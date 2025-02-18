@@ -1,0 +1,70 @@
+﻿@model NextOnServices.Infrastructure.ViewModels.ProjectsURL.ProjectsURLViewModel
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Url Mapping</h4>
+            <p class="card-description">
+                <ul class="list-unstyled">
+                    <li>Project Id: @Model?.Project?.Pid</li>
+                    <li>Project Name: @Model?.Project?.Pname</li>
+                </ul>
+            </p>
+            <form class="forms-sample" id="ProjectURLForm">
+                <div class="row">
+                    <div class="col-md-4 offset-md-8 mb-2">
+                        <label class="container1_ppd">
+                            <input type="checkbox" id="chkTokens" asp-for="ProjectsURL.TokenBool" onchange="Tokens(this.id)" />&nbsp; Tokens<span class="checkmark_ppd"></span>
+                        </label>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="CountryId">Country</label>
+                        <select class="form-control form-control-sm select2" asp-for="ProjectsURL.Cid">
+                            <option value="0">--Select Country--</option>
+                            @{
+                                if (Model != null)
+                                {
+                                    if (Model.Countries != null)
+                                    {
+                                        if (Model.Countries.Count > 0)
+                                        {
+                                            foreach (var item in Model.Countries)
+                                            {
+                                                <option value="@item.CountryId">@item.Country</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="Pname">URL</label>
+                        <input type="url" class="form-control form-control-sm" asp-for="ProjectsURL.Url">
+                        <p class="help-block WOT" style="color: orange">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]</p>
+                        <p class="help-block WT" style="color: orange">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]&TID=[TokenID]</p>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="RespondentQuota">Respondent Quota</label>
+                        <input type="number" class="form-control form-control-sm" asp-for="ProjectsURL.Quota">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="Cpi">CPI ($)</label>
+                        <input type="number" class="form-control form-control-sm" asp-for="ProjectsURL.Cpi">
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label for="Notes">Notes</label>
+                        <textarea class="form-control form-control-sm" asp-for="ProjectsURL.Notes"></textarea>
+                    </div>
+                    <div class="form-group col-md-12 WT">
+                        <label for="">Paste Tokens Below</label>
+                        <textarea rows="6" class="form-control form-control-sm" asp-for="ProjectsURL.TokenRaw"></textarea>
+                    </div>
+                </div>
+
+                <input type="hidden" asp-for="ProjectsURL.Id" />
+                <input type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddURL()" value="Submit" />
+                <button class="btn btn-light btn-sm">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>

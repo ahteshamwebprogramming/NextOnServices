@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "AdminEncryptionPage";
+    Layout = null;
+}
+@model NextOnServices.Infrastructure.Models.Account.AdminEncryption
+<div class="container-xxl flex-grow-1 container-p-y">
+
+    <div class="row">
+        <div class="col-md-12">
+            <form class="form" asp-action="EncryptInput">
+                <h1>For Encrytion</h1>
+                <input asp-for="EncryptInput" type="text" class="form-control" />
+                <button class="btn btn-primary">Encrypt</button>
+                <label>@Model.EncryptOutput</label>
+            </form>
+            <form asp-action="DecryptInput">
+                <h1>For Decryption</h1>
+                <input type="text" class="form-control" asp-for="DecryptInput" />
+                <button class="btn btn-primary">Decrypt</button>
+                <label>@Model.DecryptOutput</label>
+            </form>
+        </div>
+    </div>
+
+</div>

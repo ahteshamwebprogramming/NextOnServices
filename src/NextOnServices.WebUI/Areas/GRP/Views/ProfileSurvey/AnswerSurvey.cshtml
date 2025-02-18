@@ -1,0 +1,207 @@
+﻿@model GRP.Infrastructure.ViewModels.Profile.ProfileSurveysViewModel
+@{
+    ViewData["Title"] = "AnswerSurvey";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <form id="SurveyForm">
+                            @{
+                                if (Model != null)
+                                {
+                                    if (Model.ProfileInfoSurveys != null)
+                                    {
+                                        foreach (var item in Model.ProfileInfoSurveys)
+                                        {
+                                            if (item.QuestionLabel != null)
+                                            {
+                                                <div class="form-group col-md-6" name="QuestionContainer">
+                                                    <label class="control-label">@item.QuestionLabel.QuestionLabel</label>
+                                                    @{
+                                                        if (item.QuestionLabel.QuestionType == 1)
+                                                        {
+                                                            <select class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer">
+                                                                <option value="0">Select</option>
+                                                                @{
+                                                                    if (item.AttributesSelect != null)
+                                                                    {
+                                                                        foreach (var item1 in item.AttributesSelect)
+                                                                        {
+                                                                            if (item.RespondentResponse == item1.Value)
+                                                                            {
+                                                                                <option selected value="@item1.Value">@item1.Label</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@item1.Value">@item1.Label</option>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 2)
+                                                        {
+                                                            if (item.AttributesSelect != null)
+                                                            {
+                                                                <div style="outline: 1px solid #CED4DA;padding: 5px 5px 5px 25px;max-height: 171px;overflow-y: scroll;" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer">
+                                                                    @{
+                                                                        foreach (var item1 in item.AttributesSelect)
+                                                                        {
+                                                                            <div class="form-check">
+                                                                                <label class="form-check-label">
+                                                                                    <input type="checkbox" class="form-check-input" @(item.RespondentResponse.Split(",").Contains(item1.Value) == true ? "Checked" : "") value="@item1.Value">
+                                                                                    @item1.Label
+                                                                                    <i class="input-helper"></i>
+                                                                                </label>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            }
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 3)
+                                                        {
+                                                            <input type="text" class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer" value="@item.RespondentResponse" />
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 4)
+                                                        {
+                                                            <input type="number" class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer" value="@(item.RespondentResponse)" />
+                                                        }
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <input type="hidden" asp-for="ProfileInfoCategoryId" />
+                                    <input type="button" class="btn btn-primary" value="Submit" onclick="SubmitData()" />
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("select").select2();
+        });
+
+        function SubmitData() {
+            var profileSurveyResponses = [];
+            let allQuestions = 0;
+            let filledQuestions = 0;
+            $("#SurveyForm").find("[name='QuestionContainer']").each(function () {
+                $questionContainer = $(this);
+                $answer = $questionContainer.find("[name='Answer']");
+
+                let QuestionCode = $answer.attr("questioncode");
+                let ProfileInfoSurveyId = $answer.attr("profileinfosurveyid");
+                let QuestionType = $answer.attr("questiontype");
+                let ProfileSurveyCategoryId = $("[name='ProfileInfoCategoryId']").val();
+                let answer;
+                if (QuestionType == 1) {
+                    answer = $answer.val();
+                    if ($.trim(answer) != "" && answer != 0) {
+                        filledQuestions += 1;
+                    }
+                }
+                else if (QuestionType == 2) {
+                    let values = [];
+                    $answer.find("input[type='checkbox']:checked").each(function () {
+                        values.push($(this).attr("value"));
+                    });
+                    answer = values.toString(",");
+                    if (answer.length > 0) {
+                        filledQuestions += 1;
+                    }
+                }
+                else if (QuestionType == 3) {
+                    answer = $answer.val();
+                    if ($.trim(answer) != "") {
+                        filledQuestions += 1;
+                    }
+                }
+                else if (QuestionType == 4) {
+                    answer = $answer.val();
+                    if ($.trim(answer) != "") {
+                        filledQuestions += 1;
+                    }
+                }
+
+                var ProfileSurveyResponseDTO = {};
+                ProfileSurveyResponseDTO.QuestionId = ProfileInfoSurveyId;
+                ProfileSurveyResponseDTO.AnswerId = answer;
+                ProfileSurveyResponseDTO.QuestionCode = QuestionCode;
+                ProfileSurveyResponseDTO.ProfileSurveyCategoryId = ProfileSurveyCategoryId;
+                profileSurveyResponses.push(ProfileSurveyResponseDTO);
+                allQuestions += 1;
+            });
+
+            //alert("AllQuestions : " + allQuestions + "  - FilledQuestions : " + filledQuestions);
+            let Completed = false;
+            if (allQuestions == filledQuestions) {
+                Completed = true;
+            }
+
+            var inputDTO = {
+                profileSurveyResponses: profileSurveyResponses,
+                completed: Completed
+            };
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/ProfileSurvey/SaveProfileSurveyResponses",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //$(currDiv).parent().parent().parent().remove();
+
+                    $successalert("Success!", "Saved succesfully.");
+                    setTimeout(function () {
+                        window.location.href = "/GRP/Home/AnswerSurveyCats";
+                    }, 1000);
+                    
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!');
+                    UnblockUI();
+                }
+            });
+
+        }
+
+
+    </script>
+}

@@ -1,0 +1,147 @@
+﻿@model NextOnServices.VT.Infrastructure.ViewModels.Client.ClientViewModel
+@{
+    ViewData["Title"] = "AddClient";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+    }
+
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+
+<link href="~/css/vt/validation.css" rel="stylesheet" />
+<div class="row">
+    <div class="col-md-10 offset-1 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Client</h4>
+                <p class="card-description">
+                    Please fill the in the details below
+                </p>
+                <form class="forms-sample" id="ClientForm">
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label for="Pname" class="required">Client / Company Name</label>
+                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Client.Company">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Descriptions" class="required">Contact Person</label>
+                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Client.Cperson">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Descriptions" class="required">Contact Number</label>
+                            <input type="number" class="form-control form-control-sm requiredInput" placeholder="00 999 9999" asp-for="Client.Cnumber">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Descriptions" class="required">Contact Email</label>
+                            <input type="email" class="form-control form-control-sm requiredInput" asp-for="Client.Cemail">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="" class="required">Country</label>
+                            <select class="form-control form-control-sm requiredInput select2" asp-for="Client.Country">
+                                <option value="0">--Select Country--</option>
+                                @{
+                                    if (Model != null && Model.Countries != null)
+                                    {
+                                        foreach (var item in Model.Countries)
+                                        {
+                                            <option value="@item.Country">@item.Country</option>
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-10">
+                            <label for="">Notes</label>
+                            <textarea asp-for="Client.Notes" class="form-control form-control-sm" placeholder="Enter Your Notes Here"></textarea>
+                        </div>
+                    </div>
+                    <input type="hidden" asp-for="Client.ClientId" />
+                    <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddClient()">@(Model == null ? "Submit" : Model.Client == null ? "Submit" : Model.Client.ClientId > 0 ? "Update" : "Submit")  </button>
+                    <input type="button" class="btn btn-light btn-sm" onclick="javascript:window.location.href='/VT/Client/AddClient'" value="Cancel" />
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script src="~/customjs/validation.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".select2").select2();
+        });
+
+
+
+        function AddClient() {
+
+            if (!isValidateForm("ClientForm")) {
+                return false;
+            }
+
+
+            let Data = $("#ClientForm");
+            var inputDTO = {};
+            inputDTO.ClientId = isNaN($(Data).find("[name='Client.ClientId']").val()) ? 0 : $.trim($(Data).find("[name='Client.ClientId']").val()) == "" ? 0 : $(Data).find("[name='Client.ClientId']").val();
+            inputDTO.Company = $(Data).find("[name='Client.Company']").val();
+            inputDTO.Cperson = $(Data).find("[name='Client.Cperson']").val();
+            inputDTO.Cnumber = $(Data).find("[name='Client.Cnumber']").val();
+            inputDTO.Cemail = $(Data).find("[name='Client.Cemail']").val();
+            inputDTO.Country = $(Data).find("[name='Client.Country']").val();
+            inputDTO.Notes = $(Data).find("[name='Client.Notes']").val();
+
+
+            BlockUI();
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/Client/ManageClient",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //Confirmation OK
+                    Swal.fire({ title: 'Success!', text: "Client Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                        if (result.isConfirmed) {
+                            //if (inputDTO.Id > 0) {
+                            window.location.href = "/VT/Client/ClientList";
+                            //}
+                            // else {
+                            //     window.location.href = "/VT/Supplier/SupplierCountryPanelSize/" + data.encId;
+                            // }
+                        }
+                    });
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+    </script>
+}
+

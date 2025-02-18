@@ -1,0 +1,358 @@
+﻿@model GRP.Infrastructure.ViewModels.Survey.SurveyCriteriaViewModel
+@{
+    ViewData["Title"] = "Set Criteria";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="offset-md-0 col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title" style="display: flex;justify-content: space-between;align-items: center;">
+                                        <h2>
+                                            Survey Criteria
+                                            @*<small style="color:#17a2b8">Below is the list of the surveys</small>*@
+                                        </h2>
+                                        <input type="button" class="btn btn-primary btn-sm" value="Back To Survey List" onclick="javascript:history.back();" />
+                                        @* <ul class="nav navbar-right panel_toolbox">
+                                            <li><a href="/GRP/Survey/Add">Survey Criteria</a></li>
+                                        </ul> *@
+                                        @* <div class="clearfix"></div> *@
+                                    </div>
+                                    <div class="x_content">
+                                        <br />
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Question Code</th>
+                                                            <th>Question Name</th>
+                                                            <th>Question Label</th>
+
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @{
+                                                            if (Model != null)
+                                                            {
+                                                                if (Model.profileInfoSurveys != null)
+                                                                {
+                                                                    foreach (var item in Model.profileInfoSurveys)
+                                                                    {
+                                                                        <tr>
+                                                                            <td>
+                                                                                @item.QuestionCode
+                                                                            </td>
+                                                                            <td>@item.QuestionName</td>
+                                                                            <td style="white-space:break-spaces">@item.QuestionLabel</td>
+                                                                            <td>
+                                                                                <a href="javascript:void(0)" questiontype="@item.QuestionType" onclick="showOptions(@item.ProfileInfoSurveyId,this)">View</a>&nbsp;
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="divCurrentWeatherPartialView">
+</div>
+<div id="hiddenfields">
+    <input type="hidden" name="ProfileInfoSurveyId" value="" />
+    <input type="hidden" name="SurveyId" value="@(Model==null ? 0  : Model.SurveyId==null ? 0 : Model.SurveyId)" />
+    <input type="hidden" name="QuestionType" value="" />
+</div>
+
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("table").DataTable({
+                'order': []
+            });
+        });
+
+
+        function showOptions(ProfileInfoSurveyId, currObj) {
+            let questionType = $(currObj).attr("questiontype");
+            $("#hiddenfields").find("[name='ProfileInfoSurveyId']").val(ProfileInfoSurveyId);
+            $("#hiddenfields").find("[name='QuestionType']").val(questionType);
+            var inputData = {};
+            inputData.ProfileInfoSurveyId = ProfileInfoSurveyId;
+            inputData.SurveyId = $("#hiddenfields").find("[name='SurveyId']").val();
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/Survey/SetCriteriaPartialView',
+                data: JSON.stringify(inputData),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#divCurrentWeatherPartialView").html(data);
+                    $("#divCurrentWeatherPartialView").find("[name='ShowOptions']").click();
+
+                    if (questionType == 4) {
+                        $("#exampleModalCenter").find("[name='formRange']").show()
+                        $("#exampleModalCenter").find("[name='form']").hide()
+                    }
+                    else {
+                        $("#exampleModalCenter").find("[name='formRange']").hide()
+                        $("#exampleModalCenter").find("[name='form']").show()
+                    }
+                    UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+
+                }
+            });
+        }
+        function SaveCriteria() {
+
+            let questionType = $("#hiddenfields").find("[name='QuestionType']").val();
+
+            var inputDTO = {};
+            inputDTO.SurveyId = $("#hiddenfields").find("[name='SurveyId']").val();
+            inputDTO.ProfileSurveyId = $("#hiddenfields").find("[name='ProfileInfoSurveyId']").val();
+
+            if (questionType == 4) {
+                let $form = $("#exampleModalCenter").find("[name='formRange']");
+                let from = $form.find("[name='From']").val();
+                let to = $form.find("[name='To']").val();
+                from = $.trim(from) == "" ? 0 : from;
+                to = $.trim(to) == "" ? 0 : to;
+                inputDTO.Options = from + "," + to;
+            }
+            else {
+                let $form = $("#exampleModalCenter").find("[name='form']");
+                let checkedVals = $form.find("input.options:checkbox:checked").map(function () {
+                    return this.value;
+                }).get();
+                inputDTO.Options = checkedVals.join(",");
+            }
+
+
+
+
+
+
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/Survey/SaveCriteria",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    $successalert("Success", "Criteria Saved");
+                    $("#exampleModalCenter").find(".close").click();
+                    UnblockUI();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+
+        function edit(ProfileInfoCategoryId) {
+            BlockUI();
+            var inputDTO = {};
+            inputDTO.ProfileInfoCategoryId = ProfileInfoCategoryId;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/AddPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+        function addSurvey(ProfileInfoCategoryId, encProfileInfoCategoryId) {
+            BlockUI();
+            var inputDTO = {};
+            inputDTO.ProfileInfoCategoryId = ProfileInfoCategoryId;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/AddSurveyPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    $("select").select2();
+                    $("[name='ProfileInfoCategoryId']").val(ProfileInfoCategoryId);
+                    $("[name='encProfileInfoCategoryId']").val(encProfileInfoCategoryId);
+                    $("[name='ViewAllSurveys']").attr("href", $("[name='ViewAllSurveys']").attr("href").replace("encProfileInfoCategoryId", encProfileInfoCategoryId));
+
+
+                    intiEdit();
+                    UnblockUI();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+
+
+        function Delete(ProfileInfoCategoryId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.ProfileInfoCategoryId = ProfileInfoCategoryId;
+                    $.ajax({
+                        type: "POST",
+                        url: "/GRP/ProfileInfoCategory/Delete",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            $successalert('Success', "Deleted successfully");
+                            ListPartialView();
+                            UnblockUI();
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
+
+        }
+        function addRow(currObj) {
+            //let tr = $(currObj).closest("table").find("tbody").find("tr");
+            //let indx = tr.length + 1;
+            $(currObj).closest("table").find("tbody").append("<tr><td name='value'><a href='javascript:void(0)' class='edit_text'></a></td><td name='label'><a href='javascript:void(0)' class='edit_text'></a></td><td><a href='javascript:void(0)' style='color:red;' onclick='deleteRow(this)'>Delete</a></td></tr>");
+
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'text',
+                success: function (k, v) {
+                    console.log(v);
+                }
+            });
+        }
+
+        function deleteRow(currObj) {
+            $(currObj).closest("tr").remove();
+        }
+
+        function intiEdit() {
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'textarea',
+                success: function (k, v) {
+                    console.log(v);
+                    // var href = $(this).attr("href");
+                    // $('.name-list '+href).html(v);
+                }
+            });
+        }
+
+        function SaveSurvey() {
+            var QuestionLabel = getQuestionLabelData();
+            var AttributesSelect = getAttributesSelectData();
+            var inputDTO = {
+                QuestionLabel: QuestionLabel,
+                AttributesSelect: AttributesSelect
+            };
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/ProfileInfoCategory/SaveSurvey",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //$(currDiv).parent().parent().parent().remove();
+                    $successalert("Success!", "Saved succesfully.");
+                    window.location.href = "/GRP/ProfileInfoCategory/ViewSurvey?enc=" + $("[name='encProfileInfoCategoryId']").val();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!'); UnblockUI();
+                    UnblockUI();
+                }
+            });
+        }
+        function getQuestionLabelData() {
+            var ProfileInfoSurveyDTO = {};
+            ProfileInfoSurveyDTO.ProfileInfoCategoryId = $("[name='ProfileInfoCategoryId']").val();
+            ProfileInfoSurveyDTO.SNo = $("[name='QuestionLabel.SNo']").val();
+            ProfileInfoSurveyDTO.QuestionLabel = $("[name='QuestionLabel.QuestionLabel']").val();
+            ProfileInfoSurveyDTO.QuestionType = $("[name='QuestionLabel.QuestionType']").val();
+            return ProfileInfoSurveyDTO;
+        }
+        function getAttributesSelectData() {
+            let AttributesSelect = [];
+
+            $("[name='tblQuestionTypeSelectFrameworkDTO']").find("tbody").find("tr").each((i, v) => {
+                let QuestionTypeSelectFrameworkDTO = {};
+                QuestionTypeSelectFrameworkDTO.Value = $(v).find("[name='value']").text();
+                QuestionTypeSelectFrameworkDTO.Label = $(v).find("[name='label']").text();
+                AttributesSelect.push(QuestionTypeSelectFrameworkDTO);
+            });
+            return AttributesSelect;
+        }
+
+    </script>
+}
+

@@ -1,0 +1,102 @@
+﻿@model GRP.Infrastructure.ViewModels.Survey.SurveyCriteriaViewModel
+<input type="button" name="ShowOptions" data-toggle="modal" data-target="#exampleModalCenter" style="display:none" />
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Options</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12" name="form">
+                        @{
+                            if (Model != null)
+                            {
+                                if (Model.QuestionTypeSelectFrameworkList != null)
+                                {
+                                    int[] options;
+                                    var selectedOptionsCommaSeperated = Model.surveyCriteriaDTO == null ? null : Model.surveyCriteriaDTO.Options;
+                                    if (selectedOptionsCommaSeperated != null && selectedOptionsCommaSeperated.Trim() != "")
+                                    {
+                                        options = selectedOptionsCommaSeperated.Split(',').Where(x => int.TryParse(x, out _)).Select(int.Parse).ToArray();
+                                    }
+                                    else
+                                    {
+                                        options = new int[1];
+                                    }
+                                    foreach (var item in Model.QuestionTypeSelectFrameworkList)
+                                    {
+                                        if (options.Contains(int.Parse(item.Value)))
+                                        {
+                                            <input type="checkbox" checked class="options" value="@item.Value" />
+                                            @(item.Label)  <br />
+                                        }
+                                        else
+                                        {
+                                            <input type="checkbox" class="options" value="@item.Value" />
+                                            @(item.Label)  <br />
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    </div>
+                    <div class="col-md-12" name="formRange">
+                        <div class="row">
+                            @{
+                                int[] range = new int[2];
+                                if (Model != null && Model.surveyCriteriaDTO != null && Model.surveyCriteriaDTO.Options != null)
+                                {
+                                    try
+                                    {
+                                        range = Model.surveyCriteriaDTO.Options.Split(",").Where(x => int.TryParse(x, out _)).Select(int.Parse).ToArray();
+                                        <div class="form-group col-md-6">
+                                            <label>From</label>
+                                            <input type="number" name="From" class="form-control" value="@(range.Length>0 ? range[0] : "")" />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label>To</label>
+                                            <input type="number" name="To" class="form-control" value="@(range.Length>0 ? range[1] : "")" />
+                                        </div>
+                                    }
+                                    catch
+                                    {
+                                        <div class="form-group col-md-6">
+                                            <label>From</label>
+                                            <input type="number" name="From" class="form-control" value="" />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label>To</label>
+                                            <input type="number" name="To" class="form-control" />
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="form-group col-md-6">
+                                        <label>From</label>
+                                        <input type="number" name="From" class="form-control" value="" />
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>To</label>
+                                        <input type="number" name="To" class="form-control" />
+                                    </div>
+                                }
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="SaveCriteria()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>

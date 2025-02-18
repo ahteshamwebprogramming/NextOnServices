@@ -1,0 +1,67 @@
+﻿@model GRP.Infrastructure.Models.Account.UserDTO
+
+
+
+
+
+@{
+    if (Model != null && Model.IsActive != null)
+    {
+        if (Model.IsActive == true)
+        {
+            <ul class="navbar-nav navbar-nav-right">
+                <li class="nav-item nav-profile dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+                        Welcome&nbsp;@Model.FirstName @Model.LastName
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                        <a class="dropdown-item" style="display:none !important">
+                            <i class="ti-settings text-primary"></i>
+                            Settings
+                        </a>
+                        @{
+                            if (Model.RoleName == "Respondent")
+                            {
+                                <a class="dropdown-item" href="/GRP/Home/Dashboard">
+                                    <i class="icon-grid menu-icon"></i>
+                                    Dashboard
+                                </a>
+                            }
+                            else if (Model.RoleName == "Admin")
+                            {
+                                <a class="dropdown-item" href="/GRP/Survey/List">
+                                    <i class="icon-grid menu-icon"></i>
+                                    Survey
+                                </a>
+                            }
+                            else if (Model.RoleName == "Panel Manager")
+                            {
+                                <a class="dropdown-item" href="/GRP/Points/PointsManager">
+                                    <i class="icon-grid menu-icon"></i>
+                                    PointsManager
+                                </a>
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                        <a class="dropdown-item" href="/GRP/Account/Login">
+                            <i class="ti-power-off text-primary"></i>
+                            Logout
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        }
+        else
+        {
+            <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 top_links">
+                <li><a href="/GRP/Account/Login" class="nav-link btn-custom">Sign In</a></li>
+                <li><a href="/GRP/Account/Register" class="nav-link btn-custom">Sign Up</a></li>
+            </ul>
+        }
+    }
+}
+
+

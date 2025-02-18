@@ -1,0 +1,48 @@
+﻿@model NextOnServices.Infrastructure.ViewModels.ProjectMapping.ProjectMappingViewModel
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <p class="card-title mb-0">URL Mapping</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-borderless" id="Projects">
+                    <thead>
+                        <tr>
+                            <th>Project Number</th>
+                            <th>Project Name</th>
+                            <th>Country</th>
+                            <th>Supplier</th>
+                            <th>Quota</th>
+                            <th>Client Link</th>
+                            <th>Supplier Link</th>
+                            <th>Notes</th>
+                            <th>Check</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            if (Model != null && Model.ProjectMappingWithChildList != null)
+                            {
+                                foreach (var item in Model.ProjectMappingWithChildList)
+                                {
+                                    <tr>
+                                        <td>@item.ProjectCode</td>
+                                        <td>@item.ProjectName</td>
+                                        <td>@item.Country</td>
+                                        <td>@item.Supplier</td>
+                                        <td>@item.Respondants</td>
+                                        <td>@item.Olink</td>
+                                        <td>@item.Mlink</td>
+                                        <td>@item.Notes</td>
+                                        <td><input type="checkbox" @(item.IsChecked == 1 ? "checked" : "") onchange="CheckMapping(@item.Id,this)" /></td>
+                                        <td><input type="button" class="btn btn-primary btn-sm" value="Edit" onclick="EditProjectMapping(@item.Id)" /></td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

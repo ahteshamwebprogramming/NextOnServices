@@ -1,0 +1,339 @@
+﻿@using GRP
+@namespace GRP.WebUI.Views
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, GRP
+
+
+
+@{
+    Layout = "~/Areas/GRP/Views/Shared/_LayoutWOMenus.cshtml";
+}
+@model GRP.Infrastructure.Models.Account.UserDTO
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>GRP Register</title>
+    <!-- plugins:css -->
+    <link rel="stylesheet" href="~/theme/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/theme/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="~/theme/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/theme/css/vertical-layout-light/style.css">
+    <!-- endinject -->
+    @*<link rel="shortcut icon" href="~/theme/images/favicon.png" />*@
+    <style rel="stylesheet">
+
+        .auth .auth-form-light {
+            background: #ffffff;
+            margin: 6% auto;
+        }
+        .brand-logo {
+            text-align: center;
+            margin: 0 !important;
+        }
+
+            .brand-logo img {
+                width: 290px !important;
+            }
+
+        .main_title {
+            padding: 20px 0 20px 0;
+            text-align: center;
+        }
+
+
+
+
+
+
+
+
+        .border-1 {
+            border: #e7e7e7 solid 2px;
+        }
+
+        .flow_count {
+            font-size: 29px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            display: block;
+            color: #504b8e;
+        }
+
+        .surverys_card span {
+            font-size: 29px;
+            font-weight: 900;
+            display: block;
+            color: #504b8e;
+            text-align: center;
+            background: #f5f7ff;
+            padding: 20px;
+            margin: -17px -17px 11px -17px;
+            border-radius: 19px 20px 0 0;
+        }
+
+        .surverys_card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+            .surverys_card ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+                .surverys_card ul li {
+                    margin-bottom: 10px;
+                    font-size: 16px;
+                }
+
+                    .surverys_card ul li i {
+                        position: relative;
+                        top: 3px;
+                        color: #4B49AC
+                    }
+
+        .owl-theme .owl-nav {
+            display: block !important;
+        }
+
+        .mission-vision span {
+            font-size: 52px;
+            color: #4b49ac;
+        }
+
+        .card .card-title {
+            font-size: 22px;
+        }
+
+        .list {
+            margin: 0;
+            padding: : 0;
+            list-style: none;
+        }
+
+            .list li {
+                display: flex;
+                padding: 30px 0 30px 0;
+                border-bottom: #ccc solid 1px;
+                justify-content: start;
+                align-items: center;
+            }
+
+                .list li span {
+                    color: #4b49ac;
+                    font-weight: 700;
+                }
+
+                .list li img {
+                    width: 60px;
+                    margin-right: 30px;
+                }
+
+        .bg-dark {
+            background-color: #fff !important;
+            padding: 10px 0;
+        }
+
+        .page-body-wrapper {
+            padding: 0;
+        }
+
+        .brand {
+            width: 200px;
+        }
+
+        .mainSLider img {
+            border-radius: 10px;
+        }
+
+        .content_block a {
+            text-decoration: none;
+            display: block;
+        }
+
+        .content_block:hover {
+            border: #c3c2c2 solid 1px;
+            box-shadow: #cccccc94 1px 9px 8px;
+        }
+
+        .content_block img {
+            width: 28% !important;
+            display: inline-block !important;
+            margin-bottom: 20px;
+        }
+
+        .content_block p {
+            width: auto;
+            padding: 15px 21px;
+            font-size: 15px;
+            color: #949494;
+        }
+
+        .content_block {
+            background: #fff;
+            text-align: center;
+            padding: 28px;
+            border: #ebebeb solid 1px;
+            box-shadow: #cccccc94 0px 2px 8px;
+            border-radius: 20px;
+        }
+
+            .content_block h2 {
+                font-size: 1.4em;
+                color: #000;
+            }
+
+        .arrow {
+            width: auto !important
+        }
+
+        .content_block {
+            margin-top: 20px;
+        }
+
+        .global_text {
+            background: #FFF5F2;
+            padding: 20px;
+            border-radius: 27px;
+            padding: 28px;
+            box-shadow: #fabaa73b 0px 2px 8px;
+            border: #f6d7ce solid 1px;
+        }
+
+        .bottom_links li {
+            display: inline-block;
+            padding: 0 10px;
+        }
+
+        .bottom_links {
+            display: block;
+            margin: 5px 0;
+        }
+
+            .bottom_links a {
+                color: #666 !important;
+                font-size: 12px;
+                text-shadow: 1px 1px #97e083
+            }
+
+        .top_links a {
+            color: #666;
+            font-size: 12px;
+            text-shadow: 1px 1px #97e083
+        }
+
+        .btn-custom {
+            color: #fff !important;
+            background-color: #4B49AC;
+            border-color: #4B49AC;
+            border-radius: 6px;
+            padding: 4px 15px 4px 15px;
+            margin-left: 10px;
+            text-shadow: 0px 0px #97e083 !important;
+        }
+
+    </style>
+</head>
+
+<body>
+    
+
+                    <div class="col-lg-4 mx-auto">
+                        <div class="auth-form-light text-left py-5 px-4 px-sm-5">
+                            <div class="brand-logo">
+                                @*<img src="~/theme/images/logo.svg" alt="logo">*@
+                                @*<img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />*@
+                                <a href="/GRP/Home/Index"> <img src="/grp/Images/img/logo.jpg" /></a>
+                            </div>
+                            <h4 class="main_title">New here?</h4>
+                            <h6 class="font-weight-light">Signing up is easy. It only takes a few steps</h6>
+                            <form method="post" action="/GRP/Account/Register">
+                                <div class="form-group">
+                                    <input type="text" class="form-control form-control-lg" asp-for="FirstName" placeholder="First Name">
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control form-control-lg" asp-for="LastName" placeholder="Last Name">
+                                </div>
+                                <div class="form-group">
+                                    <input type="email" class="form-control form-control-lg" asp-for="EmailId" placeholder="Email">
+                                    <span asp-validation-for="EmailId" class="text-danger"></span>
+                                </div>
+                                <div class="form-group">
+                                    <select class="form-control form-control-lg" asp-for="Gender">
+                                        <option value="0">Choose Gender</option>
+                                        <option value="1">Male</option>
+                                        <option value="2">Female</option>
+                                        <option value="3">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <input type="date" class="form-control form-control-lg" asp-for="DateOfBirth">
+                                </div>
+                                <div class="form-group">
+                                    <select class="form-control form-control-lg" asp-for="CountryId">
+                                        <option value="0">Choose Country</option>
+                                        @{
+                                            if (Model != null)
+                                            {
+                                                if (Model.Countries != null)
+                                                {
+                                                    foreach (var item in Model.Countries)
+                                                    {
+                                                        <option value="@item.CountryId">@item.Country</option>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <label class="form-check-label text-muted" style="display: inline;">
+                                            <input type="checkbox" class="form-check-input" asp-for="AgreedToTACPP">
+                                            I agree to all
+                                        </label>
+                                        <label class="form-check-label text-muted" style="display:inline;margin-left:0px;">
+                                            <a href="/GRP/Legal/TermsOfServices">Terms Of Services</a> and <a href="/GRP/Legal/PrivacyPolicy">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                    <span asp-validation-for="AgreedToTACPP" class="text-danger"></span>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" href="../../index.html">SIGN UP</button>
+                                </div>
+                                <div class="text-center mt-4 font-weight-light">
+                                    Already have an account? <a href="/GRP/Account/Login" class="text-primary">Login</a>
+                                </div>
+                                @Html.ValidationSummary("", new { @class = "text-danger" })
+                            </form>
+                        </div>
+                    </div>
+
+
+               
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <script src="~/theme/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="~/theme/js/off-canvas.js"></script>
+    <script src="~/theme/js/hoverable-collapse.js"></script>
+    <script src="~/theme/js/template.js"></script>
+    <script src="~/theme/js/settings.js"></script>
+    <script src="~/theme/js/todolist.js"></script>
+    <!-- endinject -->
+</body>
+
+</html>

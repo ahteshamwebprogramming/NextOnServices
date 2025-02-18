@@ -1,0 +1,338 @@
+﻿@model List<GRP.Infrastructure.Models.Survey.SurveyDTO>
+@{
+    ViewData["Title"] = "List";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="offset-md-0 col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2>
+                                            Surveys
+                                            @*<small style="color:#17a2b8">Below is the list of the surveys</small>*@
+                                        </h2>
+                                        <ul class="nav navbar-right panel_toolbox">
+                                            <li><a href="/GRP/Survey/Add">Create Survey</a></li>
+                                        </ul>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <br />
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table class="table table-hover">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Survey Id</th>
+                                                            <th>Survey Name</th>
+                                                            <th>Survey Description</th>
+                                                            <th>Duration</th>
+                                                            <th>Is Active</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @{
+                                                            if (Model != null)
+                                                            {
+                                                                foreach (var item in Model)
+                                                                {
+                                                                    <tr>
+                                                                        <td>@item.SurveyId</td>
+                                                                        <td>@item.SurveyName</td>
+                                                                        <td>@item.SurveyDescription</td>
+                                                                        <td>@item.Duration</td>
+                                                                        <td>@item.IsActive</td>
+                                                                        <td>
+                                                                            <a href="/GRP/Survey/Add?enc=@item.encSurveyId">Edit</a>&nbsp;
+                                                                            <a href="javascript:void(0)" onclick="DeleteSurvey('@item.encSurveyId')">Delete</a>&nbsp;
+                                                                            <a href="">Details</a>&nbsp;
+                                                                            <a href="/GRP/Survey/SetCriteria?enc=@item.encSurveyId">Set Criteria</a>&nbsp;
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("table").DataTable({
+                'order': []
+            });
+            //ListPartialView();
+        });
+
+        function ListPartialView() {
+            $("#PartialViews").empty();
+            //BlockUI();
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/ListPartialView',
+                //data: JSON.stringify({ ProjectId: project, ReportType: reportType }),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    $("table").DataTable({
+                        'order': []
+                    });
+                    //UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+
+                }
+            });
+        }
+        function AddPartialView() {
+            //BlockUI();
+            var inputDTO = {};
+            inputDTO.Id = 0;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/AddPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    $('select').select2();
+                    //UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+        function Add() {
+            let data = $("#form");
+            var inputDTO = {};
+            inputDTO.ProfileInfoCategoryId = $(data).find("[name='ProfileInfoCategoryId']").val();
+            inputDTO["CategoryName"] = $(data).find("[name='CategoryName']").val();
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/ProfileInfoCategory/Add",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    $successalert("Success", "Category is added succesfully");
+                    ListPartialView();
+                    UnblockUI();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+        function edit(ProfileInfoCategoryId) {
+            BlockUI();
+            var inputDTO = {};
+            inputDTO.ProfileInfoCategoryId = ProfileInfoCategoryId;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/AddPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+        function addSurvey(ProfileInfoCategoryId, encProfileInfoCategoryId) {
+            BlockUI();
+            var inputDTO = {};
+            inputDTO.ProfileInfoCategoryId = ProfileInfoCategoryId;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/ProfileInfoCategory/AddSurveyPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    $("select").select2();
+                    $("[name='ProfileInfoCategoryId']").val(ProfileInfoCategoryId);
+                    $("[name='encProfileInfoCategoryId']").val(encProfileInfoCategoryId);
+                    $("[name='ViewAllSurveys']").attr("href", $("[name='ViewAllSurveys']").attr("href").replace("encProfileInfoCategoryId", encProfileInfoCategoryId));
+
+
+                    intiEdit();
+                    UnblockUI();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+
+
+        function DeleteSurvey(encSurveyId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.encSurveyId = encSurveyId;
+                    $.ajax({
+                        type: "POST",
+                        url: "/GRP/Survey/DeleteSurvey",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            $successalert('Success', "Deleted successfully");
+                            window.location.href = "/GRP/Survey/List";
+                            UnblockUI();
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
+
+        }
+        function addRow(currObj) {
+            //let tr = $(currObj).closest("table").find("tbody").find("tr");
+            //let indx = tr.length + 1;
+            $(currObj).closest("table").find("tbody").append("<tr><td name='value'><a href='javascript:void(0)' class='edit_text'></a></td><td name='label'><a href='javascript:void(0)' class='edit_text'></a></td><td><a href='javascript:void(0)' style='color:red;' onclick='deleteRow(this)'>Delete</a></td></tr>");
+
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'text',
+                success: function (k, v) {
+                    console.log(v);
+                }
+            });
+        }
+
+        function deleteRow(currObj) {
+            $(currObj).closest("tr").remove();
+        }
+
+        function intiEdit() {
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'textarea',
+                success: function (k, v) {
+                    console.log(v);
+                    // var href = $(this).attr("href");
+                    // $('.name-list '+href).html(v);
+                }
+            });
+        }
+
+        function SaveSurvey() {
+            var QuestionLabel = getQuestionLabelData();
+            var AttributesSelect = getAttributesSelectData();
+            var inputDTO = {
+                QuestionLabel: QuestionLabel,
+                AttributesSelect: AttributesSelect
+            };
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/ProfileInfoCategory/SaveSurvey",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //$(currDiv).parent().parent().parent().remove();
+                    $successalert("Success!", "Saved succesfully.");
+                    window.location.href = "/GRP/ProfileInfoCategory/ViewSurvey?enc=" + $("[name='encProfileInfoCategoryId']").val();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!'); UnblockUI();
+                    UnblockUI();
+                }
+            });
+        }
+        function getQuestionLabelData() {
+            var ProfileInfoSurveyDTO = {};
+            ProfileInfoSurveyDTO.ProfileInfoCategoryId = $("[name='ProfileInfoCategoryId']").val();
+            ProfileInfoSurveyDTO.SNo = $("[name='QuestionLabel.SNo']").val();
+            ProfileInfoSurveyDTO.QuestionLabel = $("[name='QuestionLabel.QuestionLabel']").val();
+            ProfileInfoSurveyDTO.QuestionType = $("[name='QuestionLabel.QuestionType']").val();
+            return ProfileInfoSurveyDTO;
+        }
+        function getAttributesSelectData() {
+            let AttributesSelect = [];
+
+            $("[name='tblQuestionTypeSelectFrameworkDTO']").find("tbody").find("tr").each((i, v) => {
+                let QuestionTypeSelectFrameworkDTO = {};
+                QuestionTypeSelectFrameworkDTO.Value = $(v).find("[name='value']").text();
+                QuestionTypeSelectFrameworkDTO.Label = $(v).find("[name='label']").text();
+                AttributesSelect.push(QuestionTypeSelectFrameworkDTO);
+            });
+            return AttributesSelect;
+        }
+
+    </script>
+}
+
+
+

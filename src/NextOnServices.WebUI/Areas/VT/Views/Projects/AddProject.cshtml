@@ -1,0 +1,434 @@
+﻿@using NextOnServices.Infrastructure.Helper;
+@model NextOnServices.Infrastructure.ViewModels.Project.AddProject
+
+@{
+    ViewData["Title"] = "AddProject";
+    //Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<style>
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        background: transparent;
+        bottom: 0;
+        color: transparent;
+        cursor: pointer;
+        height: auto;
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: auto;
+    }
+
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Project</h4>
+                <p class="card-description">
+                    Please fill the in the details below
+                </p>
+                <form class="forms-sample" id="Userform">
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label for="Pname">Project Name</label>
+                            <input type="text" class="form-control form-control-sm" id="Pname" name="Pname" value="@(Model==null?"" : Model.Project==null ? "" : Model.Project.Pname)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Descriptions">Project Description</label>
+                            <input type="text" class="form-control form-control-sm" id="Descriptions" name="Descriptions" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Descriptions)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="ClientId">Client Name</label>
+                            <select class="form-control form-control-sm" id="ClientId" name="ClientId">
+                                <option value="0">--Select Client--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.ClientsList != null)
+                                        {
+                                            if (Model.ClientsList.Count > 0)
+                                            {
+                                                foreach (var item in Model.ClientsList)
+                                                {
+                                                    if (Model.Project != null && item.ClientId == Model.Project.ClientId)
+                                                    {
+                                                        <option value="@item.ClientId" selected="selected">@item.Company</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.ClientId">@item.Company</option>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Pmanager">Project Manager</label>
+                            <select class="form-control form-control-sm" id="Pmanager" name="Pmanager">
+                                <option value="0">--Select Project Manager--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.UsersList != null)
+                                        {
+                                            if (Model.UsersList.Count > 0)
+                                            {
+                                                foreach (var item in Model.UsersList)
+                                                {
+                                                    if (Model.Project != null && item.UserId == Model.Project.Pmanager)
+                                                    {
+                                                        <option value="@item.UserId" selected="selected">@item.UserName</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.UserId">@item.UserName</option>
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Loi">LOI</label>
+                            <input type="number" class="form-control form-control-sm" id="Loi" name="Loi" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Loi)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Irate">Incidence Rate</label>
+                            <input type="number" class="form-control form-control-sm" id="Irate" name="Irate" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Irate)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Cpi">CPI ($)</label>
+                            <input type="number" class="form-control form-control-sm" id="Cpi" name="Cpi" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Cpi)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="SampleSize">Sample Size</label>
+                            <input type="number" class="form-control form-control-sm" id="SampleSize" name="SampleSize" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.SampleSize)">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="RespondentQuota">Respondent Quota</label>
+                            <input type="number" class="form-control form-control-sm" id="Quota" name="Quota" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Quota)">
+                        </div>
+                        @{
+                            DateTime? sdatee = CommonHelper.ConvertToDateTime(Model.Project.Sdate, "MM-dd-yyyy");
+                            DateTime? edate = CommonHelper.ConvertToDateTime(Model.Project.Edate, "MM-dd-yyyy");
+                        }
+                        <div class="form-group col-md-4">
+                            <label for="Sdate">Project Start Date</label>
+                            <input type="date" class="form-control form-control-sm" id="Sdate" name="Sdate" value="@(sdatee==null ? "" :  ((DateTime)sdatee).ToString("yyyy-MM-dd"))">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Edate">Project End Date</label>
+                            <input type="date" class="form-control form-control-sm" id="Edate" name="Edate" value="@(edate==null ? "" : ((DateTime)edate).ToString("yyyy-MM-dd"))">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="CountryId">Country</label>
+                            <select class="form-control form-control-sm" id="CountryId" name="CountryId">
+                                <option value="0">--Select Country--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.CountriesList != null)
+                                        {
+                                            if (Model.CountriesList.Count > 0)
+                                            {
+                                                foreach (var item in Model.CountriesList)
+                                                {
+                                                    if (Model.Project != null && item.CountryId == Model.Project.CountryId)
+                                                    {
+                                                        <option selected="selected" value="@item.CountryId">@item.Country</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.CountryId">@item.Country</option>
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="">Project Type Link</label>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype1" value="1" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 1 ? "checked" : "")>
+                                            Single Countries
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype2" value="2" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 2 ? "checked" : "")>
+                                            Multiple Countries
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="ProjectStatus">Project Status</label>
+                            <select class="form-control form-control-sm" id="Status" name="Status">
+                                <option value="0">--Select Status--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.StatusList != null)
+                                        {
+                                            if (Model.StatusList.Count > 0)
+                                            {
+                                                foreach (var item in Model.StatusList)
+                                                {
+                                                    if (Model.Project != null && item.Pvalue == Model.Project.Status)
+                                                    {
+                                                        <option selected="selected" value="@item.Pvalue">@item.Pstatus</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.Pvalue">@item.Pstatus</option>
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="Notes">Notes</label>
+                            <textarea class="form-control form-control-sm" id="Notes" name="Notes">@(Model == null ? "" : Model.Project == null ? "" : Model.Project.Notes)</textarea>
+                        </div>
+                    </div>
+                    <input type="hidden" value="@(Model == null ? 0 : Model.Project == null ? 0 : Model.Project.ProjectId)" name="ProjectId" id="ProjectId" />
+                    @*<input type="hidden" value="" name="ProjectId" id="ProjectId" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId) />*@
+                    @*<input type="hidden" value="" name="ProjectId" id="ProjectId" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId) />*@
+                    <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddUser()">@(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId > 0 ? "Update" : "Submit")  </button>
+                    <button class="btn btn-light btn-sm">Cancel</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $("select").select2();
+
+            //UsersListPartialView();
+        });
+
+        function UsersListPartialView() {
+            //BlockUI();
+
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/Account/UsersListPartialView',
+                //data: JSON.stringify({ ProjectId: project, ReportType: reportType }),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    //UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+        function AddUserPartialView() {
+            //BlockUI();
+            var inputDTO = {};
+            inputDTO.UserId = 0;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/Account/AddUserPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    //UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+        function AddUser() {
+            let userData = $("#Userform");
+            var inputDTO = {};
+            inputDTO.ProjectId = isNaN($(userData).find("[name='ProjectId']").val()) ? 0 : $.trim($(userData).find("[name='ProjectId']").val()) == "" ? 0 : $(userData).find("[name='ProjectId']").val();
+            inputDTO.Pname = $(userData).find("[name='Pname']").val();
+            inputDTO.Descriptions = $(userData).find("[name='Descriptions']").val();
+            inputDTO.ClientId = $(userData).find("[name='ClientId']").val();
+            inputDTO.Pmanager = $(userData).find("[name='Pmanager']").val();
+            inputDTO.Loi = $(userData).find("[name='Loi']").val();
+            inputDTO.Irate = $(userData).find("[name='Irate']").val();
+            inputDTO.Cpi = $(userData).find("[name='Cpi']").val();
+            inputDTO.SampleSize = $(userData).find("[name='SampleSize']").val();
+            inputDTO.Quota = $(userData).find("[name='Quota']").val();
+            inputDTO.Sdate = $(userData).find("[name='Sdate']").val();
+            inputDTO.Edate = $(userData).find("[name='Edate']").val();
+            inputDTO.CountryId = $(userData).find("[name='CountryId']").val();
+            inputDTO.Ltype = $(userData).find("input[name='Ltype']:checked").val(); //$(userData).find("[name='Ltype']").val();
+            inputDTO.Status = $(userData).find("[name='Status']").val();
+            inputDTO.Notes = $(userData).find("[name='Notes']").val();
+
+            BlockUI();
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/Projects/ManageProject",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //Confirmation OK
+                    Swal.fire({ title: 'Success!', text: "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = "/VT/Projects/ProjectsList";
+                        }
+                    });
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+        function edit(userId) {
+            BlockUI();
+            var inputDTO = {};
+            inputDTO.UserId = userId;
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/Account/AddUserPartialView',
+                data: JSON.stringify(inputDTO),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+        function ChangeStatus(status, userId) {
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, change it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.UserId = userId;
+                    inputDTO.Status = status == "Active" ? true : false;
+                    $.ajax({
+                        type: "POST",
+                        url: "/VT/Account/ChangeUsersStatus",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            $successalert("success", "User is " + status + " now");
+                            UsersListPartialView();
+                            UnblockUI();
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
+
+
+
+        }
+
+        function DeleteUser(userId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.UserId = userId;
+                    $.ajax({
+                        type: "POST",
+                        url: "/Account/DeleteUser",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            $successalert('Success', "Deleted successfully");
+                            UsersListPartialView();
+                            UnblockUI();
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
+        }
+
+    </script>
+}
+
+

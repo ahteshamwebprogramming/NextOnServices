@@ -1,0 +1,361 @@
+﻿@{
+    ViewData["Title"] = "Home";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+<style type="text/css">
+    .progress {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        height: 1rem;
+        overflow: hidden;
+        font-size: .75rem;
+        background-color: #e9ecef;
+        border-radius: 0.25rem;
+    }
+
+    .progress-bar {
+        width: 50%;
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        -webkit-box-pack: center;
+        -ms-flex-pack: center;
+        justify-content: center;
+        color: #fff;
+        text-align: center;
+        background-color: #007bff;
+        transition: width .6s ease;
+    }
+
+    .leftBlock .point_table {
+        width: 100%;
+        margin: 30px auto;
+        padding: 0;
+    }
+
+        .leftBlock .point_table ul {
+            width: 96%;
+            list-style: none;
+            margin: 10px auto;
+            padding: 0 0%;
+            border-bottom: 1px solid #CCC;
+            overflow: hidden;
+        }
+
+            .leftBlock .point_table ul li:first-child {
+                text-align: left;
+            }
+
+            .leftBlock .point_table ul li:last-child {
+                text-align: right;
+            }
+
+            .leftBlock .point_table ul li {
+                width: 46%;
+                margin: 0 auto;
+                padding: 10px 2%;
+                float: left;
+                color: #000;
+                text-align: center;
+                list-style-type: none;
+            }
+
+                .leftBlock .point_table ul li span {
+                    width: 100px;
+                    background: #476D7B;
+                    color: #fff;
+                    padding: 4px;
+                    margin: 0 auto;
+                    border-radius: 6px;
+                }
+
+    .leftBlock .nav_tab {
+        width: 100%;
+        margin: 0 auto;
+        padding: 0;
+    }
+
+        .leftBlock .nav_tab ul li {
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 0 15px 0;
+            line-height: 2;
+            list-style-type: none;
+            text-align: left;
+        }
+
+            .leftBlock .nav_tab ul li a {
+                color: #504b8e;
+                font-weight: 600;
+            }
+
+            .leftBlock .nav_tab ul li span {
+                background: #476D7B;
+                color: #fff;
+                padding: 3px;
+                margin: 0 0 0 4px;
+                border-radius: 8px;
+            }
+
+    .scrollable_wrap {
+        height: 220px;
+        overflow-y: scroll;
+        border: #ccc solid 1px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+
+    .heading_title {
+        border-bottom: #ccc solid 1px;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-4 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="leftBlock">
+                    <div class="progress mt-3 mb-3">
+                        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p>
+                        Earn 1970 more points to earn a payout!
+                    </p>
+                    <section class="point_table">
+                        <ul>
+                            <li><span>Approved</span></li>
+                            <li>530</li>
+                        </ul>
+                        <ul>
+                            <li><span style="background: #F90;">Pending </span></li>
+                            <li>0</li>
+                        </ul>
+                        <ul>
+                            <li>Total</li>
+                            <li>530</li>
+                        </ul>
+                    </section>
+                    <section class="nav_tab">
+                        <ul>
+                            <li><a href="Survey_StartupPage.aspx">Complete Your Profile</a><span>70 Points</span></li>
+                            <li><a href="invite.aspx">Share Global Research</a><span>10 Points</span></li>
+                            <li><a href="transactionhistory.aspx">Transaction History</a></li>
+                            <li><a href="changepassword.aspx">Change Password</a></li>
+                            <li><a href="redeption.aspx">Redemption</a></li>
+                            <li><a href="survey.aspx">Surveys</a><span>1</span></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="heading_title">Food and Entertainment</h2>
+                <p class="card-description">Which Fast Food restaurants you hve visited ever?</p>
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">How often do you eat fast food (any quick service restaurant) in any given week (on average)?</label>
+                    <select class="form-control form-control-lg" id="exampleFormControlSelect1">
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                        <option>5</option>
+                    </select>
+                </div>
+                <p class="card-description">Which Fast Food restaurants you hve visited ever?</p>
+                <form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="scrollable_wrap">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            KFC
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Mc Donald
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Bikanerwala
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Panda
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Street
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Bikanerwala
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Panda
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Street
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Bikanerwala
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Panda
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="checkbox" class="form-check-input">
+                                            Food Street
+                                            <i class="input-helper"></i>
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+                <p class="card-description">Which Fast Food restaurants you hve visited ever?</p>
+                <form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="optionsRadios" id="optionsRadios1" value="">
+                                        KFC
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="optionsRadios" id="optionsRadios1" value="">
+                                        Mc Donald
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="optionsRadios" id="optionsRadios1" value="">
+                                        Bikanerwala
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="optionsRadios" id="optionsRadios1" value="">
+                                        Food Panda
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="radio" class="form-check-input" name="optionsRadios" id="optionsRadios1" value="">
+                                        Food Street
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+
+
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+                <p class="card-description">Which Fast Food restaurants you hve visited ever?</p>
+                <form>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input">
+                                        KFC
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input">
+                                        Mc Donald
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input">
+                                        Bikanerwala
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input">
+                                        Food Panda
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input type="checkbox" class="form-check-input">
+                                        Food Street
+                                        <i class="input-helper"></i>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

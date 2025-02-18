@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "SurveyComplete";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+@model GRP.Infrastructure.Models.Survey.SurveyRedirectDetailsDTO
+
+
+
+@{
+    if (Model != null)
+    {
+        if (Model.Status.ToUpper() == "COMPLETE")
+        {
+            <h1>Congratulations! You have successfully completed the survey.</h1>
+        }
+        else if (Model.Status.ToUpper() == "TERMINATE")
+        {
+            <h1>Thank you very much for your participation. <br> Unfortunately, at the moment we are looking for a different profile to match survey's conditions.</h1>            
+        }
+        else if (Model.Status.ToUpper() == "QUOTAFULL")
+        {
+            <h1>Thank you very much for your participation, but at this time we have received specific numbers of completes</h1>            
+        }
+        else if (Model.Status.ToUpper() == "SCREENED")
+        {
+            <h1>Thank you for your interest in this survey. <br> Unfortunately, you did not match the criteria required for participation</h1>
+        }
+        else if (Model.Status.ToUpper() == "OVERQUOTA")
+        {
+            <h1>Thank you for your interest in this survey. <br> Unfortunately, the quota was reached for your demographic group</h1>            
+        }
+        else if (Model.Status.ToUpper() == "SEC_TERM")
+        {
+            <h1>Thank you very much for your participation. <br> Unfortunately, at the moment we are lookng for a different profile to match survey's conditions</h1>            
+        }
+        else if (Model.Status.ToUpper() == "F_ERROR")
+        {
+            <h1>Thank you very much for your participation. <br> Unfortunately, at the moment we are lookng for a different profile to match survey's conditions</h1>            
+        }
+        else
+        {
+            <h1>Error</h1>
+        }
+    }
+
+}
+
+

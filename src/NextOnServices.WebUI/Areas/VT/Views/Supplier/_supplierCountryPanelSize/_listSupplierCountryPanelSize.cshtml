@@ -1,0 +1,36 @@
+﻿@model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierPanelSizeViewModel
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <p class="card-title mb-0">Supplier Country Panel Size</p>
+            <div class="table-responsive">
+                <table class="table table-striped table-borderless" id="Projects">
+                    <thead>
+                        <tr>
+                            <th>Supplier Name</th>
+                            <th>Country</th>
+                            <th>Sample Size</th>
+                            <th>Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            if (Model != null && Model.SupplierPanelSizeWithChildren != null)
+                            {
+                                foreach (var item in Model.SupplierPanelSizeWithChildren)
+                                {
+                                    <tr>
+                                        <td>@item.Supplier</td>
+                                        <td>@item.Country</td>
+                                        <td>@item.Psize</td>
+                                        <td><input type="button" class="btn btn-primary btn-sm" value="Edit" onclick="EditSupplierCountryPanelSize(@item.Id)" /></td>
+                                    </tr>
+                                }
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

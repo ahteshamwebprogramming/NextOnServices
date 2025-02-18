@@ -1,0 +1,148 @@
+﻿@model List<GRP.Infrastructure.Models.Survey.SurveyDTO>
+@{
+    ViewData["Title"] = "Pending Points";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="offset-md-0 col-md-12">
+                                <div class="x_panel">
+                                    <div class="x_title">
+                                        <h2>Points List <small style="color:#17a2b8">Below is the list of pending points</small></h2>
+                                        <ul class="nav navbar-right panel_toolbox">
+                                            @*<li><a href="/GRP/Survey/Add">Create Survey</a></li>*@
+                                        </ul>
+                                        <div class="clearfix"></div>
+                                    </div>
+                                    <div class="x_content">
+                                        <br />
+                                        <div id="PartialViews">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            ListPartialView();
+        });
+
+        function ListPartialView() {
+            //BlockUI();
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/GRP/Points/ListPointsPending_PartialView',
+                //data: JSON.stringify({ ProjectId: project, ReportType: reportType }),
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $("#PartialViews").html(data);
+                    $('table').DataTable({
+                        'order': []
+                    });
+                    //UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+
+                }
+            });
+        }
+
+        function ApproveConfirm(PointsHistoryId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, approve it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    ApproveRejectPoints(PointsHistoryId, "Approved");
+                    BlockUI();
+                }
+            });
+        }
+        function RejectConfirm(PointsHistoryId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, reject it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    ApproveRejectPoints(PointsHistoryId, "Rejected");
+                }
+            });
+        }
+
+        function ApproveRejectPoints(PointsHistoryId, Status) {
+            var inputDTO = {};
+            inputDTO.PointsHistoryId = PointsHistoryId;
+            inputDTO.Status = Status;
+            $.ajax({
+                type: "POST",
+                url: "/GRP/Points/ApproveRejectPoints",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    $successalert('Success', Status + " successfully");
+                    ListPartialView();
+                    UnblockUI();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+
+
+
+    </script>
+}
+
+
+

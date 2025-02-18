@@ -1,0 +1,63 @@
+﻿@model NextOnServices.Infrastructure.ViewModels.ProjectMapping.ProjectMappingViewModel
+@{
+    ViewData["Title"] = "ProjectMapping";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/custmahte.css" rel="stylesheet" />
+<link href="~/css/tooltip.css" rel="stylesheet" />
+<style>
+
+    .container1_ppd {
+        display: block;
+        position: relative;
+        padding-left: 0px;
+        margin-bottom: 0px;
+        cursor: pointer;
+        font-size: 19px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .checkmark_ppd {
+        position: absolute;
+        top: 0px;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+    }
+
+    .container1_ppd input {
+        position: relative;
+        opacity: 0;
+    }
+</style>
+
+
+<div id="PartialView_AddProjectMapping">
+    @Html.Partial("_projectMapping/_addProjectMapping")
+</div>
+<div id="PartialView_ListProjectMapping">
+    @Html.Partial("_projectMapping/_listProjectMapping")
+</div>
+
+<input type="hidden" asp-for="ProjectMappingWithChild.encProjectId" />
+@section scripts {
+    
+    <script src="~/customjs/projectmapping/projectmapping.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            AddProjectMappingPartialView();
+            ListProjectMappingPartialView();
+        });
+
+
+
+
+    </script>
+}
+
+
+

@@ -1,0 +1,322 @@
+﻿@model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .navbar-custom {
+            background-color: #2C3E50;
+        }
+
+            .navbar-custom .navbar-brand, .navbar-custom .nav-link, .navbar-custom .vendor-info {
+                color: #fff;
+            }
+
+        .navbar-center {
+            margin: auto;
+        }
+
+        .dashboard-container {
+            margin-top: 20px;
+        }
+
+        .form-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .save-btn {
+            background: linear-gradient(45deg, #0066cc, #003366);
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            transition: background 0.3s;
+        }
+
+            .save-btn:hover {
+                background: linear-gradient(45deg, #0052a3, #002947);
+            }
+
+        label.required::after {
+            content: "*";
+            color: red;
+            margin-left: 2px;
+        }
+
+        .select2-container--default .select2-selection--single {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+
+        .select2-container .select2-selection--single {
+            box-sizing: border-box;
+            cursor: pointer;
+            display: block;
+            height: 37px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #495057;
+            line-height: 34px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 26px;
+            position: absolute;
+            top: 6px;
+            right: 1px;
+            width: 20px;
+        }
+
+        .select2Dropdown {
+            display: block;
+            width: 100%;
+            height: calc(1.5em + .75rem + 2px);
+            padding: .375rem .75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
+            transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <a class="navbar-brand" href="#" style="padding-top: 0px;padding-bottom: 0px;">
+            <img src="/LoginRoot/NextonLogo.png" class="mr-2" alt="logo" style="height:40px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav navbar-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/Dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/Profile"><i class="fas fa-user"></i> Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/ChangePassword"><i class="fas fa-key"></i> Change Password</a>
+                </li>
+            </ul>
+            <div class="vendor-info ml-auto">
+                <span class="mr-3">Welcome, <strong>@Model?.Supplier?.Name</strong></span>
+                <a href="/VT/Supplier/Login" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Edit Profile Form -->
+    <div class="container form-container">
+        <h2 class="text-center mb-4">Edit Profile</h2>
+        <form method="post" action="/VT/Supplier/UpdateProfile">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="name" class="required">Supplier Name</label>
+                    <input type="text" class="form-control requiredInput" asp-for="Supplier.Name">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="description" class="required">Description</label>
+                    <input type="text" class="form-control requiredInput" asp-for="Supplier.Description">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="number" class="required">Contact Number</label>
+                    <input type="number" class="form-control requiredInput" asp-for="Supplier.Number">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="email" class="required">Email</label>
+                    <input type="email" class="form-control requiredInput" asp-for="Supplier.Email">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="psize" class="required">Panel Size</label>
+                    <input type="number" class="form-control requiredInput" asp-for="Supplier.Psize">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="country" class="required">Country</label>
+                    <select class="form-control requiredInput select2" asp-for="Supplier.Country">
+                        <option value="0">--Select Country--</option>
+                        @{
+                            if (Model != null && Model.Countries != null)
+                            {
+                                foreach (var item in Model.Countries)
+                                {
+                                    <option value="@item.Country">@item.Country</option>
+                                }
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="completes">Completes</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Completes">
+                    <p class="help-block" style="color: orange">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]</p>
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="terminate">Terminate</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Terminate">
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="overquota">Overquota</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Overquota">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="security">Security Term</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Security">
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="fraud">Fraud Error</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Fraud">
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="success">Success</label>
+                    <input type="url" class="form-control" asp-for="Supplier.Success">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="default">Default</label>
+                    <textarea asp-for="Supplier.Default" class="form-control"></textarea>
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="failure">Failure</label>
+                    <textarea asp-for="Supplier.Failure" class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-12">
+                    <label for="qualityTermination">Quality Termination</label>
+                    <textarea asp-for="Supplier.QualityTermination" class="form-control"></textarea>
+                </div>
+                <div class="form-group col-md-12">
+                    <label for="overQuota1">Over Quota</label>
+                    <textarea asp-for="Supplier.OverQuota1" class="form-control"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea asp-for="Supplier.Notes" class="form-control" placeholder="Enter Your Notes Here"></textarea>
+            </div>
+            <button type="submit" class="btn save-btn btn-block mt-4">Save Changes</button>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3">
+        <p class="text-muted">&copy; 2024 SkyDash Admin. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="~/customjs/validation.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(".select2").select2();
+        });
+
+
+
+        function AddSupplier() {
+
+            if (!isValidateForm("SupplierForm")) {
+                return false;
+            }
+
+
+
+            let supplierData = $("#SupplierForm");
+            var inputDTO = {};
+            inputDTO.Id = isNaN($(supplierData).find("[name='Supplier.Id']").val()) ? 0 : $.trim($(supplierData).find("[name='Supplier.Id']").val()) == "" ? 0 : $(supplierData).find("[name='Supplier.Id']").val();
+            inputDTO.Name = $(supplierData).find("[name='Supplier.Name']").val();
+            inputDTO.Description = $(supplierData).find("[name='Supplier.Description']").val();
+            inputDTO.Number = $(supplierData).find("[name='Supplier.Number']").val();
+            inputDTO.Email = $(supplierData).find("[name='Supplier.Email']").val();
+            inputDTO.Psize = $(supplierData).find("[name='Supplier.Psize']").val();
+            inputDTO.Country = $(supplierData).find("[name='Supplier.Country']").val();
+            inputDTO.Completes = $(supplierData).find("[name='Supplier.Completes']").val();
+            inputDTO.Terminate = $(supplierData).find("[name='Supplier.Terminate']").val();
+            inputDTO.Overquota = $(supplierData).find("[name='Supplier.Overquota']").val();
+            inputDTO.Security = $(supplierData).find("[name='Supplier.Security']").val();
+            inputDTO.Fraud = $(supplierData).find("[name='Supplier.Fraud']").val();
+            inputDTO.Success = $(supplierData).find("[name='Supplier.Success']").val();
+            inputDTO.Default = $(supplierData).find("[name='Supplier.Default']").val();
+            inputDTO.Failure = $(supplierData).find("[name='Supplier.Failure']").val();
+            inputDTO.QualityTermination = $(supplierData).find("[name='Supplier.QualityTermination']").val();
+            inputDTO.OverQuota1 = $(supplierData).find("[name='Supplier.OverQuota1']").val();
+            inputDTO.Notes = $(supplierData).find("[name='Supplier.Notes']").val();
+
+            BlockUI();
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/Supplier/ManageSupplier",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //Confirmation OK
+                    Swal.fire({ title: 'Success!', text: "Supplier Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                        if (result.isConfirmed) {
+                            if (inputDTO.Id > 0) {
+                                window.location.href = "/VT/Supplier/SupplierList";
+                            }
+                            else {
+                                window.location.href = "/VT/Supplier/SupplierCountryPanelSize/" + data.encId;
+                            }
+
+                        }
+                    });
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+                }
+            });
+        }
+    </script>
+
+
+
+
+
+</body>
+</html>

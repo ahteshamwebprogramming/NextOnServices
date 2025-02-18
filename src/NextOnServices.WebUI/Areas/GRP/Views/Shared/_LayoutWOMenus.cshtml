@@ -1,0 +1,453 @@
+﻿@using GRP
+@namespace GRP.WebUI.Views
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, GRP
+
+
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Global Research Panel</title>
+    <!-- plugins:css -->
+
+    <link rel="stylesheet" href="~/theme/vendors/feather/feather.css">
+    <link rel="stylesheet" href="~/theme/vendors/ti-icons/css/themify-icons.css">
+    <link rel="stylesheet" href="~/theme/vendors/css/vendor.bundle.base.css">
+    <!-- endinject -->
+    <!-- Plugin css for this page -->
+    <!-- End plugin css for this page -->
+    <!-- inject:css -->
+    <link rel="stylesheet" href="~/theme/css/vertical-layout-light/style.css">
+    <!-- endinject -->
+    @*<link rel="shortcut icon" href="~/theme/images/favicon.png" />*@
+    <style>
+        .page-body-wrapper.full-page-wrapper {
+            width: 100%;
+            min-height: auto !important;
+            padding-top: 0;
+        }
+
+        .main-panel {
+            min-height: calc(100vh - 260px) !important;
+            width: 100% !important;
+        }
+
+        .main-panel {
+            transition: width 0.25s ease, margin 0.25s ease;
+            width: calc(100% - 235px);
+            min-height: calc(100vh - 260px) !important;
+            display: -webkit-flex;
+            display: flex;
+            -webkit-flex-direction: column;
+            flex-direction: column;
+            padding-top: 60px !important;
+        }
+
+        .content-wrapper {
+            padding: 0 !important;
+        }
+
+        .border-1 {
+            border: #e7e7e7 solid 2px;
+        }
+
+        .flow_count {
+            font-size: 29px;
+            font-weight: 900;
+            margin-bottom: 10px;
+            display: block;
+            color: #504b8e;
+        }
+
+        .surverys_card span {
+            font-size: 29px;
+            font-weight: 900;
+            display: block;
+            color: #504b8e;
+            text-align: center;
+            background: #f5f7ff;
+            padding: 20px;
+            margin: -17px -17px 11px -17px;
+            border-radius: 19px 20px 0 0;
+        }
+
+        .surverys_card {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+            .surverys_card ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+                .surverys_card ul li {
+                    margin-bottom: 10px;
+                    font-size: 16px;
+                }
+
+                    .surverys_card ul li i {
+                        position: relative;
+                        top: 3px;
+                        color: #4B49AC
+                    }
+
+        .owl-theme .owl-nav {
+            display: block !important;
+        }
+
+        .mission-vision span {
+            font-size: 52px;
+            color: #4b49ac;
+        }
+
+        .card .card-title {
+            font-size: 22px;
+        }
+
+        .list {
+            margin: 0;
+            padding: : 0;
+            list-style: none;
+        }
+
+            .list li {
+                display: flex;
+                padding: 30px 0 30px 0;
+                border-bottom: #ccc solid 1px;
+                justify-content: start;
+                align-items: center;
+            }
+
+                .list li span {
+                    color: #4b49ac;
+                    font-weight: 700;
+                }
+
+                .list li img {
+                    width: 60px;
+                    margin-right: 30px;
+                }
+
+        .bg-dark {
+            background-color: #fff !important;
+            padding: 10px 0;
+        }
+
+        .page-body-wrapper {
+            padding: 0;
+        }
+
+        .brand {
+            width: 200px;
+        }
+
+        .mainSLider img {
+            border-radius: 10px;
+        }
+
+        .content_block img {
+            width: 28% !important;
+            display: inline-block !important;
+            margin-bottom: 20px;
+        }
+
+        .content_block p {
+            width: auto;
+            padding: 15px 21px;
+            font-size: 15px;
+            color: #949494;
+        }
+
+        .content_block {
+            background: #fff;
+            text-align: center;
+            padding: 28px;
+            border: #ebebeb solid 1px;
+            box-shadow: #cccccc94 0px 2px 8px;
+            border-radius: 20px;
+        }
+
+            .content_block h2 {
+                font-size: 1.4em;
+                color: #000;
+            }
+
+        .arrow {
+            width: auto !important
+        }
+
+        .content_block {
+            margin-top: 20px;
+        }
+
+        .global_text {
+            background: #FFF5F2;
+            padding: 20px;
+            border-radius: 27px;
+            padding: 28px;
+            box-shadow: #fabaa73b 0px 2px 8px;
+            border: #f6d7ce solid 1px;
+        }
+
+        .bottom_links li {
+            display: inline-block;
+            padding: 0 10px;
+        }
+
+        .bottom_links {
+            display: block;
+            margin: 5px 0;
+        }
+
+            .bottom_links a {
+                color: #666 !important;
+                font-size: 12px;
+                text-shadow: 1px 1px #97e083
+            }
+
+        .top_links a {
+            color: #666;
+            font-size: 12px;
+            text-shadow: 1px 1px #97e083
+        }
+
+        .btn-custom {
+            color: #fff !important;
+            background-color: #4B49AC;
+            border-color: #4B49AC;
+            border-radius: 6px;
+            padding: 4px 15px 4px 15px;
+            margin-left: 10px;
+            text-shadow: 0px 0px #97e083 !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    @*<nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
+    <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
+    <a class="navbar-brand brand-logo mr-5" href="index.html">
+    <img src="/grp/Images/img/logo.jpg" class="mr-2" alt="logo" />
+    </a>
+    </div>
+    <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
+
+    <ul class="navbar-nav mr-lg-2">
+    </ul>
+    <ul class="navbar-nav navbar-nav-right nav">
+    <li class="nav-item dropdown">
+    <a class="nav-link" href="/GRP/Home/Index">
+    Home
+    </a>
+    </li>
+    <li class="nav-item">
+    <a class="nav-link " href="/GRP/Home/AboutUs">
+    About Us
+    </a>
+    </li>
+    <li class="nav-item nav-profile dropdown">
+    <a class="nav-link" href="/GRP/Home/HowItWorks">
+    How it works
+    </a>
+    </li>
+    <li class="nav-item nav-profile dropdown">
+    <a class="nav-link" href="/GRP/Home/ContactUs">
+    Contact Us
+    </a>
+    </li>
+    <li class="nav-item nav-profile dropdown">
+    <a class="nav-link" href="/GRP/Account/Login">
+    Sign In
+    </a>
+    </li>
+    <li class="nav-item nav-profile dropdown">
+    <a class="nav-link" href="/GRP/Account/Register">
+    Sign Up
+    </a>
+    </li>
+    </ul>
+    <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button" data-toggle="offcanvas">
+    <span class="icon-menu"></span>
+    </button>
+    </div>
+    </nav>*@
+    <style>
+        .top_header {
+            background: #1c7c01;
+            padding: 3px 0;
+        }
+
+            .top_header .top_links a {
+                background: #fff !important;
+                color: #1c7c01 !important;
+                line-height: 20px;
+            }
+
+            .top_header .goog-te-gadget-simple {
+                padding: 4px;
+                border-radius: 6px;
+            }
+
+        .navbar-nav .dropdown-menu {
+            position: absolute !important;
+            top: 45px !important;
+        }
+
+        .page-body-wrapper {
+            padding-top: 100px !important;
+        }
+
+        .top_header .navbar-nav .nav-link {
+            color: #fff !important
+        }
+
+        top_links a {
+            color: #666;
+            font-size: 12px;
+            text-shadow: 1px 1px #97e083
+        }
+
+        .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right {
+            align-items: center !important;
+        }
+    </style>
+    <div class="top_header">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between ">
+                <aside class="toplang">
+                    <div id="google_translate_element"></div>
+                    <script type="text/javascript">
+                        function googleTranslateElementInit() {
+                            new google.translate.TranslateElement({ pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE }, 'google_translate_element');
+                        }
+                    </script>
+                    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+                </aside>
+                @await Component.InvokeAsync("GRP/UserName")
+                @* <ul class="navbar-nav navbar-nav-right">
+                <li class="nav-item nav-profile dropdown">
+                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
+                Welcome&nbsp;
+                @await Component.InvokeAsync("GRP/UserName")
+                </a>
+                <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                <a class="dropdown-item" style="display:none !important">
+                <i class="ti-settings text-primary"></i>
+                Settings
+                </a>
+                <a class="dropdown-item" href="/GRP/Account/Login">
+                <i class="ti-power-off text-primary"></i>
+                Logout
+                </a>
+                </div>
+                </li>
+                </ul> *@
+
+                @* <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 top_links">
+                <li><a href="/GRP/Account/Login" class="nav-link btn-custom">Sign In</a></li>
+                <li><a href="/GRP/Account/Register" class="nav-link btn-custom">Sign Up</a></li>
+                </ul> *@
+            </div>
+        </div>
+    </div>
+    <header class="bg-dark text-white">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between ">
+                <a href="/GRP/Home/Index" class="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none">
+                    <img src="/grp/Images/img/logo.jpg" class="mr-2 brand" alt="logo">
+                </a>
+
+                <ul class="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0 top_links">
+                    <li><a href="/GRP/Home/Index" class="nav-link px-2 text-secondary">Home</a></li>
+                    <li><a href="/GRP/Home/AboutUs" class="nav-link px-2 text-secondary">About Us</a></li>
+                    <li><a href="/GRP/Home/HowItWorks" class="nav-link px-2 text-secondary">How it works</a></li>
+                    <li><a href="/GRP/Home/ContactUs" class="nav-link px-2 text-secondary">Contact Us</a></li>
+
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-scroller">
+        <div class="container-fluid page-body-wrapper full-page-wrapper">
+            <div class="content-wrapper d-flex align-items-center auth px-0">
+                <div class="row w-100 mx-0">
+
+                    @RenderBody()
+
+                </div>
+            </div>
+            <!-- content-wrapper ends -->
+        </div>
+        <!-- page-body-wrapper ends -->
+    </div>
+    <div class="container">
+        <footer class="row">
+            <div class="col-md-12 mb-3 text-center">
+                <a href="/GRP/Home/Index" class="footer_logo">
+                    <img src="/grp/Images/img/logo.jpg" style="mix-blend-mode:darken;width:300px;" class="mr-2" alt="logo">
+                </a>
+                <ul class="nav bottom_links">
+                    <li class="nav-item mb-2"><a href="/GRP/Home/Index" class="nav-link p-0 ">Home</a></li>
+                    <li class="nav-item mb-2"><a href="/GRP/Home/AboutUs" class="nav-link p-0 ">About Us</a></li>
+                    <li class="nav-item mb-2"><a href="/GRP/Home/HowItWorks" class="nav-link p-0 ">How It Works</a></li>
+                    <li class="nav-item mb-2"><a href="/GRP/Home/ContactUs" class="nav-link p-0 ">Contact Us</a></li>
+
+                </ul>
+                <p class="text-muted">© Copyright 2024 Global Research Panels. All rights reserved.| <a href="/GRP/Legal/PrivacyPolicy" style="color: #423b3b">Privacy Policy</a> | <a href="/GRP/Legal/TermsOfServices" style="color: #423b3b">Terms & Condition</a></p>
+            </div>
+
+        </footer>
+    </div>
+    @* <footer class="footer">
+    <div class="d-sm-flex justify-content-center justify-content-sm-between">
+    <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">© Copyright 2024 Global Research Panels. All rights reserved.| <a href="/GRP/Legal/PrivacyPolicy" style="color: #423b3b">Privacy Policy</a> |  <a href="/GRP/Legal/TermsOfServices" style="color: #423b3b">Terms & Condition</a></span>
+    <div class="">
+    <h6>Quick Links</h6>
+    <ul>
+    <li> <a href="/GRP/Home/Index">Home</a></li>
+    <li><a href="/GRP/Home/AboutUs">About Us</a></li>
+    <li><a href="/GRP/Home/HowItWorks">How It Works</a></li>
+    <li><a href="/GRP/Home/ContactUs">Contact Us</a></li>
+    </ul>
+    </div>
+    </div>
+
+    </footer>*@
+    <!-- container-scroller -->
+    <!-- plugins:js -->
+    <script src="~/theme/vendors/js/vendor.bundle.base.js"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="~/theme/js/off-canvas.js"></script>
+    <script src="~/theme/js/hoverable-collapse.js"></script>
+    <script src="~/theme/js/template.js"></script>
+    <script src="~/theme/js/settings.js"></script>
+    <script src="~/theme/js/todolist.js"></script>
+    <!-- endinject -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="~/customjs/common.js"></script>
+    <!-- End custom js for this page-->
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>
+

@@ -1,0 +1,316 @@
+﻿@model GRP.Infrastructure.ViewModels.Dashboard.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.carousel.min.css" />
+
+<style>
+    .border-1 {
+        border: #e7e7e7 solid 2px;
+    }
+
+    .flow_count {
+        font-size: 29px;
+        font-weight: 900;
+        margin-bottom: 10px;
+        display: block;
+        color: #504b8e;
+    }
+
+    .surverys_card span {
+        font-size: 29px;
+        font-weight: 900;
+        display: block;
+        color: #504b8e;
+        text-align: center;
+        background: #f5f7ff;
+        padding: 20px;
+        margin: -17px -17px 11px -17px;
+        border-radius: 19px 20px 0 0;
+    }
+
+    .surverys_card {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+        .surverys_card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .surverys_card ul li {
+                margin-bottom: 10px;
+                font-size: 16px;
+            }
+
+                .surverys_card ul li i {
+                    position: relative;
+                    top: 3px;
+                    color: #4B49AC
+                }
+
+    .owl-theme .owl-nav {
+        display: block !important;
+    }
+</style>
+<div class="row ">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="row justify-content-between justify-content-center">
+                    <div class="col-md-3 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="font-weight-bold">Welcome @await Component.InvokeAsync("GRP/UserName")</h3>
+                                <h6 class="font-weight-normal mb-0">Your Account Sumamry:</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card border-1">
+                            <div class="card-body">
+                                <h4 class="card-title">Profile Status</h4>
+                                <span class="flow_count">@(Model == null ? 0 : Model.ProfileCompletePercent == null ? 0 : Model.ProfileCompletePercent)%</span>
+                                <a href="/GRP/Home/AnswerSurveyCW" class="button_clickable btn btn-outline-primary btn-fw">Complete My Profile</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card border-1">
+                            <div class="card-body">
+                                <h4 class="card-title">Points Earned</h4>
+                                <span class="flow_count">@(Model == null ? 0 : Model.PointsTransaction == null ? 0 : Model.PointsTransaction.BalancePoints) Points</span>
+                                <a href="/GRP/Points/PointsEarned" class="button_clickable btn btn-outline-primary btn-fw">View History</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 stretch-card">
+                        <div class="card border-1">
+                            <div class="card-body">
+                                <h4 class="card-title">Points Pending</h4>
+                                <span class="flow_count">@(Model != null ? Model.PointsPending : 0) Points</span>
+                                <a href="/GRP/Points/PointsPending" class="button_clickable btn btn-outline-primary btn-fw">View History</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+
+<div id="divCurrentWeatherPartialView">
+
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card tale-bg">
+                <div class="card-people mt-auto">
+                    <img src="~/theme/images/dashboard/people.svg" height="250" alt="people">
+                    <div class="weather-info">
+                        <div class="d-flex">
+                            <div>
+                                <h2 class="mb-0 font-weight-normal"><img style="width:50px;" name="icon" src="" class=""/><span name="temp"></span><sup></sup></h2>
+                            </div>
+                            <div class="ml-2">
+                                <h4 class="location font-weight-normal" name="City"></h4>
+                                <h6 class="font-weight-normal" name="Country"></h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="owl-carousel surverys owl-theme">
+            @{
+                if (Model != null && Model.surveys != null)
+                {
+                    foreach (var item in Model.surveys)
+                    {
+                        <div class="item">
+                            <!-- card start -->
+                            <div class="card surverys_card">
+                                @*<div class="btn btn-dark btn-lg btn-block">High Reward</div>*@
+                                <span>@*<i class="mdi mdi-currency-inr"></i>*@ Point : @item.SurveyPoint</span>
+                                <ul>
+                                    <li><i class="mdi mdi-message"></i> @item.SurveyName</li>
+                                    <li><i class="mdi mdi-clock"></i> @item.Duration mins</li>
+                                </ul>
+                                @*<a href="https://@item.SurveyUrl" class="btn btn-primary btn-fw text-center">Start Interview</a>*@
+                                <a href="javascript:void(0)" onclick="RedirectToSurveyLink(@item.SurveyId,'@item.SurveyUrl')" class="btn btn-primary btn-fw text-center">Start Interview</a>
+                            </div>
+                            <!-- card ends -->
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+
+            //ViewCurrentWeather();
+            navigator.geolocation.getCurrentPosition(successCallback);
+
+        });
+
+
+        $('.owl-carousel').owlCarousel({
+            loop: false,
+            margin: 10,
+            nav: true,
+            responsive: {
+                0: {
+                    items: 1
+                },
+                600: {
+                    items: 4
+                },
+                1000: {
+                    items: 4
+                }
+            }
+        })
+
+        function RedirectToSurveyLink(SurveyId, SurveyLink) {
+            var inputDTO = {
+                SurveyId: SurveyId
+            };
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/Survey/SurveyRedirectDetails",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    $successalert("Success!", "Saved succesfully.");
+                    let number = data.respondentId;
+
+                    //let link = "https://nexton.us/VT/MaskingUrl.aspx?SID=VPJM6J3Y&ID=XXXXXXXXXX";
+                    let link = SurveyLink;
+                    urlval = link.substring(link.lastIndexOf('=') + 1);
+                    link = link.replace(urlval, number);
+                    var win = window.open(link, '_blank');
+                    window.location.href = "/GRP/Home/Dashboard";
+                    //    //let link = "https://nexton.us/VT/MaskingUrl.aspx?SID=I6FE0JMU&ID=";
+                    //    let link = "http://localhost:6753/VT/MaskingUrl.aspx?SID=I6FE0JMU&ID=XXXXXXXXXX";
+                    //    //5fee3618-ca64-3e4c-2ef5-2cf1f2b75dbc
+                    //    var number = Math.floor(Math.random() * 200000000);
+                    //    number = 'test_' + number;
+                    //    urlval = link.substring(link.lastIndexOf('=') + 1);
+                    //    link = link.replace(urlval, number);
+                    //    // alert(link);
+                    //    var win = window.open(link, '_blank');
+                    //    if (win) {
+                    //        //Browser has allowed it to be opened
+                    //        win.focus();
+                    //        //loadSupplierDetails(id);
+                    //        //getfractionComplete();
+                    //    } else {
+                    //        //Browser has blocked it
+                    //        alert('Please allow popups for this website');
+                    //    }
+                    //    //window.open(SurveyURL, "_blank");
+                    //}
+
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!');
+                    UnblockUI();
+                }
+            });
+        }
+
+        function ViewCurrentWeather() {
+
+            navigator.geolocation.getCurrentPosition(successCallback);
+
+            //BlockUI();
+            //$.ajax({
+            //    type: "POST",
+            //    contentType: "application/json; charset=utf-8",
+            //    url: '/GRP/ProfileInfoCategory/ListPartialView',
+            //    //data: JSON.stringify({ ProjectId: project, ReportType: reportType }),
+            //    cache: false,
+            //    dataType: "html",
+            //    success: function (data, textStatus, jqXHR) {
+            //        $("#PartialViews").html(data);
+            //        $("table").DataTable({
+            //            'order': []
+            //        });
+            //        //UnblockUI();
+            //    },
+            //    error: function (result) {
+            //        $erroralert("Error!", error.responseText);
+            //        UnblockUI();
+
+            //    }
+            //});
+        }
+        var successCallback = function (position) {
+            var x = position.coords.latitude;
+            var y = position.coords.longitude;
+            console.log("in successcall back x:" + x + "  y:" + y);
+            getCityName(x, y);
+        };
+        function getCityName(lat, lon) {
+            var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon;
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function (response) {
+                    var city = response.address.city;
+                    console.log("City: " + city);
+                    // You can use the city variable for further processing
+                    var appId = "cc338e6480566a0f6c5ffaa020bafcfc";
+                    var url1 = "http://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=metric&cnt=1&APPID=" + appId;
+                    $.ajax({
+                        url: url1,
+                        type: 'GET',
+                        success: function (response1) {
+                            var weather = response1;
+                            let s = $(".weather-info");
+                            //// http://openweathermap.org/img/w/" + iconcode + ".png
+                            s.find("[name='icon']").attr("src", "http://openweathermap.org/img/w/" + weather.weather[0].icon + ".png");
+                            s.find("[name='temp']").text(weather.main.temp);
+                            s.find("[name='City']").text(weather.name);
+                            s.find("[name='Country']").text(response.address.country);
+
+
+
+                        },
+                        error: function (xhr1, status1, error1) {
+                            console.error("Error:", error);
+                        }
+                    });
+
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error);
+                }
+            });
+        }
+
+    </script>
+}

@@ -1,0 +1,36 @@
+﻿.spinner-border-lg {
+    width: 7rem !important;
+    height: 7rem !important;
+    border-width: 0.8em !important;
+}
+.text-primary, .list-wrapper .completed .remove {
+    color: #4B49AC !important;
+}
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: .75s linear infinite spinner-border;
+}
+.visually-hidden, .visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 8px !important;
+    height: 8px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+/*a, div, h1, h2, h3, h4, h5, p, span {
+    text-shadow: none;
+}*/
+.blockUI.blockMsg.blockPage {
+    border: 0px !important;
+    background-color: initial !important;
+}

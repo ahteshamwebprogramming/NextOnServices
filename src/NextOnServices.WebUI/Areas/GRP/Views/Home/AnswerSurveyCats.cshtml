@@ -1,0 +1,33 @@
+﻿@model IEnumerable<GRP.Infrastructure.Models.Masters.ProfileInfoCategoryDTO>
+@{
+    ViewData["Title"] = "AnswerSurveyCats";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card-body">
+                        <ul>
+
+                            @{
+                                if (Model != null)
+                                {
+                                    foreach (var item in Model)
+                                    {
+                                        <li catid="@item.ProfileInfoCategoryId"><a href="/GRP/ProfileSurvey/AnswerSurvey?enc=@item.EncryptedId"><h4 class="card-title">@item.CategoryName</h4></a></li>
+                                    }
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+

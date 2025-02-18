@@ -1,0 +1,259 @@
+﻿@model NextOnServices.Infrastructure.Models.Supplier.SupplierDTO
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplier Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Additional custom styling */
+        .navbar-custom {
+            background-color: #2C3E50;
+        }
+
+            .navbar-custom .navbar-brand, .navbar-custom .nav-link, .navbar-custom .vendor-info {
+                color: #fff;
+            }
+
+        .navbar-center {
+            margin: auto;
+        }
+
+        .dashboard-container {
+            margin-top: 20px;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .vendor-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-height {
+            height: 140px;
+        }
+
+
+        .btn-edit-profile {
+            background: linear-gradient(145deg, #005f99, #007bb5); /* Gradient from deep blue to lighter blue */
+            color: #fff;
+            padding: 10px 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Add a slight shadow for a glossy effect */
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+            .btn-edit-profile:hover {
+                background: linear-gradient(145deg, #007bb5, #005f99); /* Reverse gradient on hover */
+                transform: scale(1.05); /* Slightly enlarge on hover */
+                box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3); /* Enhance shadow on hover */
+            }
+
+            .btn-edit-profile i {
+                margin-right: 5px;
+            }
+
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+        <a class="navbar-brand" href="#" style="padding-top: 0px;padding-bottom: 0px;">
+            <img src="/LoginRoot/NextonLogo.png" class="mr-2" alt="logo" style="height:40px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav navbar-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/Dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/Profile"><i class="fas fa-user"></i> Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/VT/Supplier/ChangePassword"><i class="fas fa-key"></i> Change Password</a>
+                </li>
+            </ul>
+            <div class="vendor-info ml-auto">
+                <span class="mr-3">Welcome, <strong>@Model.Name</strong></span>
+                <a href="/VT/Supplier/Login" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Content -->
+    <div class="container dashboard-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-center">Supplier Details</h2>
+            <a href="/VT/Supplier/EditProfile" class="btn btn-edit-profile"><i class="fas fa-edit"></i> Edit Profile</a>
+
+        </div>
+        @* <h2 class="text-center mb-4">Supplier Details</h2> *@
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-user-tie"></i> Supplier Name</h5>
+                        <p class="card-text">@Model.Name</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-align-left"></i> Supplier Description</h5>
+                        <p class="card-text">@Model.Description</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-phone-alt"></i> Contact Number</h5>
+                        <p class="card-text">@Model.Number</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-envelope"></i> Email</h5>
+                        <p class="card-text">@Model.Email</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-users"></i> Panel Size</h5>
+                        <p class="card-text">@Model.Psize</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-flag"></i> Country</h5>
+                        <p class="card-text">@Model.Country</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-check"></i> Completes</h5>
+                        <p class="card-text">@Model.Completes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-times"></i> Terminate</h5>
+                        <p class="card-text">@Model.Terminate</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-exclamation-triangle"></i> Overquota</h5>
+                        <p class="card-text">@Model.Overquota</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-shield-alt"></i> Security Term</h5>
+                        <p class="card-text">@Model.Security</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-exclamation-circle"></i> Fraud Error</h5>
+                        <p class="card-text">@Model.Fraud</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-check-circle"></i> Success</h5>
+                        <p class="card-text">@Model.Success</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-star"></i> Default</h5>
+                        <p class="card-text">@Model.Default</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-times-circle"></i> Failure</h5>
+                        <p class="card-text">@Model.Failure</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-ban"></i> Quality Termination</h5>
+                        <p class="card-text">@Model.QualityTermination</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-tachometer-alt"></i> Over Quota</h5>
+                        <p class="card-text">@Model.OverQuota1</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12 mb-4">
+                <div class="card card-height">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-sticky-note"></i> Notes</h5>
+                        <p class="card-text">@Model.Notes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center mt-5 mb-3">
+        <p class="text-muted">&copy; 2024 SkyDash Admin. All rights reserved.</p>
+    </footer>
+
+    <!-- Bootstrap and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

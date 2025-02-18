@@ -1,0 +1,36 @@
+﻿@model List<GRP.Infrastructure.ViewModels.Survey.PendingPointListViewModel>
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Survey Id</th>
+                    <th>Survey Name</th>
+                    <th>User Name</th>
+                    <th>Points</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    if (Model != null)
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.SurveyIdHost</td>
+                                <td>@item.SurveyName</td>
+                                <td>@item.UserName</td>
+                                <td>@item.Points</td>
+                                <td>
+                                    <a style="color:green" href="javascript:void(0)" onclick="ApproveConfirm(@item.PointsHistoryId)">Approve</a>&nbsp;
+                                    <a style="color:red" href="javascript:void(0)" onclick="RejectConfirm(@item.PointsHistoryId)">Reject</a>&nbsp;
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,9 @@
+﻿.error-mandatory {
+    color: red;
+}
+
+label.required::after {
+    content: "*";
+    color: red;
+    margin-left: 2px;
+}

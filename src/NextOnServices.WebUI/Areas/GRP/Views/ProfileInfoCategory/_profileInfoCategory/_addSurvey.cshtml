@@ -1,0 +1,116 @@
+﻿@model GRP.Infrastructure.ViewModels.Profile.ProfileInfoSurveyViewModel
+
+
+<div class="row">
+    <div class="offset-2 col-md-8 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Add Survey Question</h4>
+                <p class="card-description">
+                    Please fill the in the details below
+                </p>
+                <form class="forms-sample" id="AddSurveyform">
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            <label for="ClientId">Category</label>
+                            <select class="form-control form-control-sm" asp-for="QuestionLabel.ProfileInfoCategoryId">
+                                <option value="0">--Select--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.Categories != null)
+                                        {
+                                            foreach (var item in Model.Categories)
+                                            {
+                                                if (Model.ProfileInfoCategoryId == item.ProfileInfoCategoryId)
+                                                {
+                                                    <option selected value="@item.ProfileInfoCategoryId">@item.CategoryName</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@item.ProfileInfoCategoryId">@item.CategoryName</option>
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="Pname">S No</label>
+                            <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.SNo">
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label for="Pname">Question Code</label>
+                            <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionCode">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="Pname">Question Name</label>
+                            <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionName">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="ClientId">Question Type</label>
+                            <select class="form-control form-control-sm" asp-for="QuestionLabel.QuestionType">
+                                <option value="0">--Select--</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.QuestionTypeList != null)
+                                        {
+                                            foreach (var item in Model.QuestionTypeList)
+                                            {
+                                                <option value="@item.QuestionTypeMasterId">@item.QuestionType</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="Descriptions">Question Label</label>
+                            <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionLabel">
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="Descriptions">Cultural Notes</label>
+                            <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.CulturalNotes">
+                        </div>
+                        
+                        <div class="form-group col-md-12" name="divQuestionTypeSelectFrameworkDTO">
+                            <label for="">Options</label>
+                            <table class="table table-bordered table-striped" name="tblQuestionTypeSelectFrameworkDTO">
+                                <thead>
+                                    <tr>
+                                        <th>Value</th>
+                                        <th>Label</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @*<tr>
+                                    <td name="value"><a href='javascript:void(0)' class='edit_text'></a></td>
+                                    <td name="label"><a href='javascript:void(0)' class='edit_text'></a></td>
+                                    <td><a href="javascript:void(0)" style="color:red;" onclick="deleteRow(this)">Delete</a></td>
+                                    </tr>*@
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="2"></td>
+                                        <td colspan="1"><a href="javascript:void(0)" style="color:green;" onclick="addRow(this)">Add</a></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success mr-2 btn-sm" onclick="SaveSurvey()">Submit</button>
+                    <button class="btn btn-primary btn-sm" type="reset" onclick="AddPartialView()">Reset</button>
+                    <button class="btn btn-light btn-sm">Cancel</button>
+                    <a class="btn btn-light btn-sm" href="/GRP/ProfileInfoCategory/ViewSurvey?enc=encProfileInfoCategoryId" name="ViewAllSurveys">View All Surveys</a>
+                    <input type="hidden" name="hfProfileInfoCategoryId" />
+                    <input type="hidden" name="encProfileInfoCategoryId" />
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+

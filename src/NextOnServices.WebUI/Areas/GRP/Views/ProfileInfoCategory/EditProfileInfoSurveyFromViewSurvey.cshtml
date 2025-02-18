@@ -1,0 +1,267 @@
+﻿@{
+    ViewData["Title"] = "EditProfileInfoSurveyFromViewSurvey";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/css/bootstrap-editable.css" rel="stylesheet">
+@model GRP.Infrastructure.ViewModels.Profile.ProfileInfoSurveyViewModel
+
+<style>
+    .select2-container--default .select2-selection--single {
+        padding: 0.5rem 0.81rem;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 2.575rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
+    }
+</style>
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="offset-2 col-md-8 grid-margin stretch-card">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="card-title">Add Survey Question</h4>
+                                        <p class="card-description">
+                                            Please fill the in the details below
+                                        </p>
+                                        <form class="forms-sample" id="AddSurveyform">
+                                            <div class="row">
+                                                <div class="form-group col-md-12">
+                                                    <label for="ClientId">Category</label>
+                                                    <select class="form-control form-control-sm" asp-for="QuestionLabel.ProfileInfoCategoryId">
+                                                        <option value="0">--Select--</option>
+                                                        @{
+                                                            if (Model != null)
+                                                            {
+                                                                if (Model.Categories != null)
+                                                                {
+                                                                    foreach (var item in Model.Categories)
+                                                                    {
+                                                                        if (Model.ProfileInfoCategoryId == item.ProfileInfoCategoryId)
+                                                                        {
+                                                                            <option selected value="@item.ProfileInfoCategoryId">@item.CategoryName</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@item.ProfileInfoCategoryId">@item.CategoryName</option>
+                                                                        }                                                                        
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="Pname">S No</label>
+                                                    <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.SNo">
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="Pname">Question Code</label>
+                                                    <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionCode">
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <label for="Pname">Question Name</label>
+                                                    <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionName">
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <label for="ClientId">Question Type</label>
+                                                    <select class="form-control form-control-sm" asp-for="QuestionLabel.QuestionType">
+                                                        <option value="0">--Select--</option>
+                                                        @{
+                                                            if (Model != null)
+                                                            {
+                                                                if (Model.QuestionTypeList != null)
+                                                                {
+                                                                    foreach (var item in Model.QuestionTypeList)
+                                                                    {
+                                                                        <option value="@item.QuestionTypeMasterId">@item.QuestionType</option>
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label for="Descriptions">Question Label</label>
+                                                    <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.QuestionLabel">
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label for="Descriptions">Cultural Notes</label>
+                                                    <input type="text" class="form-control form-control-sm" asp-for="QuestionLabel.CulturalNotes">
+                                                </div>
+                                                <div class="form-group col-md-12" name="divQuestionTypeSelectFrameworkDTO">
+                                                    <label for="">Options</label>
+                                                    <table class="table table-bordered table-striped" name="tblQuestionTypeSelectFrameworkDTO">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Value</th>
+                                                                <th>Label</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @{
+                                                                if (Model != null)
+                                                                {
+                                                                    if (Model.AttributesSelect != null)
+                                                                    {
+                                                                        foreach (var item in Model.AttributesSelect)
+                                                                        {
+                                                                            <tr>
+                                                                                <td name="value"><a href='javascript:void(0)' class='edit_text'>@item.Value</a></td>
+                                                                                <td name="label"><a href='javascript:void(0)' class='edit_text'>@item.Label</a></td>
+                                                                                <td><a href="javascript:void(0)" style="color:red;" onclick="deleteRow(this)">Delete</a></td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                            @*<tr>
+                                                            <td name="value"><a href='javascript:void(0)' class='edit_text'></a></td>
+                                                            <td name="label"><a href='javascript:void(0)' class='edit_text'></a></td>
+                                                            <td><a href="javascript:void(0)" style="color:red;" onclick="deleteRow(this)">Delete</a></td>
+                                                            </tr>*@
+                                                        </tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <td colspan="2"></td>
+                                                                <td colspan="1"><a href="javascript:void(0)" style="color:green;" onclick="addRow(this)">Add</a></td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-success mr-2 btn-sm" onclick="SaveSurvey()">Submit</button>
+                                            @*<button class="btn btn-primary btn-sm" type="reset" onclick="AddPartialView()">Reset</button>*@
+                                            <button class="btn btn-light btn-sm" onclick="javascript:history.back();">Cancel</button>
+                                            <a class="btn btn-light btn-sm" href="/GRP/ProfileInfoCategory/ViewSurvey?enc=@Model.EncryptedProfileInfoCategoryId" name="ViewAllSurveys">View All Surveys</a>
+                                            <input type="hidden" name="ProfileInfoCategoryId" asp-for="@Model.ProfileInfoCategoryId" />
+                                            <input type="hidden" name="encProfileInfoCategoryId" asp-for="@Model.EncryptedProfileInfoCategoryId" />
+                                            <input type="hidden" name="ProfileInfoSurveyId" asp-for="@Model.QuestionLabel.ProfileInfoSurveyId" />
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/x-editable/1.4.4/bootstrap-editable/js/bootstrap-editable.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("select").select2();
+            intiEdit();
+            QuestionTypeInit();
+            $("#AddSurveyform").find("[name='QuestionLabel.QuestionType']").change();
+        });
+        function addRow(currObj) {
+            let tr = $(currObj).closest("table").find("tbody").find("tr");
+            let indx = tr.length + 1;
+            $(currObj).closest("table").find("tbody").append("<tr><td name='value'><a href='javascript:void(0)' class='edit_text'>" + indx + "</a></td><td name='label'><a href='javascript:void(0)' class='edit_text'></a></td><td><a href='javascript:void(0)' style='color:red;' onclick='deleteRow(this)'>Delete</a></td></tr>");
+
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'text',
+                success: function (k, v) {
+                    console.log(v);
+                }
+            });
+
+            $(currObj).closest("table").find("tfoot").find("a").focus();
+        }
+        function intiEdit() {
+            $.fn.editable.defaults.mode = 'inline';
+            $('.edit_text').editable({
+                type: 'text',
+                success: function (k, v) {
+                    console.log(v);
+                    // var href = $(this).attr("href");
+                    // $('.name-list '+href).html(v);
+                }
+            });
+        }
+        function deleteRow(currObj) {
+            $(currObj).closest("tr").remove();
+        }
+        function SaveSurvey() {
+            var QuestionLabel = getQuestionLabelData();
+            var AttributesSelect = getAttributesSelectData();
+            var inputDTO = {
+                QuestionLabel: QuestionLabel,
+                AttributesSelect: AttributesSelect
+            };
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/ProfileInfoCategory/SaveSurvey",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    UnblockUI();
+                    //$(currDiv).parent().parent().parent().remove();
+                    $successalert("Success!", "Saved succesfully.");
+                    window.location.href = "/GRP/ProfileInfoCategory/ViewSurvey?enc=" + $("[name='encProfileInfoCategoryId']").val();
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!'); UnblockUI();
+                    UnblockUI();
+                }
+            });
+        }
+        function getQuestionLabelData() {
+            var ProfileInfoSurveyDTO = {};
+            ProfileInfoSurveyDTO.ProfileInfoCategoryId = $("[name='QuestionLabel.ProfileInfoCategoryId']").val();
+            ProfileInfoSurveyDTO.SNo = $("[name='QuestionLabel.SNo']").val();
+            ProfileInfoSurveyDTO.QuestionCode = $("[name='QuestionLabel.QuestionCode']").val();
+            ProfileInfoSurveyDTO.QuestionName = $("[name='QuestionLabel.QuestionName']").val();
+            ProfileInfoSurveyDTO.CulturalNotes = $("[name='QuestionLabel.CulturalNotes']").val();
+            ProfileInfoSurveyDTO.ProfileInfoSurveyId = ($("[name='ProfileInfoSurveyId']").val() != null && $.trim($("[name='ProfileInfoSurveyId']").val()) != "") ? $("[name='ProfileInfoSurveyId']").val() : 0;
+            ProfileInfoSurveyDTO.QuestionLabel = $("[name='QuestionLabel.QuestionLabel']").val();
+            ProfileInfoSurveyDTO.QuestionType = $("[name='QuestionLabel.QuestionType']").val();
+            return ProfileInfoSurveyDTO;
+        }
+        function getAttributesSelectData() {
+            let AttributesSelect = [];
+
+            $("[name='tblQuestionTypeSelectFrameworkDTO']").find("tbody").find("tr").each((i, v) => {
+                let QuestionTypeSelectFrameworkDTO = {};
+                QuestionTypeSelectFrameworkDTO.Value = $(v).find("[name='value']").text();
+                QuestionTypeSelectFrameworkDTO.Label = $(v).find("[name='label']").text();
+                AttributesSelect.push(QuestionTypeSelectFrameworkDTO);
+            });
+            return AttributesSelect;
+        }
+        function QuestionTypeInit() {
+            $("#AddSurveyform").find("[name='QuestionLabel.QuestionType']").change(function () {
+                if ($(this).val() == 0) {
+                    $("#AddSurveyform").find("[name='divQuestionTypeSelectFrameworkDTO']").hide();
+                }
+                else if ($(this).val() == 1) {
+                    $("#AddSurveyform").find("[name='divQuestionTypeSelectFrameworkDTO']").show();
+                }
+                else if ($(this).val() == 2) {
+                    $("#AddSurveyform").find("[name='divQuestionTypeSelectFrameworkDTO']").show();
+                }
+                else if ($(this).val() == 3) {
+                    $("#AddSurveyform").find("[name='divQuestionTypeSelectFrameworkDTO']").hide();
+                }
+            });
+        }
+    </script>
+}

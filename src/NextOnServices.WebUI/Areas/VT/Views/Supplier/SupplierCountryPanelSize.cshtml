@@ -1,0 +1,28 @@
+﻿@model NextOnServices.Infrastructure.Models.Supplier.SupplierDTO
+@{
+    ViewData["Title"] = "SupplierCountryPanelSize";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<div id="PartialView_AddSupplierCountryPanelSize">
+    @* @Html.Partial("_supplierCountryPanelSize/_addSupplierCountryPanelSize") *@
+</div>
+<div id="PartialView_ListSupplierCountryPanelSize">
+    @* @Html.Partial("_supplierCountryPanelSize/_listSupplierCountryPanelSize") *@
+</div>
+
+<input type="hidden" asp-for="encId" />
+@section scripts {
+    <script src="~/customjs/Supplier/SupplierCountryPanelSize.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            AddSupplierCountryPanelSizePartialView();
+            ListSupplierCountryPanelSizePartialView();
+        });
+
+    </script>
+}
+
+
+
+

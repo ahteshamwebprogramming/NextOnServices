@@ -1,0 +1,55 @@
+﻿@model List<GRP.Infrastructure.Models.Masters.ProfileInfoCategoryDTO>
+<div class="row">
+    <div class="offset-md-2 col-md-8">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>Categories 
+                    @*<small style="color:#17a2b8">Below is the list of the categories</small>*@
+                    </h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a href="javascript:void(0)" onclick="AddPartialView()">Add Category</a></li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <div class="x_content">
+                <br />
+                <div class="row">
+                    <div class="col-md-12">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Categories</th>
+                                    <th>Surveys</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.Count > 0)
+                                        {
+                                            foreach (var item in Model)
+                                            {
+                                                <tr>
+                                                    <td>@item.CategoryName</td>
+                                                    <td><a href="javascript:void(0)" onclick="addSurvey(@item.ProfileInfoCategoryId,'@item.EncryptedId')">Add</a>&nbsp;&nbsp;<a href="javascript:void(0)" onclick="window.location.href='/GRP/ProfileInfoCategory/ViewSurvey?enc=@item.EncryptedId'">View</a></td>
+                                                    <td style="white-space:nowrap">
+                                                        @{
+                                                            <i class="fa fa-edit hvr-grow" data-toggle="tooltip" data-placement="left" title="Edit" onclick="edit(@item.ProfileInfoCategoryId)"></i>
+                                                            <i style="color:red" class="fa fa-trash  hvr-grow  ml-2" data-toggle="tooltip" data-placement="left" title="Delete" onclick="Delete(@item.ProfileInfoCategoryId)"></i>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

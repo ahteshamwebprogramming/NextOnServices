@@ -1,0 +1,88 @@
+﻿@model GRP.Infrastructure.Models.Account.UserDTO
+
+
+
+<nav class="sidebar sidebar-offcanvas" id="sidebar">
+    <ul class="nav">
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "Respondent")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="/GRP/Home/Dashboard">
+                        <i class="icon-grid menu-icon"></i>
+                        <span class="menu-title">Dashboard</span>
+                    </a>
+                </li>
+            }
+        }
+
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="/GRP/Home/Home">
+                        <i class="icon-grid menu-icon"></i>
+                        <span class="menu-title">Home</span>
+                    </a>
+                </li>
+            }
+        }
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "Admin")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="/GRP/Survey/List">
+                        <i class="icon-grid menu-icon"></i>
+                        <span class="menu-title">Survey</span>
+                    </a>
+                </li>
+            }
+        }
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "Panel Manager")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="/GRP/Points/PointsManager">
+                        <i class="icon-grid menu-icon"></i>
+                        <span class="menu-title">Approve Pending Points</span>
+                    </a>
+                </li>
+            }
+        }
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "Admin")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+                        <i class="icon-layout menu-icon"></i>
+                        <span class="menu-title">Masters</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="ui-basic">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item"> <a class="nav-link" href="/GRP/ProfileInfoCategory/ProfileInfoCategory">Profile Category</a></li>
+
+                        </ul>
+                    </div>
+                </li>
+            }
+        }
+        @{
+            if (Model != null && Model.RoleName != null && Model.RoleName == "")
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="pages/documentation/documentation.html">
+                        <i class="icon-paper menu-icon"></i>
+                        <span class="menu-title">Documentation</span>
+                    </a>
+                </li>
+            }
+        }
+        <li class="nav-item">
+            <a class="nav-link" href="/GRP/Account/ChangePassword">
+                <i class="icon-paper menu-icon"></i>
+                <span class="menu-title">Change Password</span>
+            </a>
+        </li>
+    </ul>
+</nav>

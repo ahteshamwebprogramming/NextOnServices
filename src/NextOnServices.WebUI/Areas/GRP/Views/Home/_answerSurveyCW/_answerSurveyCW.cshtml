@@ -1,0 +1,95 @@
+﻿@model GRP.Infrastructure.ViewModels.Profile.ProfileSurveysViewModel
+
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card-body">
+                        <form id="SurveyForm">
+                            @{
+                                if (Model != null)
+                                {
+                                    if (Model.ProfileInfoSurveys != null)
+                                    {
+                                        foreach (var item in Model.ProfileInfoSurveys)
+                                        {
+                                            if (item.QuestionLabel != null)
+                                            {
+                                                <div class="form-group col-md-7" name="QuestionContainer">
+                                                    <label class="control-label">@item.QuestionLabel.QuestionLabel</label>
+                                                    @{
+                                                        if (item.QuestionLabel.QuestionType == 1)
+                                                        {
+                                                            <select class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer">
+                                                                <option value="0">Select</option>
+                                                                @{
+                                                                    if (item.AttributesSelect != null)
+                                                                    {
+                                                                        foreach (var item1 in item.AttributesSelect)
+                                                                        {
+                                                                            if (item.RespondentResponse == item1.Value)
+                                                                            {
+                                                                                <option selected value="@item1.Value">@item1.Label</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@item1.Value">@item1.Label</option>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </select>
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 2)
+                                                        {
+                                                            if (item.AttributesSelect != null)
+                                                            {
+                                                                <div style="outline: 1px solid #CED4DA;padding: 5px 5px 5px 25px;max-height: 171px;overflow-y: scroll;" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer">
+                                                                    @{
+                                                                        foreach (var item1 in item.AttributesSelect)
+                                                                        {
+                                                                            <div class="form-check">
+                                                                                <label class="form-check-label">
+                                                                                    <input type="checkbox" class="form-check-input" @(item.RespondentResponse.Split(",").Contains(item1.Value) == true ? "Checked" : "") value="@item1.Value">
+                                                                                    @item1.Label
+                                                                                    <i class="input-helper"></i>
+                                                                                </label>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            }
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 3)
+                                                        {
+                                                            <input type="text" class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer" value="@item.RespondentResponse" />
+                                                        }
+                                                        else if (item.QuestionLabel.QuestionType == 4)
+                                                        {
+                                                            <input type="number" class="form-control" ProfileInfoSurveyId="@item.QuestionLabel.ProfileInfoSurveyId" QuestionCode="@item.QuestionLabel.QuestionCode" questiontype="@item.QuestionLabel.QuestionType" name="Answer" value="@(item.RespondentResponse)" />
+                                                        }
+                                                    }
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <input type="hidden" asp-for="ProfileInfoCategoryId" />
+                                    @*<input type="button" class="btn btn-primary" value="Submit" onclick="SubmitData()" />*@
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>

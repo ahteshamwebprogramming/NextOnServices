@@ -1,0 +1,61 @@
+﻿@model NextOnServices.Infrastructure.ViewModels.ProjectsURL.ProjectsURLViewModel
+@{
+    ViewData["Title"] = "ProjectUrls";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/custmahte.css" rel="stylesheet" />
+<link href="~/css/tooltip.css" rel="stylesheet" />
+<style>
+
+    .container1_ppd {
+        display: block;
+        position: relative;
+        padding-left: 0px;
+        margin-bottom: 0px;
+        cursor: pointer;
+        font-size: 19px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .checkmark_ppd {
+        position: absolute;
+        top: 0px;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+    }
+
+    .container1_ppd input {
+        position: relative;
+        opacity: 0;
+    }
+</style>
+
+
+<div id="PartialView_AddProjectURL">
+    @Html.Partial("_projectURLs/_addProjectURL")
+</div>
+<div id="PartialView_ListProjectURL">
+    @Html.Partial("_projectURLs/_listProjectURL")
+</div>
+
+<input type="hidden" asp-for="ProjectsURL.encProjectId" />
+@section scripts {
+    <script src="~/customjs/projectsurl/projectsurl.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            AddProjectURLPartialView();
+            ListProjectURLPartialView();
+        });
+
+        
+
+
+    </script>
+}
+
+

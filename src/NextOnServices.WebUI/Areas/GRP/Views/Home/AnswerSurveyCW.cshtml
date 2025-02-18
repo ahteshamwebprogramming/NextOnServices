@@ -1,0 +1,376 @@
+﻿@model IEnumerable<GRP.Infrastructure.Models.Masters.ProfileInfoCategoryDTO>
+@{
+    ViewData["Title"] = "AnswerSurveyCW";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+
+            <style>
+                body {
+                    margin-top: 40px;
+                }
+
+                .stepwizard-step p {
+                    margin-top: 10px;
+                }
+
+                .stepwizard-row {
+                   /* display: table-row;*/
+                    display: flex;
+                    justify-content: space-between;
+                }
+
+                .stepwizard {
+                    display: table;
+                    width: 100%;
+                    position: relative;
+                }
+
+                .stepwizard-step button[disabled] {
+                    opacity: 1 !important;
+                    filter: alpha(opacity=100) !important;
+                }
+
+                .stepwizard-row:before {
+                    top: 14px;
+                    bottom: 0;
+                    position: absolute;
+                    content: " ";
+                    width: 100%;
+                    height: 1px;
+                    background-color: #ccc;
+                    z-order: 0;
+                }
+
+                .stepwizard-step {
+                    /*display: table-cell;*/
+                    text-align: center;
+                    position: relative;
+                    width: 100px;
+                }
+
+                    .stepwizard-step .btn-primary {
+                        background: #000 !important
+                    }
+
+                .btn-circle {
+                    border: #ccc solid 1px;
+                    background: #fff;
+                    width: 30px;
+                    height: 30px;
+                    text-align: center;
+                    padding: 6px 0;
+                    font-size: 12px;
+                    line-height: 1.428571429;
+                    border-radius: 15px;
+                }
+            </style>
+
+            <div class="card-body">
+
+                <div class="stepwizard">
+                    <div class="stepwizard-row setup-panel">
+                        @{
+                            if (Model != null)
+                            {
+                                for (int i = 0; i < Model.Count(); i++)
+                                {
+                                    if (i > 0)
+                                    {
+                                        <div class="stepwizard-step">
+                                            <a href="#step-@(i + 1)" onclick="StepClick('step-@(i + 1)')" type="button" class="btn btn-default btn-circle" disabled="disabled">@(i + 1)</a>
+                                            <p>@(Model.ToArray()[i].CategoryName)</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="stepwizard-step">
+                                            <a href="#step-@(i + 1)" type="button" class="btn btn-primary btn-circle">@(i + 1)</a>
+                                            <p>@(Model.ToArray()[i].CategoryName)</p>
+                                        </div>
+                                    }
+
+                                }
+                            }
+                        }
+                    </div>
+                </div>
+                <form role="form">
+
+                    @{
+                        if (Model != null)
+                        {
+                            for (int i = 0; i < Model.Count(); i++)
+                            {
+                                <div class="row setup-content" id="step-@(i + 1)">
+                                    <div class="col-md-12">
+
+                                        <input type="hidden" name="CategoryId" value="@(Model.ToArray()[i].ProfileInfoCategoryId)">
+                                        <input type="hidden" name="CategoryEncId" value="@(Model.ToArray()[i].EncryptedId)">
+                                        @*<h3>Step @(i + 1)</h3>*@
+
+                                        <div name="PartialViews">
+                                        </div>
+
+
+
+                                        @{
+                                            if (i > 0)
+                                            {
+                                                <button class="btn btn-warning prevBtn pull-left" type="button">Back</button>
+                                            }
+                                            if (i < (Model.Count() - 1))
+                                            {
+                                                <button class="btn btn-primary nextBtn pull-right" type="button" ptype="Next">Save And Next</button>
+                                            }
+                                            <button class="btn btn-primary nextBtn pull-right" type="button" ptype="Exit">Save And Exit</button>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+
+                    @*<div class="row setup-content" id="step-1">
+                    <div class="col-md-12">
+                    <h3> Step 1</h3>
+                    <div class="form-group">
+                    <label class="control-label">First Name</label>
+                    <input maxlength="100" type="text" required="required" class="form-control" placeholder="Enter First Name" />
+                    </div>
+                    <div class="form-group">
+                    <label class="control-label">Last Name</label>
+                    <input maxlength="100" type="text" required="required" class="form-control" placeholder="Enter Last Name" />
+                    </div>
+                    <button class="btn btn-primary nextBtn btn-lg pull-right" type="button">Next</button>
+                    </div>
+                    </div>
+                    <div class="row setup-content" id="step-2">
+                    <div class="col-md-12">
+                    <h3> Step 2</h3>
+                    <div class="form-group">
+                    <label class="control-label">Company Name</label>
+                    <input maxlength="200" type="text" required="required" class="form-control" placeholder="Enter Company Name" />
+                    </div>
+                    <div class="form-group">
+                    <label class="control-label">Company Address</label>
+                    <input maxlength="200" type="text" required="required" class="form-control" placeholder="Enter Company Address" />
+                    </div>
+                    <button class="btn btn-warning prevBtn btn-lg pull-left" type="button">Back</button>
+                    <button class="btn btn-primary nextBtn btn-lg pull-right" type="button">Next</button>
+                    </div>
+                    </div>
+                    <div class="row setup-content" id="step-3">
+
+                    <div class="col-md-12">
+                    <h3> Step 3</h3>
+                    <button class="btn btn-success btn-lg pull-right" type="submit">Finish!</button>
+                    </div>
+
+                    </div>*@
+                </form>
+
+
+
+            </div>
+
+
+
+
+        </div>
+
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+
+
+
+
+
+            var navListItems = $('div.setup-panel div a'),
+                allWells = $('.setup-content'),
+                allNextBtn = $('.nextBtn'),
+                allPrevBtn = $('.prevBtn');
+
+
+            allWells.hide();
+
+            navListItems.click(function (e) {
+                e.preventDefault();
+                var $target = $($(this).attr('href')),
+                    $item = $(this);
+
+                if (!$item.hasClass('disabled')) {
+                    navListItems.removeClass('btn-primary').addClass('btn-default');
+                    $item.addClass('btn-primary');
+                    allWells.hide();
+                    $target.show();
+                    $target.find('input:eq(0)').focus();
+                }
+            });
+
+            allNextBtn.click(function () {
+                var curStep = $(this).closest(".setup-content"),
+                    curStepBtn = curStep.attr("id"),
+                    nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+                    curInputs = curStep.find("input[type='text'],input[type='url']"),
+                    isValid = true,
+                    ptype = $(this).attr("ptype");
+                SubmitData(curStepBtn).then((d) => {
+                    if (isValid) {
+                        nextStepWizard.removeAttr('disabled').trigger('click');
+                        $(window).scrollTop(0);
+                        if (ptype == "Exit")
+                            window.location.href = "/GRP/Home/Dashboard";
+                        //if (nextStepWizard.length > 0) {
+                        //    let hash = nextStepWizard[0].hash;
+                        //    //AppendPartialView($(hash).find("[name='CategoryId']").val(), hash);
+                        //}
+                        //else {
+
+                        //}
+                    }
+                });
+
+
+            });
+
+            allPrevBtn.click(function () {
+                var curStep = $(this).closest(".setup-content"),
+                    curStepBtn = curStep.attr("id"),
+                    prevStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().prev().children("a");
+                prevStepWizard.removeAttr('disabled').trigger('click');
+
+                $(window).scrollTop(0);
+            });
+
+
+            $('div.setup-panel div a.btn-primary').trigger('click');
+
+            AppendPartialView($("#step-1").find("[name='CategoryId']").val(), "#step-1");
+
+        });
+
+        function StepClick(hash) {
+            hash = "#" + hash;
+            AppendPartialView($(hash).find("[name='CategoryId']").val(), hash);
+        }
+
+        function AppendPartialView(CategoryId, step) {
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                //contentType: "application/json; charset=utf-8",
+                url: '/GRP/Home/AnswerSurveyPartialView',
+                data: { CategoryId: CategoryId },
+                cache: false,
+                dataType: "html",
+                success: function (data, textStatus, jqXHR) {
+                    $(step).find("[name='PartialViews']").html(data);
+
+                    UnblockUI();
+                },
+                error: function (result) {
+                    $erroralert("Error!", error.responseText);
+                    UnblockUI();
+
+                }
+            });
+        }
+
+
+
+        function SubmitData(step) {
+            return new Promise((resolve, reject) => {
+                step = "#" + step;
+                var profileSurveyResponses = [];
+                let allQuestions = 0;
+                let filledQuestions = 0;
+                $(step).find("[name='QuestionContainer']").each(function () {
+                    $questionContainer = $(this);
+                    $answer = $questionContainer.find("[name='Answer']");
+
+                    let QuestionCode = $answer.attr("questioncode");
+                    let ProfileInfoSurveyId = $answer.attr("profileinfosurveyid");
+                    let QuestionType = $answer.attr("questiontype");
+                    let ProfileSurveyCategoryId = $(step).find("[name='ProfileInfoCategoryId']").val();
+                    let answer;
+                    if (QuestionType == 1) {
+                        answer = $answer.val();
+                        if ($.trim(answer) != "" && answer != 0) {
+                            filledQuestions += 1;
+                        }
+                    }
+                    else if (QuestionType == 2) {
+                        let values = [];
+                        $answer.find("input[type='checkbox']:checked").each(function () {
+                            values.push($(this).attr("value"));
+                        });
+                        answer = values.toString(",");
+                        if (answer.length > 0) {
+                            filledQuestions += 1;
+                        }
+                    }
+                    else if (QuestionType == 3) {
+                        answer = $answer.val();
+                        if ($.trim(answer) != "") {
+                            filledQuestions += 1;
+                        }
+                    }
+                    else if (QuestionType == 4) {
+                        answer = $answer.val();
+                        if ($.trim(answer) != "") {
+                            filledQuestions += 1;
+                        }
+                    }
+
+                    var ProfileSurveyResponseDTO = {};
+                    ProfileSurveyResponseDTO.QuestionId = ProfileInfoSurveyId;
+                    ProfileSurveyResponseDTO.AnswerId = answer;
+                    ProfileSurveyResponseDTO.QuestionCode = QuestionCode;
+                    ProfileSurveyResponseDTO.ProfileSurveyCategoryId = ProfileSurveyCategoryId;
+                    profileSurveyResponses.push(ProfileSurveyResponseDTO);
+                    allQuestions += 1;
+                });
+
+                //alert("AllQuestions : " + allQuestions + "  - FilledQuestions : " + filledQuestions);
+                let Completed = false;
+                if (allQuestions == filledQuestions) {
+                    Completed = true;
+                }
+
+                var inputDTO = {
+                    profileSurveyResponses: profileSurveyResponses,
+                    completed: Completed
+                };
+                BlockUI();
+                $.ajax({
+                    type: "POST",
+                    url: "/GRP/ProfileSurvey/SaveProfileSurveyResponses",
+                    contentType: 'application/json',
+                    data: JSON.stringify(inputDTO),
+                    success: function (data) {
+                        UnblockUI();
+                        $successalert("Success!", "Saved succesfully.");
+                        //setTimeout(function () {
+                        //    window.location.href = "/GRP/Home/AnswerSurveyCats";
+                        //}, 1000);
+                        resolve();
+                    },
+                    error: function (error) {
+                        $erroralert("Error!", error.responseText + '!');
+                        UnblockUI();
+                        reject();
+                    }
+                });
+            });
+        }
+    </script>
+}
+

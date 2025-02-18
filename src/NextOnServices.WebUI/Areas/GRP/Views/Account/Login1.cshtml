@@ -1,0 +1,105 @@
+﻿@using GRP
+@namespace GRP.WebUI.Views
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@addTagHelper *, GRP
+
+@model GRP.Infrastructure.Models.Account.LoginDetailDTO
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link href="https://fonts.googleapis.com/css?family=Assistant:400,700" rel="stylesheet">
+    <link rel="stylesheet" href="~/LoginRoot/style.css">
+    <style>
+        .login {
+            background: linear-gradient(to right, #006767, #0785b4);
+            padding: 0px 0px 0px 0px;
+        }
+
+        body {
+            /*background: #cbdbea;*/
+            background: #F3F3F3;
+            /*background: #EEF5FF;*/
+            /*background: #FFEBD8;*/
+        }
+
+        .text-danger {
+            color: red;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+            .text-danger ul {
+                list-style: none;
+            }
+
+        .login .form input[type=text].text, .login .form input[type=text].text:active, .login .form input[type=text].text:hover, .login .form input[type=text].text:focus, .login .form input[type=text].text:visited, .login .form input[type=text].text:focus-within, .login .form input[type=text].text:focus-visible, .login .form input[type=text].text:target, .login .form input[type=password].password, .login .form input[type=password].password:active, .login .form input[type=password].password:hover, .login .form input[type=password].password:focus, .login .form input[type=password].password:visited, .login .form input[type=password].password:focus-within, .login .form input[type=password].password:focus-visible, .login .form input[type=password].password:target {
+            background: none !important;
+        }
+
+        .logoSection {
+            border-top-left-radius: 9px;
+            border-top-right-radius: 9px;
+            padding-bottom: 15px;
+            padding-top: 15px;
+            text-align: center;
+            background-color: white;
+        }
+
+        .footerSection {
+            padding: 15px;
+            text-align: center;
+            background-color: white;
+            border-bottom-left-radius: 9px;
+            border-bottom-right-radius: 9px;
+            color: #026467;
+        }
+    </style>
+</head>
+<body>
+    @*<img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;position:absolute;top:50px;right:100px;" />*@
+    <!-- partial:index.partial.html -->
+    <section class='login' id='login' style="width:28%;min-height:30vh">
+        <div style="" class="logoSection">
+            <img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />
+        </div>
+
+        @*<div class='head'>
+        <!--<h1 class='company'>Universe Explorer</h1>-->
+        <img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />
+        </div>*@
+        <div style="padding-right:50px;padding-left:50px;padding-bottom:50px;padding-top: 40px;">
+            <p class='msg' style="margin-top: 0px;margin-bottom: 25px;">Welcome back</p>
+            <div class='form'>
+                <form method="post" action="/GRP/Account/Login">
+                    @Html.ValidationSummary("" ,new{@class = "text-danger"})
+                    <input style="padding-left:10px" type="text" placeholder='Username' class='text' id='username' required asp-for="Username"><br>
+                    <input style="padding-left:10px" type="password" placeholder='••••••••••••••' class='password' asp-for="Password"><br><br>
+                    @*<a href="/Account/Login" class='btn-login' id='do-login'>Login</a>*@
+                    <button type="submit" class='btn-login' id='do-login'>Login</button>
+                    <a href="#" class='forgot'>Forgot?</a>
+
+
+
+                </form>
+            </div>
+        </div>
+        <div style="" class="footerSection">
+            <p style="margin-bottom:0px;margin-top:0px;"><i class="fa fa-envelope"></i>info@nextonservices.com | <i class="fa fa-mobile"></i>+1-818-453-1793</p>
+        </div>
+    </section>
+    <footer>
+        @*<p><i class="fa fa-envelope"></i>info@nextonservices.com | <i class="fa fa-mobile"></i>+1-818-453-1793</p>*@
+
+    </footer>
+    <!-- partial -->
+    @*<script src="~/LoginRoot/script.js"></script>*@
+
+</body>
+</html>

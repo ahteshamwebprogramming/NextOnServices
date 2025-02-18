@@ -1,0 +1,55 @@
+﻿@model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierPanelSizeViewModel
+<div class="col-md-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Country Panel Size</h4>
+            <p class="card-description">
+
+            </p>
+            <form class="forms-sample" id="SupplierCountryPanelSizeForm">
+                <div class="row">
+                    <div class="form-group col-md-4">
+                        <label for="CountryId">Country</label>
+                        <select class="form-control form-control-sm select2" asp-for="SupplierPanelSize.CountryId">
+                            <option value="0">--Select Country--</option>
+                            @{
+                                if (Model != null)
+                                {
+                                    if (Model.Countries != null)
+                                    {
+                                        if (Model.Countries.Count > 0)
+                                        {
+                                            foreach (var item in Model.Countries)
+                                            {
+                                                <option value="@item.CountryId">@item.Country</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="Pname">Panel Size</label>
+                        <input type="number" class="form-control form-control-sm" asp-for="SupplierPanelSize.Psize">
+                    </div>
+                </div>
+
+                <input type="hidden" asp-for="SupplierPanelSize.Id" />
+                @{
+                    if (Model?.SupplierPanelSize?.Id > 0)
+                    {
+                        <input type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddSupplierCountryPanelSize()" value="Update" />
+                    }
+                    else
+                    {
+                        <input type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddSupplierCountryPanelSize()" value="Submit" />
+                    }
+                }
+                
+                <button class="btn btn-light btn-sm">Cancel</button>
+                <input type="button" class="btn btn-light btn-sm" value="Back To Supplier" onclick="javascript:window.location.href='/VT/Supplier/SupplierList'" />
+            </form>
+        </div>
+    </div>
+</div>

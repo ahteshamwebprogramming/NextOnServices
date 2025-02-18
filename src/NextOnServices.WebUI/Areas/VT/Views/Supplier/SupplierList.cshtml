@@ -1,0 +1,140 @@
+﻿@model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierViewModel
+@{
+    ViewData["Title"] = "SupplierList";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<style>
+    .tablebutton {
+        width: 100px !important;
+        padding: 9px !important;
+        font-size: 12px !important;
+    }
+
+    td:has(input.tablebutton) {
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+</style>
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">Supplier List</p>
+                <div class="table-responsive">
+                    <table class="table table-striped table-borderless" id="Projects">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>Contact Number</th>
+                                <th>Email</th>
+                                <th>Panel Size</th>
+                                <th>Country</th>
+                                <th>Add/Edit Panel Size</th>
+                                <th>Edit</th>
+                                <th>Active(Yes/No)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                if (Model != null && Model.SupplierList != null)
+                                {
+                                    foreach (var item in Model.SupplierList)
+                                    {
+                                        <tr>
+                                            <td>@item.Name</td>
+                                            <td>@item.Description</td>
+                                            <td>@item.Number</td>
+                                            <td>@item.Email</td>
+                                            <td>@item.Psize</td>
+                                            <td>@item.Country</td>
+                                            <td>
+                                                <input type="button" class="btn btn-primary tablebutton" onclick="javascript:window.location.href='/VT/Supplier/SupplierCountryPanelSize/@item.encId'" value="Edit Panel Size" />
+                                            </td>
+                                            <td>
+                                                <input type="button" class="btn btn-primary tablebutton" value="Edit" onclick="javascript:window.location.href='/VT/Supplier/AddSupplier/@item.encId'" />
+                                            </td>
+                                            <td>
+                                                @{
+                                                    if (item.IsActive == 1)
+                                                    {
+                                                        <input type="button" class="btn btn-success tablebutton" onclick="ChangeStatus(@item.Id,0,this)" value="Yes" />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="button" class="btn btn-danger tablebutton" onclick="ChangeStatus(@item.Id,1,this)" value="No" />
+                                                    }
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("table").DataTable({
+                "order": []
+            });
+        });
+
+
+        function ChangeStatus(Id, Status, curObj) {
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You want to change the status!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, change it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.Id = Id;
+                    inputDTO.IsActive = Status;
+                    $.ajax({
+                        type: "POST",
+                        url: "/VT/Supplier/ChangeSupplierStatus",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            UnblockUI();
+                            $successalert("success", "Status Changed");
+                            let element = $(curObj).closest("td");
+                            element.empty();
+                            if (Status == 1) {
+                                element.append('<input type="button" class="btn btn-success tablebutton" onclick="ChangeStatus(' + Id + ',0,this)" value="Yes" />');
+                            }
+                            else {
+                                element.append('<input type="button" class="btn btn-danger tablebutton" onclick="ChangeStatus(' + Id + ',1,this)" value="No" />');
+                            }
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
+
+
+
+        }
+
+
+    </script>
+}

@@ -1,0 +1,898 @@
+﻿@using NextOnServices.Infrastructure.Helper;
+@model NextOnServices.Infrastructure.ViewModels.ProjectDetails.ProjectDetailPageViewModel
+
+@{
+    ViewData["Title"] = "Project Page";
+    //Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/custmahte.css" rel="stylesheet" />
+<link href="~/css/tooltip.css" rel="stylesheet" />
+<style>
+    .bordertophighlight {
+        border-top: 1px solid #f1f1f1;
+        box-shadow: 0px 1px 4px 1px #f1f1f1;
+        padding: 12px;
+    }
+
+    .tooltip1 {
+        border-bottom: 0px dotted black !important;
+    }
+
+    .container1_ppd {
+        display: block;
+        position: relative;
+        padding-left: 0px;
+        margin-bottom: 0px;
+        cursor: pointer;
+        font-size: 19px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    .checkmark_ppd {
+        position: absolute;
+        top: 0px;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #eee;
+    }
+
+    .projectInfotile {
+        max-width: 20%;
+    }
+
+    .header {
+        font-weight: 600;
+    }
+
+    .color_amber {
+        color: orange;
+    }
+
+    .color_red {
+        color: red;
+    }
+
+    .color_yellow {
+        color: yellow;
+    }
+
+    .color_blue {
+        color: blue;
+    }
+
+    .color_white {
+        color: wheat;
+    }
+
+    .color_white1 {
+        display: none !important;
+    }
+
+    .color_green {
+        color: green;
+    }
+
+</style>
+
+<div class="row">
+    <div class="col-md-12 grid-margin transparent">
+        <div class="row">
+            <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
+                <div class="card card-tale">
+                    <div class="card-body">
+                        <p class="mb-4">Projects Status</p>
+                        <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model.ProjectDetailList.FirstOrDefault().StatusName) </p>
+                        @*<p>10.00% (30 days)</p>*@
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
+                <div class="card card-dark-blue">
+                    <div class="card-body">
+                        <p class="mb-4">Achievement</p>
+                        <p class="fs-30 mb-2">@(Model == null ? "0% Achieved" : Model.Table5List == null ? "0% Achieved" : Model.Table5List.Count == 0 ? "0% Achieved" : Model.Table5List.FirstOrDefault() == null ? "0% Achieved" : Model.Table5List.FirstOrDefault().CompletePercent + "% Achieved")</p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
+                <div class="card card-light-blue">
+                    <div class="card-body">
+                        <p class="mb-4">Respondents</p>
+                        <p class="fs-30 mb-2">@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Complete) out of @(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Total)</p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
+                <div class="card card-light-danger">
+                    <div class="card-body">
+                        <p class="mb-4">Actual IR</p>
+                        <p class="fs-30 mb-2">
+                            @(Model == null ? "0%" : Model.FractionComplete1 == null ? "0%" : Model.FractionComplete1.IRPercent + "%")
+                            @{
+                                if (Model != null)
+                                {
+                                    float flagIR = 0;
+                                    float flagLOI = 0;
+                                    float EXPIR = Model.FractionComplete1.ExpectedIR == null ? 0 : Model.FractionComplete1.ExpectedIR;
+                                    float ACTIR = Model.FractionComplete1.ActualIR == null ? 0 : Model.FractionComplete1.ActualIR;
+                                    float EXPLOI = Model.FractionComplete3.Expected_LOI == null ? 0 : Model.FractionComplete3.Expected_LOI;
+                                    float ACTLOI = Model.FractionComplete3.Actual_LOI == null ? 0 : Model.FractionComplete3.Actual_LOI;
+                                    if (EXPIR > ACTIR)
+                                    {
+                                        float drop = EXPIR - ACTIR;
+                                        float dropPercent = drop * 100 / EXPIR;
+                                        if (dropPercent > 50)
+                                        {
+                                            flagIR = 1;
+                                        }
+                                    }
+                                    if (ACTLOI > EXPLOI)
+                                    {
+                                        float drop = ACTLOI - EXPLOI;
+                                        float dropPercent = drop * 100 / EXPLOI;
+                                        if (dropPercent > 35)
+                                        {
+                                            flagLOI = 1;
+                                        }
+                                    }
+
+                                    if (flagIR > 0 && flagLOI > 0)
+                                    {
+                                        <span id="spnflag" class="fa fa-flag color_red tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%.LOI raised by 35%</span></span>
+                                    }
+                                    else if (flagIR > 0)
+                                    {
+                                        <span id="spnflag" class="fa fa-flag color_blue tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%</span></span>
+                                    }
+                                    else if (flagLOI > 0)
+                                    {
+                                        <span id="spnflag" class="fa fa-flag color_yellow tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">LOI raised by 35%</span></span>
+                                    }
+                                    else
+                                    {
+                                        <span id="spnflag" class="fa fa-flag color_white1 tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR and LOI under control</span></span>
+                                    }
+
+                                }
+
+                            }
+
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
+                <div class="card card-light-danger">
+                    <div class="card-body">
+                        <p class="mb-4">Actual LOI</p>
+                        <p class="fs-30 mb-2">@(Model == null ? "0 min" : Model.FractionComplete3 == null ? "0 min" : Model.FractionComplete3.Actual_LOI + " min")</p>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">Survey Details</p>
+
+                <div class="row mt-6">
+                    <div class="col-md-6">
+                        <table class="table table-hover table-bordered">
+                            <tbody>
+                                <tr>
+                                    <td class="header w-30">Survey ID</td>
+                                    <td>
+                                        <span id="lblSurveyID">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().PID </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">Survey Name</td>
+                                    <td>
+                                        <span id="lblSurvayname">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().PName </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">Client</td>
+                                    <td>
+                                        <span id="lblClient">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().Company </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td class="header">Project Manager</td>
+                                    <td>
+                                        <span id="lblProjectManager">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().UserName </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td class="header">Country</td>
+                                    <td>
+                                        <span id="lblCountry">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().Country </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">Length Of Interview</td>
+                                    <td>
+                                        <span id="lblLOI">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().LOI </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>&nbsp;<span>min</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">CPI</td>
+                                    <td>
+                                        $&nbsp;
+                                        <span id="lblCPI">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().CPI </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">Expected IR</td>
+                                    <td>
+                                        <span id="txtEIR">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.FractionComplete1 != null)
+                                                    {
+                                                        if (Model.FractionComplete1.ExpectedIR != null)
+                                                        {
+                                                            <span> @Model.FractionComplete1.ExpectedIR</span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            %
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">End Date</td>
+                                    <td>
+                                        <span id="lblEDate">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            if (Model.ProjectDetailList.FirstOrDefault().edate != null)
+                                                            {
+                                                                <span>
+                                                                    @(((DateTime)Model.ProjectDetailList.FirstOrDefault().edate).ToString("dd-MMM-yyyy"))
+                                                                </span>
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="header">Notes</td>
+                                    <td style="white-space:inherit">
+                                        <span id="lblNotes">
+                                            @{
+                                                if (Model != null)
+                                                {
+                                                    if (Model.ProjectDetailList != null)
+                                                    {
+                                                        if (Model.ProjectDetailList.Count > 0)
+                                                        {
+                                                            <span> @Model.ProjectDetailList.FirstOrDefault().Notes </span>
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        </span>
+                                    </td>
+
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="col-md-3" style="padding-top:0px;padding-bottom:0px;">
+                        <div style="width:100%;height:100%;border: 1px solid #f1f1f1;padding-top:10%">
+                            <div class="col-md-12" style="margin-top: 25px;text-align:center">
+                                <h3>Device Preference</h3>
+                            </div>
+                            <div class="offset-1 col-md-10" style="margin-top: 25px;">
+                                <div class="col-md-1">
+                                    <label class="container1_ppd">
+                                        <input type="checkbox" id="chkMobile" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                    </label>
+                                </div>
+                                <div class="col-md-11" style="text-align: left;margin-left:30px;">
+                                    <label>Mobile (non-IOS)</label>
+                                </div>
+                            </div>
+                            <div class="offset-1 col-md-10" style="margin-top: 25px;">
+                                <div class="col-md-1">
+                                    <label class="container1_ppd">
+                                        <input type="checkbox" id="chkIOSMobile" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                    </label>
+                                </div>
+                                <div class="col-md-11" style="text-align: left;margin-left:30px;">
+                                    <label>IOS Mobile</label>
+                                </div>
+                            </div>
+                            <div class="offset-1 col-md-10" style="margin-top: 25px;">
+                                <div class="col-md-1">
+                                    <label class="container1_ppd">
+                                        <input type="checkbox" id="chkDesktop" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                    </label>
+                                </div>
+                                <div class="col-md-11" style="text-align: left;margin-left:30px;">
+                                    <label>Desktop/Laptop</label>
+                                </div>
+                            </div>
+                            <div class="offset-1 col-md-10" style="margin-top: 25px;">
+                                <div class="col-md-1">
+                                    <label class="container1_ppd">
+                                        <input type="checkbox" id="chkTablet" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                    </label>
+                                </div>
+                                <div class="col-md-11" style="text-align: left;margin-left:30px;">
+                                    <label>Tablet</label>
+                                </div>
+                            </div>
+                            <div class="offset-1 col-md-10" style="margin-top: 25px;">
+                                <div class="col-md-1">
+                                    <label class="container1_ppd">
+                                        <input type="checkbox" id="chkIpAddress" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                    </label>
+                                </div>
+                                <div class="col-md-11" style="text-align: left;margin-left:30px;">
+                                    <label>Duplicate IP</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12" style="margin-top: 25px;text-align:center">
+                                <p style="color:red">*<i>Please check above to block</i></p>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div class="col-md-3" style="padding-top:0px;padding-bottom:0px;">
+                        <div style="width:100%;height:100%;border: 1px solid #f1f1f1;padding:24% 25px 10px 25px;">
+                            <div>
+                                <input type="button" class="btn btn-primary" style="width:100%" value="Edit" onclick="window.location.href='/VT/Projects/AddProject/@(CommonHelper.EncryptURLHTML(Model?.Project?.ProjectId.ToString()))'" />
+
+                                <input type="button" class="btn btn-primary mt-3" style="width:100%" value="Edit URL" onclick="window.location.href='/VT/Projects/ProjectUrls/@(CommonHelper.EncryptURLHTML(Model?.Project?.ProjectId.ToString()))'" />
+                                <input type="button" class="btn btn-primary mt-3" style="width:100%" value="Project Sampling" onclick="window.location.href='/VT/Projects/ProjectMapping/@(CommonHelper.EncryptURLHTML(Model?.Project?.ProjectId.ToString()))'" />
+                                <input type="button" class="btn btn-primary mt-3" style="width:100%" value="Download Data" onclick="window.location.href='/VT/Home/ExportToExcelDownloadData?projectId=@Model?.Project?.ProjectId'" />
+                                <input type="button" class="btn btn-primary mt-3" style="width:100%" value="Download Response" onclick="window.location.href='/VT/Home/ExportToExcelDownloadResponseData?projectId=@Model?.Project?.ProjectId'" />
+                                <input type="button" class="btn btn-primary mt-3" style="width:100%" value="Detailed Report" data-toggle="modal" data-target="#mdlDetailedReport" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">Survey Specs</p>
+                <div class="row mt-5">
+                    <div class="col-md-12">
+                        <div class="table-responsive">
+                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Country</th>
+                                        <th>Quota</th>
+                                        <th>CPI</th>
+                                        <th>Complete</th>
+                                        <th>Percentage</th>
+                                        <th>Status</th>
+                                        <th>IR</th>
+                                        <th>LOI</th>
+                                        <th>Flag</th>
+                                        <th>Map IP</th>
+                                        <th>Pre Screening</th>
+                                        <th>Countries Mapped</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        if (Model != null)
+                                        {
+                                            if (Model.SurveySpecsList != null)
+                                            {
+                                                if (Model.SurveySpecsList.Count > 0)
+                                                {
+                                                    foreach (var item in Model.SurveySpecsList)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Country</td>
+                                                            <td>@item.SurveyQuota</td>
+                                                            <td>$@item.CPI</td>
+                                                            <td>@item.Complete</td>
+                                                            <td>@item.CompletePercent</td>
+                                                            <td> <a href="javacript:void(0)">@item.StatusName</a></td>
+                                                            <td>@item.IRPercent%</td>
+                                                            <td>@item.ActLOI</td>
+                                                            <td>
+                                                                @{
+                                                                    if (item != null)
+                                                                    {
+                                                                        float flagIR = 0;
+                                                                        float flagLOI = 0;
+                                                                        float EXPIR = item.IRate == null ? 0 : item.IRate ?? default(float);
+                                                                        float ACTIR = item.IRPercent == null ? 0 : item.IRPercent ?? default(float);
+                                                                        float EXPLOI = item.LOI == null ? 0 : item.LOI ?? default(float);
+                                                                        float ACTLOI = item.ActLOI == null ? 0 : item.ActLOI ?? default(float);
+                                                                        if (EXPIR > ACTIR)
+                                                                        {
+                                                                            float drop = EXPIR - ACTIR;
+                                                                            float dropPercent = drop * 100 / EXPIR;
+                                                                            if (dropPercent > 50)
+                                                                            {
+                                                                                flagIR = 1;
+                                                                            }
+                                                                        }
+                                                                        if (ACTLOI > EXPLOI)
+                                                                        {
+                                                                            float drop = ACTLOI - EXPLOI;
+                                                                            float dropPercent = drop * 100 / EXPLOI;
+                                                                            if (dropPercent > 35)
+                                                                            {
+                                                                                flagLOI = 1;
+                                                                            }
+                                                                        }
+
+                                                                        if (flagIR > 0 && flagLOI > 0)
+                                                                        {
+                                                                            <span id="spnflag" class="fa fa-flag color_red tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%.LOI raised by 35%</span></span>
+                                                                        }
+                                                                        else if (flagIR > 0)
+                                                                        {
+                                                                            <span id="spnflag" class="fa fa-flag color_blue tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%</span></span>
+                                                                        }
+                                                                        else if (flagLOI > 0)
+                                                                        {
+                                                                            <span id="spnflag" class="fa fa-flag color_yellow tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">LOI raised by 35%</span></span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span id="spnflag" class="fa fa-flag color_red tooltip1 d-none"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b"></span></span>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </td>
+                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Map IP"> </td>
+                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Pre Screening"> </td>
+                                                            <td></td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">Country Details</p>
+                <div class="row mt-5">
+                    <div class="col-md-12">
+                        <div class="table-responsive">
+                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Country</th>
+                                        <th>Total</th>
+                                        <th>Complete</th>
+                                        <th>Terminate</th>
+                                        <th>OverQuota</th>
+                                        <th>Security Term</th>
+                                        <th>Fraud Error</th>
+                                        <th>Incomplete</th>
+                                        <th>Cancelled</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        if (Model != null)
+                                        {
+                                            if (Model.CountryDetailsList != null)
+                                            {
+                                                if (Model.CountryDetailsList.Count > 0)
+                                                {
+                                                    foreach (var item in Model.CountryDetailsList)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Country</td>
+                                                            <td>@item.Total</td>
+                                                            <td>@item.Complete</td>
+                                                            <td>@item.Terminate</td>
+                                                            <td>@item.Overquota</td>
+                                                            <td>@item.Sec_Term</td>
+                                                            <td>@item.F_Error</td>
+                                                            <td>@item.Incomplete</td>
+                                                            <td>@item.Cancelled</td>
+
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">
+                    Supplier Details
+                </p>
+                <div class="row mt-5">
+                    <div class="col-md-12">
+                        <div class="table-responsive">
+                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>COUNTRY</th>
+                                        <th>SUPPLIER NAME</th>
+                                        <th>CPI</th>
+                                        <th>QUOTA</th>
+                                        <th>TOTAL</th>
+                                        <th>COMPLETE</th>
+                                        <th>TERMINATE</th>
+                                        <th>OVERQUOTA</th>
+                                        <th>SECURITY TERM</th>
+                                        <th>FRAUD ERROR</th>
+                                        <th>INCOMPLETE</th>
+                                        <th>IR(IN %)</th>
+                                        <th>LOI</th>
+                                        <th>BLOCK</th>
+                                        <th>PRESCREENING</th>
+                                        <th>EDIT</th>
+                                        <th>TRACKING TYPE</th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        if (Model != null)
+                                        {
+                                            if (Model.SupplierDetailsList != null)
+                                            {
+                                                if (Model.SupplierDetailsList.Count > 0)
+                                                {
+                                                    foreach (var item in Model.SupplierDetailsList)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Country</td>
+                                                            <td>@item.Name</td>
+                                                            <td>$@item.CPI</td>
+                                                            <td>@item.Quota</td>
+                                                            <td>@item.Total</td>
+                                                            <td>@item.Complete</td>
+                                                            <td>@item.Terminate</td>
+                                                            <td>@item.OverQuota</td>
+                                                            <td>@item.SecurityTerm</td>
+                                                            <td>@item.FraudError</td>
+                                                            <td>@item.Incomplete</td>
+                                                            <td>@item.IR%</td>
+                                                            <td>@item.LOI</td>
+                                                            <td><input type="checkbox" value="@item.Block" /></td>
+                                                            <td><input type="checkbox" value="@item.PreScreening" /></td>
+                                                            <td><input type="button" class="btn btn-info btn-sm" value="Edit" /></td>
+                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Redirects" /></td>
+
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <p class="card-title mb-0">
+                    Survey Links
+                </p>
+                <div class="row mt-5">
+                    <div class="col-md-12">
+                        <div class="table-responsive">
+                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>COUNTRY</th>
+                                        <th>SUPPLIER NAME</th>
+                                        <th>CLIENT SURVEY LINK</th>
+                                        <th>SUPPLIER LINK</th>
+                                        <th>TEST</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        if (Model != null)
+                                        {
+                                            if (Model.SurveyLinksList != null)
+                                            {
+                                                if (Model.SurveyLinksList.Count > 0)
+                                                {
+                                                    foreach (var item in Model.SurveyLinksList)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Country</td>
+                                                            <td>@item.Suppliers</td>
+                                                            <td>$@item.OLink</td>
+                                                            <td>@item.MLink</td>
+                                                            <td><input type="button" class="btn btn-info btn-sm" value="Test" /></td>
+
+
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- #region Modals -->
+
+<div class="modals">
+    <div class="modal fade" id="mdlChangeStatus" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Change Projects Status</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <select class="form-control" name="Status">
+                                <option value="1">Closed</option>
+                                <option value="2">Live</option>
+                                <option value="3">On Hold</option>
+                                <option value="4">Cancelled</option>
+                                <option value="5">Awarded</option>
+                                <option value="6">Invoiced</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" value="0" name="ProjectId" />
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="UpdateStatus()">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modals">
+    <div class="modal fade" id="mdlDetailedReport" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Detailed Report</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label>Start Date</label>
+                            <input type="date" class="form-control" id="StartReportDate" />
+                            <label>End Date</label>
+                            <input type="date" class="form-control" id="EndReportDate" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" value="0" name="ProjectId" />
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" data-dismiss="modal" onclick="DownloadDetailedReport(@Model?.Project.ProjectId)">Download Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- #endregion -->
+@section scripts {
+    <script src="~/customjs/home/dashboard.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //getProjectTable();
+        });
+
+        function getProjectTable() {
+            BlockUI();
+            //getProjectTablePartialView().then((d) => {
+            //    UnblockUI();
+            //});
+        }
+
+        function DownloadDetailedReport(projectId) {
+            let startReportDate = $("#StartReportDate").val();
+            let endReportDate = $("#EndReportDate").val();
+            $.ajax({
+                url: `/VT/Home/ExportToExcelDetailedDateWiseReport`, // Replace with your controller's name
+                type: 'GET',
+                data: { projectId: projectId, startReportDate: startReportDate, endReportDate: endReportDate },
+                xhrFields: {
+                    responseType: 'blob' // Important for downloading files
+                },
+                success: function (data, status, xhr) {
+                    // Get the filename from the Content-Disposition header
+                    let disposition = xhr.getResponseHeader('Content-Disposition');
+                    let fileName = 'Report.xlsx'; // Default filename
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        let matches = /filename="([^"]*)"/.exec(disposition);
+                        if (matches && matches[1]) fileName = matches[1];
+                    }
+
+                    // Create a download link and trigger it
+                    let url = window.URL.createObjectURL(data);
+                    let a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                },
+                error: function (xhr, status, error) {
+                    alert('Error downloading the file: ' + error);
+                }
+            });
+        }
+
+
+    </script>
+}
