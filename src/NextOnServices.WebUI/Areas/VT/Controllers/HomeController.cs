@@ -25,12 +25,14 @@ public class HomeController : Controller
     private readonly ProjectsAPIController _projectsAPIController;
     private readonly AccountsController _accountAPIController;
     private readonly StatusMasterAPIController _statusMasterAPIController;
-    public HomeController(ILogger<HomeController> logger, ProjectsAPIController projectsAPIController, AccountsController accountAPIController, StatusMasterAPIController statusMasterAPIController)
+    private readonly CountryAPIController _countryAPIController;
+    public HomeController(ILogger<HomeController> logger, ProjectsAPIController projectsAPIController, AccountsController accountAPIController, StatusMasterAPIController statusMasterAPIController, CountryAPIController countryAPIController)
     {
         _logger = logger;
         _projectsAPIController = projectsAPIController;
         _accountAPIController = accountAPIController;
         _statusMasterAPIController = statusMasterAPIController;
+        _countryAPIController = countryAPIController;
     }
 
     public IActionResult Index()
@@ -51,6 +53,17 @@ public class HomeController : Controller
             ProjectDetailPageViewModel outputData = new ProjectDetailPageViewModel();
 
             ProjectDTO inputData = new ProjectDTO();
+
+            var resProjects =  await _projectsAPIController.GetProjectById(projectId);
+            if (resProjects != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)resProjects).StatusCode == 200)
+            {
+                ProjectDTO? projectDTO = (ProjectDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)resProjects).Value;
+                if(projectDTO != null)
+                {
+                    inputData = projectDTO;
+                }                
+            }
+
             inputData.ProjectId = projectId;
 
             IActionResult actionResultStatus = await _statusMasterAPIController.GetStatusMaster();
@@ -407,4 +420,56 @@ public class HomeController : Controller
         }
         return null;
     }
+    #region Danish
+    public async Task<IActionResult> DeviceControl([FromBody] ProjectDTO model)
+    {
+        if (model == null)
+        {
+            return BadRequest("Invalid request");
+        }
+        var res = await _projectsAPIController.UpdateDeviceControl(model);
+        return res;
+    }
+
+    public async Task<IActionResult> GetCountries()
+    {
+        var resCountries = await _countryAPIController.GetCountries();
+        return resCountries;
+        
+    }
+
+    public async Task<IActionResult> SaveMapIP([FromBody] SaveMapIPRequest model)
+    {
+        if (model == null)
+        {
+            return BadRequest("Invalid Request");
+        }
+        var res = await _projectsAPIController.UpdateMappings(model);
+
+        return Ok(res);
+    }
+
+    public async Task<IActionResult> DeleteMappingCountries([FromBody] DeleteMapIPRequest model)
+    {
+        if (model == null)
+        {
+            return BadRequest("Invalid Request");
+        }
+        var res = await _projectsAPIController.DeleteMappings(model);
+
+        return Ok(res);
+    }
+    public async Task<IActionResult> GetMappedCountries([FromBody] ProUrlIDModel ProUrlID)
+    {
+       
+        var res = await _projectsAPIController.GetMappedCountries(ProUrlID.ProUrlID);
+        return Ok(res);
+    }
+
+    public async Task<IActionResult> GetProjectsDetailsbyid([FromBody]string ID)
+    {
+        return Ok();
+    }
+    #endregion
+
 }

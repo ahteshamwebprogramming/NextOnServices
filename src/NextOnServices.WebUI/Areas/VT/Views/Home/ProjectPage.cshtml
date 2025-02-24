@@ -8,6 +8,8 @@
 }
 <link href="~/css/custmahte.css" rel="stylesheet" />
 <link href="~/css/tooltip.css" rel="stylesheet" />
+
+
 <style>
     .bordertophighlight {
         border-top: 1px solid #f1f1f1;
@@ -86,7 +88,7 @@
                 <div class="card card-tale">
                     <div class="card-body">
                         <p class="mb-4">Projects Status</p>
-                        <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model.ProjectDetailList.FirstOrDefault().StatusName) </p>
+                        <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model?.ProjectDetailList?.FirstOrDefault().StatusName) </p>
                         @*<p>10.00% (30 days)</p>*@
                     </div>
                 </div>
@@ -395,6 +397,17 @@
                         </table>
                     </div>
 
+                    @{
+                        int[] arrBlockDevice = new int[5];
+                        if (Model != null && Model.Project != null)
+                        {
+                            string? blockDevice = Model?.Project?.BlockDevice;
+                            if (blockDevice != null && blockDevice.Length == 5)
+                            {
+                                arrBlockDevice = blockDevice.Select(c => int.Parse(c.ToString())).ToArray();
+                            }
+                        }
+                    }
                     <div class="col-md-3" style="padding-top:0px;padding-bottom:0px;">
                         <div style="width:100%;height:100%;border: 1px solid #f1f1f1;padding-top:10%">
                             <div class="col-md-12" style="margin-top: 25px;text-align:center">
@@ -403,7 +416,7 @@
                             <div class="offset-1 col-md-10" style="margin-top: 25px;">
                                 <div class="col-md-1">
                                     <label class="container1_ppd">
-                                        <input type="checkbox" id="chkMobile" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                        <input type="checkbox" id="chkMobile" @(arrBlockDevice[0]==1 ? "checked" : "") onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
                                     </label>
                                 </div>
                                 <div class="col-md-11" style="text-align: left;margin-left:30px;">
@@ -413,7 +426,7 @@
                             <div class="offset-1 col-md-10" style="margin-top: 25px;">
                                 <div class="col-md-1">
                                     <label class="container1_ppd">
-                                        <input type="checkbox" id="chkIOSMobile" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                        <input type="checkbox" id="chkIOSMobile" @(arrBlockDevice[1]==1 ? "checked" : "") onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
                                     </label>
                                 </div>
                                 <div class="col-md-11" style="text-align: left;margin-left:30px;">
@@ -423,7 +436,7 @@
                             <div class="offset-1 col-md-10" style="margin-top: 25px;">
                                 <div class="col-md-1">
                                     <label class="container1_ppd">
-                                        <input type="checkbox" id="chkDesktop" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                        <input type="checkbox" id="chkDesktop" @(arrBlockDevice[2]==1 ? "checked" : "") onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
                                     </label>
                                 </div>
                                 <div class="col-md-11" style="text-align: left;margin-left:30px;">
@@ -433,7 +446,7 @@
                             <div class="offset-1 col-md-10" style="margin-top: 25px;">
                                 <div class="col-md-1">
                                     <label class="container1_ppd">
-                                        <input type="checkbox" id="chkTablet" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                        <input type="checkbox" id="chkTablet" @(arrBlockDevice[3]==1 ? "checked" : "") onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
                                     </label>
                                 </div>
                                 <div class="col-md-11" style="text-align: left;margin-left:30px;">
@@ -443,7 +456,7 @@
                             <div class="offset-1 col-md-10" style="margin-top: 25px;">
                                 <div class="col-md-1">
                                     <label class="container1_ppd">
-                                        <input type="checkbox" id="chkIpAddress" onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
+                                        <input type="checkbox" id="chkIpAddress" @(arrBlockDevice[4]==1 ? "checked" : "") onchange="DeviceControl(this.id)"><span class="checkmark_ppd"></span>
                                     </label>
                                 </div>
                                 <div class="col-md-11" style="text-align: left;margin-left:30px;">
@@ -482,7 +495,7 @@
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered" id="tblSurveySpecs">
                                 <thead>
                                     <tr>
                                         <th>Country</th>
@@ -566,9 +579,9 @@
                                                                     }
                                                                 }
                                                             </td>
-                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Map IP"> </td>
+                                                            <td><input type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#MapIPModal" value="Map IP" onclick="ShowCountryModal(@item?.PUID)"> </td>
                                                             <td><input type="button" class="btn btn-primary btn-sm" value="Pre Screening"> </td>
-                                                            <td></td>
+                                                            <td data-itemid="@item?.PUID"></td>
                                                         </tr>
                                                     }
                                                 }
@@ -580,6 +593,36 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="MapIPModal" tabindex="-1" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="countryModalLabel">Select Country/Countries</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal" role="form" style="padding-right: 15px; padding-left: 15px">
+                    <div class="form-group">
+                        <input type="hidden" id="hdnMapCountry1" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-10">Select Country/Countries</label>
+                       
+                        <select class="form-control" id="mulddlCountries" multiple="multiple">
+                            
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="SaveSelectedCountries()">Save changes</button>
             </div>
         </div>
     </div>
@@ -703,7 +746,7 @@
                                                             <td>@item.LOI</td>
                                                             <td><input type="checkbox" value="@item.Block" /></td>
                                                             <td><input type="checkbox" value="@item.PreScreening" /></td>
-                                                            <td><input type="button" class="btn btn-info btn-sm" value="Edit" /></td>
+                                                            <td><input type="button" class="btn btn-info btn-sm" value="Edit" data-toggle="modal" data-target="#modal_cpi" /></td>
                                                             <td><input type="button" class="btn btn-primary btn-sm" value="Redirects" /></td>
 
                                                         </tr>
@@ -721,7 +764,61 @@
         </div>
     </div>
 </div>
+<div class="modal fade in" id="modal_cpi" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display:none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">
+                    <span aria-hidden="true">×</span>
+                    <span class="sr-only">Close</span>
+                </button>
+                <h4 class="modal-title" id="modal_cpi">Edit</h4>
+            </div>
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <div class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <div class="col-sm-10">
+                            <input type="hidden" id="hiddenCPIID" value="75648">
+                            <label class="" id="lblPname">1046534</label>
+                            <br>
+                            <label class="" id="lnlPnumber">NXT214506</label>
+                            <br>
+                            <label class="" id="lblCountryName">United States of America</label>
+                            <br>
+                            <label class="" id="lblSupplierName">VEND1</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtQuota">RESPONDENT QUOTA</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtQuota" placeholder="RESPONDENT QUOTA">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtCPI">CPI</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtCPI" placeholder="CPI">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtNOTES">NOTES</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtNOTES" placeholder="NOTES">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <input type="button" class="btn btn-default" data-dismiss="modal" value="Close">
+                <input type="button" class="btn btn-primary" onclick="savecpichanges()" value="Save changes">
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
@@ -841,14 +938,16 @@
         </div>
     </div>
 </div>
+<input type="hidden" name="gProjectId" value="@Model?.Project?.ProjectId" />
 
 <!-- #endregion -->
 @section scripts {
+
+
     <script src="~/customjs/home/dashboard.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
-
-            //getProjectTable();
+            MappedCountriesView();
         });
 
         function getProjectTable() {
@@ -893,6 +992,232 @@
             });
         }
 
+        function DeviceControl(id) {
+            debugger
+            var reqmobile = 0;
+            var reqIOS = 0;
+            var reqDesktop = 0;
+            var reqtablet = 0;
+            var reqIP = 0;
+            if ($('#chkMobile').is(':checked')) {
+                reqmobile = 1;
+            }
+            else {
+                reqmobile = 0;
+            }
+            if ($('#chkIOSMobile').is(':checked')) {
+                reqIOS = 1;
+            }
+            else {
+                reqIOS = 0;
+            }
+            if ($('#chkDesktop').is(':checked')) {
+                reqDesktop = 1
+            }
+            else {
+                reqDesktop = 0;
+            }
+            if ($('#chkTablet').is(':checked')) {
+                reqtablet = 1
+            }
+            else {
+                reqtablet = 0;
+            }
 
+            if ($('#chkIpAddress').is(':checked')) {
+                reqIP = 1
+
+            }
+            else {
+                reqIP = 0;
+            }
+            var req = reqmobile + '' + reqIOS + '' + reqDesktop + '' + reqtablet + '' + reqIP;
+            var model = {};
+            model.BlockDevice = req;
+            model.ProjectId = $("[name='gProjectId']").val();
+            BlockUI();
+            $.ajax({
+                type: "POST",
+                contentType: "application/json",
+                url: '/VT/Home/DeviceControl',
+                data: JSON.stringify(model),
+                success: function (data) {
+                    UnblockUI();
+                    Swal.fire({ title: 'Success!', text: "Device Control Updated", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                        if (result.isConfirmed) {
+
+                        }
+                    });
+                },
+                error: function (error) {
+                    UnblockUI();
+                    $erroralert("Error!", error.responseText);
+                }
+            });
+            // alert(req);
+
+        }
+
+        function ShowCountryModal(ID) {
+            debugger
+            $("#MapIPModal").css("display", "block");
+            $('#hdnMapCountry1').val(ID);
+            if ($("#mulddlCountries option").length === 0) {
+                LoadCountries();
+            }
+        }
+
+         function LoadCountries() {
+            
+            $.ajax({
+                type: "POST",
+                url: '/VT/Home/GetCountries',
+                success: function (data) {
+                    if (data.length > 0) {
+                        let optionsHtml = "";
+
+                        for (var i = 0; i < data.length; i++) {
+                            optionsHtml += `<option value="${data[i].countryId}">${data[i].country}</option>`;
+                        }
+
+                        // Add options dynamically
+                        $("#mulddlCountries").html(optionsHtml);
+
+                        // Initialize Select2
+                        $("#mulddlCountries").select2({
+                            placeholder: "Select Country/Countries", // Placeholder text
+                            allowClear: true, // Allow clearing selections
+                            width: '100%' // Set width to 100%
+                        });
+
+                    } else {
+                        console.warn("No countries returned from server.");
+                    }
+                },
+                error: function (result) {
+                    console.error("Error fetching countries:", result);
+                }
+            });
+        }
+
+       function SaveSelectedCountries() {
+       
+    const selectedCountries = $("#mulddlCountries").val(); 
+    
+            if (!selectedCountries || selectedCountries.length === 0) {
+                alert("Please select at least one country."); 
+                return; 
+            }
+    $.ajax({
+        type: "POST",
+        url: '/VT/Home/SaveMapIP', 
+        contentType: "application/json", 
+        data: JSON.stringify({ 
+            id: $("#hdnMapCountry1").val(), 
+            countries: selectedCountries 
+        }),
+        success: function (response) {
+            console.log("Countries saved successfully:", response);
+
+            alert("Countries saved successfully!");
+             $('#MapIPModal').modal('hide');
+             MappedCountriesView();
+        },
+        error: function (error) {
+            console.error("Error saving countries:", error);
+            alert("Error saving countries. Please try again.");
+        }
+    });
+}
+
+        
+        $('#MapIPModal').on('shown.bs.modal', function () {
+            LoadCountries();
+        });
+       
+
+        function mgrCountryMapping(id) {
+            id = id.split('btn')[1];
+            $('#hdnMapCountry1').val(id);
+            $('#mulddlCountries').dropdown('clear');
+
+        }
+        function MappedCountriesView() {
+            debugger
+            $('#tblSurveySpecs').find('tbody').find('tr').each(function () {
+                var row = $(this);
+                var id = row.find('td[data-itemid]').data('itemid'); 
+                var rowcol = '';
+
+                if (id) {
+                    GetMappedCountries(id).done(function (data) {
+                        if (data.value.length > 0) {
+                            data.value.forEach(function (item) {
+                                rowcol += '<label class="B_grnd" style="display: inline-block!important; color: black">' +
+                                    item.country +
+                                    '<i class="delete icon" id="' + item.Id + '_' + id + '" onclick="deleteMappedCountry(\'' + item.id + '\', \'' + id + '\')"></i>' +
+                                    '</label>';
+                            });
+                        }
+                       
+                        row.find('td:last').html(rowcol);
+                    }).fail(function (error) {
+                        console.error("Error fetching mapped countries: ", error);
+                    });
+                }
+            });
+        }
+
+        function GetMappedCountries(id) {
+            return $.ajax({
+                type: "POST",
+                url: '/VT/Home/GetMappedCountries',
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify({ ProUrlID: id }),
+                dataType: "json"
+            });
+        }
+
+        function deleteMappedCountry(countryId, projectUrlId) {
+            return $.ajax({
+                type: "POST",
+                url: '/VT/Home/DeleteMappingCountries',
+                data: JSON.stringify({ ProjectURLID: projectUrlId, CountryID: countryId }),
+                contentType: "application/json",  
+                dataType: "json",
+                success: function (response) {
+                    console.log("Mapping deleted successfully");
+                    MappedCountriesView(); 
+                },
+                error: function (error) {
+                    console.error("Error deleting mapped country: ", error);
+                }
+            });
+        }
+       function Edit(id) {
+    
+    $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+                url: '/VT/Home/GetProjectsDetailsbyid',
+        data: JSON.stringify({ ID: id }),
+        cache: false,
+        dataType: "json",
+        success: function (data) {
+                
+            $('#hiddenCPIID').val(id);
+            $('#txtQuota').val(data.d[0].RespondantQuota);
+            $('#txtCPI').val(data.d[0].CPI);
+            $('#txtNOTES').val(data.d[0].Notes);
+            $('#lblPname').text(data.d[0].ProjectName);
+            $('#lblSupplierName').text(data.d[0].Supplier);
+            $('#lblCountryName').text(data.d[0].Country);
+            $('#lnlPnumber').text(data.d[0].PNumber);
+        },
+        error: function (result) {
+            (result.statusText);
+        }
+    });
+}
     </script>
 }

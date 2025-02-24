@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using Dapper;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
@@ -272,6 +273,35 @@ public class ProjectsAPIController : ControllerBase
         }
     }
     [HttpPost]
+    public async Task<IActionResult> UpdateDeviceControl(ProjectDTO inputDTO)
+    {
+        try
+        {
+            try
+            {
+
+                string sQuery = "Select * from Projects where ProjectId=@Id";
+                var sParam = new { @Id = inputDTO.ProjectId };
+                var projects = await _unitOfWork.Project.GetEntityData<Project>(sQuery, sParam);
+                if (projects != null) {
+                    projects.BlockDevice = inputDTO.BlockDevice;
+                    var updated = await _unitOfWork.Project.UpdateAsync(projects);
+                    if (updated)
+                    {
+                        return Ok();
+                    }
+                }
+                return BadRequest("Unable to update the device control");
+            }
+            catch (Exception ex) { return null; }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retriving Attendance {nameof(GetProjectById)}");
+            throw;
+        }
+    }
+    [HttpPost]
     public async Task<IActionResult> UpdateProject(ProjectDTO inputData)
     {
         try
@@ -318,7 +348,99 @@ public class ProjectsAPIController : ControllerBase
         }
     }
 
+    [HttpPost]
+    public async Task<IActionResult> UpdateMappings(SaveMapIPRequest inputDTO)
+    {
+        try
+        {
+                var projecturlid = inputDTO.Id;
+                var countries = inputDTO.Countries;
 
+                
+                if (countries == null || countries.Count == 0)
+                {
+                    return BadRequest(new { success = false, message = "No countries selected." });
+                }
+
+                foreach (var countryid in countries)
+                {   
+                    string sQuery = @"
+                IF ((SELECT COUNT(*) FROM tblIPMapping WHERE prourlid = @prourlid AND countryid = @countryid AND isactive = 1) = 0)
+                BEGIN
+                    INSERT INTO tblIPMapping (prourlid, countryid, stat, isactive) 
+                    VALUES (@prourlid, @countryid, 0, 1)
+                END";
+
+                    var sParam = new { @prourlid = projecturlid, @countryid = countryid };
+    
+                    await _unitOfWork.Project.ExecuteQueryAsync(sQuery, sParam);
+                }
+
+                return Ok(new { success = true, message = "Countries saved successfully." });
+            
+               
+            }
+        catch (Exception ex) { return null; }
+    
+
+
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteMappings(DeleteMapIPRequest inputDTO)
+    {
+        try
+        {
+            var projecturlid = inputDTO.ProjectURLID;
+            var countries = inputDTO.CountryID;
+
+            string sQuery = @"
+        UPDATE tblIPMapping 
+        SET isactive=0 
+        WHERE Id=@countryId AND prourlid=@projecturlid AND isactive=1";
+
+            var sParam = new
+            {
+                projecturlid = projecturlid,
+                countryId = countries
+            };
+
+            await _unitOfWork.Project.ExecuteQueryAsync(sQuery, sParam);
+
+            return Ok(new { success = true, message = "Countries updated successfully." });
+        }
+        catch (Exception ex)
+        {
+            // Log the exception if necessary
+            return StatusCode(500, new { success = false, message = "An error occurred while updating countries.", error = ex.Message });
+        }
+    }
+    public async Task<IActionResult> GetMappedCountries(int id)
+    {
+        try
+        {
+            var projecturlid = id;
+
+           
+            string sQuery = @"
+            SELECT tp.id, tc.country 
+            FROM tblIPMapping tp 
+            INNER JOIN CountryMaster tc ON tp.countryid = tc.countryid  
+            WHERE tp.prourlid = @projecturlid AND tp.isactive = 1";
+            var sParam = new { projecturlid };
+            var mappedCountries = await _unitOfWork.Project.GetTableData<MappedCountryResponse>(sQuery, sParam);
+
+            return Ok(mappedCountries);
+        }
+        catch (Exception ex)
+        {
+           
+            Console.WriteLine($"Error fetching mapped countries: {ex.Message}");
+
+            
+            return StatusCode(500, "An error occurred while fetching mapped countries.");
+        }
+    }
     [HttpPost]
     public async Task<IActionResult> AddProject(ProjectDTO inputData)
     {
