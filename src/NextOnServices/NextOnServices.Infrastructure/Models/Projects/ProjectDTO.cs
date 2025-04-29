@@ -64,3 +64,24 @@ public class ProjectDTO
     public CountryMasterDTO Country { get; set; } = null!;
     
 }
+
+public class SaveMapIPRequest
+{
+    public int Id { get; set; }
+    public List<string> Countries { get; set; }
+}
+
+public class DeleteMapIPRequest
+{
+    public int ProjectURLID { get; set; }
+    public int CountryID { get; set; }
+}
+public class MappedCountryResponse
+{
+    public int Id { get; set; }
+    public string Country { get; set; }
+}
+public class ProUrlIDModel
+{
+    public int ProUrlID { get; set; }
+}
