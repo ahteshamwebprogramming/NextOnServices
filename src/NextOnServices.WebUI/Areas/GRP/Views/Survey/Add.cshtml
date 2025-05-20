@@ -16,6 +16,22 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 38px;
     }
+
+    .form-control {
+        height: 35px;
+    }
+
+    .btn-success {
+        background: #03a791 !important;
+    }
+
+    .btn-light {
+        background: #e4e8f8 !important; border:0 !important;
+     }
+    .btn-success, .btn-danger, .btn-light {
+        border-radius: 9px !important;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    }
 </style>
 <div class="row">
     <div class="col-12 grid-margin stretch-card">
@@ -32,61 +48,64 @@
                                             Please fill the in the details below
                                         </p>
                                         <form class="forms-sample" id="form">
-                                            <div style="border: 2px dashed #4B49AC;  padding: 15px;">
+                                            <div style="border: 2px dashed #4B49AC;  padding: 15px; background: #f5f7ff;">
                                                 <div class="row">
                                                     <div class="form-group col-md-6">
                                                         <label for="Pname">Survey Name</label>
                                                         <input type="text" class="form-control form-control-sm" asp-for="SurveyName">
                                                     </div>
                                                     <div class="form-group col-md-6">
+                                                        <label for="Pname">Survey Code</label>
+                                                        <input type="text" class="form-control form-control-sm" asp-for="SurveyIdHost">
+                                                    </div>
+                                                    <div class="form-group col-md-12">
                                                         <label for="Pname">Survey Description</label>
                                                         <input type="text" class="form-control form-control-sm" asp-for="SurveyDescription">
                                                     </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="Pname">Image URL</label>
-                                                        <input type="text" class="form-control form-control-sm" asp-for="ImageUrl">
-                                                    </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-12">
                                                         <label for="Pname">Survey URL</label>
                                                         <input type="text" class="form-control form-control-sm" asp-for="SurveyUrl">
                                                     </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="Pname">Duration</label>
-                                                        <input type="number" class="form-control form-control-sm" asp-for="Duration">
+                                                    <div class="form-group col-md-12">
+                                                        <label for="Pname">Image URL</label>
+                                                        <input type="text" class="form-control form-control-sm" asp-for="ImageUrl">
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    
+                                                    <div class="form-group col-md-12">
                                                         <label for="">Client Detail</label>
                                                         <input type="text" class="form-control form-control-sm" asp-for="ClientDetail">
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-3">
+                                                        <label for="Pname">Duration</label>
+                                                        <input type="number" class="form-control form-control-sm" asp-for="Duration">
+                                                    </div>
+                                                   
+                                                    <div class="form-group col-md-3">
                                                         <label for="Pname">Max Count</label>
                                                         <input type="number" class="form-control form-control-sm" asp-for="MaxCount">
                                                     </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="Pname">Is Active</label>
-                                                        <br />
-                                                        <input type="checkbox" class="" asp-for="IsActive">
-                                                    </div>
-                                                    <div class="form-group col-md-6">
+                                                   
+                                                    <div class="form-group col-md-3">
                                                         <label for="Pname">Survey Point</label>
                                                         <input type="number" class="form-control form-control-sm" asp-for="SurveyPoint">
                                                     </div>
-                                                    <div class="form-group col-md-6">
+                                                    <div class="form-group col-md-3">
                                                         <label for="Pname">Click Count</label>
                                                         <input type="number" class="form-control form-control-sm" asp-for="ClickCount">
                                                     </div>
-                                                    <div class="form-group col-md-6">
-                                                        <label for="Pname">Survey Code</label>
-                                                        <input type="text" class="form-control form-control-sm" asp-for="SurveyIdHost">
+                                                    <div class="form-group col-md-12">
+                                                        <label for="Pname">Is Active</label>
+                                                        <br />
+                                                        <input type="checkbox" class="" asp-for="IsActive">
                                                     </div>
 
 
                                                 </div>
                                             </div>
-                                            <div style="border: 2px dashed #4B49AC;  padding: 15px;margin-top:5px;">
+                                            <div style="border: 2px dashed #4B49AC;  padding: 15px;margin-top:5px; background: #03a79114;">
                                                 <div class="row">
                                                     <div class="col-md-12">
-                                                        <h5 style="text-decoration: underline;">Critearea for showing Survey</h5>
+                                                        <h5 style="text-decoration: underline;">Criteria for showing Survey</h5>
                                                     </div>
                                                     <div class="form-group col-md-6">
                                                         <label for="ClientId">Gender</label>
@@ -116,7 +135,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div style="border: 2px dashed #4B49AC;  padding: 15px;margin-top:5px;margin-bottom:5px;">
+                                            <div style="border: 2px dashed #4B49AC;  padding: 15px;margin-top:5px;margin-bottom:5px; background: #f5f7ff;">
                                                 <div class="row">
                                                     <div class="col-md-12">
                                                         <h5 style="text-decoration: underline;">URLs</h5>
@@ -139,7 +158,7 @@
                                             <input type="hidden" asp-for="SurveyId" />
                                             <input type="hidden" />
                                             <button type="button" class="btn btn-success mr-2 btn-sm" onclick="SaveSurvey()">Submit</button>
-                                            <button type="button" onclick="javascript:window.location.href='/GRP/Survey/Add'" class="btn btn-danger btn-sm">Cancel</button>
+                                            <button type="button" onclick="javascript:window.location.href='/GRP/Survey/Add'" class="btn btn-danger btn-sm mr-2">Cancel</button>
                                             <a class="btn btn-light btn-sm" href="/GRP/Survey/List" name="ViewAllSurveys">Go To List</a>
                                         </form>
                                     </div>

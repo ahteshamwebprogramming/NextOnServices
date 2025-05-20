@@ -15,6 +15,60 @@
     .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 38px;
     }
+
+    .dataTables_wrapper {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 20px;
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+        .dataTables_wrapper table.dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+            .dataTables_wrapper table.dataTable thead {
+                background-color: #4b49ac;
+                color: #fff;
+            }
+
+                .dataTables_wrapper table.dataTable thead th {
+                    padding: 12px;
+                    font-weight: 600;
+                    text-align: left;
+                    border-bottom: 2px solid #ddd;
+                }
+
+            .dataTables_wrapper table.dataTable tbody td {
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+                border-right: 1px solid #eee;
+            }
+
+            .dataTables_wrapper table.dataTable tbody tr:hover {
+                background-color: #f9f9f9;
+            }
+
+            .dataTables_wrapper table.dataTable tbody td a {
+                border-radius: 12px;
+                border: #007bff solid 1px;
+                background: #9ec4eb2e;
+                margin-right: 10px;
+                padding: 1px 8px 3px 8px;
+            }
+
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+          
 </style>
 <div class="row">
     <div class="col-12 grid-margin stretch-card">
@@ -39,7 +93,7 @@
                                         <br />
                                         <div class="row">
                                             <div class="col-md-12">
-                                                <table class="table table-hover">
+                                                <table class="table table-hover table-striped">
                                                     <thead>
                                                         <tr>
                                                             <th>Survey Id</th>

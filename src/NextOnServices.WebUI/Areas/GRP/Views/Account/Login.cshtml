@@ -235,6 +235,22 @@
             text-shadow: 0px 0px #97e083 !important;
         }
 
+        .page-body-wrapper {
+            padding: 0 !important;
+        }
+
+        .form-check label {
+            font-weight: 400;
+        }
+
+        label {
+            font-weight: 600;
+        }
+
+        .auth-form-btn {
+            background: #FFA55D !important;
+            border-color: #FFA55D !Important;
+        }
     </style>
 </head>
 
@@ -244,11 +260,7 @@
 
     <div class="col-lg-4 mx-auto">
         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-            <div class="brand-logo">
-                @*<img src="~/theme/images/logo.svg" alt="logo">*@
-                @*<img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />*@
-                <a href="/GRP/Home/Index"><img src="/grp/Images/img/logo.jpg" /></a>
-            </div>
+            
             <h4 class="main_title">Hello! let's get started</h4>
             <h6 class="font-weight-light">Sign in to continue.</h6>
             <form method="post" action="/GRP/Account/Login">

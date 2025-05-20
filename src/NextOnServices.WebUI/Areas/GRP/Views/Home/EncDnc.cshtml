@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Areas/GRP/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="row ">
+    <div class="col-md-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" id="txtName" />
+                        <input type="button" class="btn btn-primary" value="Encrypt" onclick="EncDnc('Encrypt')" />
+                        <input type="button" class="btn btn-primary" value="Decrypt" onclick="EncDnc('Decrypt')" />
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+        });
+
+        function EncDnc(opt) {
+            var inputDTO = {
+                Name: $("#txtName").val(),
+                opt: opt
+            };
+            //BlockUI();
+            $.ajax({
+                type: "POST",
+                url: "/GRP/Home/EncDncOpt",
+                contentType: 'application/json',
+                data: JSON.stringify(inputDTO),
+                success: function (data) {
+                    alert(data)
+                },
+                error: function (error) {
+                    $erroralert("Error!", error.responseText + '!');
+                    UnblockUI();
+                }
+            });
+        }
+
+    </script>
+}

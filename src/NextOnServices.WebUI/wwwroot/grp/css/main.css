@@ -1,0 +1,75 @@
+﻿.dataTables_wrapper {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+    .dataTables_wrapper table.dataTable {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+        .dataTables_wrapper table.dataTable thead {
+            background-color: #4b49ac;
+            color: #fff;
+        }
+
+            .dataTables_wrapper table.dataTable thead th {
+                padding: 12px;
+                font-weight: 600;
+                text-align: left;
+                border-bottom: 2px solid #ddd;
+            }
+
+        .dataTables_wrapper table.dataTable tbody td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            border-right: 1px solid #eee;
+        }
+
+        .dataTables_wrapper table.dataTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .dataTables_wrapper table.dataTable tbody td a {
+            border-radius: 12px;
+            border: #007bff solid 1px;
+            background: #9ec4eb2e;
+            margin-right: 10px;
+            padding: 1px 8px 3px 8px;
+        }
+
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 10px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+.btn-outline-primary {
+    color: #FFA55D;
+    border-color: #FFA55D !important;
+    padding: 7px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+}
+    .btn-outline-primary:hover {
+        color: #fff !important;
+        background: #FFA55D !important;
+        border-color: #FFA55D !important;
+    }
+.ac_summary .card-body {
+    text-align:center;
+}
+.dataTables_filter .form-control {
+    padding: 0px 15px !important;
+    height: 28px !important;
+}
+.dataTables_wrapper select {
+    padding: 0px 15px !important;
+    height: 28px !important;
+}

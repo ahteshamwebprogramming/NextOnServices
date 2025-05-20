@@ -151,13 +151,29 @@ app.MapRazorPages();
 
 app.UseEndpoints(endpoints =>
 {
+
+    //endpoints.MapControllerRoute(
+    //name: "GRP",
+    //pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+    //endpoints.MapControllerRoute(
+    //    name: "default",
+    //    pattern: "{controller=Account}/{action=Login}/{id?}");
+
+
     endpoints.MapControllerRoute(
-    name: "MyArea",
-    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+        name: "areas",
+        pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
     endpoints.MapControllerRoute(
         name: "default",
         pattern: "{controller=Account}/{action=Login}/{id?}");
+
+    endpoints.MapGet("/", context =>
+    {
+        context.Response.Redirect("/GRP/Home/Index");
+        return Task.CompletedTask;
+    });
 });
 app.Run();
 

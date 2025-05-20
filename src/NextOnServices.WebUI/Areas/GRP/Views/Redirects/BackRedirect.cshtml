@@ -1,0 +1,26 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Closing...</title>
+</head>
+<body>
+    <script type="text/javascript">
+        localStorage.setItem('refreshNeeded', 'true');
+        window.close();
+    </script>
+</body>
+</html>
+
+
+@* window.addEventListener('storage', function(event) {
+    if (event.key === 'refreshNeeded' && event.newValue === 'true') {
+        window.location.reload();
+        localStorage.setItem('refreshNeeded', 'false'); // reset
+    }
+}); *@

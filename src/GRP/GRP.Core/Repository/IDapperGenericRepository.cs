@@ -11,7 +11,10 @@ public interface IDapperRepository<T> where T : class
     Task<List<T>> FindAllAsync();
     Task<T> FindByIdAsync(int id);
     object UpdateFields<TS>(T param, IDbConnection connection, IDbTransaction transaction = null, int? commandTimeOut = null);
+
+    Task<List<T>> GetTableData<T>(string sQuery, object parameters = null);
     Task<List<T>> GetTableData<T>(IDbConnection connection, IDbTransaction trns, string sWhere = "", string sOrderBy = "");
+    Task<T> GetEntityData<T>(string sQuery, object parameters = null);
     Task<List<T>> GetTableData<T>(string sQuery, IDbConnection connection, IDbTransaction trans = null);
     Task<List<T>> GetTableData<T>(string sQuery);
     Task<List<T>> GetTableDataExec<T>(string sQuery);

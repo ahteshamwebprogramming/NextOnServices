@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\NextOnServices\NextOnServices.Core\NextOnServices.Core.csproj" />
     <ProjectReference Include="..\..\GRP.Core\GRP.Core.csproj" />
     <ProjectReference Include="..\..\GRP.Infrastructure\GRP.Infrastructure.csproj" />
   </ItemGroup>

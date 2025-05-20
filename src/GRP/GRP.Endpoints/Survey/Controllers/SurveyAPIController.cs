@@ -51,7 +51,7 @@ public class SurveyAPIController : ControllerBase
     {
         try
         {
-            string query = $"Select * from survey where SurveyId not in (select SurveyId from [SurveyRedirectDetails] where userid={UserId}) and  SurveyId not in  (select a.SurveyId from ( select SurveyId,ProfileSurveyId,Options,pis.QuestionType,QuestionName  ,(Case  when (QuestionType=4 and (select count(1) from ProfileSurveyResponses psr where psr.UserId={UserId} and psr.QuestionId=sc.ProfileSurveyId and psr.AnswerId between Convert(int,(select top 1 value from string_split(sc.Options,',') order by value asc)) and Convert(int,(select top 1 value from string_split(sc.Options,',') order by value desc)) )>0 ) then 1 when ( QuestionType!=4 and ((select value from string_split((select psr.AnswerId from ProfileSurveyResponses psr where psr.UserId={UserId} and psr.QuestionId=sc.ProfileSurveyId),',')) in (select value from string_split(sc.Options,','))) )then 1 else 0 end  ) Criteria from SurveyCriteria sc  join ProfileInfoSurvey pis on sc.ProfileSurveyId=pis.ProfileInfoSurveyId where sc.IsActive=1 and pis.IsActive=1 and ProfileSurveyId!=0 )a where a.Criteria=0)";
+            string query = $"Select * from survey ssur where SurveyId not in (select SurveyId from [SurveyRedirectDetails] where userid={UserId}) and  SurveyId not in  (select a.SurveyId from ( select SurveyId,ProfileSurveyId,Options,pis.QuestionType,QuestionName  ,(Case  when (QuestionType=4 and (select count(1) from ProfileSurveyResponses psr where psr.UserId={UserId} and psr.QuestionId=sc.ProfileSurveyId and psr.AnswerId between Convert(int,(select top 1 value from string_split(sc.Options,',') order by value asc)) and Convert(int,(select top 1 value from string_split(sc.Options,',') order by value desc)) )>0 ) then 1 when ( QuestionType!=4 and ((select value from string_split((select psr.AnswerId from ProfileSurveyResponses psr where psr.UserId={UserId} and psr.QuestionId=sc.ProfileSurveyId),',')) in (select value from string_split(sc.Options,','))) )then 1 else 0 end  ) Criteria from SurveyCriteria sc  join ProfileInfoSurvey pis on sc.ProfileSurveyId=pis.ProfileInfoSurveyId where sc.IsActive=1 and pis.IsActive=1 and ProfileSurveyId!=0 )a where a.Criteria=0)  and ssur.IsActive=1";
             List<SurveyDTO> dto = await _unitOfWork.Survey.GetTableData<SurveyDTO>(query);
             return Ok(dto);
         }
@@ -242,7 +242,7 @@ public class SurveyAPIController : ControllerBase
 
                         PointsHistory pointsHistory = new PointsHistory();
                         pointsHistory.Points = 0;
-                        pointsHistory.TransType = "Credit";
+                        pointsHistory.TransType = "Pending";
                         pointsHistory.Source = "Survey";
                         pointsHistory.SourceRefId = inputDTO.SurveyId ?? default(int);
                         pointsHistory.IsActive = true;

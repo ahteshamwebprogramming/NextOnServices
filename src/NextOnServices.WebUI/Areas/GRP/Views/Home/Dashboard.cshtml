@@ -18,8 +18,8 @@
         margin-bottom: 10px;
         display: block;
         color: #504b8e;
-        position:relative;
-        width:53px;
+        position: relative;
+        width: 53px;
     }
 
     .surverys_card span {
@@ -61,9 +61,13 @@
     }
 
     .card .card-title, .flow_count {
-    
-    margin-bottom: 0;}
-    .status_percent{gap:15px; align-items:center;}
+        margin-bottom: 0;
+    }
+
+    .status_percent {
+        gap: 15px;
+        align-items: center;
+    }
 
     .flow_count {
         display: flex;
@@ -85,12 +89,12 @@
         <div class="card">
             <div class="card-body">
                 <h6 class="font-weight-normal mb-3">Your Account Sumamry:</h6>
-                <div class="row justify-content-start justify-content-start">
+                <div class="row justify-content-start justify-content-center ac_summary">
                     @* <div class="col-md-3 grid-margin stretch-card">
                         <div class="card">
                             <div class="card-body">
                                 <h3 class="font-weight-bold">Welcome @await Component.InvokeAsync("GRP/UserName")</h3>
-                                
+
                             </div>
                         </div>
                     </div> *@
@@ -98,42 +102,42 @@
                         <div class="card border-1">
                             <div class="card-body">
                                 <div class=" d-flex justify-content-between align-items-center">
-                                <h4 class="card-title">Profile Status</h4>
-                                <div class="status_percent d-flex ">
-                                    <span class="flow_count">@(Model == null ? 0 : Model.ProfileCompletePercent == null ? 0 : Model.ProfileCompletePercent)%</span>
-                                </div>
+                                    <h4 class="card-title">Profile Status</h4>
+                                    <div class="status_percent d-flex ">
+                                        <span class="flow_count">@(Model == null ? 0 : Model.ProfileCompletePercent == null ? 0 : Model.ProfileCompletePercent)%</span>
+                                    </div>
                                 </div>
                                 <hr />
                                 <a href="/GRP/Home/AnswerSurveyCW" class="button_clickable btn btn-outline-primary btn-fw">Complete My Profile</a>
                             </div>
                         </div>
-                       
+
                     </div>
                     <div class="col-md-3 ">
                         <div class="card border-1">
                             <div class="card-body">
                                 <div class=" d-flex justify-content-between align-items-center">
-                                <h4 class="card-title">Points Earned</h4>
-                                <span class="flow_count">@(Model == null ? 0 : Model.PointsTransaction == null ? 0 : Model.PointsTransaction.BalancePoints) <em class="points">Points</em></span>
+                                    <h4 class="card-title"> Earned</h4>
+                                    <span class="flow_count">@(Model == null ? 0 : Model.PointsTransaction == null ? 0 : Model.PointsTransaction.BalancePoints) <em class="points">Points</em></span>
                                 </div>
                                 <hr />
                                 <a href="/GRP/Points/PointsEarned" class="button_clickable btn btn-outline-primary  btn-fw">View History</a>
                             </div>
                         </div>
-                        
+
                     </div>
                     <div class="col-md-3 ">
                         <div class="card border-1">
                             <div class="card-body">
                                 <div class=" d-flex justify-content-between align-items-center">
-                                <h4 class="card-title">Points Pending</h4>
-                                <span class="flow_count">@(Model != null ? Model.PointsPending : 0) <em class="points">Points</em></span>
+                                    <h4 class="card-title"> Pending</h4>
+                                    <span class="flow_count">@(Model != null ? Model.PointsPending : 0) <em class="points">Points</em></span>
                                 </div>
                                 <hr />
                                 <a href="/GRP/Points/PointsPending" class="button_clickable btn btn-outline-primary  btn-fw">View History</a>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
@@ -154,7 +158,7 @@
                     <div class="weather-info">
                         <div class="d-flex">
                             <div>
-                                <h2 class="mb-0 font-weight-normal"><img style="width:50px;" name="icon" src="" class=""/><span name="temp"></span><sup></sup></h2>
+                                <h2 class="mb-0 font-weight-normal"><img style="width:50px;" name="icon" src="" class="" /><span name="temp"></span><sup></sup></h2>
                             </div>
                             <div class="ml-2">
                                 <h4 class="location font-weight-normal" name="City"></h4>
@@ -201,7 +205,12 @@
 @section scripts {
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.min.js"></script>
     <script type="text/javascript">
-
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'refreshNeeded' && event.newValue === 'true') {
+                window.location.reload();
+                localStorage.setItem('refreshNeeded', 'false'); // reset
+            }
+        });
         $(document).ready(function () {
 
 

@@ -36,6 +36,29 @@ public class HomeController : Controller
         _surveyAPIController = surveyAPIController;
     }
 
+    public async Task<IActionResult> EncDnc()
+    {
+        return View();
+    }
+    public async Task<IActionResult> EncDncOpt([FromBody] ENCDNCViewModel inputDTO)
+    {
+        string enc = "";
+        string encComplete = "7Lavo40IgOeslashbRQMst3YorJtPEHQyAaL085YY4oUO2o%3D";
+        string encTerminate = "ywLxvpn3UXOtoM1UF3QDWCWOCbYSwgjDfHZ5BCVn1fM%3D";
+        if (inputDTO != null)
+        {
+            if (inputDTO.opt == "Encrypt")
+            {
+                enc = CommonHelper.EncryptURL(inputDTO.Name);
+            }
+            if (inputDTO.opt == "Decrypt")
+            {
+                enc = CommonHelper.DecryptURL(inputDTO.Name);
+            }
+        }
+        return Ok(enc);
+    }
+
     public async Task<IActionResult> Dashboard()
     {
         UserDTO userSession = (UserDTO)(JsonConvert.DeserializeObject<UserDTO>(HttpContext.Session.GetString("User")));
@@ -103,7 +126,7 @@ public class HomeController : Controller
     {
         return View();
     }
-        
+
     public async Task<IActionResult> AnswerSurveyCW()
     {
         var res = await _profileInfoCategoryAPIController.ProfileInfoCategoryList();

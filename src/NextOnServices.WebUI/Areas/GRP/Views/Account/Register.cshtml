@@ -34,6 +34,7 @@
             background: #ffffff;
             margin: 6% auto;
         }
+
         .brand-logo {
             text-align: center;
             margin: 0 !important;
@@ -209,6 +210,7 @@
             border: #f6d7ce solid 1px;
         }
 
+        .page-body-wrapper{padding: 0 !important;}
         .bottom_links li {
             display: inline-block;
             padding: 0 10px;
@@ -240,87 +242,144 @@
             margin-left: 10px;
             text-shadow: 0px 0px #97e083 !important;
         }
+        p{text-align:justify;}
 
+        .form-check label {
+            font-weight: 400;
+        }
+        label{font-weight:600;}
+
+        .auth-form-btn {
+            background: #FFA55D !important;
+            border-color:#FFA55D !Important;
+        }
     </style>
 </head>
 
 <body>
-    
 
-                    <div class="col-lg-4 mx-auto">
-                        <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <div class="brand-logo">
-                                @*<img src="~/theme/images/logo.svg" alt="logo">*@
-                                @*<img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />*@
-                                <a href="/GRP/Home/Index"> <img src="/grp/Images/img/logo.jpg" /></a>
-                            </div>
-                            <h4 class="main_title">New here?</h4>
-                            <h6 class="font-weight-light">Signing up is easy. It only takes a few steps</h6>
-                            <form method="post" action="/GRP/Account/Register">
-                                <div class="form-group">
-                                    <input type="text" class="form-control form-control-lg" asp-for="FirstName" placeholder="First Name">
-                                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                                </div>
-                                <div class="form-group">
-                                    <input type="text" class="form-control form-control-lg" asp-for="LastName" placeholder="Last Name">
-                                </div>
-                                <div class="form-group">
-                                    <input type="email" class="form-control form-control-lg" asp-for="EmailId" placeholder="Email">
-                                    <span asp-validation-for="EmailId" class="text-danger"></span>
-                                </div>
-                                <div class="form-group">
-                                    <select class="form-control form-control-lg" asp-for="Gender">
-                                        <option value="0">Choose Gender</option>
-                                        <option value="1">Male</option>
-                                        <option value="2">Female</option>
-                                        <option value="3">Other</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <input type="date" class="form-control form-control-lg" asp-for="DateOfBirth">
-                                </div>
-                                <div class="form-group">
-                                    <select class="form-control form-control-lg" asp-for="CountryId">
-                                        <option value="0">Choose Country</option>
-                                        @{
-                                            if (Model != null)
-                                            {
-                                                if (Model.Countries != null)
-                                                {
-                                                    foreach (var item in Model.Countries)
-                                                    {
-                                                        <option value="@item.CountryId">@item.Country</option>
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    </select>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="form-check">
-                                        <label class="form-check-label text-muted" style="display: inline;">
-                                            <input type="checkbox" class="form-check-input" asp-for="AgreedToTACPP">
-                                            I agree to all
-                                        </label>
-                                        <label class="form-check-label text-muted" style="display:inline;margin-left:0px;">
-                                            <a href="/GRP/Legal/TermsOfServices">Terms Of Services</a> and <a href="/GRP/Legal/PrivacyPolicy">Privacy Policy</a>
-                                        </label>
-                                    </div>
-                                    <span asp-validation-for="AgreedToTACPP" class="text-danger"></span>
-                                </div>
-                                <div class="mt-3">
-                                    <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" href="../../index.html">SIGN UP</button>
-                                </div>
-                                <div class="text-center mt-4 font-weight-light">
-                                    Already have an account? <a href="/GRP/Account/Login" class="text-primary">Login</a>
-                                </div>
-                                @Html.ValidationSummary("", new { @class = "text-danger" })
-                            </form>
+
+    <div class="col-lg-8 mx-auto">
+        <div class="auth-form-light text-left py-5 px-4 px-sm-5">
+            
+            <p class="pb-3">
+                By being a part of the online community from Global Research Panels you have a chance to influence future products and services by sharing your opinions, thoughts and experiences regarding a range of other interesting topics. You will be rewarded for every survey you complete, usually the amount is between $1 and $15 per survey, depending on the length and nature of the interview.
+                <br /><br />
+                Please enter your details below to get started...
+            </p>
+
+
+            <form method="post" action="/GRP/Account/Register">
+                <div>
+                    <label>What is your name?</label>
+                    <div>
+                        <div class="form-group">
+                            <input type="text" class="form-control form-control-lg" asp-for="FirstName" placeholder="First Name">
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" class="form-control form-control-lg" asp-for="LastName" placeholder="Last Name">
                         </div>
                     </div>
+                </div>
+
+                <div>
+                    <label>What is your email address?</label>
+                    <div>
+                        <div class="form-group">
+                            <input type="email" class="form-control form-control-lg" asp-for="EmailId" placeholder="Email Address">
+                            <span asp-validation-for="EmailId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" class="form-control form-control-lg" placeholder="Validate Email">
+                            <span class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Date of birth</label>
+                    <div>
+                        <div class="form-group">
+                            <input type="date" class="form-control form-control-lg" asp-for="DateOfBirth">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label>What is your gender?</label>
+                    <div>
+                        <div class="form-group">
+                            <select class="form-control form-control-lg" asp-for="Gender">
+                                <option value="0">Choose Gender</option>
+                                <option value="1">Male</option>
+                                <option value="2">Female</option>
+                                <option value="3">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
 
-               
+                <div>
+                    <label>What is your current employment status?</label>
+                    <div>
+                        <div class="form-group">
+                            <select class="form-control form-control-lg" <option value="-999">Select Value</option><option value="632682">Employed full-time</option><option value="632683">Employed part-time</option><option value="632684">Self-employed full-time</option><option value="632685">Self-employed part-time</option><option value="632686">Active military</option><option value="632687">Inactive military/Veteran</option><option value="632688">Temporarily unemployed</option><option value="632689">Full-time homemaker</option><option value="632690">Retired</option><option value="632691">Student</option><option value="632692">Disabled</option><option value="632693">Prefer not to answer</option></select>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label>What is your country?</label>
+                    <div>
+                        <div class="form-group">
+                            <select class="form-control form-control-lg" asp-for="CountryId">
+                                <option value="0">Choose Country</option>
+                                @{
+                                    if (Model != null)
+                                    {
+                                        if (Model.Countries != null)
+                                        {
+                                            foreach (var item in Model.Countries)
+                                            {
+                                                <option value="@item.CountryId">@item.Country</option>
+                                            }
+                                        }
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 m-auto">
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <label class="form-check-label text-muted" style="display: inline;">
+                                <input type="checkbox" class="form-check-input" asp-for="AgreedToTACPP">
+                                I agree to all
+                            </label>
+                            <label class="form-check-label text-muted" style="display:inline;margin-left:0px;">
+                                <a href="/GRP/Legal/TermsOfServices">Terms Of Services</a> and <a href="/GRP/Legal/PrivacyPolicy">Privacy Policy</a>
+                            </label>
+                        </div>
+                        <span asp-validation-for="AgreedToTACPP" class="text-danger"></span>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" href="../../index.html">Register</button>
+                </div>
+                <div class="text-center mt-4 font-weight-light">
+                    Already have an account? <a href="/GRP/Account/Login" class="text-primary">Login</a>
+                </div>
+                @Html.ValidationSummary("", new { @class = "text-danger" })
+            </form>
+        </div>
+    </div>
+
+
+
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="~/theme/vendors/js/vendor.bundle.base.js"></script>

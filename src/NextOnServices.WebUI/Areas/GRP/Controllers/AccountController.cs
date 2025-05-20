@@ -115,6 +115,7 @@ public class AccountController : Controller
     [HttpPost]
     public async Task<IActionResult> Register(UserDTO userDTO)
     {
+        userDTO.Countries = await _mastersAPIController.CountryList();
         if (ModelState.IsValid)
         {
             string randomGeneratedPassword = CommonHelper.RandomString(8);
