@@ -19,6 +19,9 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using NextOnServices.Infrastructure.ViewModels.ProjectDetails;
 using Microsoft.EntityFrameworkCore.Query;
 using X.PagedList;
+using System.Data.Common;
+using System.Threading;
+using System.Transactions;
 
 namespace NextOnServices.Services;
 
@@ -497,5 +500,25 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         finally { DbConnection.Close(); }
     }
 
+    public async Task<T> GetOutputFromStoredProcedure<T>(string storedProcedure, DynamicParameters dynamicParameters, string outputParamName)
+    {
+        DbConnection.Open();
+        try
+        {
+            await DbConnection.ExecuteAsync(storedProcedure, dynamicParameters, commandType: CommandType.StoredProcedure);
+            return dynamicParameters.Get<T>(outputParamName);
+        }
+        catch (Exception)
+        {
+            return default;
+        }
+        finally
+        {
+            DbConnection.Close();
+        }
+    }
+
+
 
 }
+

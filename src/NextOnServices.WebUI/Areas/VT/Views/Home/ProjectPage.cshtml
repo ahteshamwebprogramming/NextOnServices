@@ -744,9 +744,9 @@
                                                             <td>@item.Incomplete</td>
                                                             <td>@item.IR%</td>
                                                             <td>@item.LOI</td>
-                                                            <td><input type="checkbox" value="@item.Block" /></td>
-                                                            <td><input type="checkbox" value="@item.PreScreening" /></td>
-                                                            <td><input type="button" class="btn btn-info btn-sm" value="Edit" data-toggle="modal" data-target="#modal_cpi" /></td>
+                                                            <td><input type="checkbox" id="@item.Id" onchange="chkchecked(this)" value="@item.Block" data-project-id="@item.Id" @(item.Block.HasValue && !item.Block.Value ? "" : "checked") /></td>
+                                                            <td><input type="checkbox" value="@item.PreScreening" id="@item.Id" onchange="Prescreeningchecked(this)" value="@item.PreScreening" data-project-id="@item.Id" @(item.PreScreening.HasValue && !item.PreScreening.Value ? "" : "checked") /></td>
+                                                            <td><input type="button" class="btn btn-info btn-sm" value="Edit" id="@item.Id" onclick="Edit(this.id)" /></td>
                                                             <td><input type="button" class="btn btn-primary btn-sm" value="Redirects" /></td>
 
                                                         </tr>
@@ -1057,7 +1057,103 @@
             // alert(req);
 
         }
+        function chkchecked(checkbox) {
+            try {
+                const isChecked = checkbox.checked;
+                const itemId = checkbox.dataset.projectId;
+                const status = isChecked ? 'Check' : 'Uncheck';
 
+                const model = {
+                    ProjectId: itemId,
+                    Action: status
+                };
+
+                BlockUI();
+
+                $.ajax({
+                    type: "POST",
+                    url: '/VT/Home/UpdateStatus',
+                    contentType: "application/json",
+                    data: JSON.stringify(model),
+                    dataType: "json"
+                })
+                .done(function (data) {
+                    UnblockUI();
+
+                    const message = data?.value?.message;
+
+                    if (!message) {
+                        Swal.fire('Unknown Response', 'No message returned from server.', 'warning');
+                        return;
+                    }
+
+                    if (message === "Overquota") {
+                        $(checkbox).prop('checked', true);
+                        Swal.fire('Quota Exceeded', message, 'warning');
+                    } else if (message === "Invalid request") {
+                        $(checkbox).prop('checked', !isChecked);
+                        Swal.fire('Invalid Request', message, 'error');
+                    } else {
+                        Swal.fire('Success', message, 'success');
+                    }
+                })
+                .fail(function (xhr, status, error) {
+                    UnblockUI();
+                    $(checkbox).prop('checked', !isChecked);
+                    Swal.fire('Error', 'Something went wrong: ' + error, 'error');
+                });
+            } catch (e) {
+                Swal.fire('Client Error', e.message, 'error');
+            }
+        }
+
+        function Prescreeningchecked(checkbox) {
+                 debugger
+            try {
+                const isChecked = checkbox.checked;
+                const itemId = checkbox.dataset.projectId;
+
+                const model = {
+                     ProjectId: parseInt(itemId),
+                    Prescreening: isChecked ? 1 : 0
+                };
+
+                BlockUI();
+
+                $.ajax({
+                    type: "POST",
+                    url: '/VT/Home/upDatePrescreening',
+                    contentType: "application/json",
+                    data: JSON.stringify(model),
+                    dataType: "json"
+                })
+                .done(function (data) {
+                    UnblockUI();
+
+                    const result = data;
+                    const message = result?.RetMessage;
+
+                    if (result?.RetVal === -1) {
+                        $(checkbox).prop('checked', !isChecked);
+                        Swal.fire('Update Failed', message, 'error');
+                    } else {
+                        Swal.fire('Success', message, 'success');
+                    }
+                })
+                .fail(function (xhr, status, error) {
+                    UnblockUI();
+                    $(checkbox).prop('checked', !isChecked);
+                    Swal.fire('Error', 'Something went wrong: ' + error, 'error');
+                });
+            } catch (e) {
+                Swal.fire('Client Error', e.message, 'error');
+            }
+        }
+
+        function showNotification(message, type) {
+            // Replace with your preferred notification library (Toastr, SweetAlert, etc.)
+            alert(`${type}: ${message}`);
+        }
         function ShowCountryModal(ID) {
             debugger
             $("#MapIPModal").css("display", "block");
@@ -1066,6 +1162,9 @@
                 LoadCountries();
             }
         }
+
+
+        
 
          function LoadCountries() {
             
@@ -1119,13 +1218,26 @@
         success: function (response) {
             console.log("Countries saved successfully:", response);
 
-            alert("Countries saved successfully!");
-             $('#MapIPModal').modal('hide');
-             MappedCountriesView();
+                    Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Countries saved successfully!',
+                confirmButtonColor: '#3085d6'
+            }).then(() => {
+                $('#MapIPModal').modal('hide');
+                MappedCountriesView();
+            });
         },
+
         error: function (error) {
             console.error("Error saving countries:", error);
-            alert("Error saving countries. Please try again.");
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error saving countries. Please try again.',
+                confirmButtonColor: '#d33'
+            });
         }
     });
 }
@@ -1178,46 +1290,135 @@
             });
         }
 
-        function deleteMappedCountry(countryId, projectUrlId) {
-            return $.ajax({
-                type: "POST",
-                url: '/VT/Home/DeleteMappingCountries',
-                data: JSON.stringify({ ProjectURLID: projectUrlId, CountryID: countryId }),
-                contentType: "application/json",  
-                dataType: "json",
-                success: function (response) {
-                    console.log("Mapping deleted successfully");
-                    MappedCountriesView(); 
-                },
-                error: function (error) {
-                    console.error("Error deleting mapped country: ", error);
+               function deleteMappedCountry(countryId, projectUrlId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This country will be unmapped from the project.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        type: "POST",
+                        url: '/VT/Home/DeleteMappingCountries',
+                        data: JSON.stringify({ ProjectURLID: projectUrlId, CountryID: countryId }),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'Mapping deleted successfully.',
+                                confirmButtonColor: '#3085d6'
+                            });
+                            MappedCountriesView();
+                        },
+                        error: function (error) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Failed to delete mapping. Please try again.',
+                                confirmButtonColor: '#d33'
+                            });
+                            console.error("Error deleting mapped country: ", error);
+                        }
+                    });
                 }
             });
         }
+
        function Edit(id) {
-    
-    $.ajax({
+          debugger
+          const model = {
+            Action: id,
+            };
+         $.ajax({
         type: "POST",
-        contentType: "application/json; charset=utf-8",
-                url: '/VT/Home/GetProjectsDetailsbyid',
-        data: JSON.stringify({ ID: id }),
+       
+            url: '/VT/Home/GetProjectsDetailsbyid',
+           
+        data: JSON.stringify(model),
+                contentType: "application/json; charset=utf-8",
         cache: false,
         dataType: "json",
-        success: function (data) {
-                
-            $('#hiddenCPIID').val(id);
-            $('#txtQuota').val(data.d[0].RespondantQuota);
-            $('#txtCPI').val(data.d[0].CPI);
-            $('#txtNOTES').val(data.d[0].Notes);
-            $('#lblPname').text(data.d[0].ProjectName);
-            $('#lblSupplierName').text(data.d[0].Supplier);
-            $('#lblCountryName').text(data.d[0].Country);
-            $('#lnlPnumber').text(data.d[0].PNumber);
+                success: function (response) {
+                debugger
+           
+     const data = response.value;
+
+    $('#hiddenCPIID').val(data.id);
+            $('#txtQuota').val(data.respondants);
+            $('#txtCPI').val(data.cpi);              
+    $('#txtNOTES').val(data.notes);
+    $('#lblPname').text(data.projectName);
+    $('#lblSupplierName').text(data.supplier);
+    $('#lblCountryName').text(data.country);
+    $('#lnlPnumber').text(data.pid);      
+
+    $('#modal_cpi').modal('show'); 
         },
         error: function (result) {
             (result.statusText);
         }
     });
 }
+
+        function savecpichanges() {
+            var formdata = getdata('CPI');
+            debugger
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                        url: '/VT/Home/UpdatepromappingCPI',
+                data: JSON.stringify({ ProjectId: formdata.id, quota: formdata.quota, cpi: formdata.cpi, notes: formdata.notes }),
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    debugger
+                                   if (data.value.retVal === 1) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                            text: data.value.retMessage || "CPI Mapping updated successfully.",
+                    confirmButtonColor: '#3085d6'
+                }).then(() => {
+                    $('#modal_cpi .close').click();
+                    // loadSupplierDetails(querystringid); 
+                    window.location.reload();
+                });
+            } else if (data.value === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: "Please try again.",
+                    confirmButtonColor: '#d33'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Unexpected Response',
+                    text: "Please contact the administrator.",
+                    confirmButtonColor: '#f6c23e'
+                });
+            }
+        },
+                error: function (result) {
+                    //
+                    (result.d);
+                }
+            });
+        }
+
+        function getdata(prefix) {
+            return {
+                id: $('#hiddenCPIID').val(),
+                quota: $('#txtQuota').val(),
+                cpi: $('#txtCPI').val(),
+                notes: $('#txtNOTES').val()
+            };
+        }
     </script>
 }

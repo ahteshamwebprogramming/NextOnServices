@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using NextOnServices.Core.Entities;
 using NextOnServices.Core.Repository;
 using NextOnServices.Infrastructure.Helper;
@@ -535,5 +536,90 @@ public class ProjectsAPIController : ControllerBase
         return Ok(res);
     }
 
+    [HttpPost]
+    public async Task<IActionResult> UpdateStatus(int id, string action)
+    {
+       
+        var parameters = new DynamicParameters();
+        parameters.Add("@id", id);
+        parameters.Add("@action", action);
+        parameters.Add("@ssid", "YUQFALPJ");
+        parameters.Add("@output", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
+        var message = await _unitOfWork.Project.GetOutputFromStoredProcedure<string>("mgrOverquota",parameters,"@output");
+
+        return Ok(new { message });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> upDatePrescreening(int id, int action)
+    {
+
+        if (id <= 0)
+        {
+            return BadRequest(new { RetVal = -1, RetMessage = "Invalid request" });
+        }
+
+        // action is already int, so no conversion needed
+        int prescreening = action;
+
+        string sql = "UPDATE dbo.ProjectMapping SET Prescreening = @Prescreening WHERE Id = @Id";
+
+        bool success = await _unitOfWork.Project.ExecuteQueryAsync(sql, new { Id = id, Prescreening = prescreening });
+
+        if (success)
+        {
+            return Ok(new { RetVal = 1, RetMessage = "Updated" });
+        }
+        else
+        {
+            return Ok(new { RetVal = -1, RetMessage = "Failed" });
+        }
+
+    }
+
+    public async Task<IActionResult> getProjectDetailsbyID(int ID)
+    {
+        string sql = @"
+        select p.PID,pm.ID,pm.ProjectID, p.PName as projectname,pm.CountryID,tc.Country,pm.SUpplierID,s.Name as Supplier,pm.OLink,pm.CPI,pm.MLink,pm.Respondants,pm.Notes,pm.IsChecked,
+            pm.SID,pm.Code,pm.Completes,pm.Terminate,pm.Quotafull,pm.Screened,pm.Overquota,pm.Incomplete,pm.Security,pm.Fraud,pm.SUCCESS,pm.[DEFAULT],pm.FAILURE,pm.[QUALITYTERMINATION],
+            pm.[OVERQUOTA],pm.IsActive,pm.Block,
+            (CASE WHEN pm.trackingtype is NULL THEN 0 ELSE pm.trackingtype end) AS trackingtype
+            ,isnull(AddHashing,0)AddHashing
+            ,isnull(ParameterName,'')ParameterName
+            ,isnull(HashingType,'')HashingType
+             from projectmapping pm left join projects p on pm.ProjectID=p.projectid left join CountryMaster tc on pm.CountryID=tc.CountryId 
+            left join Suppliers s on pm.SUpplierID = s.ID where pm.ID=@id";
+
+        var result = await _unitOfWork.Project.GetEntityData<ProjectDetailDTO>(sql, new { id = ID });
+
+        if (result == null)
+            return NotFound(new { RetVal = -1, RetMessage = "Project not found." });
+
+        return Ok(result);
+    }
+
+    public async Task<IActionResult> UpdateCPIMapping(ProjectDTO model)
+    {
+        string sql = @"UPDATE projectmapping 
+                   SET Respondants = @Quota, CPI = @CPI, Notes = @Notes 
+                   WHERE ID = @Id";
+
+        bool success = await _unitOfWork.Project.ExecuteQueryAsync(sql, new
+        {
+            Id = model.ProjectId,
+            CPI = model.Cpi,
+            Quota = model.Quota,
+            Notes = model.Notes
+        });
+
+        if (success)
+        {
+            return Ok(new { RetVal = 1, RetMessage = "CPI Mapping updated successfully." });
+        }
+        else
+        {
+            return Ok(new { RetVal = -1, RetMessage = "Failed to update CPI Mapping." });
+        }
+    }
 }

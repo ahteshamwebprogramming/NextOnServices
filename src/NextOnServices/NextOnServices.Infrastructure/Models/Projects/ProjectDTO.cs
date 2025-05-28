@@ -62,9 +62,15 @@ public class ProjectDTO
     public string? ProjectFrom { get; set; }
     public ClientDTO Client { get; set; } = null!;
     public CountryMasterDTO Country { get; set; } = null!;
-    
-}
+    public string Action { get; set; }
+    public int Prescreening { get; set; }
 
+}
+//public class StatusUpdateRequest
+//{
+//    public string Id { get; set; }
+//    public string Action { get; set; }
+//}
 public class SaveMapIPRequest
 {
     public int Id { get; set; }
@@ -84,4 +90,19 @@ public class MappedCountryResponse
 public class ProUrlIDModel
 {
     public int ProUrlID { get; set; }
+}
+
+public class ProjectDetailDTO
+{
+    
+    public int ID { get; set; }
+    public string PID { get; set; }
+    public string ProjectName { get; set; }
+    public string Country { get; set; }
+    public string Supplier { get; set; }
+    public int Respondants { get; set; }
+    public double CPI { get; set; }
+    public string Notes { get; set; }
+    public string PNumber { get; set; }
+    public int TrackingType { get; set; }
 }

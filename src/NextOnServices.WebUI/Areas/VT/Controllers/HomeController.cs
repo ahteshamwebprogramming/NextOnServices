@@ -431,6 +431,7 @@ public class HomeController : Controller
         return res;
     }
 
+    
     public async Task<IActionResult> GetCountries()
     {
         var resCountries = await _countryAPIController.GetCountries();
@@ -465,10 +466,59 @@ public class HomeController : Controller
         var res = await _projectsAPIController.GetMappedCountries(ProUrlID.ProUrlID);
         return Ok(res);
     }
-
-    public async Task<IActionResult> GetProjectsDetailsbyid([FromBody]string ID)
+    [HttpPost]
+    public async Task<IActionResult> GetProjectsDetailsbyid([FromBody]ProjectDTO model)
     {
-        return Ok();
+         var ID= Convert.ToInt32(model.Action);
+         var data = await _projectsAPIController.getProjectDetailsbyID(ID);
+        return Ok(data);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateStatus([FromBody] ProjectDTO request)
+    {
+        try
+        {
+            if ((request.ProjectId == 0) || string.IsNullOrEmpty(request.Action))
+            {
+                return Ok("Invalid request"); 
+            }
+
+          
+            var result = await _projectsAPIController.UpdateStatus(request.ProjectId, request.Action);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An error occurred while updating status");
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> upDatePrescreening([FromBody] ProjectDTO request)
+    {
+        try
+        {
+            if (request.ProjectId == 0)
+            {
+                return Ok("Invalid request");
+            }
+            var result = await _projectsAPIController.upDatePrescreening(request.ProjectId, request.Prescreening);
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, "An error occurred while updating status");
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdatepromappingCPI([FromBody] ProjectDTO model)
+    {
+        var result = await _projectsAPIController.UpdateCPIMapping(model);
+        return Ok(result);
     }
     #endregion
 

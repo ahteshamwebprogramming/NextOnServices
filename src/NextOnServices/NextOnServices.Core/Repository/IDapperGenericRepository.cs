@@ -31,4 +31,5 @@ public interface IDapperRepository<T> where T : class
     Task<List<T>> GetAllPagedAsync(int limit, int offset, string sWhere = "", string sOrderBy = "");
 
     Task<ProjectDetailPageViewModel> GetProjectDetailPageMultipleAsync(string query);
+    Task<T> GetOutputFromStoredProcedure<T>(string storedProcedure, DynamicParameters dynamicParameters, string outputParamName);
 }
