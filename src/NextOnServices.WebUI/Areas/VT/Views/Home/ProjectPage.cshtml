@@ -1,4 +1,5 @@
 ﻿@using NextOnServices.Infrastructure.Helper;
+@using System.Web;
 @model NextOnServices.Infrastructure.ViewModels.ProjectDetails.ProjectDetailPageViewModel
 
 @{
@@ -6,21 +7,51 @@
     //Layout = "~/Views/Shared/_Layout.cshtml";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" />
-<link href="~/css/tooltip.css" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true"/>
+<link href="~/css/tooltip.css" rel="stylesheet" asp-append-version="true"/>
 
 
 <style>
+    .card-body .mb-4 {
+        margin:0 0 7px 0 !important;
+        font-size: 16px ;
+    }
     .bordertophighlight {
         border-top: 1px solid #f1f1f1;
         box-shadow: 0px 1px 4px 1px #f1f1f1;
         padding: 12px;
     }
 
-    .tooltip1 {
-        border-bottom: 0px dotted black !important;
+    .card-light-danger .tooltip1 {
+        position: absolute;
+        bottom: 19px;
+        right: 18px;
+        border: #fff solid 1px;
+        font-size: 17px;
+        top:auto;
+        padding: 7px;
+        border-radius: 11px;
+    }
+   
+
+    .card.card-tale {
+        background-color: #A71E4A !important;
+    }
+    .card.card-dark-blue {
+        background-color: #F05624 !important;
     }
 
+    .card.card-light-blue {
+        background-color: #F89A20 !important;
+    }
+
+    .card.card-light-danger {
+        background-color: #F7BC18 !important;
+    }
+
+    .card.card-light-danger1 {
+        background-color: #50C1E9 !important;
+    }
     .container1_ppd {
         display: block;
         position: relative;
@@ -79,6 +110,12 @@
         color: green;
     }
 
+    .card-body .menu-icon img {
+        width: 29px;
+        margin-bottom: 12px;
+    }
+    
+
 </style>
 
 <div class="row">
@@ -87,8 +124,17 @@
             <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
                 <div class="card card-tale">
                     <div class="card-body">
-                        <p class="mb-4">Projects Status</p>
-                        <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model?.ProjectDetailList?.FirstOrDefault().StatusName) </p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                            <div class="icons2">
+                                
+                                <i class="menu-icon mb-3"><img src="~/theme/images/status.svg" /></i>
+                            <p class="mb-4">Projects Status</p>
+                            </div>
+                            <div>
+                                <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model?.ProjectDetailList?.FirstOrDefault().StatusName) </p>
+                            </div>
+                        </div>
+                       
                         @*<p>10.00% (30 days)</p>*@
                     </div>
                 </div>
@@ -96,8 +142,16 @@
             <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
                 <div class="card card-dark-blue">
                     <div class="card-body">
-                        <p class="mb-4">Achievement</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "0% Achieved" : Model.Table5List == null ? "0% Achieved" : Model.Table5List.Count == 0 ? "0% Achieved" : Model.Table5List.FirstOrDefault() == null ? "0% Achieved" : Model.Table5List.FirstOrDefault().CompletePercent + "% Achieved")</p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                              <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/achievement.svg" /></i>
+                                
+                            <p class="mb-4">Achievement</p>
+                            </div>
+                            <p class="fs-30 mb-2">@(Model == null ? "0% Achieved" : Model.Table5List == null ? "0% Achieved" : Model.Table5List.Count == 0 ? "0% Achieved" : Model.Table5List.FirstOrDefault() == null ? "0% Achieved" : Model.Table5List.FirstOrDefault().CompletePercent + "% Achieved")</p>
+                            </div>
+                       
+                        
 
                     </div>
                 </div>
@@ -105,8 +159,15 @@
             <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
                 <div class="card card-light-blue">
                     <div class="card-body">
-                        <p class="mb-4">Respondents</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Complete) out of @(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Total)</p>
+                         <div class="justify-content-center d-flex justify-content-between">
+                              <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/respondent.svg" /></i>
+                           <p class="mb-4">Respondents</p>
+                            </div>
+                            <p class="fs-30 mb-2">@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Complete) out of @(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Total)</p>
+                            </div>
+                        
+                        
 
                     </div>
                 </div>
@@ -114,8 +175,13 @@
             <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
                 <div class="card card-light-danger">
                     <div class="card-body">
-                        <p class="mb-4">Actual IR</p>
-                        <p class="fs-30 mb-2">
+
+                         <div class="justify-content-center d-flex justify-content-between">
+                              <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/actual loi.svg" /></i>
+                           <p class="mb-4">Actual IR</p>
+                            </div>
+                             <p class="fs-30 mb-2">
                             @(Model == null ? "0%" : Model.FractionComplete1 == null ? "0%" : Model.FractionComplete1.IRPercent + "%")
                             @{
                                 if (Model != null)
@@ -167,15 +233,23 @@
                             }
 
                         </p>
+                            </div>
 
                     </div>
                 </div>
             </div>
             <div class="col-md-3 mb-4 stretch-card transparent projectInfotile">
-                <div class="card card-light-danger">
+                <div class="card card-light-danger1">
                     <div class="card-body">
-                        <p class="mb-4">Actual LOI</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "0 min" : Model.FractionComplete3 == null ? "0 min" : Model.FractionComplete3.Actual_LOI + " min")</p>
+                         <div class="justify-content-center d-flex justify-content-between">
+                              <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/time.svg" /></i>
+                           <p class="mb-4">Actual LOI</p>
+                            </div>
+                             <p class="fs-30 mb-2">@(Model == null ? "0 min" : Model.FractionComplete3 == null ? "0 min" : Model.FractionComplete3.Actual_LOI + " min")</p>
+                            </div>
+                        
+                       
 
                     </div>
                 </div>
@@ -191,7 +265,7 @@
 
                 <div class="row mt-6">
                     <div class="col-md-6">
-                        <table class="table table-hover table-bordered">
+                        <table class="table table-hover table-striped table-bordered">
                             <tbody>
                                 <tr>
                                     <td class="header w-30">Survey ID</td>
@@ -604,7 +678,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="countryModalLabel">Select Country/Countries</h5>
-                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"><i class="fa fa-close"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-horizontal" role="form" style="padding-right: 15px; padding-left: 15px">
@@ -747,7 +821,11 @@
                                                             <td><input type="checkbox" id="@item.Id" onchange="chkchecked(this)" value="@item.Block" data-project-id="@item.Id" @(item.Block.HasValue && !item.Block.Value ? "" : "checked") /></td>
                                                             <td><input type="checkbox" value="@item.PreScreening" id="@item.Id" onchange="Prescreeningchecked(this)" value="@item.PreScreening" data-project-id="@item.Id" @(item.PreScreening.HasValue && !item.PreScreening.Value ? "" : "checked") /></td>
                                                             <td><input type="button" class="btn btn-info btn-sm" value="Edit" id="@item.Id" onclick="Edit(this.id)" /></td>
-                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Redirects" /></td>
+                                                            <td>
+                                                                <input type="button" class="btn btn-primary btn-sm" id="@item.Id"
+                                                                       value="@(item.TrackingType == true ? "Pixel Tracking" : "Redirects")"
+                                                                       data-toggle="modal" data-target="#myModalHorizontal" onclick="redirectclick(this.id)" />
+                                                            </td>
 
                                                         </tr>
                                                     }
@@ -769,10 +847,7 @@
         <div class="modal-content">
             <!-- Modal Header -->
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">
-                    <span aria-hidden="true">×</span>
-                    <span class="sr-only">Close</span>
-                </button>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"><i class="fa fa-close"></i></button>
                 <h4 class="modal-title" id="modal_cpi">Edit</h4>
             </div>
             <!-- Modal Body -->
@@ -854,8 +929,7 @@
                                                             <td>@item.Suppliers</td>
                                                             <td>$@item.OLink</td>
                                                             <td>@item.MLink</td>
-                                                            <td><input type="button" class="btn btn-info btn-sm" value="Test" /></td>
-
+                                                            <td><input type="button" class="btn btn-info btn-sm" value="Test" onclick="testyourlink('@Html.Raw(HttpUtility.JavaScriptStringEncode(item.MLink))')" /></td>
 
                                                         </tr>
                                                     }
@@ -938,6 +1012,80 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="myModalHorizontal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">Tracking Type</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body">
+                <form id="trackingForm" class="form-horizontal">
+
+                    <input type="hidden" id="hiddenID" />
+
+                    <!-- Tracking Type -->
+                    <div class="form-group">
+                        <label for="ddlTrackingType" class="control-label mb-2">Tracking Type</label>
+                        <select id="ddlTrackingType" class="form-control">
+                            <option value="0">Redirects</option>
+                            @* <option value="1">Pixel</option> *@
+                        </select>
+                    </div>
+
+                    <!-- Redirects Section -->
+                    <div class="row" id="Section_Redirects">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Completes</label>
+                                <input type="text" id="txtComplete" class="form-control" placeholder="Enter your status complete URL here" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Terminate</label>
+                                <input type="text" id="txtTerminate" class="form-control" placeholder="Enter your Terminate URL" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Overquota</label>
+                                <input type="text" id="txtOverquota" class="form-control" placeholder="Enter your Overquota URL" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Security Term</label>
+                                <input type="text" id="txtSecurity" class="form-control" placeholder="Enter your Security Term URL" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label>Fraud Error</label>
+                                <input type="text" id="txtFraud" class="form-control" placeholder="Enter your Fraud Error URL" />
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id="btnsavetrackingtype" class="btn btn-primary">Save changes</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
 <input type="hidden" name="gProjectId" value="@Model?.Project?.ProjectId" />
 
 <!-- #endregion -->
@@ -1255,7 +1403,7 @@
 
         }
         function MappedCountriesView() {
-            debugger
+            //debugger
             $('#tblSurveySpecs').find('tbody').find('tr').each(function () {
                 var row = $(this);
                 var id = row.find('td[data-itemid]').data('itemid'); 
@@ -1419,6 +1567,214 @@
                 cpi: $('#txtCPI').val(),
                 notes: $('#txtNOTES').val()
             };
+        }
+
+                function redirectclick(id) {
+                    debugger
+            $('#ddlTrackingType').val(0);
+           // checkTrackingtype();
+             getredirectdata(id);
+            //  $('#txtcomplete').val(id.substring(3));
+        }
+
+        //         function trackingtype() {
+        //             debugger
+        //     $('#Section_Pixel').hide();
+        //     $('#ddlTrackingType').change(function () {
+        //         checkTrackingtype();
+        //     });
+        // }
+        // function checkTrackingtype() {
+        //     if ($('#ddlTrackingType').val() == 0) {
+        //         $('#Section_Redirects').slideDown();
+        //         $('#Section_Pixel').slideUp();
+        //     }
+        //     else if ($('#ddlTrackingType').val() == 1) {
+        //         $('#Section_Redirects').slideUp();
+        //         $('#Section_Pixel').slideDown();
+        //     }
+        // }
+
+        // function getredirectdata(id) {
+        //                      debugger
+        //           const model = {
+        //             Action: id,
+        //             };
+        //          $.ajax({
+        //         type: "POST",
+
+        //             url: '/VT/Home/GetProjectsDetailsbyid',
+
+        //         data: JSON.stringify(model),
+        //                 contentType: "application/json; charset=utf-8",
+        //         cache: false,
+        //         dataType: "json",
+        //         success: function (data) {
+        //              const v = data.value;
+        //              console.log(v);
+        //             $('#ddlTrackingType').val(data.d[0].TrackingType);
+        //             if ($('#ddlTrackingType').val() == 0) {
+
+        //                 $('#Section_Redirects').slideDown();
+        //                 $('#Section_Pixel').slideUp();
+        //             }
+
+        //             else if ($('#ddlTrackingType').val() == 1) {
+
+        //                 $('#Section_Redirects').slideUp();
+        //                 $('#Section_Pixel').slideDown();
+        //             }
+        //             hiddenID
+        //             $('#hiddenID').val(id);
+        //             $('#txtcomplete').val(data.d[0].Completes);
+        //             $('#txtTerminate').val(data.d[0].Terminate);
+        //             $('#txtOverquota').val(data.d[0].Overquota);
+        //             $('#txtSecurity').val(data.d[0].Security);
+        //             $('#txtFraud').val(data.d[0].Fraud);
+        //             $('#txtSuccess').val(data.d[0].SUCCESS);
+        //             $('#txtDefault').val(data.d[0].DEFAULT);
+        //             $('#txtFailure').val(data.d[0].FAILURE);
+        //             $('#ddlQuality').val(data.d[0].QUALITY_TERMINATION);
+        //             $('#ddlOverquota').val(data.d[0].OVER_QUOTA);
+
+        //         },
+        //         error: function (result) {
+        //             alert(result.statusText);
+        //         }
+        //     });
+        // }
+
+                function getredirectdata(id) {
+            const model = { Action: id };
+
+            $.ajax({
+                type: "POST",
+                 url: '/VT/Home/GetProjectsDetailsbyid',
+                data: JSON.stringify(model),
+                contentType: "application/json; charset=utf-8",
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                            const v = data.value;
+                             console.log(v);
+
+                                    if (!v) {
+                        alert("No data found for this ID.");
+                        return;
+                    }
+
+                    // Tracking type
+                    // $('#ddlTrackingType').val(project.TrackingType);
+
+                    // if (project.TrackingType == 0) {
+                    //     $('#Section_Redirects').slideDown();
+                    //     $('#Section_Pixel').slideUp();
+                    // } else if (project.TrackingType == 1) {
+                    //     $('#Section_Redirects').slideUp();
+                    //     $('#Section_Pixel').slideDown();
+                    // }
+
+                            $('#hiddenID').val(id);
+
+                    // Redirect section values
+                    $('#txtComplete').val(v.completes);
+                    $('#txtTerminate').val(v.terminate);
+                    $('#txtOverquota').val(v.overquota);
+                    $('#txtSecurity').val(v.security);
+                    $('#txtFraud').val(v.fraud);
+
+                    // Pixel section values
+                    // $('#txtSuccess').val(project.SUCCESS);
+                    // $('#txtDefault').val(project.DEFAULT);
+                    // $('#txtFailure').val(project.FAILURE);
+                    // $('#txtQualityTermination').val(project.QUALITY_TERMINATION);
+                    // $('#txtOverQuotaPixel').val(project.OVER_QUOTA);
+                },
+                error: function (xhr) {
+                    alert("Error: " + xhr.statusText);
+                }
+            });
+        }
+                      $('#btnsavetrackingtype').click(function () {
+                 var object = {
+                ID: $('#hiddenID').val(),
+                TrackingType: $('#ddlTrackingType').val(),
+                Completes: $('#txtComplete').val(),
+                Terminate: $('#txtTerminate').val(),
+                Overquota: $('#txtOverquota').val(),
+                Security: $('#txtSecurity').val(),
+                Fraud: $('#txtFraud').val(),
+                SUCCESS: $('#txtSuccess').val(),
+                DEFAULT: $('#txtDefault').val(),
+                FAILURE: $('#txtFailure').val(),
+                QUALITY_TERMINATION: $('#txtQualityTermination').val(),
+                OVER_QUOTA: $('#txtOverQuotaPixel').val()
+            };
+
+            savetrackings(object);
+        });
+
+
+                    function savetrackings(formdata) {
+           
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/Home/UpdateRedirectsInProMap',
+                data: JSON.stringify(formdata),
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    debugger
+                                    if (data.value.retVal === 1) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.retMessage,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+
+                        // Close modal after slight delay to let user see message
+                        setTimeout(() => {
+                            $('#myModalHorizontal .close').click();
+                        }, 2000);
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: data.retMessage || "Please try again"
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Server Error',
+                        text: xhr.statusText || "An unexpected error occurred."
+                    });
+                }
+            });
+        }
+
+
+                function testyourlink(link) {
+                    debugger
+            var number = Math.floor(Math.random() * 200000000);
+            number = 'test_' + number;
+            urlval = link.substring(link.lastIndexOf('=') + 1);
+            link = link.replace(urlval, number);
+            // alert(link);
+            var win = window.open(link, '_blank');
+            if (win) {
+                //Browser has allowed it to be opened
+                win.focus();
+                //loadSupplierDetails(id);
+                //getfractionComplete();
+            } else {
+                
+                alert('Please allow popups for this website');
+            }
         }
     </script>
 }

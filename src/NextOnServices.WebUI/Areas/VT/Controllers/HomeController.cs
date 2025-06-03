@@ -520,6 +520,13 @@ public class HomeController : Controller
         var result = await _projectsAPIController.UpdateCPIMapping(model);
         return Ok(result);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateRedirectsInProMap([FromBody] ProjectDetailDTO model)
+    {
+        var result = await _projectsAPIController.UpdateRedirects(model);
+        return Ok(result);
+    }
     #endregion
 
 }

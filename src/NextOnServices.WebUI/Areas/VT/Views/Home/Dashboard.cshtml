@@ -47,54 +47,106 @@
         width: 100% !important;
     }
 
+    .card-body .menu-icon img {
+        width: 29px;
+        margin-bottom: 12px;
+    }
+
+    .card-body{position:relative;}
+    .card-body  .bttmText {
+        position: absolute;
+            bottom: 10px;
+            right: 16px;
+        font-size: 14px;
+        }
+
+    .fs-30text {
+        font-size: 40px !important;
+        font-weight: 800;
+    }
+    
 </style>
+
 
 <div class="row">
     <div class="col-md-12 grid-margin transparent">
         <div class="row">
-            <div class="col-md-3 mb-4 stretch-card transparent">
+            <div class="col-md-3 mb-4 transparent">
                 <div class="card card-tale">
                     <div class="card-body">
-                        <p class="mb-4">Total Projects</p>
-                        <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.TotalProjects) </p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                            <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/total projects.svg" /></i>
+                                <p class="mb-4">Total Projects</p>
+                            </div>
+                            <div>
+                                <p class="fs-30 fs-30text mb-2"> @(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.TotalProjects) </p>
+                            </div>
+                        </div>
+                        
+                       
                         @*<p>10.00% (30 days)</p>*@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4 stretch-card transparent">
+            <div class="col-md-3 mb-4 transparent">
                 <div class="card card-dark-blue">
                     <div class="card-body">
-                        <p class="mb-4">Active Projects</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.ActiveProjects)</p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                            <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/active projects.svg" /></i>
+                                <p class="mb-4">Active Projects</p>
+                            </div>
+                            <div>
+                                <p class="fs-30 fs-30text mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.ActiveProjects)</p>
+                            </div>
+                        </div>
+                       
                         @* <p>@(Model == null ? "0" : Model.ProjectCountSummary == null ? "0" : (Model.ProjectCountSummary.ActiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p> *@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4 stretch-card transparent">
+            <div class="col-md-3 mb-4  transparent">
                 <div class="card card-light-blue">
                     <div class="card-body">
-                        <p class="mb-4">Inactive Projects</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.InactiveProjects)</p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                            <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/inactive projects.svg" /></i>
+                                <p class="mb-4">Inactive Projects</p>
+                            </div>
+                            <div>
+                                <p class="fs-30 fs-30text mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.InactiveProjects)</p>
+                            </div>
+                        </div>
                         @* <p>@(Model == null ? "0" : Model.ProjectCountSummary == null ? "0" : (Model.ProjectCountSummary.InactiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p> *@
                         @{
                             if (Model != null && Model.ProjectCountSummary != null && Model.ProjectCountSummary.TotalProjects != 0)
                             {
-                                <p>@((Model.ProjectCountSummary.InactiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
+                                <p class="bttmText">@((Model.ProjectCountSummary.InactiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
                             }
                         }
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4 stretch-card transparent">
+            <div class="col-md-3 mb-4 transparent">
                 <div class="card card-light-danger">
                     <div class="card-body">
-                        <p class="mb-4">Archived Projects</p>
-                        <p class="fs-30 mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.ArchivedProjects)</p>
+                        <div class="justify-content-center d-flex justify-content-between">
+                            <div class="icons2">
+                                <i class="menu-icon mb-3"><img src="~/theme/images/archivedProjects.svg" /></i>
+                                <p class="mb-4">Archived Projects</p>
+                            </div>
+                            <div>
+                                <p class="fs-30 fs-30text mb-2">@(Model == null ? "" : Model.ProjectCountSummary == null ? "" : Model.ProjectCountSummary.ArchivedProjects)</p>
+                            </div>
+                        </div>
+                        
+                       
                         @* <p>@(Model == null ? "0" : Model.ProjectCountSummary == null ? "0" : (Model.ProjectCountSummary.ArchivedProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p> *@
                         @{
                             if (Model != null && Model.ProjectCountSummary != null && Model.ProjectCountSummary.TotalProjects != 0)
                             {
-                                <p>@((Model.ProjectCountSummary.ArchivedProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
+                                <p class="bttmText">@((Model.ProjectCountSummary.ArchivedProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
                             }
                         }
                     </div>
@@ -107,7 +159,7 @@
     <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
-                <p class="card-title mb-0">Project List</p>
+                <p class="card-title mb-0 p-3">Project List</p>
 
                 <div class="row mb-5" id="TableFilters">
                     <div class="offset-3 col-md-6">

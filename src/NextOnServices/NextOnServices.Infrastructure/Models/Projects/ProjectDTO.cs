@@ -104,5 +104,12 @@ public class ProjectDetailDTO
     public double CPI { get; set; }
     public string Notes { get; set; }
     public string PNumber { get; set; }
-    public int TrackingType { get; set; }
+    public int trackingtype { get; set; }
+    public string OLink { get; set; }
+    public string MLink { get; set; }
+    public string Completes { get; set; }
+    public string Terminate { get; set; }
+    public string OVERQUOTA { get; set; }
+    public string Security { get; set; }
+    public string Fraud { get; set; }
 }

@@ -622,4 +622,36 @@ public class ProjectsAPIController : ControllerBase
             return Ok(new { RetVal = -1, RetMessage = "Failed to update CPI Mapping." });
         }
     }
-}
+
+    public async Task<IActionResult> UpdateRedirects(ProjectDetailDTO model)
+    {
+        string sql = @"UPDATE ProjectMapping 
+               SET Completes = @Completes,
+                   Terminate = @Terminate,
+                   Overquota = @Overquota,
+                   Security = @Security,
+                   Fraud = @Fraud,
+                   TrackingType = @TrackingType
+               WHERE ID = @Id";
+
+        bool rowsAffected = await _unitOfWork.Project.ExecuteQueryAsync(sql, new
+        {
+            Id = model.ID,
+            Completes = model.Completes,
+            Terminate = model.Terminate,
+            Overquota = model.OVERQUOTA,
+            Security = model.Security,
+            Fraud = model.Fraud,
+            TrackingType = model.trackingtype
+        });
+
+        if (rowsAffected)
+        {
+            return Ok(new { RetVal = 1, RetMessage = "Tracking data updated successfully." });
+        }
+        else
+        {
+            return Ok(new { RetVal = -1, RetMessage = "No data was updated." });
+        }
+    }
+ }

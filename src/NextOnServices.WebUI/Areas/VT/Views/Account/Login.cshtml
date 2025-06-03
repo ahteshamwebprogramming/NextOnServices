@@ -17,16 +17,37 @@
     <link href="https://fonts.googleapis.com/css?family=Assistant:400,700" rel="stylesheet">
     <link rel="stylesheet" href="~/LoginRoot/style.css">
     <style>
-        .login {
-            background: linear-gradient(to right, #006767, #0785b4);
-            padding: 0px 0px 0px 0px;
+        .login .form .btn-login {
+            background: none;
+            text-decoration: none;
+            color: white;
             box-shadow: none;
-            border: #cccccc5c solid 1px;
+            border-radius: 3px;
+            padding: 8px 2em;
+            transition: 0.5s;
+            background: #089387;
+            border: 0 !important;
+        }
+        input{padding:10px; border-radius:8px;}
+        .login {
+            padding: 0px;
+            border-radius: 20px;
+            overflow:hidden;
+            box-shadow: none;
+            border: #fff solid 0px;
+            background:#fff;
+        }
+        .login_middle{
+            padding-right: 50px;
+            padding-left: 50px;
+            padding-bottom: 50px;
+            padding-top: 40px;
+            background: linear-gradient(to right, #006767, #0785b4);
         }
 
         body {
             /*background: #cbdbea;*/
-            background: #F3F3F3;
+            background: #ebebeb;
             /*background: #EEF5FF;*/
             /*background: #FFEBD8;*/
         }
@@ -46,8 +67,7 @@
         }
 
         .logoSection {
-            border-top-left-radius: 9px;
-            border-top-right-radius: 9px;
+           
             padding-bottom: 15px;
             padding-top: 15px;
             text-align: center;
@@ -58,8 +78,7 @@
             padding: 15px;
             text-align: center;
             background-color: white;
-            border-bottom-left-radius: 9px;
-            border-bottom-right-radius: 9px;
+           
             color: #026467;
         }
 
@@ -77,8 +96,8 @@
         <!--<h1 class='company'>Universe Explorer</h1>-->
         <img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />
         </div>*@
-        <div style="padding-right:50px;padding-left:50px;padding-bottom:50px;padding-top: 40px;">
-            <p class='msg' style="margin-top: 0px;margin-bottom: 25px;">Welcome back</p>
+        <div class="login_middle">
+            <p class='msg' style="margin-top: 0px;margin-bottom: 25px; font-size:22px;">Welcome back</p>
             <div class='form'>
                 <form method="post" action="/VT/Account/Login">
                     @Html.ValidationSummary("" ,new{@class = "text-danger"})
