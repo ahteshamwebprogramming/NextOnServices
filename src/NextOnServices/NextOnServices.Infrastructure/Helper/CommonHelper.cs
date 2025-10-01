@@ -23,6 +23,63 @@ public static class CommonHelper
         }
         return t;
     }
+
+    public static string RandomString(int length)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        return new string(Enumerable.Repeat(chars, length)
+          .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+    public static string Device(HttpRequest request)
+    {
+        var userAgent = request.Headers["User-Agent"].ToString().ToLower();
+
+        // Basic mobile detection
+        if (userAgent.Contains("iphone") || userAgent.Contains("android") || userAgent.Contains("blackberry") || userAgent.Contains("windows ce"))
+        {
+            if (userAgent.Contains("iphone"))
+            {
+                return "iOS";
+            }
+            else if (userAgent.Contains("mobile") || userAgent.Contains("blackberry") || userAgent.Contains("windows ce"))
+            {
+                return "Mobile";
+            }
+            else
+            {
+                return "Tablet";
+            }
+        }
+
+        return "Desktop";
+    }
+
+    public static string ParseBrowser(HttpRequest request)
+    {
+        var userAgent = request.Headers["User-Agent"].ToString().ToLower();
+
+        if (string.IsNullOrEmpty(userAgent))
+            return "Unknown";
+
+        userAgent = userAgent.ToLower();
+
+        if (userAgent.Contains("edg"))
+            return "Edge";
+        else if (userAgent.Contains("chrome") && !userAgent.Contains("edg"))
+            return "Chrome";
+        else if (userAgent.Contains("firefox"))
+            return "Firefox";
+        else if (userAgent.Contains("safari") && !userAgent.Contains("chrome"))
+            return "Safari";
+        else if (userAgent.Contains("opr") || userAgent.Contains("opera"))
+            return "Opera";
+        else if (userAgent.Contains("trident") || userAgent.Contains("msie"))
+            return "Internet Explorer";
+
+        return "Other";
+    }
+
+
     public static string RandomString()
     {
         try
@@ -37,12 +94,7 @@ public static class CommonHelper
             return "";
         }
     }
-    public static string RandomString(int length)
-    {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        return new string(Enumerable.Repeat(chars, length)
-          .Select(s => s[random.Next(s.Length)]).ToArray());
-    }
+
     public static bool IsNumeric(string Value)
     {
         return decimal.TryParse(Value, out _) || double.TryParse(Value, out _);

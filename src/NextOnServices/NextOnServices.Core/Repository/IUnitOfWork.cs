@@ -20,5 +20,7 @@ public interface IUnitOfWork : IDisposable
     public ISuppliersRepository Suppliers { get; }
     public ISupplierPanelSizeRepository SupplierPanelSize { get; }
     public ISupplierLoginRepository SupplierLogin { get; }
+    public IGenOperationsRepository GenOperations { get; }
+    public ISupplierProjectsRepository SupplierProjects { get; }
     int Save();
 }

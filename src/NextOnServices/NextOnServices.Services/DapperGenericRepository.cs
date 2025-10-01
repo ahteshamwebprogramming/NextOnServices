@@ -369,7 +369,45 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
                 DbConnection.Close();
         }
     }
+    public async Task<T> GetEntityDataSP<T>(string sQuery, object parameters = null)
+    {
+        //var DbConnection = trans?.Connection ?? connection;
+        var tableName = typeof(T).Name;
 
+        if (DbConnection.State != ConnectionState.Open)
+            DbConnection.Open();
+
+        try
+        {
+            var data = await DbConnection.QueryFirstOrDefaultAsync<T>(sQuery, parameters, commandType: CommandType.StoredProcedure);
+            return data;
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
+    }
+    public async Task<List<T>> GetTableDataSP<T>(string sQuery, object parameters = null)
+    {
+        //var DbConnection = trans?.Connection ?? connection;
+        var tableName = typeof(T).Name;
+
+        var query = sQuery;
+        if (DbConnection.State != ConnectionState.Open)
+            DbConnection.Open();
+
+        try
+        {
+            var data = await DbConnection.QueryAsync<T>(query, parameters, commandType: CommandType.StoredProcedure);
+            return data.ToList();
+        }
+        catch (Exception ex) { throw ex; }
+    }
     public async Task<int> GetEntityCount(string sQuery, object parameters = null)
     {
         if (DbConnection.State != ConnectionState.Open)

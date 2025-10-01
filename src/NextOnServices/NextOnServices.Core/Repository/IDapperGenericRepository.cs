@@ -12,9 +12,11 @@ public interface IDapperRepository<T> where T : class
     Task<List<T>> GetTableData<T>(IDbConnection connection, IDbTransaction trns, string sWhere = "", string sOrderBy = "");
     Task<List<T>> GetTableData<T>(string sQuery, IDbConnection connection, IDbTransaction trans = null);
     Task<List<T>> GetTableData<T>(string sQuery, object parameters = null);
+    Task<List<T>> GetTableDataSP<T>(string sQuery, object parameters = null);
     Task<bool> IsExists(string query, object dynamicParameters = null);
     Task<bool> Exists(Expression<Func<T, bool>> filter);
     Task<T> GetEntityData<T>(string sQuery, object parameters = null);
+    Task<T> GetEntityDataSP<T>(string sQuery, object parameters = null);
     Task<int> GetEntityCount(string sQuery, object parameters = null);
     Task<bool> ExecuteQueryAsync(string sQuery, object parameters = null);
     Task<int> EexecuteAddAsync(T entity, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null);

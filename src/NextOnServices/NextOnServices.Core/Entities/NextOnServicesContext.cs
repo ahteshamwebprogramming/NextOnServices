@@ -52,7 +52,7 @@ public partial class NextOnServicesContext : DbContext
 
     public virtual DbSet<SupplierPanelSize> SupplierPanelSizes { get; set; }
 
-    public virtual DbSet<SupplierProject> SupplierProjects { get; set; }
+    public virtual DbSet<SupplierProjects> SupplierProjects { get; set; }
 
     
 
@@ -432,48 +432,48 @@ public partial class NextOnServicesContext : DbContext
             entity.Property(e => e.SupplierId).HasColumnName("SupplierID");
         });
 
-        modelBuilder.Entity<SupplierProject>(entity =>
+        modelBuilder.Entity<SupplierProjects>(entity =>
         {
-            entity.HasIndex(e => e.Id, "IX_SupplierProjects_ID");
+            entity.HasIndex(e => e.ID, "IX_SupplierProjects_ID");
 
-            entity.HasIndex(e => e.Pmid, "IX_SupplierProjects_PMID");
+            entity.HasIndex(e => e.PMID, "IX_SupplierProjects_PMID");
 
-            entity.HasIndex(e => new { e.Sid, e.Status, e.StartDate, e.EndDate }, "IX_SupplierProjects_SID_Stat098us_StartDate_EndDate");
+            entity.HasIndex(e => new { e.SID, e.Status, e.StartDate, e.EndDate }, "IX_SupplierProjects_SID_Stat098us_StartDate_EndDate");
 
-            entity.HasIndex(e => new { e.Sid, e.Status }, "IX_SupplierProjects_SID_Status098");
+            entity.HasIndex(e => new { e.SID, e.Status }, "IX_SupplierProjects_SID_Status098");
 
-            entity.HasIndex(e => new { e.Sid, e.Status }, "IX_SupplierProjects_SID_Status98");
+            entity.HasIndex(e => new { e.SID, e.Status }, "IX_SupplierProjects_SID_Status98");
 
-            entity.HasIndex(e => e.Uid, "IX_SupplierProjects_UID");
+            entity.HasIndex(e => e.UID, "IX_SupplierProjects_UID");
 
-            entity.HasIndex(e => e.Sid, "M1index");
+            entity.HasIndex(e => e.SID, "M1index");
 
             entity.HasIndex(e => e.Status, "Mindex2");
 
-            entity.Property(e => e.Id).HasColumnName("ID");
+            entity.Property(e => e.ID).HasColumnName("ID");
             entity.Property(e => e.ActStatus).HasMaxLength(50);
             entity.Property(e => e.ClientBrowser).HasMaxLength(50);
-            entity.Property(e => e.ClientIp)
+            entity.Property(e => e.ClientIP)
                 .HasMaxLength(50)
                 .HasColumnName("ClientIP");
             entity.Property(e => e.CreationDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.Device).HasMaxLength(50);
-            entity.Property(e => e.Enc)
+            entity.Property(e => e.ENC)
                 .HasMaxLength(255)
                 .HasColumnName("ENC");
             entity.Property(e => e.EndDate).HasColumnType("datetime");
             entity.Property(e => e.IsSent).HasDefaultValueSql("((0))");
-            entity.Property(e => e.Pmid)
+            entity.Property(e => e.PMID)
                 .HasMaxLength(50)
                 .HasColumnName("PMID");
-            entity.Property(e => e.Sid)
+            entity.Property(e => e.SID)
                 .HasMaxLength(50)
                 .HasColumnName("SID");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.Status).HasMaxLength(50);
-            entity.Property(e => e.Uid)
+            entity.Property(e => e.UID)
                 .HasMaxLength(50)
                 .HasColumnName("UID");
         });

@@ -30,6 +30,8 @@ public class UnitOfWork : IUnitOfWork
         Suppliers = new SuppliersRepository(dbSetting);
         SupplierPanelSize = new SupplierPanelSizeRepository(dbSetting);
         SupplierLogin = new SupplierLoginRepository(dbSetting);
+        GenOperations = new GenOperationsRepository(dbSetting);
+        SupplierProjects = new SupplierProjectsRepository(dbSetting);
     }
     public IUserRepository User
     { get; private set; }
@@ -48,6 +50,8 @@ public class UnitOfWork : IUnitOfWork
     public ISuppliersRepository Suppliers { get; private set; }
     public ISupplierPanelSizeRepository SupplierPanelSize { get; private set; }
     public ISupplierLoginRepository SupplierLogin { get; private set; }
+    public IGenOperationsRepository GenOperations { get; private set; }
+    public ISupplierProjectsRepository SupplierProjects { get; private set; }
     public void Dispose()
     {
         try { _context.Dispose(); }

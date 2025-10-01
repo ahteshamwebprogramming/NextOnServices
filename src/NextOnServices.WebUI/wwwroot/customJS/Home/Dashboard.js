@@ -92,3 +92,39 @@ function chckchckbox() {
 
     return flag;
 }
+function testyourlink(link) {
+    debugger
+    var number = Math.floor(Math.random() * 200000000);
+    number = 'test_' + number;
+    urlval = link.substring(link.lastIndexOf('=') + 1);
+    link = link.replace(urlval, number);
+    // alert(link);
+    var win = window.open(link, '_blank');
+    if (win) {
+        //Browser has allowed it to be opened
+        win.focus();
+        //loadSupplierDetails(id);
+        //getfractionComplete();
+    } else {
+
+        alert('Please allow popups for this website');
+    }
+}
+    
+//function testyourlink(link) {
+//    var number = Math.floor(Math.random() * 200000000);
+//    number = 'test_' + number;
+//    urlval = link.substring(link.lastIndexOf('=') + 1);
+//    link = link.replace(urlval, number);
+//    // alert(link);
+//    var win = window.open(link, '_blank');
+//    if (win) {
+//        //Browser has allowed it to be opened
+//        win.focus();
+//        loadSupplierDetails(id);
+//        getfractionComplete();
+//    } else {
+//        //Browser has blocked it
+//        alert('Please allow popups for this website');
+//    }
+//}

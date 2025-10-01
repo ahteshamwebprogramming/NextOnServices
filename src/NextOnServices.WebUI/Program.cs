@@ -171,7 +171,7 @@ app.UseEndpoints(endpoints =>
 
     endpoints.MapGet("/", context =>
     {
-        context.Response.Redirect("/GRP/Home/Index");
+        context.Response.Redirect("/VT/Account/Login");
         return Task.CompletedTask;
     });
 });
