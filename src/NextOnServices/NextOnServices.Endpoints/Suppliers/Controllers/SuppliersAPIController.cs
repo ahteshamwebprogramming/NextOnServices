@@ -85,7 +85,7 @@ public class SuppliersAPIController : ControllerBase
     {
         try
         {
-            string sQuery = "WITH SupplierCounts AS (\r\n    SELECT \r\n        pm.ID ProjectMappingId,\r\n        pm.ProjectID ProjectId,\r\n        pm.SupplierID SupplierId,\r\n        s.Name SupplierName,\r\n        p.PName ProjectName,\r\n        p.STATUS Status,\r\n        cm.Country,\r\n        pm.CPI,\r\n        pm.Respondants,\r\n        COUNT(sp.Status) AS Total,\r\n        SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END) AS Complete,\r\n        SUM(CASE WHEN sp.Status = 'Terminate' THEN 1 ELSE 0 END) AS Terminate,\r\n        SUM(CASE WHEN sp.Status = 'OVERQUOTA' THEN 1 ELSE 0 END) AS Overquota,\r\n        SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,\r\n        SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,\r\n        SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,\r\n\t\tLOI = AVG(CASE \r\n                    WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL \r\n                    THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate) \r\n                    ELSE NULL \r\n                  END)\r\n    FROM \r\n        ProjectMapping pm\r\n    JOIN \r\n        Projects p ON pm.ProjectID = p.ProjectId\r\n    JOIN \r\n        Suppliers s ON pm.SupplierID = s.ID\r\n    JOIN \r\n        CountryMaster cm ON pm.CountryID = cm.CountryId\r\n    LEFT JOIN \r\n        SupplierProjects sp ON sp.SID = pm.SID\r\n    WHERE \r\n        pm.SupplierID = @SupplierID \r\n        AND p.IsActive = 1 \r\n        AND s.IsActive = 1\r\n    GROUP BY \r\n        pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants\r\n)\r\nSELECT *,\r\n    IRPercent = CASE \r\n        WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0\r\n        ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))\r\n    END \r\nFROM SupplierCounts order by ProjectName;\r\n";
+            string sQuery = "WITH SupplierCounts AS (\r\n    SELECT \r\n        pm.ID ProjectMappingId,\r\n        pm.ProjectID ProjectId,\r\n        pm.SupplierID SupplierId,\r\n        s.Name SupplierName,\r\n        p.PName ProjectName,\r\n        cm.Country,\r\n        pm.CPI,\r\n        pm.Respondants,\r\n        COUNT(sp.Status) AS Total,\r\n        SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END) AS Complete,\r\n        SUM(CASE WHEN sp.Status = 'Terminate' THEN 1 ELSE 0 END) AS Terminate,\r\n        SUM(CASE WHEN sp.Status = 'OVERQUOTA' THEN 1 ELSE 0 END) AS Overquota,\r\n        SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,\r\n        SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,\r\n        SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,\r\n\t\tLOI = AVG(CASE \r\n                    WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL \r\n                    THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate) \r\n                    ELSE NULL \r\n                  END)\r\n    FROM \r\n        ProjectMapping pm\r\n    JOIN \r\n        Projects p ON pm.ProjectID = p.ProjectId\r\n    JOIN \r\n        Suppliers s ON pm.SupplierID = s.ID\r\n    JOIN \r\n        CountryMaster cm ON pm.CountryID = cm.CountryId\r\n    LEFT JOIN \r\n        SupplierProjects sp ON sp.SID = pm.SID\r\n    WHERE \r\n        pm.SupplierID = @SupplierID \r\n        AND p.IsActive = 1 \r\n        AND s.IsActive = 1\r\n    GROUP BY \r\n        pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, cm.Country, pm.CPI, pm.Respondants\r\n)\r\nSELECT *,\r\n    IRPercent = CASE \r\n        WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0\r\n        ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))\r\n    END \r\nFROM SupplierCounts order by ProjectName;\r\n";
             //var sParam = new { @SupplierID = SupplierId };
 
             var orderDirection = orderByDirection.ToLower() == "desc" ? "DESC" : "ASC";
@@ -126,7 +126,6 @@ public class SuppliersAPIController : ControllerBase
                     pm.SupplierID SupplierId,
                     s.Name SupplierName,
                     p.PName ProjectName,
-                    p.STATUS Status,
                     cm.Country,
                     pm.CPI,
                     pm.Respondants,
@@ -159,7 +158,7 @@ public class SuppliersAPIController : ControllerBase
                     AND s.IsActive = 1
                     AND (p.PName LIKE '%' + @SearchValue + '%' OR cm.Country LIKE '%' + @SearchValue + '%')  
                 GROUP BY 
-                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked
+                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked
             ORDER BY " + orderByColumnName + " " + orderDirection + @"
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY
             )
@@ -226,7 +225,6 @@ public class SuppliersAPIController : ControllerBase
                     pm.SupplierID SupplierId,
                     s.Name SupplierName,
                     p.PName ProjectName,
-                    p.STATUS Status,
                     p.PID,
                     cm.Country,
                     pm.CPI,
@@ -262,7 +260,7 @@ public class SuppliersAPIController : ControllerBase
                     AND p.IsActive = 1 
                     AND s.IsActive = 1                    
                 GROUP BY 
-                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked,p.PID,pm.Notes,pm.OLink,pm.MLink            
+                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked,p.PID,pm.Notes,pm.OLink,pm.MLink            
             ),
             SupplierCountsWithIR as (SELECT *, 
                 IRPercent = CASE 
