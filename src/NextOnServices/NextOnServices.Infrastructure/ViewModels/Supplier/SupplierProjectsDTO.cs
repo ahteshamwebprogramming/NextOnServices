@@ -27,6 +27,7 @@ public class SupplierProjectsDTO
     public decimal? LOI { get; set; }
     public decimal? IRPercent { get; set; }
     public int? ProjectMappingChecked { get; set; }
+    public int? Status { get; set; }
     public string? Notes { get; set; }
     public string? OLink { get; set; }
     public string? MLink { get; set; }
