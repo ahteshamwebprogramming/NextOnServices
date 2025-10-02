@@ -292,7 +292,16 @@
                                 <td>@item.CPI</td>
                                 <td>@item.Respondants</td>
                                 <td>
-                                    <div class="cell-scroll" title="@item.OLink">@item.OLink</div>
+                                    @{
+                                        var oLinkDisplay = string.IsNullOrWhiteSpace(item.OLink)
+                                            ? string.Empty
+                                            : item.OLink
+                                                .Replace("\r\n", " ")
+                                                .Replace("\n", " ")
+                                                .Replace("\r", " ")
+                                                .Trim();
+                                    }
+                                    <div class="cell-scroll" title="@oLinkDisplay">@oLinkDisplay</div>
                                 </td>
                                 @* <td>@item.MLink</td> *@
                                 <td>@item.Total</td>
