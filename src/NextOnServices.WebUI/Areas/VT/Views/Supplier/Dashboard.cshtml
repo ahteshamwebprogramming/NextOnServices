@@ -132,6 +132,13 @@
         .withdraw-button {
             min-width: 100px;
         }
+
+        .cell-scroll {
+            display: block !important;
+            max-width: 280px !important; /* set the visible width you want */
+            white-space: nowrap !important; /* single line */
+            overflow-x: auto ; /* scrollbar if too long */
+        }
     </style>
 </head>
 <body>
@@ -146,7 +153,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav navbar-center">
+            <ul class="navbar-nav w-100 justify-content-center">
                 <li class="nav-item">
                     <a class="nav-link" href="/VT/Supplier/Dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                 </li>
@@ -157,6 +164,7 @@
                     <a class="nav-link" href="/VT/Supplier/ChangePassword"><i class="fas fa-key"></i> Change Password</a>
                 </li>
             </ul>
+
             <div class="vendor-info ml-auto">
                 <span class="mr-3">Welcome, <strong>@Model?.Supplier?.Name</strong></span>
                 <a href="/VT/Supplier/Login" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -166,29 +174,29 @@
 
     <!-- Dashboard Content -->
     <div class="container dashboard-container">
-        <h2 class="text-center mb-4">Supplier Details</h2>
+        <h2 class="text-center mb-4">Project Dashboard</h2>
         <div class="row">
             <div class="col-md-6 mb-4">
-                <div class="card">
+                @* <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-building"></i> Supplier Name</h5>
                         <p class="card-text">@Model?.Supplier?.SupplierCode</p>
                     </div>
-                </div>
+                </div> *@
             </div>
             <div class="col-md-6 mb-4">
-                <div class="card">
+                @* <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-info-circle"></i> Supplier Description</h5>
                         <p class="card-text">@Model?.Supplier?.Name</p>
                     </div>
-                </div>
+                </div> *@
             </div>
             <!-- Add more fields as needed following the same format -->
         </div>
     </div>
     <div class="table-container" style="padding-bottom:100px;">
-        <h4 class="mb-3">Supplier Data</h4>
+        @* <h4 class="mb-3">Supplier Data</h4> *@
 
         <div id="exportStatus" style="display: none;">
             <p id="statusMessage">Data download in process...</p>
@@ -202,13 +210,13 @@
             <table id="supplierTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-
+                       
                         <th>Project Number</th>
                         <th>Country</th>
                         <th>CPI</th>
                         <th>Respondants</th>
                         <th>OLink</th>
-                        <th>MLink</th>
+                        @* <th>MLink</th> *@
                         <th>Total</th>
                         <th>Complete</th>
                         <th>Terminate</th>
@@ -229,13 +237,14 @@
                         foreach (var item in Model.SupplierProjects)
                         {
                             <tr>
+                              
                                 <td>@count</td>
                                 <td>@item.PID</td>
                                 <td>@item.Country</td>
                                 <td>@item.CPI</td>
                                 <td>@item.Respondants</td>
-                                <td>@item.OLink</td>
-                                <td>@item.MLink</td>
+                                <td class="cell-scroll">@item.OLink</td>
+                                @* <td>@item.MLink</td> *@
                                 <td>@item.Total</td>
                                 <td>@item.Complete</td>
                                 <td>@item.Terminate</td>
@@ -546,12 +555,13 @@
                     }
                 }],
                 "columns": [
+                   
                     { "data": "pid" },
                     { "data": "country" },
                     { "data": "cpi" },
                     { "data": "respondants" },
                     { "data": "oLink" },
-                    { "data": "mLink" },
+                    // { "data": "mLink" },
                     { "data": "total" },
                     { "data": "complete" },
                     { "data": "terminate" },
