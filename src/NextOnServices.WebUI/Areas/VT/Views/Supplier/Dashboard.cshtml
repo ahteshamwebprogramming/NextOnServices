@@ -225,11 +225,11 @@
                 <thead>
                     <tr>
                        
+                        <th>Status</th>
                         <th>Project Number</th>
                         <th>Country</th>
                         <th>CPI</th>
                         <th>Respondants</th>
-                        <th>Status</th>
                         <th>OLink</th>
                         @* <th>MLink</th> *@
                         <th>Total</th>
@@ -248,16 +248,9 @@
                 <tbody>
                     @if (Model != null && Model.SupplierProjects != null && Model.SupplierProjects.Any())
                     {
-                        int count = 1;
                         foreach (var item in Model.SupplierProjects)
                         {
                             <tr>
-                              
-                                <td>@count</td>
-                                <td>@item.PID</td>
-                                <td>@item.Country</td>
-                                <td>@item.CPI</td>
-                                <td>@item.Respondants</td>
                                 <td>
                                     @{
                                         var statusValue = item.Status ?? 0;
@@ -294,6 +287,10 @@
                                     }
                                     <span class="status-badge @statusClass">@statusText</span>
                                 </td>
+                                <td>@item.PID</td>
+                                <td>@item.Country</td>
+                                <td>@item.CPI</td>
+                                <td>@item.Respondants</td>
                                 <td>
                                     <div class="cell-scroll" title="@item.OLink">@item.OLink</div>
                                 </td>
@@ -313,7 +310,6 @@
                                     <a href="/VT/Supplier/Delete/@item.ProjectMappingId" class="btn btn-sm btn-danger">Delete</a>
                                 </td>
                             </tr>
-                            count++;
                         }
                     }
                 </tbody>
@@ -473,11 +469,11 @@
             excludeColumns = ["projectName", "projectMappingId", "projectId", "supplierId", "supplierName"];
 
             //const headers = Object.keys(allData[0]).filter(header => !excludeColumns.includes(header));
-            const headers = ["pid", "country", "cpi", "respondants", "status", "oLink", "mLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
+            const headers = ["status", "pid", "country", "cpi", "respondants", "oLink", "mLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
 
             // Convert data to an array of arrays, excluding specified columns
             const data = allData.map(row => headers.map(header => row[header]));
-            const displayHeaders = ["Project Number", "Country", "CPI", "Respondants", "Status", "OLink", "MLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
+            const displayHeaders = ["Status", "Project Number", "Country", "CPI", "Respondants", "OLink", "MLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
             // Add headers as the first row
             return [displayHeaders, ...data];
         }
@@ -608,11 +604,7 @@
                     }
                 }],
                 "columns": [
-                   
-                    { "data": "pid" },
-                    { "data": "country" },
-                    { "data": "cpi" },
-                    { "data": "respondants" },
+
                     {
                         "data": "status",
                         "render": function (data, type) {
@@ -634,6 +626,10 @@
                             return `<span class="status-badge ${statusInfo.className}">${statusInfo.text}</span>`;
                         }
                     },
+                    { "data": "pid" },
+                    { "data": "country" },
+                    { "data": "cpi" },
+                    { "data": "respondants" },
                     {
                         "data": "oLink",
                         "render": function (data, type) {
@@ -684,7 +680,7 @@
                         // }
                     }
                 ],
-                "order": [[0, 'asc']],
+                "order": [[1, 'asc']],
             });
         }
 
