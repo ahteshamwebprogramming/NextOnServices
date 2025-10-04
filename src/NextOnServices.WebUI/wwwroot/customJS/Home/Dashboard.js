@@ -30,12 +30,13 @@
     });
 }
 
-function openChangeStatusBox(status, projectId) {
+function openChangeStatusBox(statusId, projectId, statusLabel) {
     $("#mdlChangeStatus").modal('show');
-    let statusId = status == "Closed" ? 1 : status == "Live" ? 2 : status == "On Hold" ? 3 : status == "Cancelled" ? 4 : status == "Awarded" ? 5 : status == "Invoiced" ? 6 : 0;
-    $("#mdlChangeStatus").find("[name='Status']").val(statusId);
+    $("#mdlChangeStatus").find("[name='Status']").val(statusId).trigger('change');
     $("#mdlChangeStatus").find("[name='ProjectId']").val(projectId);
 
+    var statusText = statusLabel ? '(' + statusLabel + ')' : '';
+    $("#mdlChangeStatus").find(".modal-title span.current-status").text(statusText);
 }
 
 function UpdateStatus() {
