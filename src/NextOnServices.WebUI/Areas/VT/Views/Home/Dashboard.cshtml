@@ -257,7 +257,7 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Change Project Status <span class="text-muted font-weight-normal current-status"></span></h5>
+                    <h5 class="modal-title" id="exampleModalLongTitle">Change Projects Status</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -294,9 +294,6 @@
             // return;
             $("select").select2();
             getProjectTable();
-            $("#mdlChangeStatus").on('hidden.bs.modal', function () {
-                $(this).find(".modal-title span.current-status").text('');
-            });
         });
 
         function getProjectTable() {
