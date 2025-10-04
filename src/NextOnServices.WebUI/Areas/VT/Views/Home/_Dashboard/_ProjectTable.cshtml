@@ -10,15 +10,6 @@
     .tblstatus {
         cursor: pointer;
     }
-
-    .badge.tblstatus {
-        border: none;
-        outline: none;
-    }
-
-    .badge.tblstatus:focus {
-        box-shadow: none;
-    }
 </style>
 <table class="table table-striped table-borderless">
     <thead>
@@ -71,27 +62,27 @@
                                     @{
                                         if (item.STATUS == 1)
                                         {
-                                            <button type="button" class="badge badge-danger hvr-grow tblstatus" onclick="openChangeStatusBox(1,@item.ProjectId,'Closed')">Closed</button>
+                                            <div class="badge badge-danger"><span onclick="openChangeStatusBox('Closed',@item.ProjectId)" class="hvr-grow tblstatus">Closed</span></div>
                                         }
                                         if (item.STATUS == 2)
                                         {
-                                            <button type="button" class="badge badge-success hvr-grow tblstatus" onclick="openChangeStatusBox(2,@item.ProjectId,'Live')">Live</button>
+                                            <div class="badge badge-success"><span onclick="openChangeStatusBox('Live',@item.ProjectId)" class="hvr-grow tblstatus">Live</span></div>
                                         }
                                         if (item.STATUS == 3)
                                         {
-                                            <button type="button" class="badge badge-warning hvr-grow tblstatus" onclick="openChangeStatusBox(3,@item.ProjectId,'On Hold')">On Hold</button>
+                                            <div class="badge badge-warning"><span onclick="openChangeStatusBox('On Hold',@item.ProjectId)" class="hvr-grow tblstatus">On Hold</span></div>
                                         }
                                         if (item.STATUS == 4)
                                         {
-                                            <button type="button" class="badge badge-danger hvr-grow tblstatus" onclick="openChangeStatusBox(4,@item.ProjectId,'Cancelled')">Cancelled</button>
+                                            <div class="badge badge-danger"><span onclick="openChangeStatusBox('Cancelled',@item.ProjectId)" class="hvr-grow tblstatus">Cancelled</span></div>
                                         }
                                         if (item.STATUS == 5)
                                         {
-                                            <button type="button" class="badge badge-info hvr-grow tblstatus" onclick="openChangeStatusBox(5,@item.ProjectId,'Awarded')">Awarded</button>
+                                            <div class="badge badge-info"><span onclick="openChangeStatusBox('Awarded',@item.ProjectId)" class="hvr-grow tblstatus">Awarded</span></div>
                                         }
                                         if (item.STATUS == 6)
                                         {
-                                            <button type="button" class="badge badge-default hvr-grow tblstatus" onclick="openChangeStatusBox(6,@item.ProjectId,'Invoiced')">Invoiced</button>
+                                            <div class="badge badge-default"><span onclick="openChangeStatusBox('Invoiced',@item.ProjectId)" class="hvr-grow tblstatus">Invoiced</span></div>
                                         }
                                     }
                                 </td>
