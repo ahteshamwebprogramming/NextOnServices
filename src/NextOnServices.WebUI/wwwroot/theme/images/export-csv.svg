@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="csvGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6ee7b7" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+  </defs>
+  <path d="M44 12h44l28 28v64c0 11.046-8.954 20-20 20H44c-11.046 0-20-8.954-20-20V32c0-11.046 8.954-20 20-20z" fill="url(#csvGradient)" />
+  <path d="M88 12v24h24" fill="#bbf7d0" />
+  <path d="M36 36h56c6.627 0 12 5.373 12 12v48c0 6.627-5.373 12-12 12H36c-6.627 0-12-5.373-12-12V48c0-6.627 5.373-12 12-12z" fill="#ffffff" />
+  <text x="64" y="60" text-anchor="middle" font-family="'Poppins', 'Segoe UI', Arial, sans-serif" font-size="26" font-weight="700" fill="#10b981">CSV</text>
+  <rect x="44" y="74" width="40" height="8" rx="4" fill="#34d399" />
+  <rect x="44" y="90" width="40" height="8" rx="4" fill="#86efac" />
+  <rect x="44" y="106" width="40" height="8" rx="4" fill="#bbf7d0" />
+</svg>
