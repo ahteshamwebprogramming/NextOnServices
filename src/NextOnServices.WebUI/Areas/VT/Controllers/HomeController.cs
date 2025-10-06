@@ -1,6 +1,7 @@
 ﻿
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using NextOnServices.Endpoints.Accounts;
@@ -147,9 +148,17 @@ public class HomeController : Controller
     {
         return View();
     }
+    [HttpPost]
     public async Task<IActionResult> ChangeProjectStatus(int Status, int ProjectId)
     {
         IActionResult res = await _projectsAPIController.ChangeProjectStatus(Status, ProjectId);
+
+        if (res is ObjectResult objectResult)
+        {
+            int statusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+            return StatusCode(statusCode, objectResult.Value);
+        }
+
         return res;
     }
 
