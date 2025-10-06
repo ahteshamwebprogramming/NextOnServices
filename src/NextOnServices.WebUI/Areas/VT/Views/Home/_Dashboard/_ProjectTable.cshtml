@@ -10,52 +10,6 @@
     .tblstatus {
         cursor: pointer;
     }
-
-    .dt-buttons {
-        margin-bottom: 1rem;
-    }
-
-    .dt-buttons .dt-button.export-action {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px;
-        border-radius: 0.5rem;
-        border: 1px solid #cbd5e1;
-        background-color: #ffffff;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-    }
-
-    .dt-buttons .dt-button.export-action:not(:last-child) {
-        margin-right: 0.75rem;
-    }
-
-    .dt-buttons .dt-button.export-action:hover,
-    .dt-buttons .dt-button.export-action:focus {
-        background-color: #f1f5f9;
-        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
-        transform: translateY(-1px);
-    }
-
-    .dt-buttons .dt-button.export-action img.export-icon {
-        display: block;
-        width: 36px;
-        height: 36px;
-    }
-
-    .dt-buttons .dt-button.export-action .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
 </style>
 <table class="table table-striped table-borderless">
     <thead>
@@ -181,23 +135,13 @@
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    text: '<span class="sr-only">Export to Excel</span><img src="@Url.Content("~/theme/images/export-excel.svg")" class="export-icon" alt="Export to Excel" />',
-                    title: 'Data_Export', // File name
-                    className: 'export-action',
-                    attr: {
-                        'title': 'Export to Excel',
-                        'aria-label': 'Export to Excel'
-                    }
+                    text: 'Export to Excel',
+                    title: 'Data_Export' // File name
                 },
                 {
                     extend: 'csvHtml5',
-                    text: '<span class="sr-only">Export to CSV</span><img src="@Url.Content("~/theme/images/export-csv.svg")" class="export-icon" alt="Export to CSV" />',
-                    title: 'Data_Export', // File name
-                    className: 'export-action',
-                    attr: {
-                        'title': 'Export to CSV',
-                        'aria-label': 'Export to CSV'
-                    }
+                    text: 'Export to CSV',
+                    title: 'Data_Export' // File name
                 }
             ]
         });
