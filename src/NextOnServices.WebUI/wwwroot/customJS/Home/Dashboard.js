@@ -49,10 +49,16 @@ function UpdateStatus() {
         cache: false,
         dataType: "json",
         success: function (data) {
-            $("#mdlChangeStatus").modal('hide');
-            getProjectTablePartialView().then(() => {
+            if (data && data.success) {
+                $("#mdlChangeStatus").modal('hide');
+                getProjectTablePartialView().then(() => {
+                    UnblockUI();
+                });
+            }
+            else {
                 UnblockUI();
-            });
+                alert("Error!", "Unable to update project status.");
+            }
         },
         error: function (result) {
             UnblockUI();

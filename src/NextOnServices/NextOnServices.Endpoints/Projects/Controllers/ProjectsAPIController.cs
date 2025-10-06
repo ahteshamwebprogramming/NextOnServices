@@ -170,22 +170,23 @@ public class ProjectsAPIController : ControllerBase
     {
         try
         {
-            var parms = new DynamicParameters();
-            parms.Add(@"@userid", 0, DbType.Int32);
-            parms.Add(@"@stattype", 0, DbType.Int32);
-            parms.Add(@"@flagtype", 0, DbType.Int32);
-            try
+            // Update the project status using a parameterized query to avoid SQL injection
+            const string updateQuery = "UPDATE Projects SET Status = @Status WHERE ProjectId = @ProjectId";
+            var updateParams = new { Status, ProjectId };
+
+            bool updateResult = await _unitOfWork.Project.ExecuteQueryAsync(updateQuery, updateParams);
+
+            if (updateResult)
             {
-                //var result = await _unitOfWork.Project.GetStoredProcedure("GetDashboardbyManager", parms);
-                var result = await _unitOfWork.Project.GetQueryAll<DashboardViewModel>(@"update projects set status=" + Status + " where projectid=" + ProjectId);
-                return StatusCode(StatusCodes.Status200OK, result);
+                return StatusCode(StatusCodes.Status200OK, new { success = true });
             }
-            catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, ex); }
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new { success = false });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error in retriving Attendance {nameof(GetProjects)}");
-            throw;
+            _logger.LogError(ex, $"Error in updating project status {nameof(ChangeProjectStatus)}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { success = false, message = ex.Message });
         }
     }
 
