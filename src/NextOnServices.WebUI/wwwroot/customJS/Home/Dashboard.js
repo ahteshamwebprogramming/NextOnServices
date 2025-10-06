@@ -31,32 +31,47 @@
 }
 
 function openChangeStatusBox(status, projectId) {
-    $("#mdlChangeStatus").modal('show');
+    // Bootstrap 5 native way
+    const modalElement = document.getElementById('mdlChangeStatus');
+    const modal = new bootstrap.Modal(modalElement);
+    modal.show();
+
     let statusId = status == "Closed" ? 1 : status == "Live" ? 2 : status == "On Hold" ? 3 : status == "Cancelled" ? 4 : status == "Awarded" ? 5 : status == "Invoiced" ? 6 : 0;
+
     $("#mdlChangeStatus").find("[name='Status']").val(statusId);
     $("#mdlChangeStatus").find("[name='ProjectId']").val(projectId);
-
 }
 
 function UpdateStatus() {
-    BlockUI();
+    //BlockUI();
     let status = $("#mdlChangeStatus").find("[name='Status']").val();
     let projectId = $("#mdlChangeStatus").find("[name='ProjectId']").val();
+
     jQuery.ajax({
         type: "POST",
-        url: "/VT/Home/ChangeProjectStatus/",
+        url: "/VT/Home/ChangeProjectStatus",
         data: { Status: status, ProjectId: projectId },
         cache: false,
         dataType: "json",
         success: function (data) {
-            $("#mdlChangeStatus").modal('hide');
-            getProjectTablePartialView().then(() => {
-                UnblockUI();
-            });
+            // Close modal manually
+            $('#mdlChangeStatus').hide();
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+
+            // Refresh table
+            setTimeout(function () {
+                getProjectTablePartialView()
+                    .then(() => {
+                        console.log("Table refreshed successfully");
+                    })
+                    .catch((error) => {
+                        console.error("Table refresh failed:", error);
+                    });
+            }, 300);
         },
-        error: function (result) {
-            UnblockUI();
-            alert("Error!", result.responseText + "!")
+        error: function (xhr) {
+            alert("Error! " + xhr.responseText);
         }
     });
 }

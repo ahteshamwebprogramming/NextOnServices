@@ -4,6 +4,7 @@
     ViewData["Title"] = "Dashboard";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+
 <link href="~/css/custmahte.css" rel="stylesheet" />
 <link href="~/css/tooltip.css" rel="stylesheet" />
 <style>
@@ -122,7 +123,7 @@
                         @{
                             if (Model != null && Model.ProjectCountSummary != null && Model.ProjectCountSummary.TotalProjects != 0)
                             {
-                                <p class="bttmText">@((Model.ProjectCountSummary.InactiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
+                                // <p class="bttmText">@((Model.ProjectCountSummary.InactiveProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
                             }
                         }
                     </div>
@@ -146,7 +147,7 @@
                         @{
                             if (Model != null && Model.ProjectCountSummary != null && Model.ProjectCountSummary.TotalProjects != 0)
                             {
-                                <p class="bttmText">@((Model.ProjectCountSummary.ArchivedProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
+                                // <p class="bttmText">@((Model.ProjectCountSummary.ArchivedProjects * 100) / Model.ProjectCountSummary.TotalProjects)% of the total projects</p>
                             }
                         }
                     </div>
