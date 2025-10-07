@@ -38,6 +38,53 @@
             margin-top: 20px;
         }
 
+        .dashboard-summary {
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f7f9fc, #eef2f7);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+            height: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .metric-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: #0d6efd;
+            background: rgba(13, 110, 253, 0.12);
+        }
+
+        .metric-content h5 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #1b263b;
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .metric-subtext {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin: 0;
+        }
+
         .card {
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
@@ -190,6 +237,83 @@
     <!-- Dashboard Content -->
     <div class="container dashboard-container">
         <h2 class="text-center mb-4">Project Dashboard</h2>
+        <p class="text-center text-muted mb-4">Comprehensive snapshot of supplier delivery metrics, invoicing progress, and global footprint.</p>
+
+        <div class="row dashboard-summary">
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Projects Invoiced</h5>
+                        <div class="metric-value">92</div>
+                        <p class="metric-subtext">Successfully billed engagements</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Projects Completed</h5>
+                        <div class="metric-value">127</div>
+                        <p class="metric-subtext">Total successful project deliveries</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-stopwatch"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Avg. Duration</h5>
+                        <div class="metric-value">45 days</div>
+                        <p class="metric-subtext">Average project completion time</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Avg. Project Value</h5>
+                        <div class="metric-value">$12,500</div>
+                        <p class="metric-subtext">Average value per engagement</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Countries Covered</h5>
+                        <div class="metric-value">23</div>
+                        <p class="metric-subtext">Global reach and coverage</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="metric-card">
+                    <div class="metric-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h5>Supplier Since</h5>
+                        <div class="metric-value">15/06/2018</div>
+                        <p class="metric-subtext">7 years of partnership</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col-md-6 mb-4">
                 @* <div class="card">
