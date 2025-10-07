@@ -21,6 +21,26 @@
 
 
 
+                $('table').DataTable({
+                    aaSorting: [],
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
+                            titleAttr: 'Export to Excel',
+                            filename: 'Data_Export'
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
+                            titleAttr: 'Export to CSV',
+                            filename: 'Data_Export'
+                        }
+                    ]
+                });
+
+
                 resolve();
             },
             error: function (error) {
