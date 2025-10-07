@@ -26,7 +26,6 @@ using Newtonsoft.Json.Linq;
 using NextOnServices.Infrastructure.ViewModels;
 using NuGet.Protocol.Core.Types;
 using System.Drawing.Printing;
-using System.Linq;
 
 
 
@@ -65,16 +64,11 @@ public class SupplierController : Controller
             {
                 dto.Supplier = (SupplierDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)res).Value;
             }
-            var resProjects = await _suppliersAPIController.GetSupplierProjectsBySupplierId1(Convert.ToInt32(SupplierId));
-            if (resProjects is ObjectResult projectsResult && projectsResult.StatusCode == 200)
-            {
-                dto.SupplierProjects = projectsResult.Value as List<SupplierProjectsDTO>;
-                if (dto.SupplierProjects != null && dto.SupplierProjects.Any())
-                {
-                    dto.ProjectsInvoicedCount = dto.SupplierProjects.Count(x => x.Status == 6);
-                    dto.ProjectsCompletedCount = dto.ProjectsInvoicedCount;
-                }
-            }
+            //var resProjects = await _suppliersAPIController.GetSupplierProjectsBySupplierId(Convert.ToInt32(SupplierId));
+            //if (resProjects != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)resProjects).StatusCode == 200)
+            //{
+            //    dto.SupplierProjects = (List<SupplierProjectsDTO>?)((Microsoft.AspNetCore.Mvc.ObjectResult)resProjects).Value;
+            //}
         }
         return View(dto);
     }

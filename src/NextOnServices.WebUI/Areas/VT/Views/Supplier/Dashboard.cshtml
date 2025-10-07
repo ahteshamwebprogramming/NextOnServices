@@ -247,7 +247,7 @@
                     </div>
                     <div class="metric-content">
                         <h5>Projects Invoiced</h5>
-                        <div class="metric-value">@(Model?.ProjectsInvoicedCount ?? 0)</div>
+                        <div class="metric-value">92</div>
                         <p class="metric-subtext">Successfully billed engagements</p>
                     </div>
                 </div>
@@ -259,7 +259,7 @@
                     </div>
                     <div class="metric-content">
                         <h5>Projects Completed</h5>
-                        <div class="metric-value">@(Model?.ProjectsCompletedCount ?? 0)</div>
+                        <div class="metric-value">127</div>
                         <p class="metric-subtext">Total successful project deliveries</p>
                     </div>
                 </div>
@@ -319,7 +319,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-building"></i> Supplier Name</h5>
-                        <p class="card-text mb-0">@Model?.Supplier?.SupplierCode</p>
+                        <p class="card-text">@Model?.Supplier?.SupplierCode</p>
                     </div>
                 </div>
             </div>
@@ -327,15 +327,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-info-circle"></i> Supplier Description</h5>
-                        <p class="card-text mb-0">@Model?.Supplier?.Name</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="fas fa-check-circle"></i> Projects Completed</h5>
-                        <p class="card-text mb-0">@(Model?.ProjectsCompletedCount ?? 0)</p>
+                        <p class="card-text">@Model?.Supplier?.Name</p>
                     </div>
                 </div>
             </div>
