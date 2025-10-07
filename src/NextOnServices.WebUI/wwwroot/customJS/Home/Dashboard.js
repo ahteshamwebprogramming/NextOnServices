@@ -1,8 +1,8 @@
-﻿function getProjectTablePartialView() {
-
+function getProjectTablePartialView() {
     let Pmanager = $("#TableFilters").find("[name='Managers']").val();
     let Status = $("#TableFilters").find("[name='Status']").val();
     let flagstat = chckchckbox();
+
     var inputData = {
         "Pmanager": Pmanager,
         "Status": Status,
@@ -19,15 +19,61 @@
             success: function (data) {
                 $('#div_ProjectTable').html(data);
 
-
-
-                resolve();
+                try {
+                    initializeProjectTable();
+                    resolve();
+                } catch (initError) {
+                    reject(initError);
+                }
             },
             error: function (error) {
                 reject(error);
             }
         });
     });
+}
+
+function initializeProjectTable() {
+    const $table = $('#div_ProjectTable').find('table');
+
+    if (!$table.length || !$.fn.DataTable) {
+        return;
+    }
+
+    $table.DataTable({
+        destroy: true,
+        aaSorting: [],
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'excelHtml5',
+                text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
+                titleAttr: 'Export to Excel',
+                filename: 'Data_Export'
+            },
+            {
+                extend: 'csvHtml5',
+                text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
+                titleAttr: 'Export to CSV',
+                filename: 'Data_Export'
+            }
+        ],
+        language: {
+            search: '',
+            searchPlaceholder: 'Search projects...'
+        }
+    });
+
+    const $filter = $('#div_ProjectTable .dataTables_filter');
+    const $label = $filter.find('label');
+    const $input = $filter.find('input[type="search"]');
+
+    $label.contents().filter(function () {
+        return this.nodeType === 3;
+    }).remove();
+
+    $label.addClass('w-100 justify-content-end');
+    $input.addClass('form-control form-control-sm').attr('placeholder', 'Search projects...');
 }
 
 function openChangeStatusBox(status, projectId) {
@@ -43,7 +89,7 @@ function openChangeStatusBox(status, projectId) {
 }
 
 function UpdateStatus() {
-    //BlockUI();
+    BlockUI();
     let status = $("#mdlChangeStatus").find("[name='Status']").val();
     let projectId = $("#mdlChangeStatus").find("[name='ProjectId']").val();
 
@@ -53,24 +99,29 @@ function UpdateStatus() {
         data: { Status: status, ProjectId: projectId },
         cache: false,
         dataType: "json",
-        success: function (data) {
-            // Close modal manually
-            $('#mdlChangeStatus').hide();
-            $('.modal-backdrop').remove();
-            $('body').removeClass('modal-open');
+        success: function () {
+            const modalElement = document.getElementById('mdlChangeStatus');
+            const modalInstance = bootstrap.Modal.getInstance(modalElement);
 
-            // Refresh table
-            setTimeout(function () {
-                getProjectTablePartialView()
-                    .then(() => {
-                        console.log("Table refreshed successfully");
-                    })
-                    .catch((error) => {
-                        console.error("Table refresh failed:", error);
-                    });
-            }, 300);
+            if (modalInstance) {
+                modalInstance.hide();
+            } else {
+                $('#mdlChangeStatus').hide();
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+            }
+
+            getProjectTablePartialView()
+                .then(() => {
+                    UnblockUI();
+                })
+                .catch((error) => {
+                    console.error("Table refresh failed:", error);
+                    UnblockUI();
+                });
         },
         error: function (xhr) {
+            UnblockUI();
             alert("Error! " + xhr.responseText);
         }
     });
