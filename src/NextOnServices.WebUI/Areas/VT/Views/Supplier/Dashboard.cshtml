@@ -1,6 +1,32 @@
 ﻿@model NextOnServices.Infrastructure.ViewModels.Supplier.SupplierDashboardViewModel
+@using System.Collections.Generic
 @{
     Layout = null;
+
+    var projects = Model?.SupplierProjects ?? new List<NextOnServices.Infrastructure.ViewModels.Supplier.SupplierProjectsDTO>();
+    var totalProjects = projects.Count;
+    var liveProjects = projects.Count(p => p.Status == 2);
+    var closedProjects = projects.Count(p => p.Status == 1);
+    var onHoldProjects = projects.Count(p => p.Status == 3);
+    var awardedProjects = projects.Count(p => p.Status == 5);
+    var countriesCovered = projects
+        .Select(p => p.Country)
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .SelectMany(c => c.Split(',', StringSplitOptions.RemoveEmptyEntries))
+        .Select(c => c.Trim())
+        .Where(c => !string.IsNullOrWhiteSpace(c))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Count();
+    var averageCpi = projects
+        .Where(p => p.CPI.HasValue)
+        .Select(p => p.CPI!.Value)
+        .DefaultIfEmpty(0)
+        .Average();
+    var averageLoi = projects
+        .Where(p => p.LOI.HasValue)
+        .Select(p => p.LOI!.Value)
+        .DefaultIfEmpty(0m)
+        .Average();
 }
 
 <!DOCTYPE html>
@@ -46,12 +72,14 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(0, 0, 0, 0.08);
             border-radius: 0.75rem;
+            height: 100%;
         }
 
         .metric-card .card-body {
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
+            gap: 0.5rem;
+            min-height: 165px;
         }
 
         .metric-card .card-title {
@@ -60,7 +88,7 @@
             gap: 0.5rem;
             font-size: 1rem;
             font-weight: 600;
-            color: #1b263b;
+            color: #000;
             margin-bottom: 0.25rem;
         }
 
@@ -68,18 +96,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 0.5rem;
-            background: rgba(13, 110, 253, 0.12);
-            color: #0d6efd;
+            background: #f1f1f1;
+            color: #000;
             font-size: 1.2rem;
         }
 
         .metric-value {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #0d6efd;
+            color: #000;
             margin-bottom: 0;
         }
 
@@ -244,75 +272,99 @@
         <p class="text-center text-muted mb-4">Comprehensive snapshot of supplier delivery metrics, invoicing progress, and global footprint.</p>
 
         <div class="row dashboard-summary">
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <span class="metric-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                            Projects Invoiced
+                            <span class="metric-icon"><i class="fas fa-layer-group"></i></span>
+                            Total Projects
                         </h5>
-                        <p class="metric-value">92</p>
-                        <p class="metric-subtext">Successfully billed engagements</p>
+                        <p class="metric-value">@totalProjects</p>
+                        <p class="metric-subtext">Aggregate count of supplier projects</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
+                <div class="card metric-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <span class="metric-icon"><i class="fas fa-broadcast-tower"></i></span>
+                            Live Projects
+                        </h5>
+                        <p class="metric-value">@liveProjects</p>
+                        <p class="metric-subtext">Currently active supplier engagements</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
                             <span class="metric-icon"><i class="fas fa-check-circle"></i></span>
-                            Projects Completed
+                            Closed Projects
                         </h5>
-                        <p class="metric-value">127</p>
-                        <p class="metric-subtext">Total successful project deliveries</p>
+                        <p class="metric-value">@closedProjects</p>
+                        <p class="metric-subtext">Completed and closed assignments</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <span class="metric-icon"><i class="fas fa-stopwatch"></i></span>
-                            Avg. Duration
+                            <span class="metric-icon"><i class="fas fa-pause-circle"></i></span>
+                            On Hold Projects
                         </h5>
-                        <p class="metric-value">45 days</p>
-                        <p class="metric-subtext">Average project completion time</p>
+                        <p class="metric-value">@onHoldProjects</p>
+                        <p class="metric-subtext">Projects temporarily paused</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <span class="metric-icon"><i class="fas fa-dollar-sign"></i></span>
-                            Avg. Project Value
+                            <span class="metric-icon"><i class="fas fa-award"></i></span>
+                            Awarded Projects
                         </h5>
-                        <p class="metric-value">$12,500</p>
-                        <p class="metric-subtext">Average value per engagement</p>
+                        <p class="metric-value">@awardedProjects</p>
+                        <p class="metric-subtext">Projects awarded to the supplier</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
                             <span class="metric-icon"><i class="fas fa-globe"></i></span>
                             Countries Covered
                         </h5>
-                        <p class="metric-value">23</p>
-                        <p class="metric-subtext">Global reach and coverage</p>
+                        <p class="metric-value">@countriesCovered</p>
+                        <p class="metric-subtext">Unique countries across projects</p>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-4 col-md-6 mb-4">
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
                 <div class="card metric-card h-100">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <span class="metric-icon"><i class="fas fa-calendar-check"></i></span>
-                            Supplier Since
+                            <span class="metric-icon"><i class="fas fa-coins"></i></span>
+                            Average CPI
                         </h5>
-                        <p class="metric-value">15/06/2018</p>
-                        <p class="metric-subtext">7 years of partnership</p>
+                        <p class="metric-value">@averageCpi.ToString("0.##")</p>
+                        <p class="metric-subtext">Average cost per interview</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-lg-3 mb-4">
+                <div class="card metric-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <span class="metric-icon"><i class="fas fa-hourglass-half"></i></span>
+                            Average LOI
+                        </h5>
+                        <p class="metric-value">@averageLoi.ToString("0.##")</p>
+                        <p class="metric-subtext">Mean length of interview (minutes)</p>
                     </div>
                 </div>
             </div>
