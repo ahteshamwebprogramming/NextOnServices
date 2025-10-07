@@ -1,5 +1,7 @@
 ﻿@model NextOnServices.Infrastructure.ViewModels.Dashboard.DashboardViewModel
 
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 <style>
     .badge {
         width: 90px;
@@ -32,26 +34,6 @@
             display: block
             
 
-        }
-
-    .dataTables_wrapper .dataTables_filter {
-        margin-bottom: 1rem;
-    }
-
-        .dataTables_wrapper .dataTables_filter label {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            margin-bottom: 0;
-            font-weight: 600;
-        }
-
-        .dataTables_wrapper .dataTables_filter input {
-            margin-left: 0 !important;
-            width: 260px;
-            max-width: 100%;
-            border-radius: 999px;
-            padding: .35rem 1rem;
         }
 
 </style>
@@ -159,3 +141,38 @@
     </tbody>
 </table>
 
+<!-- jQuery & DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+
+<!-- For Excel Export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+
+<!-- For CSV Export (Optional) -->
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+<script type="text/javascript">
+      $(function () {
+      $('table').DataTable({
+        aaSorting: [],
+        dom: 'Bfrtip',
+        buttons: [
+          {
+            extend: 'excelHtml5',
+            text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
+            titleAttr: 'Export to Excel',
+            filename: 'Data_Export'
+          },
+          {
+            extend: 'csvHtml5',
+            text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
+            titleAttr: 'Export to CSV',
+            filename: 'Data_Export'
+          }
+        ]
+      });
+    });
+
+</script>
