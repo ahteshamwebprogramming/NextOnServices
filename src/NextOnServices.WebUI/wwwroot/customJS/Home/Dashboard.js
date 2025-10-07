@@ -125,7 +125,9 @@ function testyourlink(link) {
         alert('Please allow popups for this website');
     }
 }
-    
+
+
+
 //function testyourlink(link) {
 //    var number = Math.floor(Math.random() * 200000000);
 //    number = 'test_' + number;
