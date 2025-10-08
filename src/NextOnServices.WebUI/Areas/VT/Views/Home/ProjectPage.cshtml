@@ -114,7 +114,15 @@
         width: 29px;
         margin-bottom: 12px;
     }
-    
+
+    .badge {
+        width: 90px;
+    }
+
+    .tblstatus {
+        cursor: pointer;
+    }
+
 
 </style>
 
@@ -602,7 +610,39 @@
                                                             <td>$@item.CPI</td>
                                                             <td>@item.Complete</td>
                                                             <td>@item.CompletePercent</td>
-                                                            <td> <a href="javacript:void(0)">@item.StatusName</a></td>
+                                                            <td class="font-weight-medium">
+                                                                @{ var projectId = Model?.Project?.ProjectId ?? 0; }
+                                                                @{
+                                                                    if (item.Status == 1)
+                                                                    {
+                                                                        <div class="badge badge-danger"><span onclick="openChangeStatusBox('Closed',@projectId)" class="hvr-grow tblstatus">Closed</span></div>
+                                                                    }
+                                                                    else if (item.Status == 2)
+                                                                    {
+                                                                        <div class="badge badge-success"><span onclick="openChangeStatusBox('Live',@projectId)" class="hvr-grow tblstatus">Live</span></div>
+                                                                    }
+                                                                    else if (item.Status == 3)
+                                                                    {
+                                                                        <div class="badge badge-warning"><span onclick="openChangeStatusBox('On Hold',@projectId)" class="hvr-grow tblstatus">On Hold</span></div>
+                                                                    }
+                                                                    else if (item.Status == 4)
+                                                                    {
+                                                                        <div class="badge badge-danger"><span onclick="openChangeStatusBox('Cancelled',@projectId)" class="hvr-grow tblstatus">Cancelled</span></div>
+                                                                    }
+                                                                    else if (item.Status == 5)
+                                                                    {
+                                                                        <div class="badge badge-info"><span onclick="openChangeStatusBox('Awarded',@projectId)" class="hvr-grow tblstatus">Awarded</span></div>
+                                                                    }
+                                                                    else if (item.Status == 6)
+                                                                    {
+                                                                        <div class="badge badge-default"><span onclick="openChangeStatusBox('Invoiced',@projectId)" class="hvr-grow tblstatus">Invoiced</span></div>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <a href="javascript:void(0)" class="tblstatus" onclick="openChangeStatusBox('@item.StatusName',@projectId)">@item.StatusName</a>
+                                                                    }
+                                                                }
+                                                            </td>
                                                             <td>@item.IRPercent%</td>
                                                             <td>@item.ActLOI</td>
                                                             <td>
