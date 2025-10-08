@@ -26,13 +26,15 @@ public class HomeController : Controller
     private readonly AccountsController _accountAPIController;
     private readonly StatusMasterAPIController _statusMasterAPIController;
     private readonly CountryAPIController _countryAPIController;
-    public HomeController(ILogger<HomeController> logger, ProjectsAPIController projectsAPIController, AccountsController accountAPIController, StatusMasterAPIController statusMasterAPIController, CountryAPIController countryAPIController)
+    private readonly ProjectURLAPIController _projectUrlApiController;
+    public HomeController(ILogger<HomeController> logger, ProjectsAPIController projectsAPIController, AccountsController accountAPIController, StatusMasterAPIController statusMasterAPIController, CountryAPIController countryAPIController, ProjectURLAPIController projectUrlApiController)
     {
         _logger = logger;
         _projectsAPIController = projectsAPIController;
         _accountAPIController = accountAPIController;
         _statusMasterAPIController = statusMasterAPIController;
         _countryAPIController = countryAPIController;
+        _projectUrlApiController = projectUrlApiController;
     }
 
     public IActionResult Index()
@@ -150,6 +152,12 @@ public class HomeController : Controller
     public async Task<IActionResult> ChangeProjectStatus(int Status, int ProjectId)
     {
         IActionResult res = await _projectsAPIController.ChangeProjectStatus(Status, ProjectId);
+        return res;
+    }
+
+    public async Task<IActionResult> ChangeProjectUrlStatus(int Status, int ProjectUrlId)
+    {
+        IActionResult res = await _projectUrlApiController.ChangeProjectUrlStatus(Status, ProjectUrlId);
         return res;
     }
 

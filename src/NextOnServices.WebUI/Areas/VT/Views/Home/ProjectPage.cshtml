@@ -611,35 +611,38 @@
                                                             <td>@item.Complete</td>
                                                             <td>@item.CompletePercent</td>
                                                             <td class="font-weight-medium">
-                                                                @{ var projectId = Model?.Project?.ProjectId ?? 0; }
                                                                 @{
-                                                                    if (item.Status == 1)
+                                                                    var projectUrlId = item?.PUID ?? 0;
+                                                                    var statusId = item?.Status ?? 0;
+                                                                    var statusName = item?.StatusName ?? string.Empty;
+
+                                                                    if (statusId == 1)
                                                                     {
-                                                                        <div class="badge badge-danger"><span onclick="openChangeStatusBox('Closed',@projectId)" class="hvr-grow tblstatus">Closed</span></div>
+                                                                        <div class="badge badge-danger"><span onclick="openSurveyStatusBox(1,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">Closed</span></div>
                                                                     }
-                                                                    else if (item.Status == 2)
+                                                                    else if (statusId == 2)
                                                                     {
-                                                                        <div class="badge badge-success"><span onclick="openChangeStatusBox('Live',@projectId)" class="hvr-grow tblstatus">Live</span></div>
+                                                                        <div class="badge badge-success"><span onclick="openSurveyStatusBox(2,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">Live</span></div>
                                                                     }
-                                                                    else if (item.Status == 3)
+                                                                    else if (statusId == 3)
                                                                     {
-                                                                        <div class="badge badge-warning"><span onclick="openChangeStatusBox('On Hold',@projectId)" class="hvr-grow tblstatus">On Hold</span></div>
+                                                                        <div class="badge badge-warning"><span onclick="openSurveyStatusBox(3,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">On Hold</span></div>
                                                                     }
-                                                                    else if (item.Status == 4)
+                                                                    else if (statusId == 4)
                                                                     {
-                                                                        <div class="badge badge-danger"><span onclick="openChangeStatusBox('Cancelled',@projectId)" class="hvr-grow tblstatus">Cancelled</span></div>
+                                                                        <div class="badge badge-danger"><span onclick="openSurveyStatusBox(4,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">Cancelled</span></div>
                                                                     }
-                                                                    else if (item.Status == 5)
+                                                                    else if (statusId == 5)
                                                                     {
-                                                                        <div class="badge badge-info"><span onclick="openChangeStatusBox('Awarded',@projectId)" class="hvr-grow tblstatus">Awarded</span></div>
+                                                                        <div class="badge badge-info"><span onclick="openSurveyStatusBox(5,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">Awarded</span></div>
                                                                     }
-                                                                    else if (item.Status == 6)
+                                                                    else if (statusId == 6)
                                                                     {
-                                                                        <div class="badge badge-default"><span onclick="openChangeStatusBox('Invoiced',@projectId)" class="hvr-grow tblstatus">Invoiced</span></div>
+                                                                        <div class="badge badge-default"><span onclick="openSurveyStatusBox(6,@projectUrlId,this)" class="hvr-grow tblstatus" role="button">Invoiced</span></div>
                                                                     }
                                                                     else
                                                                     {
-                                                                        <a href="javascript:void(0)" class="tblstatus" onclick="openChangeStatusBox('@item.StatusName',@projectId)">@item.StatusName</a>
+                                                                        <a href="javascript:void(0)" class="tblstatus" onclick="openSurveyStatusBox(@statusId,@projectUrlId,this)">@statusName</a>
                                                                     }
                                                                 }
                                                             </td>
@@ -1024,6 +1027,39 @@
     </div>
 </div>
 <div class="modals">
+    <div class="modal fade" id="mdlSurveyStatus" tabindex="-1" role="dialog" aria-labelledby="mdlSurveyStatusTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mdlSurveyStatusTitle">Change Survey Status</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <select class="form-control" name="SurveyStatus">
+                                <option value="1">Closed</option>
+                                <option value="2">Live</option>
+                                <option value="3">On Hold</option>
+                                <option value="4">Cancelled</option>
+                                <option value="5">Awarded</option>
+                                <option value="6">Invoiced</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" value="0" name="ProjectUrlId" />
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="updateSurveyStatus()">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modals">
     <div class="modal fade" id="mdlDetailedReport" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -1143,6 +1179,90 @@
             //getProjectTablePartialView().then((d) => {
             //    UnblockUI();
             //});
+        }
+
+        const surveyStatusConfig = {
+            1: { className: 'badge badge-danger', text: 'Closed' },
+            2: { className: 'badge badge-success', text: 'Live' },
+            3: { className: 'badge badge-warning', text: 'On Hold' },
+            4: { className: 'badge badge-danger', text: 'Cancelled' },
+            5: { className: 'badge badge-info', text: 'Awarded' },
+            6: { className: 'badge badge-default', text: 'Invoiced' }
+        };
+
+        function openSurveyStatusBox(statusId, projectUrlId, element) {
+            const modal = $('#mdlSurveyStatus');
+            modal.data('targetCell', $(element).closest('td'));
+            modal.find("[name='SurveyStatus']").val(statusId > 0 ? statusId : '');
+            modal.find("[name='ProjectUrlId']").val(projectUrlId);
+            modal.modal('show');
+        }
+
+        function updateSurveyStatus() {
+            const modal = $('#mdlSurveyStatus');
+            const statusValue = modal.find("[name='SurveyStatus']").val();
+            const projectUrlId = modal.find("[name='ProjectUrlId']").val();
+            const targetCell = modal.data('targetCell');
+
+            if (!projectUrlId || projectUrlId === '0') {
+                Swal.fire({ icon: 'warning', title: 'Missing Data', text: 'Unable to determine the survey record to update.', confirmButtonColor: '#d33' });
+                return;
+            }
+
+            if (!statusValue) {
+                Swal.fire({ icon: 'warning', title: 'Select Status', text: 'Please select a status before updating.', confirmButtonColor: '#3085d6' });
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: '/VT/Home/ChangeProjectUrlStatus',
+                data: { Status: statusValue, ProjectUrlId: projectUrlId },
+                success: function (response) {
+                    modal.modal('hide');
+                    modal.removeData('targetCell');
+
+                    const statusId = parseInt(statusValue, 10);
+                    const statusText = modal.find("[name='SurveyStatus'] option:selected").text();
+
+                    if (targetCell && targetCell.length) {
+                        updateSurveyStatusCell(targetCell, statusId, statusText, projectUrlId);
+                    }
+
+                    const successMessage = response?.message || 'Status updated successfully';
+                    Swal.fire({ icon: 'success', title: 'Success', text: successMessage, confirmButtonColor: '#3085d6' });
+                },
+                error: function (xhr) {
+                    const errorMessage = xhr?.responseJSON?.message || xhr?.responseText || 'Unable to update status right now.';
+                    Swal.fire({ icon: 'error', title: 'Error', text: errorMessage, confirmButtonColor: '#d33' });
+                }
+            });
+        }
+
+        function updateSurveyStatusCell(targetCell, statusId, fallbackText, projectUrlId) {
+            const config = surveyStatusConfig[statusId] || { className: '', text: fallbackText || 'Status' };
+            const statusText = config.text || fallbackText || 'Status';
+
+            targetCell.empty();
+
+            if (config.className) {
+                const badgeWrapper = $('<div>').addClass(config.className);
+                const badgeText = $('<span>')
+                    .addClass('hvr-grow tblstatus')
+                    .attr('role', 'button')
+                    .text(statusText)
+                    .on('click', function () { openSurveyStatusBox(statusId, projectUrlId, this); });
+
+                badgeWrapper.append(badgeText);
+                targetCell.append(badgeWrapper);
+            } else {
+                $('<a>')
+                    .attr('href', 'javascript:void(0)')
+                    .addClass('tblstatus')
+                    .text(statusText)
+                    .on('click', function () { openSurveyStatusBox(statusId, projectUrlId, this); })
+                    .appendTo(targetCell);
+            }
         }
 
         function DownloadDetailedReport(projectId) {
