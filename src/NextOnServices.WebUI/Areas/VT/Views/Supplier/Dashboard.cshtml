@@ -72,14 +72,14 @@
             height: 36px;
             border-radius: 0.5rem;
             background: rgba(13, 110, 253, 0.12);
-            color: #0d6efd;
+            color: #090a0a;
             font-size: 1.2rem;
         }
 
         .metric-value {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #0d6efd;
+            color: #090a0a;
             margin-bottom: 0;
         }
 
@@ -205,6 +205,13 @@
             justify-content: center;
             min-width: 90px;
         }
+
+        .dataTables_filter input[type=search] {
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            
+        }
     </style>
 </head>
 <body>
@@ -233,7 +240,7 @@
 
             <div class="vendor-info ml-auto">
                 <span class="mr-3">Welcome, <strong>@Model?.Supplier?.Name</strong></span>
-                <a href="/VT/Supplier/Login" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <a href="/VT/Supplier/Login" style=" white-space: nowrap;" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </nav>
@@ -319,21 +326,21 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-4">
+            @* <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-building"></i> Supplier Name</h5>
                         <p class="card-text">@Model?.Supplier?.SupplierCode</p>
                     </div>
                 </div>
-            </div>
+            </div> *@
             <div class="col-md-6 mb-4">
-                <div class="card">
+                @* <div class="card">
                     <div class="card-body">
                         <h5 class="card-title"><i class="fas fa-info-circle"></i> Supplier Description</h5>
                         <p class="card-text">@Model?.Supplier?.Name</p>
                     </div>
-                </div>
+                </div> *@
             </div>
             <!-- Add more fields as needed following the same format -->
         </div>
@@ -355,7 +362,8 @@
                     <tr>
                        
                         <th>Status</th>
-                        <th>Project Number</th>
+                        <th style="white-space: nowrap;">Project Number</th>
+
                         <th>Country</th>
                         <th>CPI</th>
                         <th>Respondants</th>
