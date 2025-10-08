@@ -28,6 +28,33 @@ public class ProjectURLAPIController : ControllerBase
         _dapperDBSetting = dapperDBSetting;
     }
     [HttpPost]
+    public async Task<IActionResult> ChangeProjectUrlStatus(int Status, int ProjectUrlId)
+    {
+        try
+        {
+            ProjectsUrl? projectsUrl = await _unitOfWork.ProjectsUrl.FindByIdAsync(ProjectUrlId);
+            if (projectsUrl == null)
+            {
+                return NotFound("Project URL not found");
+            }
+
+            projectsUrl.Status = Status;
+
+            bool isUpdated = await _unitOfWork.ProjectsUrl.UpdateAsync(projectsUrl);
+            if (isUpdated)
+            {
+                return Ok(new { Message = "Status updated successfully" });
+            }
+
+            return StatusCode(StatusCodes.Status500InternalServerError, "Unable to update status");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error updating project url status in {nameof(ChangeProjectUrlStatus)}");
+            throw;
+        }
+    }
+    [HttpPost]
     public async Task<IActionResult> AddProjectURL(ProjectsUrlDTO inputData)
     {
         try
