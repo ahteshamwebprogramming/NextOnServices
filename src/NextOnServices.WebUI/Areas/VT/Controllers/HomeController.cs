@@ -137,8 +137,22 @@ public class HomeController : Controller
     {
         DashboardViewModel outputData = new DashboardViewModel();
         IActionResult actionResult = await _projectsAPIController.GetProjects(inputData);
-        ObjectResult objResult = (ObjectResult)actionResult;
-        outputData.ListOfProjects = (List<ProjectTableViewModel>)objResult.Value;
+
+        if (actionResult is ObjectResult objResult)
+        {
+            if (objResult.Value is List<ProjectTableViewModel> projectTable)
+            {
+                outputData.ListOfProjects = projectTable;
+            }
+            else
+            {
+                outputData.ListOfProjects = new List<ProjectTableViewModel>();
+            }
+        }
+        else
+        {
+            outputData.ListOfProjects = new List<ProjectTableViewModel>();
+        }
 
         return PartialView("_Dashboard/_ProjectTable", outputData);
     }
