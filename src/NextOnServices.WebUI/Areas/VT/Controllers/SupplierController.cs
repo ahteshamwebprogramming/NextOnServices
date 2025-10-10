@@ -61,6 +61,7 @@ public class SupplierController : Controller
     {
         request ??= new SupplierChatHistoryRequest();
 
+        PrepareChatApiController();
         var apiResult = await _supplierChatApiController.GetHistory(request);
         return ConvertApiResult(apiResult);
     }
@@ -79,6 +80,7 @@ public class SupplierController : Controller
             UnreadOnly = unreadOnly ?? false
         };
 
+        PrepareChatApiController();
         var apiResult = await _supplierChatApiController.Poll(request, after);
         return ConvertApiResult(apiResult);
     }
@@ -91,8 +93,17 @@ public class SupplierController : Controller
             return BadRequest(new { message = "Message payload is required." });
         }
 
+        PrepareChatApiController();
         var apiResult = await _supplierChatApiController.Send(request);
         return ConvertApiResult(apiResult);
+    }
+
+    private void PrepareChatApiController()
+    {
+        _supplierChatApiController.ControllerContext = new ControllerContext
+        {
+            HttpContext = HttpContext
+        };
     }
 
     private IActionResult ConvertApiResult(IActionResult apiResult)
