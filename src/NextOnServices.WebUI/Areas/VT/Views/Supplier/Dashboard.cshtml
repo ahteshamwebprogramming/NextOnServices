@@ -413,7 +413,7 @@
                         <th>LOI</th>
                         <th>IRPercent</th>
                         <th>Notes</th>
-                        <th>Actions</th>
+                        <th>Comments</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -490,9 +490,10 @@
                                 <td>@item.LOI</td>
                                 <td>@item.IRPercent</td>
                                 <td>@item.Notes</td>
-                                <td>
-                                    <a href="/VT/Supplier/Edit/@item.ProjectMappingId" class="btn btn-sm btn-warning">Edit</a>
-                                    <a href="/VT/Supplier/Delete/@item.ProjectMappingId" class="btn btn-sm btn-danger">Delete</a>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" title="View Comments">
+                                        <i class="fas fa-comments"></i>
+                                    </button>
                                 </td>
                             </tr>
                         }
@@ -856,18 +857,12 @@
                     { "data": "irPercent" },
                     { "data": "notes" },
                     {
-                        "data": null, // Last column for the button
-                        "render": function (data, type, row) {
-                            if (row.projectMappingChecked == 1) {
-                                return `<button class="btn btn-sm btn-success withdraw-button" onclick="StartProjectPrompt(${row.projectMappingId})" data-id="${row.ProjectMappingId}">Start</button>`;
-                            }
-                            else {
-                                return `<button class="btn btn-sm btn-danger withdraw-button" onclick="WithDrawlPrompt(${row.projectMappingId})" data-id="${row.ProjectMappingId}">Withdraw</button>`;
-                            }
-
+                        "data": null,
+                        "render": function () {
+                            return `<button class="btn btn-sm btn-outline-primary comment-button" type="button" title="View Comments"><i class="fas fa-comments"></i></button>`;
                         },
-                        "orderable": false, // Disable sorting for this column
-                        "searchable": false // Disable searching for this column
+                        "orderable": false,
+                        "searchable": false
                     }
                 ],
                 "columnDefs": [
