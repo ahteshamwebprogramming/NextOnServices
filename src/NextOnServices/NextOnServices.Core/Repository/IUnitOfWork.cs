@@ -22,5 +22,6 @@ public interface IUnitOfWork : IDisposable
     public ISupplierLoginRepository SupplierLogin { get; }
     public IGenOperationsRepository GenOperations { get; }
     public ISupplierProjectsRepository SupplierProjects { get; }
+    public ISupplierProjectMessagesRepository SupplierProjectMessages { get; }
     int Save();
 }
