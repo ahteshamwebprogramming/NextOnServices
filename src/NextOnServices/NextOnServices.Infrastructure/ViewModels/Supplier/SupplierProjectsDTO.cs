@@ -31,5 +31,7 @@ public class SupplierProjectsDTO
     public string? Notes { get; set; }
     public string? OLink { get; set; }
     public string? MLink { get; set; }
+    public int? UnreadCount { get; set; }
+    public DateTime? LastMessageUtc { get; set; }
 
 }

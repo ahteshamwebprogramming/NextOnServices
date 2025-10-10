@@ -15,6 +15,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
     <link href="~/css/vt/blockuisupplier.css" rel="stylesheet" />
+    <link href="~/VT/css/chatPanel.css" rel="stylesheet" />
     <!-- DataTables CSS -->
     @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"> *@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
@@ -491,14 +492,26 @@
                                 <td>@item.IRPercent</td>
                                 <td>@item.Notes</td>
                                 <td class="text-center">
+                                    @{
+                                        var unreadCount = item.UnreadCount.GetValueOrDefault();
+                                        var lastMessageTimestamp = item.LastMessageUtc?.ToString("o") ?? string.Empty;
+                                    }
                                     <button type="button"
-                                            class="btn btn-sm btn-outline-primary comment-button"
-                                            title="View Comments"
+                                            class="btn btn-sm btn-outline-primary project-chat-trigger"
+                                            title="Open project chat"
                                             data-project-id="@item.ProjectMappingId"
                                             data-project-name="@item.ProjectName"
                                             data-pid="@item.PID"
-                                            data-current-comment="@item.Notes">
-                                        <i class="fas fa-comments"></i>
+                                            data-supplier-id="@item.SupplierId"
+                                            data-unread-count="@unreadCount"
+                                            data-last-message="@lastMessageTimestamp"
+                                            aria-haspopup="dialog">
+                                        <span class="sr-only">Open chat for @item.PID - @item.ProjectName</span>
+                                        <i class="fas fa-comments" aria-hidden="true"></i>
+                                        @if (unreadCount > 0)
+                                        {
+                                            <span class="chat-unread badge badge-pill badge-danger" data-unread-badge>@unreadCount</span>
+                                        }
                                     </button>
                                 </td>
                             </tr>
@@ -509,31 +522,7 @@
         </div>
     </div>
 
-    <div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <form id="commentForm">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="commentModalLabel">Add Comment</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" id="commentProjectId" />
-                        <div class="mb-3">
-                            <label class="font-weight-bold d-block" id="commentProjectLabel"></label>
-                            <textarea class="form-control" id="commentText" rows="4" placeholder="Type your comment here..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Comment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    @await Html.PartialAsync("_ProjectChatPanel")
     <!-- Footer -->
     <footer class="text-center mt-5">
         <p>&copy; 2024 Nexton Services. All rights reserved.</p>
@@ -560,65 +549,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="~/customJS/Common.js"></script>
+    <script src="~/VT/js/chatPanel.js"></script>
     <script>
         var table;
-
-        function decodeHtml(value) {
-            return $('<textarea />').html(value || '').text();
-        }
-
-        function buildProjectLabel(pid, projectName) {
-            const parts = [];
-            if (pid) {
-                parts.push(`Project #${pid}`);
-            }
-            if (projectName) {
-                parts.push(projectName);
-            }
-
-            return parts.join(' - ');
-        }
 
         $(document).ready(function () {
 
             LoadProjectsSupplierWise();
 
-            $(document).on('click', '.comment-button', function () {
-                const $button = $(this);
-                let projectId = $button.data('project-id') || '';
-                let pid = $button.data('pid') || '';
-                let projectName = decodeHtml($button.data('project-name')) || '';
-                let existingComment = decodeHtml($button.data('current-comment')) || '';
-
-                if ((!projectId || !pid || !projectName || !existingComment) && $.fn.DataTable.isDataTable('#supplierTable')) {
-                    const rowData = table.row($button.closest('tr')).data();
-                    if (rowData) {
-                        projectId = projectId || rowData.projectMappingId || '';
-                        pid = pid || rowData.pid || '';
-                        projectName = projectName || rowData.projectName || '';
-                        existingComment = existingComment || rowData.notes || '';
-                    }
-                }
-
-                $('#commentProjectId').val(projectId);
-                $('#commentProjectLabel').text(buildProjectLabel(pid, projectName) || 'Add Comment');
-                $('#commentText').val(existingComment);
-                $('#commentModal').modal('show');
-            });
-
-            $('#commentModal').on('shown.bs.modal', function () {
-                $('#commentText').trigger('focus');
-            });
-
-            $('#commentForm').on('submit', function (event) {
-                event.preventDefault();
-
-                const projectId = $('#commentProjectId').val();
-                const comment = $('#commentText').val();
-
-                console.log('Comment submitted', { projectId, comment });
-                $('#commentModal').modal('hide');
-            });
         });
 
         function exportAllData(dt, button, config) {
@@ -951,10 +889,38 @@
 
                             const projectMappingId = row?.projectMappingId ?? '';
                             const pid = row?.pid ?? '';
-                            const projectName = row?.projectName ? $('<div>').text(row.projectName).html() : '';
-                            const currentComment = row?.notes ? $('<div>').text(row.notes).html() : '';
+                            const projectName = row?.projectName ?? '';
+                            const supplierId = row?.supplierId ?? '';
+                            const unreadCount = Number(row?.unreadCount ?? row?.UnreadCount ?? 0) || 0;
+                            const lastMessage = row?.lastMessageUtc ?? row?.LastMessageUtc ?? '';
+                            const historyUrl = row?.chatHistoryUrl ?? '';
+                            const sendUrl = row?.chatSendUrl ?? '';
+                            const pollUrl = row?.chatPollUrl ?? '';
 
-                            return `<button class="btn btn-sm btn-outline-primary comment-button" type="button" title="View Comments" data-project-id="${projectMappingId}" data-pid="${pid}" data-project-name="${projectName}" data-current-comment="${currentComment}"><i class="fas fa-comments"></i></button>`;
+                            const encode = (value) => $('<div>').text(value ?? '').html();
+                            const srLabel = encode([pid, projectName].filter(Boolean).join(' - '));
+                            const projectNameEncoded = encode(projectName);
+                            const pidEncoded = encode(pid);
+                            const supplierIdEncoded = encode(supplierId);
+                            const lastMessageEncoded = encode(lastMessage);
+                            const historyUrlEncoded = encode(historyUrl);
+                            const sendUrlEncoded = encode(sendUrl);
+                            const pollUrlEncoded = encode(pollUrl);
+
+                            const badgeHtml = unreadCount > 0
+                                ? `<span class="chat-unread badge badge-pill badge-danger" data-unread-badge>${unreadCount}</span>`
+                                : '';
+
+                            return `
+                                <button class="btn btn-sm btn-outline-primary project-chat-trigger" type="button" title="Open project chat" aria-haspopup="dialog"
+                                        data-project-id="${projectMappingId}" data-pid="${pidEncoded}" data-project-name="${projectNameEncoded}"
+                                        data-supplier-id="${supplierIdEncoded}" data-unread-count="${unreadCount}" data-last-message="${lastMessageEncoded}"
+                                        data-history-url="${historyUrlEncoded}" data-send-url="${sendUrlEncoded}" data-poll-url="${pollUrlEncoded}">
+                                    <span class="sr-only">Open chat for ${srLabel}</span>
+                                    <i class="fas fa-comments" aria-hidden="true"></i>
+                                    ${badgeHtml}
+                                </button>
+                            `;
                         },
                         "orderable": false,
                         "searchable": false
