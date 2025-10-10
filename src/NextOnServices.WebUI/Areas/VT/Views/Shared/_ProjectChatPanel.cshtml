@@ -1,0 +1,62 @@
+@{
+    var chatHistoryUrl = Url.Action("GetProjectChatHistory", "Supplier", new { area = "VT" }) ?? string.Empty;
+    var chatSendUrl = Url.Action("PostProjectChatMessage", "Supplier", new { area = "VT" }) ?? string.Empty;
+    var chatPollUrl = Url.Action("PollProjectChat", "Supplier", new { area = "VT" }) ?? string.Empty;
+}
+
+<div id="projectChatPanel"
+     class="project-chat"
+     data-history-url="@chatHistoryUrl"
+     data-send-url="@chatSendUrl"
+     data-poll-url="@chatPollUrl"
+     aria-hidden="true">
+    <div class="project-chat__backdrop" data-action="close-chat" tabindex="-1"></div>
+    <aside class="project-chat__sheet" role="dialog" aria-modal="true" aria-labelledby="projectChatTitle">
+        <header class="project-chat__header">
+            <div class="project-chat__title-group">
+                <p class="project-chat__eyebrow mb-1">Project conversation</p>
+                <h2 id="projectChatTitle" class="project-chat__title" data-chat-title>—</h2>
+                <p class="project-chat__subtitle" data-chat-subtitle></p>
+            </div>
+            <button type="button"
+                    class="project-chat__close btn btn-link"
+                    data-action="close-chat"
+                    aria-label="Close project chat">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </header>
+
+        <section class="project-chat__body">
+            <div class="project-chat__meta" data-chat-meta></div>
+            <div class="project-chat__log"
+                 data-chat-log
+                 role="log"
+                 aria-live="polite"
+                 aria-relevant="additions"
+                 tabindex="0">
+                <div class="project-chat__empty" data-chat-empty>
+                    <i class="fas fa-comments" aria-hidden="true"></i>
+                    <p class="mb-0">No messages yet. Start the conversation below.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="project-chat__footer">
+            <form data-chat-form novalidate>
+                <div class="project-chat__composer">
+                    <label class="sr-only" for="projectChatComposer">Type a message</label>
+                    <textarea id="projectChatComposer"
+                              class="form-control"
+                              rows="2"
+                              data-chat-input
+                              placeholder="Type your message&hellip;"
+                              aria-label="Message text"></textarea>
+                    <div class="project-chat__composer-actions">
+                        <button type="submit" class="btn btn-primary" data-action="send-chat" disabled>Send</button>
+                    </div>
+                </div>
+                <div class="project-chat__status" data-chat-status aria-live="polite"></div>
+            </form>
+        </footer>
+    </aside>
+</div>
