@@ -30,4 +30,6 @@ public class SupplierDetails
     public float? OverQuota { get; set; }
     public float? SecurityTerm { get; set; }
     public float? FraudError { get; set; }
+    public int? UnreadCount { get; set; }
+    public DateTime? LastMessageUtc { get; set; }
 }

@@ -533,9 +533,67 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             projectDetailPageViewModel.SupplierDetailsList = results.Read<SupplierDetails>().ToList();
             projectDetailPageViewModel.CountryDetailsList = results.Read<CountryDetails>().ToList();
 
+            await PopulateSupplierChatSummaries(projectDetailPageViewModel.SupplierDetailsList);
+
             return projectDetailPageViewModel;
         }
         finally { DbConnection.Close(); }
+    }
+
+    private async Task PopulateSupplierChatSummaries(List<SupplierDetails> suppliers)
+    {
+        if (suppliers == null || suppliers.Count == 0)
+        {
+            return;
+        }
+
+        var mappingIds = suppliers
+            .Where(s => s?.Id.HasValue == true && s.Id > 0)
+            .Select(s => s!.Id!.Value)
+            .Distinct()
+            .ToArray();
+
+        if (mappingIds.Length == 0)
+        {
+            return;
+        }
+
+        const string chatSummarySql = @"SELECT ProjectMappingId,
+                                               SUM(CASE WHEN FromSupplier = 1 AND IsRead = 0 THEN 1 ELSE 0 END) AS UnreadCount,
+                                               MAX(CreatedUtc) AS LastMessageUtc
+                                        FROM SupplierProjectMessages
+                                        WHERE ProjectMappingId IN @ProjectMappingIds
+                                        GROUP BY ProjectMappingId;";
+
+        var summaries = (await DbConnection.QueryAsync<SupplierChatSummary>(chatSummarySql, new { ProjectMappingIds = mappingIds })).ToList();
+
+        if (summaries.Count == 0)
+        {
+            return;
+        }
+
+        var summaryLookup = summaries.ToDictionary(s => s.ProjectMappingId, s => s);
+
+        foreach (var supplier in suppliers)
+        {
+            if (supplier?.Id == null)
+            {
+                continue;
+            }
+
+            if (summaryLookup.TryGetValue(supplier.Id.Value, out var summary))
+            {
+                supplier.UnreadCount = summary.UnreadCount;
+                supplier.LastMessageUtc = summary.LastMessageUtc;
+            }
+        }
+    }
+
+    private sealed class SupplierChatSummary
+    {
+        public int ProjectMappingId { get; set; }
+        public int UnreadCount { get; set; }
+        public DateTime? LastMessageUtc { get; set; }
     }
 
     public async Task<T> GetOutputFromStoredProcedure<T>(string storedProcedure, DynamicParameters dynamicParameters, string outputParamName)
