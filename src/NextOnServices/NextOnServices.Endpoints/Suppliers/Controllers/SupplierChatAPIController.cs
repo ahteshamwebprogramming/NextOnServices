@@ -189,7 +189,7 @@ public class SupplierChatAPIController : ControllerBase
             var take = pageSize + 1;
             var since = request.SinceCursor?.UtcDateTime;
 
-            List<SupplierProjectMessageListItemDto> rows;
+            List<SupplierProjectMessageDto> rows;
             bool hasMore;
 
             if (since.HasValue)
@@ -222,7 +222,7 @@ public class SupplierChatAPIController : ControllerBase
                     UnreadOnly = request.UnreadOnly ? 1 : 0
                 };
 
-                rows = await _unitOfWork.SupplierProjectMessages.GetTableData<SupplierProjectMessageListItemDto>(sql, parameters);
+                rows = await _unitOfWork.SupplierProjectMessages.GetTableData<SupplierProjectMessageDto>(sql, parameters);
                 hasMore = rows.Count > pageSize;
                 if (hasMore)
                 {
@@ -257,7 +257,7 @@ public class SupplierChatAPIController : ControllerBase
                     UnreadOnly = request.UnreadOnly ? 1 : 0
                 };
 
-                rows = await _unitOfWork.SupplierProjectMessages.GetTableData<SupplierProjectMessageListItemDto>(sql, parameters);
+                rows = await _unitOfWork.SupplierProjectMessages.GetTableData<SupplierProjectMessageDto>(sql, parameters);
                 hasMore = rows.Count > pageSize;
                 if (hasMore)
                 {
