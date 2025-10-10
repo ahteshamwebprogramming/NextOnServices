@@ -67,6 +67,21 @@ public class SuppliersAPIController : ControllerBase
         }
     }
 
+    public async Task<IActionResult> GetSupplierCardsData(int SupplierId)
+    {
+        try
+        {
+            string query = "Select \r\n\r\n(Select count(1) from ProjectMapping pm\r\nleft join Projects p on pm.ProjectID=p.ProjectId\r\nleft join CountryMaster cm on pm.CountryId=cm.CountryId\r\nwhere pm.SUpplierID=@SupplierId) as ProjectBid\r\n\r\n,(Select count(1) from ProjectMapping pm\r\nleft join Projects p on pm.ProjectID=p.ProjectId\r\nleft join CountryMaster cm on pm.CountryId=cm.CountryId\r\nwhere pm.SUpplierID=@SupplierId and p.Status=6) as ProjectsCompleted\r\n\r\n\r\n\r\n\r\n,(Select avg( Convert(int,LOI)) from ProjectMapping pm\r\nleft join Projects p on pm.ProjectID=p.ProjectId\r\nleft join CountryMaster cm on pm.CountryId=cm.CountryId\r\nwhere pm.SUpplierID=@SupplierId) as AverageDuration\r\n\r\n,(Select avg( Convert(int,pm.CPI)) from ProjectMapping pm\r\nleft join Projects p on pm.ProjectID=p.ProjectId\r\nleft join CountryMaster cm on pm.CountryId=cm.CountryId\r\nwhere pm.SUpplierID=@SupplierId) as AverageProjectValue\r\n\r\n,(Select count( distinct(pm.CountryId)) from ProjectMapping pm\r\nleft join Projects p on pm.ProjectID=p.ProjectId\r\nleft join CountryMaster cm on pm.CountryId=cm.CountryId\r\nwhere pm.SUpplierID=@SupplierId ) as CountriesCovered\r\n\r\n,(Select datediff(year,CreationDate,getdate()) from Suppliers where id=@SupplierId) as SupplierSince\r\n";
+            var parameters = new { @SupplierId = SupplierId };
+            var res = await _unitOfWork.SupplierPanelSize.GetEntityData<ProjectDashboardCardsDTO>(query, parameters);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retriving Academics {nameof(GetSuppliers)}");
+            throw;
+        }
+    }
     public async Task<IActionResult> GetSupplier(int SupplierId)
     {
         try

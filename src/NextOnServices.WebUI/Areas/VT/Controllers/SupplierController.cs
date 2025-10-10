@@ -57,13 +57,21 @@ public class SupplierController : Controller
         var loginSourceClaim = User.Claims
                 .FirstOrDefault(c => c.Type == "LoginSource")?.Value;
         SupplierDashboardViewModel dto = new SupplierDashboardViewModel();
+
         if (SupplierId != null)
         {
+            var rescard = await _suppliersAPIController.GetSupplierCardsData(Convert.ToInt32(SupplierId));
             var res = await _suppliersAPIController.GetSupplier(Convert.ToInt32(SupplierId));
-            if (res != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)res).StatusCode == 200)
+            if (res != null &&  ((Microsoft.AspNetCore.Mvc.ObjectResult)res).StatusCode == 200)
             {
                 dto.Supplier = (SupplierDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)res).Value;
             }
+
+            if (rescard != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)rescard).StatusCode == 200)
+            {
+                dto.ProjectDashboardCards = (ProjectDashboardCardsDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)rescard).Value;
+            }
+
             //var resProjects = await _suppliersAPIController.GetSupplierProjectsBySupplierId(Convert.ToInt32(SupplierId));
             //if (resProjects != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)resProjects).StatusCode == 200)
             //{

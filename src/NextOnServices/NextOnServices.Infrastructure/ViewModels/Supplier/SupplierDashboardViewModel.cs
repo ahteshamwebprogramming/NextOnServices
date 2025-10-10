@@ -11,4 +11,6 @@ public class SupplierDashboardViewModel
 {
     public SupplierDTO? Supplier { get; set; }
     public List<SupplierProjectsDTO>? SupplierProjects { get; set; }
+
+    public ProjectDashboardCardsDTO? ProjectDashboardCards { get; set; }
 }
