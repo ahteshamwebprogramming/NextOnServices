@@ -54,6 +54,8 @@ public partial class NextOnServicesContext : DbContext
 
     public virtual DbSet<SupplierProjects> SupplierProjects { get; set; }
 
+    public virtual DbSet<SupplierProjectMessage> SupplierProjectMessages { get; set; }
+
     
 
     public virtual DbSet<TblIpmapping> TblIpmappings { get; set; }
@@ -476,6 +478,25 @@ public partial class NextOnServicesContext : DbContext
             entity.Property(e => e.UID)
                 .HasMaxLength(50)
                 .HasColumnName("UID");
+        });
+
+        modelBuilder.Entity<SupplierProjectMessage>(entity =>
+        {
+            entity.ToTable("SupplierProjectMessages");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasColumnName("Id");
+            entity.Property(e => e.ProjectMappingId).HasColumnName("ProjectMappingId");
+            entity.Property(e => e.ProjectId).HasColumnName("ProjectId");
+            entity.Property(e => e.SupplierId).HasColumnName("SupplierId");
+            entity.Property(e => e.Message).HasColumnName("Message");
+            entity.Property(e => e.CreatedBy).HasColumnName("CreatedBy");
+            entity.Property(e => e.CreatedByName).HasColumnName("CreatedByName");
+            entity.Property(e => e.CreatedUtc).HasColumnName("CreatedUtc").HasColumnType("datetime");
+            entity.Property(e => e.FromSupplier).HasColumnName("FromSupplier");
+            entity.Property(e => e.IsRead).HasColumnName("IsRead");
+            entity.Property(e => e.ReadUtc).HasColumnName("ReadUtc").HasColumnType("datetime");
         });
 
         modelBuilder.Entity<CountryMaster>(entity =>

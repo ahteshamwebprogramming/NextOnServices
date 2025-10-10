@@ -3,7 +3,9 @@ using GRP.Infrastructure.Helper;
 using Humanizer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Newtonsoft.Json;
 using NextOnServices.Endpoints.Accounts;
 using NextOnServices.Endpoints.Clients;
@@ -37,12 +39,14 @@ public class SupplierController : Controller
     private readonly ILogger<SupplierController> _logger;
     private readonly SuppliersAPIController _suppliersAPIController;
     private readonly CountryAPIController _countryAPIController;
+    private readonly SupplierChatAPIController _supplierChatApiController;
     private readonly IConfiguration _configuration;
-    public SupplierController(ILogger<SupplierController> logger, SuppliersAPIController suppliersAPIController, CountryAPIController countryAPIController, IConfiguration configuration)
+    public SupplierController(ILogger<SupplierController> logger, SuppliersAPIController suppliersAPIController, CountryAPIController countryAPIController, SupplierChatAPIController supplierChatApiController, IConfiguration configuration)
     {
         _logger = logger;
         _suppliersAPIController = suppliersAPIController;
         this._countryAPIController = countryAPIController;
+        _supplierChatApiController = supplierChatApiController;
         _configuration = configuration;
     }
 
@@ -50,6 +54,65 @@ public class SupplierController : Controller
     public async Task<IActionResult> Login()
     {
         return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetProjectChatHistory([FromQuery] SupplierChatHistoryRequest request)
+    {
+        request ??= new SupplierChatHistoryRequest();
+
+        var apiResult = await _supplierChatApiController.GetHistory(request);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> PollProjectChat(int projectMappingId, int? projectId, int? supplierId, string? pid, DateTimeOffset? after, int? pageSize, bool? unreadOnly)
+    {
+        var request = new SupplierChatHistoryRequest
+        {
+            ProjectMappingId = projectMappingId,
+            ProjectId = projectId,
+            SupplierId = supplierId,
+            Pid = pid,
+            PageSize = pageSize ?? 0,
+            SinceCursor = after,
+            UnreadOnly = unreadOnly ?? false
+        };
+
+        var apiResult = await _supplierChatApiController.Poll(request, after);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> PostProjectChatMessage([FromBody] SupplierChatSendRequest request)
+    {
+        if (request == null)
+        {
+            return BadRequest(new { message = "Message payload is required." });
+        }
+
+        var apiResult = await _supplierChatApiController.Send(request);
+        return ConvertApiResult(apiResult);
+    }
+
+    private IActionResult ConvertApiResult(IActionResult apiResult)
+    {
+        switch (apiResult)
+        {
+            case JsonResult jsonResult:
+                return jsonResult;
+            case ObjectResult objectResult:
+                return new JsonResult(objectResult.Value)
+                {
+                    StatusCode = objectResult.StatusCode
+                };
+            case StatusCodeResult statusCodeResult:
+                return StatusCode(statusCodeResult.StatusCode);
+            case IStatusCodeActionResult status when status.StatusCode.HasValue:
+                return StatusCode(status.StatusCode.Value);
+            default:
+                return StatusCode(StatusCodes.Status500InternalServerError);
+        }
     }
     public async Task<IActionResult> Dashboard()
     {
