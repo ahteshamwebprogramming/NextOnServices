@@ -199,77 +199,6 @@
                 display: inline;
             }
 
-        .comment-button {
-            background: transparent;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-            .comment-button:focus {
-                outline: none;
-                box-shadow: none;
-            }
-
-            .comment-button .comment-icon-img {
-                width: 28px;
-                height: 28px;
-                transition: transform 0.2s ease;
-            }
-
-            .comment-button:hover .comment-icon-img {
-                transform: scale(1.05);
-            }
-
-        .chat-modal-dialog {
-            max-width: 380px;
-        }
-
-        .chat-modal-content {
-            border: none;
-            background: transparent;
-            box-shadow: none;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .chat-image-wrapper {
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 16px 40px rgba(15, 31, 61, 0.25);
-        }
-
-        .chat-popup-image {
-            width: 100%;
-            display: block;
-        }
-
-        .chat-modal-close {
-            position: absolute;
-            top: -14px;
-            right: -14px;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background-color: #3fa9f5;
-            color: #fff;
-            opacity: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 6px 18px rgba(15, 31, 61, 0.35);
-        }
-
-            .chat-modal-close span {
-                line-height: 1;
-                font-size: 1.5rem;
-            }
-
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -563,13 +492,13 @@
                                 <td>@item.Notes</td>
                                 <td class="text-center">
                                     <button type="button"
-                                            class="comment-button"
+                                            class="btn btn-sm btn-outline-primary comment-button"
                                             title="View Comments"
                                             data-project-id="@item.ProjectMappingId"
                                             data-project-name="@item.ProjectName"
                                             data-pid="@item.PID"
                                             data-current-comment="@item.Notes">
-                                        <img src="~/images/chat-icon.svg" alt="Open chat" class="comment-icon-img" />
+                                        <i class="fas fa-comments"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -581,22 +510,23 @@
     </div>
 
     <div class="modal fade" id="commentModal" tabindex="-1" role="dialog" aria-labelledby="commentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered chat-modal-dialog" role="document">
-            <div class="modal-content chat-modal-content">
-                <button type="button" class="close chat-modal-close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h5 id="commentModalLabel" class="sr-only">Chat preview</h5>
-                <div class="chat-image-wrapper">
-                    <img src="~/images/chat-popup.svg" alt="Chat preview" class="chat-popup-image" />
-                </div>
-                <form id="commentForm" class="d-none">
-                    <input type="hidden" id="commentProjectId" />
-                    <div class="mb-3">
-                        <label class="font-weight-bold d-block" id="commentProjectLabel"></label>
-                        <textarea class="form-control" id="commentText" rows="4" placeholder="Type your comment here..."></textarea>
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="commentForm">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="commentModalLabel">Add Comment</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
-                    <div class="modal-footer p-0 border-0">
+                    <div class="modal-body">
+                        <input type="hidden" id="commentProjectId" />
+                        <div class="mb-3">
+                            <label class="font-weight-bold d-block" id="commentProjectLabel"></label>
+                            <textarea class="form-control" id="commentText" rows="4" placeholder="Type your comment here..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save Comment</button>
                     </div>
@@ -677,10 +607,7 @@
             });
 
             $('#commentModal').on('shown.bs.modal', function () {
-                const $commentInput = $('#commentText');
-                if ($commentInput.is(':visible')) {
-                    $commentInput.trigger('focus');
-                }
+                $('#commentText').trigger('focus');
             });
 
             $('#commentForm').on('submit', function (event) {
