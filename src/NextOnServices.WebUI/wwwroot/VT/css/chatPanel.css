@@ -327,9 +327,65 @@ body.project-chat-open {
     margin-top: 0.35rem;
 }
 
+.project-chat-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.project-chat-trigger .fa-comments {
+    font-size: 1.05rem;
+}
+
 .chat-unread {
-    margin-left: 0.5rem;
-    vertical-align: middle;
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(40%, -40%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.65rem;
+    height: 1.65rem;
+    padding: 0 0.55rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fb7185, #ef4444);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1;
+    letter-spacing: 0.03em;
+    border: 3px solid #ffffff;
+    box-shadow: 0 8px 16px rgba(239, 68, 68, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.chat-unread::after {
+    content: '';
+    position: absolute;
+    inset: -0.35rem;
+    border-radius: inherit;
+    background: radial-gradient(circle at center, rgba(254, 226, 226, 0.8), rgba(255, 255, 255, 0));
+    opacity: 0.7;
+    z-index: -1;
+}
+
+.project-chat-trigger:focus-visible .chat-unread,
+.project-chat-trigger:hover .chat-unread {
+    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.45);
+}
+
+.chat-unread__count {
+    position: relative;
+    z-index: 1;
 }
 
 .project-chat.is-loading .project-chat__log::after {
