@@ -423,36 +423,25 @@
             return;
         }
 
+        if (state.$empty) {
+            state.$empty.hide();
+        }
+
         const settings = $.extend({ scroll: true }, options);
-        const classes = ['chat-message'];
-        if (message.isMine) {
-            classes.push('chat-message--outgoing');
-        } else {
-            classes.push('chat-message--incoming');
+        const $existing = findExistingMessageElement(message);
+
+        if ($existing.length) {
+            refreshMessageElement($existing, message);
+            if (settings.scroll) {
+                scrollToBottom();
+            }
+            return;
         }
 
-        if (message.optimistic) {
-            classes.push('chat-message--optimistic');
-        }
+        const $message = $('<div/>', { class: 'chat-message' });
+        $('<div/>', { class: 'chat-message__bubble' }).appendTo($message);
 
-        if (message.error) {
-            classes.push('chat-message--error');
-        }
-
-        const $message = $('<div/>', {
-            class: classes.join(' '),
-            'data-message-id': message.id || '',
-            'data-temp-id': message.tempId || ''
-        });
-
-        const $bubble = $('<div/>', { class: 'chat-message__bubble' }).text(message.text || '');
-        $message.append($bubble);
-
-        updateMessageMeta($message, message);
-
-        if (message.error) {
-            $('<div/>', { class: 'chat-message__error text-danger', text: message.error }).appendTo($message);
-        }
+        refreshMessageElement($message, message);
 
         state.$log.append($message);
 
@@ -466,22 +455,99 @@
             return;
         }
 
-        const $existing = state.$log.find(`[data-temp-id="${tempId}"]`).first();
+        const hydrated = $.extend({}, message, { tempId: tempId });
+        const $existing = findMessageByAttribute('data-temp-id', tempId);
         if (!$existing.length) {
-            appendMessage(message, { scroll: true });
+            appendMessage(hydrated, { scroll: true });
+            return;
+        }
+
+        refreshMessageElement($existing, hydrated);
+    }
+
+    function normaliseIdentityValue(value) {
+        if (value === undefined || value === null) {
+            return '';
+        }
+
+        return String(value).trim();
+    }
+
+    function findMessageByAttribute(attribute, value) {
+        if (!state.$log) {
+            return $();
+        }
+
+        const normalisedValue = normaliseIdentityValue(value);
+        if (!attribute || !normalisedValue) {
+            return $();
+        }
+
+        const $elements = state.$log.children().filter(function () {
+            const existing = normaliseIdentityValue($(this).attr(attribute));
+            return existing && existing === normalisedValue;
+        });
+
+        return $elements.first();
+    }
+
+    function findExistingMessageElement(message) {
+        if (!message) {
+            return $();
+        }
+
+        let $existing = findMessageByAttribute('data-temp-id', message.tempId);
+        if ($existing.length) {
+            return $existing;
+        }
+
+        $existing = findMessageByAttribute('data-message-id', message.id);
+        if ($existing.length) {
+            return $existing;
+        }
+
+        return findMessageByAttribute('data-message-timestamp', message.timestamp);
+    }
+
+    function refreshMessageElement($element, message) {
+        if (!$element || !$element.length) {
             return;
         }
 
         const classes = ['chat-message'];
         classes.push(message.isMine ? 'chat-message--outgoing' : 'chat-message--incoming');
 
-        $existing.attr('data-message-id', message.id || '');
-        $existing.removeClass('chat-message--optimistic chat-message--error').attr('class', classes.join(' '));
-        $existing.find('.chat-message__bubble').text(message.text || '');
+        if (message.optimistic) {
+            classes.push('chat-message--optimistic');
+        }
 
-        updateMessageMeta($existing, message);
+        if (message.error) {
+            classes.push('chat-message--error');
+        }
 
-        $existing.find('.chat-message__error').remove();
+        $element.attr('class', classes.join(' '));
+        $element.attr('data-message-id', normaliseIdentityValue(message.id));
+        $element.attr('data-temp-id', normaliseIdentityValue(message.tempId));
+        $element.attr('data-message-timestamp', normaliseIdentityValue(message.timestamp));
+
+        let $bubble = $element.find('.chat-message__bubble');
+        if (!$bubble.length) {
+            $bubble = $('<div/>', { class: 'chat-message__bubble' }).prependTo($element);
+        }
+        $bubble.text(message.text || '');
+
+        updateMessageMeta($element, message);
+
+        const $error = $element.find('.chat-message__error');
+        if (message.error) {
+            if ($error.length) {
+                $error.text(message.error);
+            } else {
+                $('<div/>', { class: 'chat-message__error text-danger', text: message.error }).appendTo($element);
+            }
+        } else if ($error.length) {
+            $error.remove();
+        }
     }
 
     function sendMessage() {
