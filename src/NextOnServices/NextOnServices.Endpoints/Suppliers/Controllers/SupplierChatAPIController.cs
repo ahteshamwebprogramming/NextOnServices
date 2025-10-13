@@ -141,10 +141,10 @@ public class SupplierChatAPIController : ControllerBase
                 Message = entity.Message,
                 CreatedBy = entity.CreatedBy,
                 CreatedByName = entity.CreatedByName,
-                CreatedUtc = entity.CreatedUtc,
+                CreatedUtc = NormalizeUtc(entity.CreatedUtc),
                 FromSupplier = entity.FromSupplier,
                 IsRead = entity.IsRead,
-                ReadUtc = entity.ReadUtc
+                ReadUtc = NormalizeUtc(entity.ReadUtc)
             };
 
             return Ok(dto);
@@ -270,10 +270,14 @@ public class SupplierChatAPIController : ControllerBase
                     .ToList();
             }
 
+            foreach (var row in rows)
+            {
+                row.CreatedUtc = NormalizeUtc(row.CreatedUtc);
+                row.ReadUtc = NormalizeUtc(row.ReadUtc);
+            }
+
             var nextCursorDate = rows.LastOrDefault()?.CreatedUtc;
-            DateTimeOffset? nextCursor = nextCursorDate.HasValue
-                ? new DateTimeOffset(DateTime.SpecifyKind(nextCursorDate.Value, DateTimeKind.Utc))
-                : null;
+            DateTimeOffset? nextCursor = NormalizeUtc(nextCursorDate);
 
             var response = new SupplierChatHistoryResponse
             {
@@ -300,6 +304,27 @@ public class SupplierChatAPIController : ControllerBase
         }
 
         return Math.Min(pageSize, MaxPageSize);
+    }
+
+    private static DateTimeOffset NormalizeUtc(DateTime value)
+    {
+        return new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+    }
+
+    private static DateTimeOffset? NormalizeUtc(DateTime? value)
+    {
+        return value.HasValue ? NormalizeUtc(value.Value) : null;
+    }
+
+    private static DateTimeOffset? NormalizeUtc(DateTimeOffset? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+
+        var utcDateTime = DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Utc);
+        return new DateTimeOffset(utcDateTime);
     }
 
     private bool TryResolveSupplierContext(int? requestedSupplierId, out int? supplierId, out bool isSupplierUser, out IActionResult? failureResult)
