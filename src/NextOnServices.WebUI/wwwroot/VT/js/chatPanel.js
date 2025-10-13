@@ -320,11 +320,6 @@
             'data-temp-id': message.tempId || ''
         });
 
-        const senderText = resolveSenderText(message);
-        if (senderText) {
-            $('<div/>', { class: 'chat-message__sender', text: senderText }).appendTo($message);
-        }
-
         const $bubble = $('<div/>', { class: 'chat-message__bubble' }).text(message.text || '');
         $message.append($bubble);
 
@@ -360,17 +355,6 @@
         $existing.attr('data-message-id', message.id || '');
         $existing.removeClass('chat-message--optimistic chat-message--error').attr('class', classes.join(' '));
         $existing.find('.chat-message__bubble').text(message.text || '');
-
-        const senderText = resolveSenderText(message);
-        let $sender = $existing.find('.chat-message__sender');
-        if (senderText) {
-            if (!$sender.length) {
-                $sender = $('<div/>', { class: 'chat-message__sender' }).prependTo($existing);
-            }
-            $sender.text(senderText);
-        } else {
-            $sender.remove();
-        }
 
         const formattedTimestamp = message.timestamp ? formatTimestamp(message.timestamp) : '';
         if (formattedTimestamp) {
@@ -712,20 +696,6 @@
         }
 
         state.$log.scrollTop(state.$log.prop('scrollHeight'));
-    }
-
-    function resolveSenderText(message) {
-        if (!message) {
-            return '';
-        }
-
-        const raw = message.sender ?? (message.isMine ? 'You' : '');
-        if (raw === undefined || raw === null) {
-            return '';
-        }
-
-        const text = String(raw).trim();
-        return text;
     }
 
     function formatTimestamp(value) {
