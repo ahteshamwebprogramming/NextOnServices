@@ -149,28 +149,21 @@ body.project-chat-open {
     overflow: hidden;
 }
 
-.project-chat__body-inner {
+.project-chat__log {
+    position: relative;
     flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
+    margin: 1.25rem 0;
+    padding: 1.25rem;
+    padding-right: 1.5rem;
+    padding-bottom: calc(1.25rem + 3.5rem);
+    scroll-padding-bottom: calc(1.25rem + 3.5rem);
     background: #f8fafc;
     border-radius: 1rem;
-    padding: 1.25rem 1.25rem 1.5rem;
-    margin: 1.25rem 0;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65),
                 0 18px 32px -24px rgba(15, 23, 42, 0.35);
     border: 1px solid rgba(148, 163, 184, 0.25);
     overflow: hidden;
-}
-
-.project-chat__log {
-    position: relative;
-    flex: 1 1 auto;
     overflow-y: auto;
-    padding-right: 0.25rem;
-    margin: 0;
-    padding-bottom: 3.5rem;
-    scroll-padding-bottom: 3.5rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(15, 23, 42, 0.3) transparent;
 }
