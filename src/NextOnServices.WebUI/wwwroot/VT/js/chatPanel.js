@@ -21,14 +21,15 @@
         $meta: null,
         activeProject: null,
         pollTimer: null,
-        isLoading: false
+        isLoading: false,
+        userContext: {}
     };
 
     const messageFields = {
-        text: ['message', 'text', 'body', 'content', 'note'],
-        id: ['id', 'messageId', 'conversationMessageId', 'chatId'],
-        timestamp: ['createdAt', 'createdOn', 'createdUtc', 'created', 'sentAt', 'timestamp', 'date', 'loggedAt'],
-        sender: ['sender', 'from', 'author', 'owner', 'createdByName']
+        text: ['message', 'Message', 'text', 'Text', 'body', 'Body', 'content', 'Content', 'note', 'Note'],
+        id: ['id', 'Id', 'messageId', 'MessageId', 'conversationMessageId', 'chatId'],
+        timestamp: ['createdAt', 'CreatedAt', 'createdOn', 'CreatedOn', 'createdUtc', 'CreatedUtc', 'created', 'Created', 'sentAt', 'SentAt', 'timestamp', 'Timestamp', 'date', 'Date', 'loggedAt', 'LoggedAt'],
+        sender: ['sender', 'Sender', 'from', 'From', 'author', 'Author', 'owner', 'Owner', 'createdByName', 'CreatedByName', 'createdByDisplayName', 'CreatedByDisplayName']
     };
 
     $(document).on('click', '.project-chat-trigger', function (event) {
@@ -79,6 +80,7 @@
         state.$title = $panel.find('[data-chat-title]');
         state.$subtitle = $panel.find('[data-chat-subtitle]');
         state.$meta = $panel.find('[data-chat-meta]');
+        state.userContext = buildUserContext($panel);
     }
 
     function bindPanelEvents() {
@@ -134,6 +136,82 @@
         }
 
         return numericValue;
+    }
+
+    function normaliseBoolean(value) {
+        if (value === undefined || value === null) {
+            return null;
+        }
+
+        if (typeof value === 'boolean') {
+            return value;
+        }
+
+        if (typeof value === 'number') {
+            if (value === 1) {
+                return true;
+            }
+
+            if (value === 0) {
+                return false;
+            }
+        }
+
+        if (typeof value === 'string') {
+            const trimmed = value.trim().toLowerCase();
+            if (!trimmed) {
+                return null;
+            }
+
+            if (['true', '1', 'yes', 'y', 'on', 'supplier', 'vendor'].indexOf(trimmed) >= 0) {
+                return true;
+            }
+
+            if (['false', '0', 'no', 'n', 'off', 'admin', 'staff', 'user', 'internal'].indexOf(trimmed) >= 0) {
+                return false;
+            }
+        }
+
+        return null;
+    }
+
+    function buildUserContext($panel) {
+        const context = {
+            role: '',
+            supplierId: null,
+            isSupplierUser: null,
+            name: ''
+        };
+
+        if (!$panel || !$panel.length) {
+            return context;
+        }
+
+        const role = $panel.data('currentUserRole');
+        if (role !== undefined) {
+            context.role = role || '';
+        }
+
+        const supplierId = normalizeId($panel.data('currentUserSupplierId'));
+        if (supplierId !== null) {
+            context.supplierId = supplierId;
+        }
+
+        const isSupplier = normaliseBoolean($panel.data('isSupplierUser'));
+        if (isSupplier !== null) {
+            context.isSupplierUser = isSupplier;
+        }
+
+        const name = $panel.data('currentUserName');
+        if (name !== undefined) {
+            context.name = name || '';
+        }
+
+        if (context.isSupplierUser === null) {
+            context.isSupplierUser = false;
+        }
+
+        return context;
     }
 
     function buildProjectFromTrigger($trigger) {
@@ -323,9 +401,7 @@
         const $bubble = $('<div/>', { class: 'chat-message__bubble' }).text(message.text || '');
         $message.append($bubble);
 
-        if (message.timestamp) {
-            $('<div/>', { class: 'chat-message__meta', text: formatTimestamp(message.timestamp) }).appendTo($message);
-        }
+        updateMessageMeta($message, message);
 
         if (message.error) {
             $('<div/>', { class: 'chat-message__error text-danger', text: message.error }).appendTo($message);
@@ -356,14 +432,7 @@
         $existing.removeClass('chat-message--optimistic chat-message--error').attr('class', classes.join(' '));
         $existing.find('.chat-message__bubble').text(message.text || '');
 
-        const formattedTimestamp = message.timestamp ? formatTimestamp(message.timestamp) : '';
-        if (formattedTimestamp) {
-            let $meta = $existing.find('.chat-message__meta');
-            if (!$meta.length) {
-                $meta = $('<div/>', { class: 'chat-message__meta' }).appendTo($existing);
-            }
-            $meta.text(formattedTimestamp);
-        }
+        updateMessageMeta($existing, message);
 
         $existing.find('.chat-message__error').remove();
     }
@@ -387,12 +456,15 @@
         }
 
         const tempId = `tmp-${Date.now()}`;
+        const userContext = state.userContext || {};
         const optimisticMessage = {
             id: '',
             tempId: tempId,
             text: trimmed,
             timestamp: new Date().toISOString(),
             isMine: true,
+            sender: userContext.name || 'You',
+            fromSupplier: typeof userContext.isSupplierUser === 'boolean' ? userContext.isSupplierUser : null,
             optimistic: true
         };
 
@@ -575,6 +647,44 @@
         return [];
     }
 
+    function updateMessageMeta($element, message) {
+        if (!$element || !$element.length) {
+            return;
+        }
+
+        const metaText = buildMetaText(message);
+        let $meta = $element.find('.chat-message__meta');
+
+        if (metaText) {
+            if (!$meta.length) {
+                $meta = $('<div/>', { class: 'chat-message__meta' }).appendTo($element);
+            }
+
+            $meta.text(metaText);
+        } else if ($meta.length) {
+            $meta.remove();
+        }
+    }
+
+    function buildMetaText(message) {
+        if (!message) {
+            return '';
+        }
+
+        const parts = [];
+
+        if (message.sender) {
+            parts.push(message.sender);
+        }
+
+        const timestamp = message.timestamp ? formatTimestamp(message.timestamp) : '';
+        if (timestamp) {
+            parts.push(timestamp);
+        }
+
+        return parts.join(' · ');
+    }
+
     function shapeMessage(message, project) {
         if ($.isArray(message) && message.length >= 2) {
             message = { message: message[1], createdAt: message[0] };
@@ -585,7 +695,8 @@
         const sender = extractField(message, messageFields.sender) || '';
         const id = extractField(message, messageFields.id) || message?.tempId || '';
 
-        const isMine = determineIsMine(message, project, sender);
+        const fromSupplier = determineFromSupplier(message);
+        const isMine = determineIsMine(message, project, sender, fromSupplier);
 
         return {
             id: id,
@@ -593,6 +704,7 @@
             timestamp: timestamp,
             sender: sender,
             isMine: isMine,
+            fromSupplier: typeof fromSupplier === 'boolean' ? fromSupplier : null,
             optimistic: message.optimistic || false
         };
     }
@@ -612,7 +724,34 @@
         return '';
     }
 
-    function determineIsMine(message, project, sender) {
+    function determineFromSupplier(message, explicit) {
+        if (typeof explicit === 'boolean') {
+            return explicit;
+        }
+
+        if (!message) {
+            return null;
+        }
+
+        const candidates = [
+            message.fromSupplier,
+            message.FromSupplier,
+            message.origin,
+            message.senderType
+        ];
+
+        for (let i = 0; i < candidates.length; i += 1) {
+            const candidate = candidates[i];
+            const normalised = normaliseBoolean(candidate);
+            if (normalised !== null) {
+                return normalised;
+            }
+        }
+
+        return null;
+    }
+
+    function determineIsMine(message, project, sender, fromSupplierFlag) {
         if (typeof message.isMine === 'boolean') {
             return message.isMine;
         }
@@ -621,8 +760,14 @@
             return message.isOutbound;
         }
 
-        if (typeof message.fromSupplier === 'boolean') {
-            return message.fromSupplier;
+        const userContext = state.userContext || {};
+        const isSupplierUser = typeof userContext.isSupplierUser === 'boolean'
+            ? userContext.isSupplierUser
+            : null;
+
+        const fromSupplier = determineFromSupplier(message, fromSupplierFlag);
+        if (typeof fromSupplier === 'boolean' && isSupplierUser !== null) {
+            return isSupplierUser ? fromSupplier : !fromSupplier;
         }
 
         if (message.direction) {
@@ -635,12 +780,24 @@
             }
         }
 
+        if (message.senderId && userContext.supplierId !== null && userContext.supplierId !== undefined) {
+            return String(message.senderId) === String(userContext.supplierId);
+        }
+
         if (message.senderId && project?.supplierId) {
             return String(message.senderId) === String(project.supplierId);
         }
 
+        if (typeof fromSupplier === 'boolean') {
+            return fromSupplier;
+        }
+
         if (sender && project?.projectName) {
             return sender.toString().toLowerCase().indexOf(project.projectName.toLowerCase()) >= 0;
+        }
+
+        if (isSupplierUser !== null) {
+            return isSupplierUser;
         }
 
         return false;
