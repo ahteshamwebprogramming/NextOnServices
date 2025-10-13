@@ -7,6 +7,17 @@
 
     const PANEL_SELECTOR = '#projectChatPanel';
     const POLL_INTERVAL = 30000;
+    const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024; // 10 MB
+    const ALLOWED_ATTACHMENT_MIME_PREFIXES = ['image/'];
+    const ALLOWED_ATTACHMENT_MIME_TYPES = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain'
+    ];
+    const ALLOWED_ATTACHMENT_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
 
     const state = {
         $panel: null,
@@ -19,16 +30,23 @@
         $title: null,
         $subtitle: null,
         $meta: null,
+        $fileInput: null,
+        $attachmentPreview: null,
         activeProject: null,
         pollTimer: null,
-        isLoading: false
+        isLoading: false,
+        isSending: false
     };
 
     const messageFields = {
         text: ['message', 'text', 'body', 'content', 'note'],
         id: ['id', 'messageId', 'conversationMessageId', 'chatId'],
         timestamp: ['createdAt', 'createdOn', 'createdUtc', 'created', 'sentAt', 'timestamp', 'date', 'loggedAt'],
-        sender: ['sender', 'from', 'author', 'owner', 'createdByName']
+        sender: ['sender', 'from', 'author', 'owner', 'createdByName'],
+        attachmentUrl: ['attachmentUrl', 'attachmentURL', 'attachmentPath', 'attachmentStoragePath'],
+        attachmentName: ['attachmentOriginalFileName', 'attachmentOriginalName', 'attachmentName', 'attachmentFileName', 'originalFileName', 'fileName'],
+        attachmentMimeType: ['attachmentMimeType', 'mimeType', 'contentType'],
+        attachmentSize: ['attachmentSizeBytes', 'attachmentSize', 'sizeBytes', 'size']
     };
 
     $(document).on('click', '.project-chat-trigger', function (event) {
@@ -79,6 +97,8 @@
         state.$title = $panel.find('[data-chat-title]');
         state.$subtitle = $panel.find('[data-chat-subtitle]');
         state.$meta = $panel.find('[data-chat-meta]');
+        state.$fileInput = $panel.find('[data-chat-file]');
+        state.$attachmentPreview = $panel.find('[data-chat-attachment-preview]');
     }
 
     function bindPanelEvents() {
@@ -106,6 +126,13 @@
                 sendMessage();
             }
         });
+
+        if (state.$fileInput) {
+            state.$fileInput.on('change', function () {
+                updateAttachmentPreview();
+                updateSendAvailability();
+            });
+        }
 
         state.$panel.on('click', '.project-chat__backdrop', function () {
             closePanel();
@@ -181,6 +208,9 @@
         markTriggerAsRead(project.$trigger);
         fetchHistory();
         startPolling();
+        clearAttachmentSelection();
+        updateAttachmentPreview();
+        updateSendAvailability();
 
         setTimeout(function () {
             state.$input.trigger('focus');
@@ -196,7 +226,11 @@
         $('body').removeClass('project-chat-open');
         stopPolling();
         state.activeProject = null;
+        state.isSending = false;
         resetStatus();
+        clearAttachmentSelection();
+        updateAttachmentPreview();
+        updateSendAvailability();
     }
 
     function updateHeader(project) {
@@ -299,42 +333,8 @@
         }
 
         const settings = $.extend({ scroll: true }, options);
-        const classes = ['chat-message'];
-        if (message.isMine) {
-            classes.push('chat-message--outgoing');
-        } else {
-            classes.push('chat-message--incoming');
-        }
-
-        if (message.optimistic) {
-            classes.push('chat-message--optimistic');
-        }
-
-        if (message.error) {
-            classes.push('chat-message--error');
-        }
-
-        const $message = $('<div/>', {
-            class: classes.join(' '),
-            'data-message-id': message.id || '',
-            'data-temp-id': message.tempId || ''
-        });
-
-        const senderText = resolveSenderText(message);
-        if (senderText) {
-            $('<div/>', { class: 'chat-message__sender', text: senderText }).appendTo($message);
-        }
-
-        const $bubble = $('<div/>', { class: 'chat-message__bubble' }).text(message.text || '');
-        $message.append($bubble);
-
-        if (message.timestamp) {
-            $('<div/>', { class: 'chat-message__meta', text: formatTimestamp(message.timestamp) }).appendTo($message);
-        }
-
-        if (message.error) {
-            $('<div/>', { class: 'chat-message__error text-danger', text: message.error }).appendTo($message);
-        }
+        const $message = $('<div/>');
+        populateMessageElement($message, message);
 
         state.$log.append($message);
 
@@ -354,34 +354,140 @@
             return;
         }
 
+        populateMessageElement($existing, message);
+    }
+
+    function populateMessageElement($message, message) {
+        if (!$message || !message) {
+            return;
+        }
+
         const classes = ['chat-message'];
         classes.push(message.isMine ? 'chat-message--outgoing' : 'chat-message--incoming');
 
-        $existing.attr('data-message-id', message.id || '');
-        $existing.removeClass('chat-message--optimistic chat-message--error').attr('class', classes.join(' '));
-        $existing.find('.chat-message__bubble').text(message.text || '');
+        if (message.optimistic) {
+            classes.push('chat-message--optimistic');
+        }
+
+        if (message.error) {
+            classes.push('chat-message--error');
+        }
+
+        $message.attr('class', classes.join(' '));
+        $message.attr('data-message-id', message.id || '');
+        $message.attr('data-temp-id', message.tempId || '');
+        $message.data('chatMessage', message);
 
         const senderText = resolveSenderText(message);
-        let $sender = $existing.find('.chat-message__sender');
+        let $sender = $message.find('.chat-message__sender');
         if (senderText) {
             if (!$sender.length) {
-                $sender = $('<div/>', { class: 'chat-message__sender' }).prependTo($existing);
+                $sender = $('<div/>', { class: 'chat-message__sender' }).prependTo($message);
             }
             $sender.text(senderText);
         } else {
             $sender.remove();
         }
 
+        let $bubble = $message.find('.chat-message__bubble');
+        if (!$bubble.length) {
+            $bubble = $('<div/>', { class: 'chat-message__bubble' }).appendTo($message);
+        }
+        populateBubble($bubble, message);
+
         const formattedTimestamp = message.timestamp ? formatTimestamp(message.timestamp) : '';
+        let $meta = $message.find('.chat-message__meta');
         if (formattedTimestamp) {
-            let $meta = $existing.find('.chat-message__meta');
             if (!$meta.length) {
-                $meta = $('<div/>', { class: 'chat-message__meta' }).appendTo($existing);
+                $meta = $('<div/>', { class: 'chat-message__meta' }).appendTo($message);
             }
             $meta.text(formattedTimestamp);
+        } else {
+            $meta.remove();
         }
 
-        $existing.find('.chat-message__error').remove();
+        let $error = $message.find('.chat-message__error');
+        if (message.error) {
+            if (!$error.length) {
+                $error = $('<div/>', { class: 'chat-message__error text-danger' }).appendTo($message);
+            }
+            $error.text(message.error);
+        } else {
+            $error.remove();
+        }
+    }
+
+    function populateBubble($bubble, message) {
+        if (!$bubble) {
+            return;
+        }
+
+        $bubble.empty();
+
+        if (message.text) {
+            $('<div/>', { class: 'chat-message__text', text: message.text }).appendTo($bubble);
+        }
+
+        if (message.attachment) {
+            renderAttachment($bubble, message.attachment);
+        }
+
+        if (!message.text && !message.attachment) {
+            $bubble.append($('<span/>', { text: '' }));
+        }
+    }
+
+    function renderAttachment($container, attachment) {
+        if (!$container || !attachment) {
+            return;
+        }
+
+        const url = attachment.url || attachment.storagePath || attachment.path || '';
+        const name = attachment.name || getFileNameFromPath(url);
+        const mimeType = (attachment.mimeType || '').toLowerCase();
+        const size = Number.isFinite(attachment.size) ? attachment.size : null;
+        const isImage = mimeType.startsWith('image/');
+
+        const $wrapper = $('<div/>', { class: 'chat-message__attachment' });
+
+        if (isImage && url) {
+            const $link = $('<a/>', {
+                href: url,
+                target: '_blank',
+                rel: 'noopener',
+                class: 'chat-message__attachment-link chat-message__attachment-link--image'
+            });
+
+            $('<img/>', {
+                src: url,
+                alt: name || 'Attachment preview'
+            }).appendTo($link);
+
+            $wrapper.append($link);
+
+            if (name) {
+                $('<div/>', { class: 'chat-message__attachment-name', text: name }).appendTo($wrapper);
+            }
+        } else if (url) {
+            $('<a/>', {
+                href: url,
+                target: '_blank',
+                rel: 'noopener',
+                class: 'chat-message__attachment-link',
+                text: name || 'Download attachment'
+            }).appendTo($wrapper);
+        } else if (name) {
+            $('<span/>', { class: 'chat-message__attachment-name', text: name }).appendTo($wrapper);
+        }
+
+        if (size) {
+            $('<div/>', {
+                class: 'chat-message__attachment-meta text-muted small',
+                text: formatFileSize(size)
+            }).appendTo($wrapper);
+        }
+
+        $container.append($wrapper);
     }
 
     function sendMessage() {
@@ -392,13 +498,23 @@
 
         const value = state.$input.val();
         const trimmed = (value || '').trim();
-        if (!trimmed) {
+        const attachmentFile = state.$fileInput && state.$fileInput[0] && state.$fileInput[0].files && state.$fileInput[0].files.length
+            ? state.$fileInput[0].files[0]
+            : null;
+
+        if (!trimmed && !attachmentFile) {
             return;
         }
 
         const sendUrl = project.sendUrl;
         if (!sendUrl) {
             showStatus('Sending is disabled. Please contact support.', 'warning');
+            return;
+        }
+
+        const attachmentValidation = validateAttachmentClient(attachmentFile);
+        if (!attachmentValidation.valid) {
+            showStatus(attachmentValidation.message, 'error');
             return;
         }
 
@@ -409,36 +525,65 @@
             text: trimmed,
             timestamp: new Date().toISOString(),
             isMine: true,
-            optimistic: true
+            optimistic: true,
+            attachment: attachmentFile ? {
+                name: attachmentFile.name,
+                size: attachmentFile.size,
+                mimeType: attachmentFile.type || '',
+                url: '',
+                storagePath: ''
+            } : null
         };
 
         appendMessage(optimisticMessage, { scroll: true });
         state.$input.val('');
+        updateAttachmentPreview();
+
+        state.isSending = true;
         updateSendAvailability();
+
+        const formData = buildSendFormData(project, trimmed, attachmentFile);
 
         $.ajax({
             url: sendUrl,
             method: 'POST',
-            contentType: 'application/json',
             dataType: 'json',
-            data: JSON.stringify(buildSendPayload(project, trimmed))
+            processData: false,
+            contentType: false,
+            data: formData,
+            xhr: function () {
+                const xhr = $.ajaxSettings.xhr();
+                if (xhr && xhr.upload) {
+                    xhr.upload.addEventListener('progress', function (event) {
+                        if (event.lengthComputable) {
+                            const percent = Math.round((event.loaded / event.total) * 100);
+                            showStatus(`Uploading… ${percent}%`, 'warning');
+                        }
+                    });
+                }
+                return xhr;
+            }
         }).done(function (response) {
             const message = shapeMessage(response, project);
             message.tempId = tempId;
+            message.optimistic = false;
             replaceOptimisticMessage(tempId, message);
             project.lastMessage = message.timestamp || new Date().toISOString();
+            clearAttachmentSelection();
+            updateAttachmentPreview();
             resetStatus();
         }).fail(function (xhr) {
             console.error('[chatPanel] Failed to send message', xhr);
             markOptimisticAsFailed(tempId, xhr);
+        }).always(function () {
+            state.isSending = false;
+            updateSendAvailability();
         });
     }
 
-    function buildSendPayload(project, message) {
-        const payload = {
-            pid: project.pid || null,
-            message: message
-        };
+    function buildSendFormData(project, message, attachmentFile) {
+        const formData = new FormData();
+        formData.append('pid', project.pid || '');
 
         const identifiers = {
             projectMappingId: normalizeId(project.projectMappingId),
@@ -447,10 +592,127 @@
         };
 
         Object.keys(identifiers).forEach(function (key) {
-            payload[key] = identifiers[key];
+            if (identifiers[key] !== null && identifiers[key] !== undefined) {
+                formData.append(key, identifiers[key]);
+            }
         });
 
-        return payload;
+        if (message) {
+            formData.append('message', message);
+        }
+
+        if (attachmentFile) {
+            formData.append('attachment', attachmentFile);
+        }
+
+        return formData;
+    }
+
+    function validateAttachmentClient(file) {
+        if (!file) {
+            return { valid: true };
+        }
+
+        if (file.size <= 0) {
+            return { valid: false, message: 'The selected attachment is empty.' };
+        }
+
+        if (file.size > MAX_ATTACHMENT_SIZE) {
+            return { valid: false, message: `Attachments must be smaller than ${formatFileSize(MAX_ATTACHMENT_SIZE)}.` };
+        }
+
+        const mimeType = (file.type || '').toLowerCase();
+        const extension = getFileExtension(file.name);
+        const matchesMimeType = mimeType && (ALLOWED_ATTACHMENT_MIME_TYPES.indexOf(mimeType) >= 0 || ALLOWED_ATTACHMENT_MIME_PREFIXES.some(function (prefix) {
+            return mimeType.indexOf(prefix) === 0;
+        }));
+        const matchesExtension = extension && ALLOWED_ATTACHMENT_EXTENSIONS.indexOf(extension) >= 0;
+
+        if (!matchesMimeType && !matchesExtension) {
+            return { valid: false, message: 'Unsupported attachment type. Allowed: images, PDF, text, or Office documents.' };
+        }
+
+        return { valid: true };
+    }
+
+    function getFileExtension(name) {
+        if (!name) {
+            return '';
+        }
+
+        const parts = name.split('.');
+        if (parts.length <= 1) {
+            return '';
+        }
+
+        return `.${parts.pop().toLowerCase()}`;
+    }
+
+    function getFileNameFromPath(path) {
+        if (!path) {
+            return '';
+        }
+
+        const normalised = path.replace(/\\/g, '/');
+        const segments = normalised.split('/');
+        return segments.pop() || '';
+    }
+
+    function formatFileSize(bytes) {
+        if (!bytes || bytes <= 0) {
+            return '0 B';
+        }
+
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex += 1;
+        }
+
+        return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+    }
+
+    function updateAttachmentPreview() {
+        if (!state.$attachmentPreview) {
+            return;
+        }
+
+        const file = state.$fileInput && state.$fileInput[0] && state.$fileInput[0].files
+            ? state.$fileInput[0].files[0]
+            : null;
+
+        state.$attachmentPreview.removeClass('text-danger');
+
+        if (!file) {
+            state.$attachmentPreview.text('');
+            return;
+        }
+
+        const validation = validateAttachmentClient(file);
+        if (!validation.valid) {
+            state.$attachmentPreview.addClass('text-danger').text(validation.message);
+            return;
+        }
+
+        const details = [file.name];
+        if (file.size) {
+            details.push(formatFileSize(file.size));
+        }
+
+        state.$attachmentPreview.text(details.join(' · '));
+    }
+
+    function clearAttachmentSelection() {
+        if (state.$fileInput && state.$fileInput.length) {
+            state.$fileInput.val('');
+        }
+
+        if (state.$attachmentPreview) {
+            state.$attachmentPreview.removeClass('text-danger').text('');
+        }
     }
 
     function markOptimisticAsFailed(tempId, xhr) {
@@ -463,14 +725,16 @@
             return;
         }
 
-        $existing.addClass('chat-message--error');
-        const errorText = deriveErrorMessage(xhr);
-        let $error = $existing.find('.chat-message__error');
-        if (!$error.length) {
-            $error = $('<div/>', { class: 'chat-message__error text-danger' }).appendTo($existing);
+        const message = $.extend({}, $existing.data('chatMessage') || {});
+        message.tempId = tempId;
+        message.error = deriveErrorMessage(xhr);
+        message.optimistic = false;
+        if (typeof message.isMine !== 'boolean') {
+            message.isMine = $existing.hasClass('chat-message--outgoing');
         }
-        $error.text(errorText);
-        showStatus(errorText, 'error');
+
+        populateMessageElement($existing, message);
+        showStatus(message.error, 'error');
     }
 
     function deriveErrorMessage(xhr) {
@@ -507,7 +771,17 @@
         }
 
         const hasText = !!(state.$input?.val() || '').trim();
-        $button.prop('disabled', !hasText);
+        let hasAttachment = false;
+        let attachmentValid = true;
+
+        if (state.$fileInput && state.$fileInput[0] && state.$fileInput[0].files && state.$fileInput[0].files.length) {
+            const file = state.$fileInput[0].files[0];
+            hasAttachment = true;
+            attachmentValid = validateAttachmentClient(file).valid;
+        }
+
+        const shouldDisable = state.isSending || (!hasText && !hasAttachment) || !attachmentValid;
+        $button.prop('disabled', shouldDisable);
     }
 
     function startPolling() {
@@ -600,6 +874,29 @@
         const timestamp = extractField(message, messageFields.timestamp) || new Date().toISOString();
         const sender = extractField(message, messageFields.sender) || '';
         const id = extractField(message, messageFields.id) || message?.tempId || '';
+        const attachmentUrl = extractField(message, messageFields.attachmentUrl) || '';
+        const attachmentName = extractField(message, messageFields.attachmentName) || '';
+        const attachmentMimeType = extractField(message, messageFields.attachmentMimeType) || '';
+        const attachmentSizeRaw = extractField(message, messageFields.attachmentSize);
+        const storagePath = message?.attachmentStoragePath || '';
+
+        let attachmentSize = null;
+        if (attachmentSizeRaw !== null && attachmentSizeRaw !== undefined && attachmentSizeRaw !== '') {
+            const parsedSize = Number(attachmentSizeRaw);
+            attachmentSize = Number.isFinite(parsedSize) ? parsedSize : null;
+        }
+
+        let attachment = null;
+        if (attachmentUrl || storagePath || attachmentName) {
+            const url = attachmentUrl || storagePath || '';
+            attachment = {
+                url: url,
+                storagePath: storagePath || '',
+                name: attachmentName || getFileNameFromPath(url),
+                mimeType: attachmentMimeType || '',
+                size: attachmentSize
+            };
+        }
 
         const isMine = determineIsMine(message, project, sender);
 
@@ -609,7 +906,9 @@
             timestamp: timestamp,
             sender: sender,
             isMine: isMine,
-            optimistic: message.optimistic || false
+            optimistic: message.optimistic || false,
+            tempId: message.tempId || '',
+            attachment: attachment
         };
     }
 
