@@ -499,7 +499,9 @@
                                     <button type="button"
                                             class="btn btn-sm btn-outline-primary project-chat-trigger"
                                             title="Open project chat"
+                                            data-project-mapping-id="@item.ProjectMappingId"
                                             data-project-id="@item.ProjectMappingId"
+                                            data-project-internal-id="@item.ProjectId"
                                             data-project-name="@item.ProjectName"
                                             data-pid="@item.PID"
                                             data-supplier-id="@item.SupplierId"
@@ -887,10 +889,11 @@
                                 return data;
                             }
 
-                            const projectMappingId = row?.projectMappingId ?? '';
-                            const pid = row?.pid ?? '';
-                            const projectName = row?.projectName ?? '';
-                            const supplierId = row?.supplierId ?? '';
+                            const projectMappingId = row?.projectMappingId ?? row?.ProjectMappingId ?? '';
+                            const projectId = row?.projectId ?? row?.ProjectId ?? '';
+                            const pid = row?.pid ?? row?.PID ?? '';
+                            const projectName = row?.projectName ?? row?.ProjectName ?? '';
+                            const supplierId = row?.supplierId ?? row?.SupplierId ?? '';
                             const unreadCount = Number(row?.unreadCount ?? row?.UnreadCount ?? 0) || 0;
                             const lastMessage = row?.lastMessageUtc ?? row?.LastMessageUtc ?? '';
                             const historyUrl = row?.chatHistoryUrl ?? '';
@@ -898,6 +901,8 @@
                             const pollUrl = row?.chatPollUrl ?? '';
 
                             const encode = (value) => $('<div>').text(value ?? '').html();
+                            const projectMappingIdEncoded = encode(projectMappingId);
+                            const projectIdEncoded = encode(projectId);
                             const srLabel = encode([pid, projectName].filter(Boolean).join(' - '));
                             const projectNameEncoded = encode(projectName);
                             const pidEncoded = encode(pid);
@@ -913,7 +918,7 @@
 
                             return `
                                 <button class="btn btn-sm btn-outline-primary project-chat-trigger" type="button" title="Open project chat" aria-haspopup="dialog"
-                                        data-project-id="${projectMappingId}" data-pid="${pidEncoded}" data-project-name="${projectNameEncoded}"
+                                        data-project-mapping-id="${projectMappingIdEncoded}" data-project-id="${projectMappingIdEncoded}" data-project-internal-id="${projectIdEncoded}" data-pid="${pidEncoded}" data-project-name="${projectNameEncoded}"
                                         data-supplier-id="${supplierIdEncoded}" data-unread-count="${unreadCount}" data-last-message="${lastMessageEncoded}"
                                         data-history-url="${historyUrlEncoded}" data-send-url="${sendUrlEncoded}" data-poll-url="${pollUrlEncoded}">
                                     <span class="sr-only">Open chat for ${srLabel}</span>

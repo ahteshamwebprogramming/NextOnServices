@@ -119,20 +119,57 @@
     }
 
     function buildProjectFromTrigger($trigger) {
+        const readData = function ($element, ...keys) {
+            if (!$element || !$element.length) {
+                return '';
+            }
+
+            for (let i = 0; i < keys.length; i += 1) {
+                const key = keys[i];
+                if (!key) {
+                    continue;
+                }
+
+                const directValue = $element.data(key);
+                if (directValue !== undefined && directValue !== null && directValue !== '') {
+                    return directValue;
+                }
+
+                if (typeof key === 'string') {
+                    const dashed = key
+                        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+                        .replace(/_{1,}/g, '-')
+                        .toLowerCase();
+
+                    if (dashed) {
+                        const attrValue = $element.attr(`data-${dashed}`);
+                        if (attrValue !== undefined && attrValue !== null && attrValue !== '') {
+                            return attrValue;
+                        }
+                    }
+                }
+            }
+
+            return '';
+        };
         const decode = (value) => $('<textarea />').html(value || '').text();
         const project = {
-            projectMappingId: $trigger.data('project-id') ?? '',
-            projectId: $trigger.data('projectId') ?? '',
-            supplierId: $trigger.data('supplierId') ?? '',
-            pid: decode($trigger.data('pid')) || '',
-            projectName: decode($trigger.data('project-name')) || '',
-            unreadCount: Number($trigger.data('unread-count') ?? 0) || 0,
-            lastMessage: $trigger.data('last-message') || '',
-            historyUrl: $trigger.data('history-url') || '',
-            sendUrl: $trigger.data('send-url') || '',
-            pollUrl: $trigger.data('poll-url') || '',
+            projectMappingId: readData($trigger, 'projectMappingId', 'projectMappingID', 'project-id'),
+            projectId: readData($trigger, 'projectInternalId', 'projectId', 'projectID'),
+            supplierId: readData($trigger, 'supplierId', 'supplierID', 'supplier-id'),
+            pid: decode(readData($trigger, 'pid', 'PID', 'projectNumber', 'project-number')) || '',
+            projectName: decode(readData($trigger, 'projectName', 'project-name', 'name')) || '',
+            unreadCount: Number(readData($trigger, 'unreadCount', 'UnreadCount', 'unread-count') ?? 0) || 0,
+            lastMessage: readData($trigger, 'lastMessage', 'LastMessage', 'last-message') || '',
+            historyUrl: readData($trigger, 'historyUrl', 'history-url'),
+            sendUrl: readData($trigger, 'sendUrl', 'send-url'),
+            pollUrl: readData($trigger, 'pollUrl', 'poll-url'),
             $trigger: $trigger
         };
+
+        if (!project.projectMappingId) {
+            project.projectMappingId = project.projectId || readData($trigger, 'project-id');
+        }
 
         if (!project.historyUrl) {
             project.historyUrl = state.$panel.data('history-url') || '';
@@ -145,6 +182,8 @@
         if (!project.pollUrl) {
             project.pollUrl = state.$panel.data('poll-url') || '';
         }
+
+        project.projectId = project.projectId || readData($trigger, 'projectId', 'project');
 
         return project;
     }
@@ -625,6 +664,7 @@
         }
 
         $trigger.attr('data-unread-count', 0);
+        $trigger.data('unread-count', 0);
         $trigger.find('[data-unread-badge]').remove();
     }
 
