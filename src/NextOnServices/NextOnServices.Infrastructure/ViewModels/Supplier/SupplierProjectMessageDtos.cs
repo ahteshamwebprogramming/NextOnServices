@@ -18,13 +18,13 @@ public class SupplierProjectMessageDto
 
     public int? CreatedBy { get; set; }
 
-    public DateTime? CreatedUtc { get; set; }
+    public DateTimeOffset? CreatedUtc { get; set; }
 
     public bool FromSupplier { get; set; }
 
     public bool IsRead { get; set; }
 
-    public DateTime? ReadUtc { get; set; }
+    public DateTimeOffset? ReadUtc { get; set; }
 }
 
 public class SupplierProjectMessageListItemDto : SupplierProjectMessageDto
