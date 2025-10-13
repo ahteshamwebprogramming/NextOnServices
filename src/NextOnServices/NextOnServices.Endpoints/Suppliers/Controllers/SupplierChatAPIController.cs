@@ -270,6 +270,20 @@ public class SupplierChatAPIController : ControllerBase
                     .ToList();
             }
 
+            if (!isSupplierUser)
+            {
+                var readUtc = DateTime.UtcNow;
+                var updatedCount = await _unitOfWork.SupplierProjectMessages.MarkSupplierMessagesAsReadAsync(request.ProjectMappingId, readUtc);
+                if (updatedCount > 0)
+                {
+                    foreach (var message in rows.Where(m => m.FromSupplier && !m.IsRead))
+                    {
+                        message.IsRead = true;
+                        message.ReadUtc = readUtc;
+                    }
+                }
+            }
+
             var nextCursorDate = rows.LastOrDefault()?.CreatedUtc;
             DateTimeOffset? nextCursor = nextCursorDate.HasValue
                 ? new DateTimeOffset(DateTime.SpecifyKind(nextCursorDate.Value, DateTimeKind.Utc))
