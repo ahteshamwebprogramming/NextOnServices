@@ -501,6 +501,11 @@ public partial class NextOnServicesDbContext : DbContext
             entity.Property(e => e.FromSupplier).HasColumnName("FromSupplier");
             entity.Property(e => e.IsRead).HasColumnName("IsRead");
             entity.Property(e => e.ReadUtc).HasColumnName("ReadUtc").HasColumnType("datetime");
+            entity.Property(e => e.AttachmentFileName).HasColumnName("AttachmentFileName");
+            entity.Property(e => e.AttachmentOriginalFileName).HasColumnName("AttachmentOriginalFileName");
+            entity.Property(e => e.AttachmentStoragePath).HasColumnName("AttachmentStoragePath");
+            entity.Property(e => e.AttachmentMimeType).HasColumnName("AttachmentMimeType");
+            entity.Property(e => e.AttachmentSizeBytes).HasColumnName("AttachmentSizeBytes");
         });
 
         modelBuilder.Entity<CountryMaster>(entity =>
