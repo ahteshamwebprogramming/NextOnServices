@@ -277,9 +277,37 @@ body.project-chat-open {
     word-break: break-word;
 }
 
+.chat-message--incoming .chat-message__bubble {
+    margin-left: 0.5rem;
+}
+
 .chat-message--outgoing .chat-message__bubble {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
+    margin-right: 0.5rem;
+}
+
+.chat-message__bubble::after {
+    content: '';
+    position: absolute;
+    bottom: 0.5rem;
+    width: 0.75rem;
+    height: 0.75rem;
+    transform: rotate(45deg);
+}
+
+.chat-message--incoming .chat-message__bubble::after {
+    left: -0.35rem;
+    background: #e5e7eb;
+    border-bottom-left-radius: 0.75rem;
+    box-shadow: -2px 2px 4px rgba(15, 23, 42, 0.05);
+}
+
+.chat-message--outgoing .chat-message__bubble::after {
+    right: -0.35rem;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-bottom-right-radius: 0.75rem;
+    box-shadow: 2px 2px 6px rgba(37, 99, 235, 0.3);
 }
 
 .chat-message__meta {
