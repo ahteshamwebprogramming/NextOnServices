@@ -327,10 +327,17 @@
         }).done(function (response) {
             const messages = normaliseMessages(response);
             renderMessages(messages, project);
-            if (messages.length) {
+
+            const nextCursor = extractNextCursor(response);
+            let fallbackCursor = null;
+
+            if (!nextCursor && messages.length) {
                 const lastMessage = messages[messages.length - 1];
-                project.lastMessage = lastMessage.timestamp || lastMessage.createdAt || lastMessage.createdOn || project.lastMessage;
+                const shaped = shapeMessage(lastMessage, project);
+                fallbackCursor = shaped.timestamp;
             }
+
+            setProjectCursor(project, nextCursor || fallbackCursor);
             resetStatus();
         }).fail(function (xhr) {
             console.error('[chatPanel] Failed to fetch chat history', xhr);
@@ -591,25 +598,45 @@
             return;
         }
 
+        const requestData = {
+            projectMappingId: project.projectMappingId
+        };
+
+        if (project.lastMessage) {
+            requestData.after = project.lastMessage;
+        }
+
         $.ajax({
             url: project.pollUrl,
             method: 'GET',
             dataType: 'json',
-            data: {
-                projectMappingId: project.projectMappingId,
-                after: project.lastMessage
-            }
+            data: requestData
         }).done(function (response) {
             const messages = normaliseMessages(response);
             if (!messages.length) {
+                const cursor = extractNextCursor(response);
+                if (cursor) {
+                    setProjectCursor(project, cursor);
+                }
                 return;
             }
+
+            const nextCursor = extractNextCursor(response);
+            let lastTimestamp = null;
 
             messages.forEach(function (item) {
                 const shaped = shapeMessage(item, project);
                 appendMessage(shaped, { scroll: true });
-                project.lastMessage = shaped.timestamp || project.lastMessage;
+                if (shaped.timestamp) {
+                    lastTimestamp = shaped.timestamp;
+                }
             });
+
+            if (nextCursor) {
+                setProjectCursor(project, nextCursor);
+            } else if (lastTimestamp) {
+                setProjectCursor(project, lastTimestamp);
+            }
 
             resetStatus();
         }).fail(function (xhr) {
@@ -645,6 +672,51 @@
         }
 
         return [];
+    }
+
+    function extractNextCursor(payload) {
+        if (!payload || typeof payload !== 'object') {
+            return null;
+        }
+
+        if (payload.nextCursor !== undefined && payload.nextCursor !== null) {
+            return payload.nextCursor;
+        }
+
+        if (payload.NextCursor !== undefined && payload.NextCursor !== null) {
+            return payload.NextCursor;
+        }
+
+        return null;
+    }
+
+    function setProjectCursor(project, cursor) {
+        if (!project || cursor === undefined || cursor === null) {
+            return;
+        }
+
+        let isoString = null;
+
+        if (cursor instanceof Date && !Number.isNaN(cursor.getTime())) {
+            isoString = cursor.toISOString();
+        } else if (typeof cursor === 'number' && Number.isFinite(cursor)) {
+            const fromNumber = new Date(cursor);
+            if (!Number.isNaN(fromNumber.getTime())) {
+                isoString = fromNumber.toISOString();
+            }
+        } else if (typeof cursor === 'string') {
+            const trimmed = cursor.trim();
+            if (trimmed) {
+                const fromString = new Date(trimmed);
+                if (!Number.isNaN(fromString.getTime())) {
+                    isoString = fromString.toISOString();
+                }
+            }
+        }
+
+        if (isoString) {
+            project.lastMessage = isoString;
+        }
     }
 
     function updateMessageMeta($element, message) {
