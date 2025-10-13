@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 
@@ -31,6 +32,13 @@ public class SupplierChatSendRequest
     public string? Pid { get; set; }
 
     public string? Message { get; set; }
+}
+
+public class SupplierChatAttachmentRequest : SupplierChatSendRequest
+{
+    public IFormFile? File { get; set; }
+
+    public string? Caption { get; set; }
 }
 
 public class SupplierChatHistoryResponse

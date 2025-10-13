@@ -2,6 +2,7 @@
     var chatHistoryUrl = Url.Action("GetProjectChatHistory", "Supplier", new { area = "VT" }) ?? string.Empty;
     var chatSendUrl = Url.Action("PostProjectChatMessage", "Supplier", new { area = "VT" }) ?? string.Empty;
     var chatPollUrl = Url.Action("PollProjectChat", "Supplier", new { area = "VT" }) ?? string.Empty;
+    var chatAttachmentUrl = Url.Action("PostProjectChatAttachment", "Supplier", new { area = "VT" }) ?? string.Empty;
 }
 
 <div id="projectChatPanel"
@@ -9,6 +10,7 @@
      data-history-url="@chatHistoryUrl"
      data-send-url="@chatSendUrl"
      data-poll-url="@chatPollUrl"
+     data-attachment-url="@chatAttachmentUrl"
      aria-hidden="true">
     <div class="project-chat__backdrop" data-action="close-chat" tabindex="-1"></div>
     <aside class="project-chat__sheet" role="dialog" aria-modal="true" aria-labelledby="projectChatTitle">
@@ -44,14 +46,37 @@
         <footer class="project-chat__footer">
             <form data-chat-form novalidate>
                 <div class="project-chat__composer">
-                    <label class="sr-only" for="projectChatComposer">Type a message</label>
-                    <textarea id="projectChatComposer"
-                              class="form-control"
-                              rows="2"
-                              data-chat-input
-                              placeholder="Type your message&hellip;"
-                              aria-label="Message text"></textarea>
+                    <div class="project-chat__composer-input">
+                        <label class="sr-only" for="projectChatComposer">Type a message</label>
+                        <textarea id="projectChatComposer"
+                                  class="form-control"
+                                  rows="2"
+                                  data-chat-input
+                                  placeholder="Type your message&hellip;"
+                                  aria-label="Message text"></textarea>
+                        <div class="project-chat__attachment-preview" data-chat-attachment-preview hidden>
+                            <i class="fas fa-paperclip" aria-hidden="true"></i>
+                            <span data-chat-attachment-name></span>
+                            <button type="button"
+                                    class="btn btn-link btn-sm"
+                                    data-action="remove-attachment"
+                                    aria-label="Remove attachment">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="project-chat__composer-actions">
+                        <input type="file"
+                               id="projectChatAttachment"
+                               class="sr-only"
+                               data-chat-attachment-input
+                               aria-label="Chat attachment" />
+                        <button type="button"
+                                class="btn btn-light project-chat__attach-btn"
+                                data-action="choose-attachment">
+                            <i class="fas fa-paperclip" aria-hidden="true"></i>
+                            <span class="sr-only">Attach a file</span>
+                        </button>
                         <button type="submit" class="btn btn-primary" data-action="send-chat" disabled>Send</button>
                     </div>
                 </div>

@@ -25,8 +25,25 @@ public class SupplierProjectMessageDto
     public bool IsRead { get; set; }
 
     public DateTime? ReadUtc { get; set; }
+
+    public SupplierChatAttachmentDto? Attachment { get; set; }
 }
 
 public class SupplierProjectMessageListItemDto : SupplierProjectMessageDto
 {
+}
+
+public class SupplierChatAttachmentDto
+{
+    public string? FileName { get; set; }
+
+    public string? FileUrl { get; set; }
+
+    public string? Caption { get; set; }
+
+    public string? ContentType { get; set; }
+
+    public long? Length { get; set; }
+
+    public bool IsImage { get; set; }
 }
