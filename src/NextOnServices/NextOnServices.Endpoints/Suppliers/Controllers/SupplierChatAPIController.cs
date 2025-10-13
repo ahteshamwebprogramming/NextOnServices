@@ -276,7 +276,7 @@ foreach (var row in rows)
             }
             if (!isSupplierUser)
             {
-                var readUtc = NormalizeUtc(DateTime.UtcNow);
+                var readUtc = DateTime.UtcNow;
                 var updatedCount = await _unitOfWork.SupplierProjectMessages.MarkSupplierMessagesAsReadAsync(request.ProjectMappingId, readUtc);
                 if (updatedCount > 0)
                 {
