@@ -305,8 +305,20 @@
             return;
         }
 
+        const $placeholder = state.$empty;
+
+        if ($placeholder && $placeholder.length) {
+            if (!$placeholder.parent().is(state.$log)) {
+                state.$log.prepend($placeholder);
+            }
+
+            state.$log.children().not($placeholder).remove();
+            updateEmptyPlaceholder($placeholder);
+            $placeholder.show();
+            return;
+        }
+
         state.$log.empty();
-        state.$empty.show();
     }
 
     function fetchHistory() {
@@ -361,14 +373,29 @@
             return;
         }
 
-        state.$log.empty();
+        const $placeholder = state.$empty;
+
+        if ($placeholder && $placeholder.length) {
+            if (!$placeholder.parent().is(state.$log)) {
+                state.$log.prepend($placeholder);
+            }
+
+            state.$log.children().not($placeholder).remove();
+            updateEmptyPlaceholder($placeholder);
+        } else {
+            state.$log.empty();
+        }
 
         if (!messages.length) {
-            state.$empty.show();
+            if ($placeholder && $placeholder.length) {
+                $placeholder.show();
+            }
             return;
         }
 
-        state.$empty.hide();
+        if ($placeholder && $placeholder.length) {
+            $placeholder.hide();
+        }
 
         messages.forEach(function (message) {
             const meta = shapeMessage(message, project);
@@ -376,6 +403,19 @@
         });
 
         scrollToBottom();
+    }
+
+    function updateEmptyPlaceholder($placeholder) {
+        if (!$placeholder || !$placeholder.length) {
+            return;
+        }
+
+        const $placeholderText = $placeholder.find('p').first();
+        if ($placeholderText.length) {
+            $placeholderText.text('No chats to display');
+        } else {
+            $placeholder.text('No chats to display');
+        }
     }
 
     function appendMessage(message, options) {
