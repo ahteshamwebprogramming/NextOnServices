@@ -98,19 +98,6 @@ public class SupplierController : Controller
         return ConvertApiResult(apiResult);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> PostProjectChatAttachment([FromForm] SupplierChatAttachmentRequest request)
-    {
-        if (request == null)
-        {
-            return BadRequest(new { message = "Attachment payload is required." });
-        }
-
-        PrepareChatApiController();
-        var apiResult = await _supplierChatApiController.Upload(request);
-        return ConvertApiResult(apiResult);
-    }
-
     private void PrepareChatApiController()
     {
         _supplierChatApiController.ControllerContext = new ControllerContext
