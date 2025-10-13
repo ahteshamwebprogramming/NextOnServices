@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.AspNetCore.Http;
 
 namespace NextOnServices.Infrastructure.ViewModels.Supplier;
 
@@ -32,8 +31,6 @@ public class SupplierChatSendRequest
     public string? Pid { get; set; }
 
     public string? Message { get; set; }
-
-    public IFormFile? Attachment { get; set; }
 }
 
 public class SupplierChatHistoryResponse

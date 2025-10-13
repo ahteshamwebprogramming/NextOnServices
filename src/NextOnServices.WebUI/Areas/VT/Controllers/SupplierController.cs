@@ -86,7 +86,7 @@ public class SupplierController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> PostProjectChatMessage([FromForm] SupplierChatSendRequest request)
+    public async Task<IActionResult> PostProjectChatMessage([FromBody] SupplierChatSendRequest request)
     {
         if (request == null)
         {
