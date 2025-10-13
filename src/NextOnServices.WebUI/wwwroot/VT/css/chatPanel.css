@@ -122,9 +122,6 @@ body.project-chat-open {
     margin-bottom: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(15, 23, 42, 0.3) transparent;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
 }
 
 .project-chat__log::-webkit-scrollbar {
@@ -168,13 +165,6 @@ body.project-chat-open {
     align-items: flex-end;
 }
 
-.project-chat__composer-input {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
 .project-chat__composer textarea {
     resize: vertical;
     min-height: 3rem;
@@ -185,44 +175,6 @@ body.project-chat-open {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    align-items: center;
-}
-
-.project-chat__attach-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(15, 23, 42, 0.12);
-    color: #1f2937;
-}
-
-.project-chat__attach-btn:hover,
-.project-chat__attach-btn:focus {
-    background: rgba(59, 130, 246, 0.1);
-    color: #1d4ed8;
-}
-
-.project-chat__attachment-preview {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(15, 23, 42, 0.05);
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.75rem;
-    font-size: 0.85rem;
-}
-
-.project-chat__attachment-preview[hidden] {
-    display: none;
-}
-
-.project-chat__attachment-preview i {
-    color: #2563eb;
-}
-
-.project-chat__attachment-preview button {
-    padding: 0;
-    color: #dc2626;
 }
 
 .project-chat__status {
@@ -235,13 +187,6 @@ body.project-chat-open {
     flex-direction: column;
     max-width: 85%;
     margin-bottom: 1rem;
-}
-
-.chat-message__sender {
-    font-size: 0.75rem;
-    color: #4b5563;
-    margin-bottom: 0.25rem;
-    align-self: flex-start;
 }
 
 .chat-message--incoming {
@@ -262,53 +207,11 @@ body.project-chat-open {
     color: #111827;
     line-height: 1.4;
     word-break: break-word;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
 }
 
 .chat-message--outgoing .chat-message__bubble {
     background: linear-gradient(135deg, #2563eb, #1d4ed8);
     color: #ffffff;
-}
-
-.chat-message__text {
-    white-space: pre-wrap;
-}
-
-.chat-message__attachment {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.chat-message__attachment-thumb {
-    border-radius: 0.75rem;
-    max-width: 240px;
-    height: auto;
-    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.15);
-}
-
-.chat-message__attachment-link {
-    font-weight: 600;
-    color: inherit;
-    text-decoration: underline;
-}
-
-.chat-message__attachment-link:hover,
-.chat-message__attachment-link:focus {
-    text-decoration: none;
-}
-
-.chat-message__attachment-link--pending {
-    opacity: 0.7;
-    cursor: default;
-    text-decoration: none;
-}
-
-.chat-message__attachment-meta {
-    font-size: 0.7rem;
-    color: rgba(17, 24, 39, 0.65);
 }
 
 .chat-message__meta {
