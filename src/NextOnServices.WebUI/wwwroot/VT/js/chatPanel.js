@@ -290,7 +290,7 @@
             subtitleParts.push(`Project #${project.pid}`);
         }
         if (project.projectMappingId) {
-            subtitleParts.push(`Mapping ID ${project.projectMappingId}`);
+            /*subtitleParts.push(`Mapping ID ${project.projectMappingId}`);*/
         }
         state.$subtitle.text(subtitleParts.join(' · '));
 
