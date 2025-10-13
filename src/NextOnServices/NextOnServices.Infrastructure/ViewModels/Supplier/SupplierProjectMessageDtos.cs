@@ -25,18 +25,6 @@ public class SupplierProjectMessageDto
     public bool IsRead { get; set; }
 
     public DateTime? ReadUtc { get; set; }
-
-    public string? AttachmentFileName { get; set; }
-
-    public string? AttachmentOriginalFileName { get; set; }
-
-    public string? AttachmentStoragePath { get; set; }
-
-    public string? AttachmentMimeType { get; set; }
-
-    public long? AttachmentSizeBytes { get; set; }
-
-    public string? AttachmentUrl { get; set; }
 }
 
 public class SupplierProjectMessageListItemDto : SupplierProjectMessageDto
