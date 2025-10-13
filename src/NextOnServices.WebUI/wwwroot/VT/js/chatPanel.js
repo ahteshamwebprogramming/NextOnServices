@@ -924,7 +924,13 @@
             return;
         }
 
-        state.$log.scrollTop(state.$log.prop('scrollHeight'));
+        const logElement = state.$log.get(0);
+        if (!logElement) {
+            return;
+        }
+
+        const maxScrollTop = logElement.scrollHeight - logElement.clientHeight;
+        state.$log.scrollTop(Math.max(0, maxScrollTop));
     }
 
     function formatTimestamp(value) {
