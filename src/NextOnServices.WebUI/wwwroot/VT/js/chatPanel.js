@@ -118,12 +118,30 @@
         });
     }
 
+    function normalizeId(value) {
+        if (value === undefined || value === null) {
+            return null;
+        }
+
+        const stringValue = String(value).trim();
+        if (!stringValue) {
+            return null;
+        }
+
+        const numericValue = Number(stringValue);
+        if (!Number.isFinite(numericValue) || !Number.isInteger(numericValue)) {
+            return null;
+        }
+
+        return numericValue;
+    }
+
     function buildProjectFromTrigger($trigger) {
         const decode = (value) => $('<textarea />').html(value || '').text();
         const project = {
-            projectMappingId: $trigger.data('project-id') ?? '',
-            projectId: $trigger.data('projectId') ?? '',
-            supplierId: $trigger.data('supplierId') ?? '',
+            projectMappingId: normalizeId($trigger.data('project-id')),
+            projectId: normalizeId($trigger.data('projectId')),
+            supplierId: normalizeId($trigger.data('supplierId')),
             pid: decode($trigger.data('pid')) || '',
             projectName: decode($trigger.data('project-name')) || '',
             unreadCount: Number($trigger.data('unread-count') ?? 0) || 0,
@@ -401,13 +419,22 @@
     }
 
     function buildSendPayload(project, message) {
-        return {
-            projectMappingId: project.projectMappingId,
-            projectId: project.projectId,
-            supplierId: project.supplierId,
-            pid: project.pid,
+        const payload = {
+            pid: project.pid || null,
             message: message
         };
+
+        const identifiers = {
+            projectMappingId: normalizeId(project.projectMappingId),
+            projectId: normalizeId(project.projectId),
+            supplierId: normalizeId(project.supplierId)
+        };
+
+        Object.keys(identifiers).forEach(function (key) {
+            payload[key] = identifiers[key];
+        });
+
+        return payload;
     }
 
     function markOptimisticAsFailed(tempId, xhr) {
