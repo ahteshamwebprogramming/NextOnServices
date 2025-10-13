@@ -199,19 +199,6 @@ body.project-chat-open {
     align-items: flex-end;
 }
 
-.chat-message__sender {
-    font-size: 0.75rem;
-    font-weight: 600;
-    margin-bottom: 0.35rem;
-    color: #374151;
-    text-align: left;
-}
-
-.chat-message--outgoing .chat-message__sender {
-    color: rgba(255, 255, 255, 0.85);
-    text-align: right;
-}
-
 .chat-message__bubble {
     position: relative;
     padding: 0.75rem 1rem;
