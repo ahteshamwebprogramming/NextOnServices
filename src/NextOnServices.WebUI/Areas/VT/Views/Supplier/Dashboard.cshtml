@@ -510,7 +510,12 @@
                                         <i class="fas fa-comments" aria-hidden="true"></i>
                                         @if (unreadCount > 0)
                                         {
-                                            <span class="chat-unread badge badge-pill badge-danger" data-unread-badge>@unreadCount</span>
+                                            var displayCount = unreadCount > 99 ? "99+" : unreadCount.ToString();
+                                            var srText = unreadCount == 1 ? "1 unread message" : $"{unreadCount} unread messages";
+                                            <span class="chat-unread" data-unread-badge>
+                                                <span class="chat-unread__count">@displayCount</span>
+                                                <span class="sr-only">@srText</span>
+                                            </span>
                                         }
                                     </button>
                                 </td>
@@ -907,8 +912,13 @@
                             const sendUrlEncoded = encode(sendUrl);
                             const pollUrlEncoded = encode(pollUrl);
 
+                            const displayCount = unreadCount > 99 ? '99+' : unreadCount.toString();
+                            const srText = unreadCount === 1 ? '1 unread message' : `${unreadCount} unread messages`;
                             const badgeHtml = unreadCount > 0
-                                ? `<span class="chat-unread badge badge-pill badge-danger" data-unread-badge>${unreadCount}</span>`
+                                ? `<span class="chat-unread" data-unread-badge data-count="${unreadCount}">
+                                        <span class="chat-unread__count">${displayCount}</span>
+                                        <span class="sr-only">${srText}</span>
+                                   </span>`
                                 : '';
 
                             return `
