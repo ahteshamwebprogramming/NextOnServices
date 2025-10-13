@@ -269,12 +269,25 @@ public class SupplierChatAPIController : ControllerBase
                     .ThenBy(m => m.Id)
                     .ToList();
             }
-
-            foreach (var row in rows)
+foreach (var row in rows)
             {
                 row.CreatedUtc = NormalizeUtc(row.CreatedUtc);
                 row.ReadUtc = NormalizeUtc(row.ReadUtc);
             }
+            if (!isSupplierUser)
+            {
+                var readUtc = NormalizeUtc(DateTime.UtcNow);
+                var updatedCount = await _unitOfWork.SupplierProjectMessages.MarkSupplierMessagesAsReadAsync(request.ProjectMappingId, readUtc);
+                if (updatedCount > 0)
+                {
+                    foreach (var message in rows.Where(m => m.FromSupplier && !m.IsRead))
+                    {
+                        message.IsRead = true;
+                        message.ReadUtc = readUtc;
+                    }
+                }
+                }
+            
 
             var nextCursorDate = rows.LastOrDefault()?.CreatedUtc;
             DateTimeOffset? nextCursor = NormalizeUtc(nextCursorDate);
