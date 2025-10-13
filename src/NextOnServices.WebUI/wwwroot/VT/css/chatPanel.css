@@ -169,7 +169,8 @@ body.project-chat-open {
     overflow-y: auto;
     padding-right: 0.25rem;
     margin: 0;
-    padding-bottom: 1rem;
+    padding-bottom: 3.5rem;
+    scroll-padding-bottom: 3.5rem;
     scrollbar-width: thin;
     scrollbar-color: rgba(15, 23, 42, 0.3) transparent;
 }
