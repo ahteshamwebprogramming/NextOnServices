@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using NextOnServices.Core.Entities;
 using NextOnServices.Core.Repository;
@@ -239,6 +240,8 @@ public class SupplierChatAPIController : ControllerBase
                 //Attachments = DeserializeAttachments(entity.Attachments)
             };
 
+            PopulateAttachmentUrls(dto.ProjectMappingId, dto.Attachments);
+
             return Ok(dto);
         }
         catch (Exception ex)
@@ -278,8 +281,36 @@ public class SupplierChatAPIController : ControllerBase
         {
             message.Attachments = DeserializeAttachments(message.AttachmentsSerialized);
             message.AttachmentsSerialized = null;
+            PopulateAttachmentUrls(message.ProjectMappingId, message.Attachments);
             message.CreatedUtc = NormalizeUtc(message.CreatedUtc);
             message.ReadUtc = NormalizeUtc(message.ReadUtc);
+        }
+    }
+
+    private void PopulateAttachmentUrls(int projectMappingId, ICollection<SupplierProjectMessageAttachmentDto>? attachments)
+    {
+        if (attachments == null || attachments.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var attachment in attachments)
+        {
+            if (attachment == null || string.IsNullOrWhiteSpace(attachment.Id))
+            {
+                continue;
+            }
+
+            var url = Url.ActionLink(nameof(DownloadAttachment), values: new
+            {
+                projectMappingId,
+                attachmentId = attachment.Id
+            });
+
+            if (!string.IsNullOrWhiteSpace(url))
+            {
+                attachment.Url = url;
+            }
         }
     }
 
@@ -560,6 +591,106 @@ public class SupplierChatAPIController : ControllerBase
         }
 
         return Math.Min(pageSize, MaxPageSize);
+    }
+
+    [HttpGet("attachments/{projectMappingId:int}/{attachmentId}")]
+    public async Task<IActionResult> DownloadAttachment(int projectMappingId, string attachmentId)
+    {
+        if (projectMappingId <= 0 || string.IsNullOrWhiteSpace(attachmentId))
+        {
+            return BadRequest(new { message = "A valid attachment identifier is required." });
+        }
+
+        SupplierProjectMessageAttachmentDto? targetAttachment = null;
+
+        try
+        {
+            var mapping = await _unitOfWork.ProjectMapping.GetEntityData<ProjectMapping>(
+                "SELECT TOP 1 * FROM ProjectMapping WHERE Id=@Id",
+                new { Id = projectMappingId });
+
+            if (mapping == null)
+            {
+                return NotFound(new { message = "Project mapping could not be located." });
+            }
+
+            if (!TryResolveSupplierContext(null, out var supplierId, out var isSupplierUser, out var failureResult))
+            {
+                return failureResult!;
+            }
+
+            if (isSupplierUser && mapping.SupplierId.HasValue && mapping.SupplierId != supplierId)
+            {
+                return Forbid();
+            }
+
+            const string attachmentsSql = @"SELECT Attachments FROM SupplierProjectMessages
+                                            WHERE ProjectMappingId = @ProjectMappingId
+                                              AND Attachments IS NOT NULL";
+
+            var payloads = await _unitOfWork.SupplierProjectMessages.GetTableData<string>(
+                attachmentsSql,
+                new { ProjectMappingId = projectMappingId });
+
+            foreach (var payload in payloads)
+            {
+                if (string.IsNullOrWhiteSpace(payload))
+                {
+                    continue;
+                }
+
+                var attachments = DeserializeAttachments(payload);
+                targetAttachment = attachments.FirstOrDefault(a =>
+                    a != null && string.Equals(a.Id, attachmentId, StringComparison.OrdinalIgnoreCase));
+
+                if (targetAttachment != null)
+                {
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving supplier chat attachment for mapping {ProjectMappingId}", projectMappingId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred while locating the attachment." });
+        }
+
+        if (targetAttachment == null)
+        {
+            return NotFound(new { message = "The requested attachment could not be located." });
+        }
+
+        var storagePath = targetAttachment.StoragePath;
+        if (string.IsNullOrWhiteSpace(storagePath))
+        {
+            return NotFound(new { message = "Attachment storage information is missing." });
+        }
+
+        var root = GetAttachmentRootPath();
+        var segments = storagePath.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+
+        var combinedPath = segments.Aggregate(root, Path.Combine);
+        var fullPath = Path.GetFullPath(combinedPath);
+        var rootPath = Path.GetFullPath(root);
+
+        if (!fullPath.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase) || !System.IO.File.Exists(fullPath))
+        {
+            return NotFound(new { message = "The requested attachment could not be located." });
+        }
+
+        var fileName = string.IsNullOrWhiteSpace(targetAttachment.FileName)
+            ? Path.GetFileName(fullPath)
+            : targetAttachment.FileName;
+
+        var contentTypeProvider = new FileExtensionContentTypeProvider();
+        if (!contentTypeProvider.TryGetContentType(fileName, out var contentType) || string.IsNullOrWhiteSpace(contentType))
+        {
+            contentType = string.IsNullOrWhiteSpace(targetAttachment.ContentType)
+                ? "application/octet-stream"
+                : targetAttachment.ContentType;
+        }
+
+        return PhysicalFile(fullPath, contentType!, fileName);
     }
 
     private static DateTimeOffset NormalizeUtc(DateTime value)
