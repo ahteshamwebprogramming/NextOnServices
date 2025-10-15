@@ -29,4 +29,6 @@ public class SupplierProjectMessage
     public bool IsRead { get; set; }
 
     public DateTime? ReadUtc { get; set; }
+
+    public string? Attachments { get; set; }
 }
