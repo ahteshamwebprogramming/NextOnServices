@@ -7,6 +7,21 @@
 
     const PANEL_SELECTOR = '#projectChatPanel';
     const POLL_INTERVAL = 30000;
+    const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20 MB
+    const ACCEPTED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv', '.zip'];
+    const ACCEPTED_MIME_TYPES = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/webp',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain',
+        'text/csv',
+        'application/zip'
+    ];
 
     const state = {
         $panel: null,
@@ -19,10 +34,15 @@
         $title: null,
         $subtitle: null,
         $meta: null,
+        $attachmentInput: null,
+        $attachmentList: null,
+        $attachmentErrors: null,
         activeProject: null,
         pollTimer: null,
         isLoading: false,
-        userContext: {}
+        userContext: {},
+        attachments: [],
+        pendingUploads: {}
     };
 
     const messageFields = {
@@ -31,6 +51,7 @@
         timestamp: ['createdAt', 'CreatedAt', 'createdOn', 'CreatedOn', 'createdUtc', 'CreatedUtc', 'created', 'Created', 'sentAt', 'SentAt', 'timestamp', 'Timestamp', 'date', 'Date', 'loggedAt', 'LoggedAt'],
         sender: ['sender', 'Sender', 'from', 'From', 'author', 'Author', 'owner', 'Owner', 'createdByName', 'CreatedByName', 'createdByDisplayName', 'CreatedByDisplayName']
     };
+    const attachmentFields = ['attachments', 'Attachments', 'files', 'Files', 'documents', 'Documents', 'media', 'Media', 'attachmentUrls', 'AttachmentUrls'];
 
     $(document).on('click', '.project-chat-trigger', function (event) {
         event.preventDefault();
@@ -80,7 +101,13 @@
         state.$title = $panel.find('[data-chat-title]');
         state.$subtitle = $panel.find('[data-chat-subtitle]');
         state.$meta = $panel.find('[data-chat-meta]');
+        state.$attachmentInput = $panel.find('[data-chat-attachments]');
+        state.$attachmentList = $panel.find('[data-chat-attachment-list]');
+        state.$attachmentErrors = $panel.find('[data-chat-attachment-errors]');
         state.userContext = buildUserContext($panel);
+        state.attachments = [];
+        state.pendingUploads = {};
+        clearAttachmentSelection({ resetErrors: true });
     }
 
     function bindPanelEvents() {
@@ -100,6 +127,10 @@
 
         state.$input.on('input', function () {
             updateSendAvailability();
+
+            if ((state.$input.val() || '').trim()) {
+                resetStatus();
+            }
         });
 
         state.$input.on('keydown', function (event) {
@@ -107,6 +138,16 @@
                 event.preventDefault();
                 sendMessage();
             }
+        });
+
+        state.$panel.on('change', '[data-chat-attachments]', function (event) {
+            handleAttachmentSelection(event);
+        });
+
+        state.$panel.on('click', '[data-action="remove-attachment"]', function (event) {
+            event.preventDefault();
+            const attachmentId = $(this).attr('data-attachment-id');
+            removeAttachment(attachmentId);
         });
 
         state.$panel.on('click', '.project-chat__backdrop', function () {
@@ -254,6 +295,7 @@
         state.$panel.addClass('is-open').attr('aria-hidden', 'false');
         $('body').addClass('project-chat-open');
 
+        resetComposer({ resetErrors: true });
         updateHeader(project);
         clearLog();
         markTriggerAsRead(project.$trigger);
@@ -274,6 +316,7 @@
         $('body').removeClass('project-chat-open');
         stopPolling();
         state.activeProject = null;
+        resetComposer({ resetErrors: true });
         resetStatus();
     }
 
@@ -319,6 +362,17 @@
         }
 
         state.$log.empty();
+    }
+
+    function resetComposer(options) {
+        const settings = $.extend({ resetErrors: false }, options);
+
+        if (state.$input && state.$input.length) {
+            state.$input.val('');
+        }
+
+        clearAttachmentSelection({ resetErrors: settings.resetErrors });
+        updateSendAvailability();
     }
 
     function fetchHistory() {
@@ -418,6 +472,230 @@
         }
     }
 
+    function handleAttachmentSelection(event) {
+        const input = event?.target;
+        const files = input?.files ? Array.from(input.files) : [];
+
+        const result = addAttachments(files);
+        renderAttachmentErrors(result.errors);
+
+        if ((!result.errors || !result.errors.length) && state.attachments.length) {
+            resetStatus();
+        }
+    }
+
+    function addAttachments(files) {
+        const errors = [];
+
+        if (!Array.isArray(files) || !files.length) {
+            return { errors: errors };
+        }
+
+        const existingKeys = new Set((state.attachments || []).map(function (item) { return item.key; }));
+
+        files.forEach(function (file) {
+            if (!file) {
+                return;
+            }
+
+            const displayName = file.name || 'This file';
+
+            if (file.size > MAX_ATTACHMENT_SIZE) {
+                errors.push(`${displayName} is larger than ${formatFileSize(MAX_ATTACHMENT_SIZE)}.`);
+                return;
+            }
+
+            if (!isSupportedFile(file)) {
+                errors.push(`${displayName} is not a supported file type.`);
+                return;
+            }
+
+            const key = buildAttachmentKey(file);
+            if (existingKeys.has(key)) {
+                errors.push(`${displayName} has already been added.`);
+                return;
+            }
+
+            const record = {
+                id: `file-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                file: file,
+                key: key,
+                name: file.name || displayName
+            };
+
+            state.attachments.push(record);
+            existingKeys.add(key);
+        });
+
+        updateAttachmentUI();
+        updateSendAvailability();
+
+        if (state.$attachmentInput && state.$attachmentInput.length) {
+            state.$attachmentInput.val('');
+        }
+
+        return { errors: errors };
+    }
+
+    function isSupportedFile(file) {
+        if (!file) {
+            return false;
+        }
+
+        const type = (file.type || '').toLowerCase();
+        if (type && ACCEPTED_MIME_TYPES.indexOf(type) >= 0) {
+            return true;
+        }
+
+        const extension = extractExtension(file.name);
+        if (extension && ACCEPTED_FILE_EXTENSIONS.indexOf(extension) >= 0) {
+            return true;
+        }
+
+        if (!type && !extension) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function extractExtension(fileName) {
+        if (!fileName) {
+            return '';
+        }
+
+        const lastDot = fileName.lastIndexOf('.');
+        if (lastDot < 0) {
+            return '';
+        }
+
+        return fileName.slice(lastDot).toLowerCase();
+    }
+
+    function buildAttachmentKey(file) {
+        return [file.name || '', file.size || 0, file.type || ''].join('::');
+    }
+
+    function updateAttachmentUI() {
+        if (!state.$attachmentList) {
+            return;
+        }
+
+        state.$attachmentList.empty();
+
+        const attachments = state.attachments || [];
+        if (!attachments.length) {
+            state.$attachmentList.attr('data-has-attachments', 'false');
+            return;
+        }
+
+        state.$attachmentList.attr('data-has-attachments', 'true');
+
+        attachments.forEach(function (attachment) {
+            const name = attachment.name || attachment.file?.name || 'Attachment';
+            const $chip = $('<div/>', {
+                class: 'project-chat__attachment-chip badge badge-light d-inline-flex align-items-center mr-2 mb-2',
+                role: 'listitem',
+                'data-attachment-id': attachment.id
+            });
+
+            $('<span/>', { class: 'project-chat__attachment-name', text: name }).appendTo($chip);
+
+            if (attachment.file && Number.isFinite(attachment.file.size)) {
+                $('<small/>', {
+                    class: 'text-muted ml-2',
+                    text: formatFileSize(attachment.file.size)
+                }).appendTo($chip);
+            }
+
+            $('<button/>', {
+                type: 'button',
+                class: 'btn btn-sm btn-link text-danger ml-2 p-0',
+                'data-action': 'remove-attachment',
+                'data-attachment-id': attachment.id,
+                'aria-label': 'Remove ' + name
+            }).text('×').appendTo($chip);
+
+            state.$attachmentList.append($chip);
+        });
+    }
+
+    function renderAttachmentErrors(errors) {
+        if (!state.$attachmentErrors) {
+            return;
+        }
+
+        const messages = Array.isArray(errors)
+            ? errors.filter(function (error, index, array) {
+                return error && array.indexOf(error) === index;
+            })
+            : [];
+
+        if (!messages.length) {
+            state.$attachmentErrors.empty();
+            state.$attachmentErrors.text('');
+            return;
+        }
+
+        const $list = $('<ul/>', { class: 'mb-0 pl-3' });
+        messages.forEach(function (message) {
+            $('<li/>').text(message).appendTo($list);
+        });
+
+        state.$attachmentErrors.empty().append($list);
+    }
+
+    function removeAttachment(attachmentId) {
+        if (!attachmentId) {
+            return;
+        }
+
+        state.attachments = (state.attachments || []).filter(function (item) {
+            return item.id !== attachmentId;
+        });
+
+        updateAttachmentUI();
+        updateSendAvailability();
+
+        if (!state.attachments.length) {
+            renderAttachmentErrors([]);
+        }
+    }
+
+    function clearAttachmentSelection(options) {
+        const settings = $.extend({ resetErrors: false }, options);
+
+        state.attachments = [];
+
+        if (state.$attachmentInput && state.$attachmentInput.length) {
+            state.$attachmentInput.val('');
+        }
+
+        updateAttachmentUI();
+
+        if (settings.resetErrors) {
+            renderAttachmentErrors([]);
+        }
+    }
+
+    function restorePendingAttachments(tempId) {
+        if (!state.pendingUploads) {
+            return;
+        }
+
+        const pending = state.pendingUploads[tempId];
+        if (!pending || !pending.length) {
+            delete state.pendingUploads[tempId];
+            return;
+        }
+
+        state.attachments = pending.slice();
+        delete state.pendingUploads[tempId];
+        updateAttachmentUI();
+        updateSendAvailability();
+        renderAttachmentErrors([]);
+    }
+
     function appendMessage(message, options) {
         if (!state.$log) {
             return;
@@ -459,10 +737,12 @@
         const $existing = findMessageByAttribute('data-temp-id', tempId);
         if (!$existing.length) {
             appendMessage(hydrated, { scroll: true });
+            delete state.pendingUploads?.[tempId];
             return;
         }
 
         refreshMessageElement($existing, hydrated);
+        delete state.pendingUploads?.[tempId];
     }
 
     function normaliseIdentityValue(value) {
@@ -534,7 +814,23 @@
         if (!$bubble.length) {
             $bubble = $('<div/>', { class: 'chat-message__bubble' }).prependTo($element);
         }
-        $bubble.text(message.text || '');
+        const messageText = (message.text || '').toString();
+        const hasText = !!messageText.trim();
+        const hasAttachments = Array.isArray(message.attachments) && message.attachments.length > 0;
+
+        if (hasText) {
+            $bubble.text(messageText);
+            $bubble.show();
+        } else {
+            $bubble.text('');
+            if (hasAttachments) {
+                $bubble.hide();
+            } else {
+                $bubble.show();
+            }
+        }
+
+        renderMessageAttachments($element, message);
 
         updateMessageMeta($element, message);
 
@@ -550,6 +846,90 @@
         }
     }
 
+    function renderMessageAttachments($element, message) {
+        if (!$element || !$element.length) {
+            return;
+        }
+
+        const attachments = Array.isArray(message.attachments)
+            ? message.attachments.filter(function (attachment) {
+                return attachment && (attachment.pending || attachment.url || attachment.name);
+            })
+            : [];
+
+        let $container = $element.find('.chat-message__attachments');
+
+        if (!attachments.length) {
+            if ($container.length) {
+                $container.remove();
+            }
+            return;
+        }
+
+        if (!$container.length) {
+            $container = $('<div/>', { class: 'chat-message__attachments mt-2' }).appendTo($element);
+        } else {
+            $container.empty();
+        }
+
+        const $list = $('<ul/>', { class: 'chat-message__attachment-list list-unstyled mb-0' }).appendTo($container);
+
+        attachments.forEach(function (attachment) {
+            const $item = $('<li/>', { class: 'chat-message__attachment d-flex align-items-center mb-2' }).appendTo($list);
+            const name = attachment.name || deriveFileName(attachment.url) || 'Attachment';
+
+            if (attachment.pending) {
+                $('<span/>', { class: 'chat-message__attachment-name font-italic', text: `${name} (uploading…)` }).appendTo($item);
+                if (typeof attachment.size === 'number' && attachment.size > 0) {
+                    $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
+                }
+                return;
+            }
+
+            if (attachment.url) {
+                const $link = $('<a/>', {
+                    href: attachment.url,
+                    text: name,
+                    target: '_blank',
+                    rel: 'noopener'
+                }).appendTo($item);
+
+                if (typeof attachment.size === 'number' && attachment.size > 0) {
+                    $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
+                }
+
+                if (isImageAttachment(attachment)) {
+                    const previewSource = attachment.previewUrl || attachment.url;
+                    if (previewSource) {
+                        $('<img/>', {
+                            src: previewSource,
+                            alt: name,
+                            class: 'chat-message__attachment-preview rounded ml-2',
+                            loading: 'lazy'
+                        }).appendTo($item);
+                    }
+                }
+            } else {
+                $('<span/>', { class: 'chat-message__attachment-name', text: name }).appendTo($item);
+                if (typeof attachment.size === 'number' && attachment.size > 0) {
+                    $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
+                }
+            }
+        });
+    }
+
+    function removeMessageAttachments($element) {
+        if (!$element || !$element.length) {
+            return;
+        }
+
+        $element.find('.chat-message__attachments').remove();
+        const $bubble = $element.find('.chat-message__bubble');
+        if ($bubble.length) {
+            $bubble.show();
+        }
+    }
+
     function sendMessage() {
         const project = state.activeProject;
         if (!project || !state.$input) {
@@ -558,7 +938,12 @@
 
         const value = state.$input.val();
         const trimmed = (value || '').trim();
-        if (!trimmed) {
+        const attachments = (state.attachments || []).slice();
+        const hasAttachments = attachments.length > 0;
+        const hasText = !!trimmed;
+
+        if (!hasText && !hasAttachments) {
+            showStatus('Add a message or choose a file before sending.', 'warning');
             return;
         }
 
@@ -578,19 +963,34 @@
             isMine: true,
             sender: userContext.name || 'You',
             fromSupplier: typeof userContext.isSupplierUser === 'boolean' ? userContext.isSupplierUser : null,
-            optimistic: true
+            optimistic: true,
+            attachments: createOptimisticAttachments(attachments)
         };
 
         appendMessage(optimisticMessage, { scroll: true });
         state.$input.val('');
+        clearAttachmentSelection({ resetErrors: true });
         updateSendAvailability();
+
+        if (!state.pendingUploads) {
+            state.pendingUploads = {};
+        }
+        if (attachments.length) {
+            state.pendingUploads[tempId] = attachments.slice();
+        } else {
+            delete state.pendingUploads[tempId];
+        }
+
+        const payload = buildSendPayload(project, trimmed);
+        const formData = buildFormData(payload, attachments);
 
         $.ajax({
             url: sendUrl,
             method: 'POST',
-            contentType: 'application/json',
             dataType: 'json',
-            data: JSON.stringify(buildSendPayload(project, trimmed))
+            data: formData,
+            processData: false,
+            contentType: false
         }).done(function (response) {
             const message = shapeMessage(response, project);
             message.tempId = tempId;
@@ -622,6 +1022,47 @@
         return payload;
     }
 
+    function buildFormData(payload, attachments) {
+        const formData = new FormData();
+
+        Object.keys(payload || {}).forEach(function (key) {
+            const value = payload[key];
+            if (value === undefined || value === null) {
+                formData.append(key, '');
+                return;
+            }
+
+            formData.append(key, value);
+        });
+
+        (attachments || []).forEach(function (attachment) {
+            if (!attachment?.file) {
+                return;
+            }
+
+            formData.append('attachments', attachment.file, attachment.file.name);
+        });
+
+        return formData;
+    }
+
+    function createOptimisticAttachments(attachments) {
+        if (!Array.isArray(attachments) || !attachments.length) {
+            return [];
+        }
+
+        return attachments.map(function (attachment) {
+            const file = attachment.file;
+            return {
+                id: attachment.id,
+                name: attachment.name || file?.name || 'Attachment',
+                size: file?.size || null,
+                contentType: file?.type || '',
+                pending: true
+            };
+        });
+    }
+
     function markOptimisticAsFailed(tempId, xhr) {
         if (!state.$log) {
             return;
@@ -629,6 +1070,7 @@
 
         const $existing = state.$log.find(`[data-temp-id="${tempId}"]`).first();
         if (!$existing.length) {
+            restorePendingAttachments(tempId);
             return;
         }
 
@@ -639,7 +1081,9 @@
             $error = $('<div/>', { class: 'chat-message__error text-danger' }).appendTo($existing);
         }
         $error.text(errorText);
+        removeMessageAttachments($existing);
         showStatus(errorText, 'error');
+        restorePendingAttachments(tempId);
     }
 
     function deriveErrorMessage(xhr) {
@@ -676,7 +1120,8 @@
         }
 
         const hasText = !!(state.$input?.val() || '').trim();
-        $button.prop('disabled', !hasText);
+        const hasAttachments = Array.isArray(state.attachments) && state.attachments.length > 0;
+        $button.prop('disabled', !(hasText || hasAttachments));
     }
 
     function startPolling() {
@@ -875,6 +1320,7 @@
 
         const fromSupplier = determineFromSupplier(message);
         const isMine = determineIsMine(message, project, sender, fromSupplier);
+        const attachments = normaliseAttachments(message);
 
         return {
             id: id,
@@ -883,8 +1329,175 @@
             sender: sender,
             isMine: isMine,
             fromSupplier: typeof fromSupplier === 'boolean' ? fromSupplier : null,
-            optimistic: message.optimistic || false
+            optimistic: message.optimistic || false,
+            attachments: attachments
         };
+    }
+
+    function normaliseAttachments(message) {
+        if (!message) {
+            return [];
+        }
+
+        const attachments = [];
+        const seen = new Set();
+
+        attachmentFields.forEach(function (field) {
+            if (message[field] !== undefined && message[field] !== null) {
+                collectAttachmentCandidates(message[field], attachments, seen);
+            }
+        });
+
+        if (message.attachment !== undefined && message.attachment !== null) {
+            collectAttachmentCandidates(message.attachment, attachments, seen);
+        }
+
+        return attachments;
+    }
+
+    function collectAttachmentCandidates(source, target, seen) {
+        if (source === undefined || source === null) {
+            return;
+        }
+
+        if (typeof source === 'string') {
+            const trimmed = source.trim();
+            if (!trimmed) {
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(trimmed);
+                collectAttachmentCandidates(parsed, target, seen);
+                return;
+            } catch (err) {
+                // Not JSON – continue parsing as plain string
+            }
+
+            if (trimmed.indexOf(',') >= 0) {
+                trimmed.split(',').forEach(function (part) {
+                    collectAttachmentCandidates(part.trim(), target, seen);
+                });
+                return;
+            }
+
+            const shapedFromString = shapeAttachmentFromValue(trimmed);
+            if (shapedFromString) {
+                addAttachmentIfUnique(shapedFromString, target, seen);
+            }
+            return;
+        }
+
+        if (Array.isArray(source)) {
+            source.forEach(function (item) {
+                collectAttachmentCandidates(item, target, seen);
+            });
+            return;
+        }
+
+        if ($.isPlainObject(source)) {
+            if (Array.isArray(source.items)) {
+                collectAttachmentCandidates(source.items, target, seen);
+                return;
+            }
+
+            if (Array.isArray(source.data)) {
+                collectAttachmentCandidates(source.data, target, seen);
+                return;
+            }
+
+            if (Array.isArray(source.files)) {
+                collectAttachmentCandidates(source.files, target, seen);
+                return;
+            }
+
+            if (Array.isArray(source.Attachments)) {
+                collectAttachmentCandidates(source.Attachments, target, seen);
+                return;
+            }
+
+            const shapedFromObject = shapeAttachmentFromValue(source);
+            if (shapedFromObject) {
+                addAttachmentIfUnique(shapedFromObject, target, seen);
+            }
+        }
+    }
+
+    function shapeAttachmentFromValue(value) {
+        if (!value) {
+            return null;
+        }
+
+        if (typeof value === 'string') {
+            const trimmed = value.trim();
+            if (!trimmed) {
+                return null;
+            }
+
+            return {
+                id: '',
+                name: deriveFileName(trimmed) || 'Attachment',
+                url: trimmed,
+                contentType: '',
+                size: null,
+                previewUrl: '',
+                pending: false
+            };
+        }
+
+        if (value instanceof File) {
+            return {
+                id: '',
+                name: value.name,
+                url: '',
+                contentType: value.type || '',
+                size: value.size,
+                previewUrl: '',
+                pending: true
+            };
+        }
+
+        if (!$.isPlainObject(value)) {
+            return null;
+        }
+
+        const url = value.url || value.href || value.link || value.downloadUrl || value.path || value.source || '';
+        const previewUrl = value.previewUrl || value.thumbnailUrl || value.preview || '';
+        const size = normaliseAttachmentSize(value.size || value.fileSize || value.length);
+        const pending = typeof value.pending === 'boolean' ? value.pending : false;
+
+        return {
+            id: normaliseIdentityValue(value.id || value.attachmentId || value.fileId || ''),
+            name: value.name || value.fileName || value.filename || deriveFileName(url) || 'Attachment',
+            url: url,
+            contentType: value.contentType || value.mimeType || value.type || '',
+            size: size,
+            previewUrl: previewUrl,
+            pending: pending
+        };
+    }
+
+    function normaliseAttachmentSize(value) {
+        const size = Number(value);
+        if (!Number.isFinite(size) || size <= 0) {
+            return null;
+        }
+
+        return size;
+    }
+
+    function addAttachmentIfUnique(attachment, target, seen) {
+        if (!attachment) {
+            return;
+        }
+
+        const key = [attachment.url || '', attachment.name || '', attachment.size || 0].join('::');
+        if (seen.has(key)) {
+            return;
+        }
+
+        seen.add(key);
+        target.push(attachment);
     }
 
     function extractField(source, candidates) {
@@ -1037,6 +1650,56 @@
 
         const maxScrollTop = logElement.scrollHeight - logElement.clientHeight;
         state.$log.scrollTop(Math.max(0, maxScrollTop));
+    }
+
+    function deriveFileName(path) {
+        if (!path) {
+            return '';
+        }
+
+        const value = path.toString();
+        const withoutQuery = value.split('?')[0].split('#')[0];
+        const normalised = withoutQuery.replace(/\\/g, '/');
+        const parts = normalised.split('/');
+        const fileName = parts[parts.length - 1] || '';
+        return fileName;
+    }
+
+    function isImageAttachment(attachment) {
+        if (!attachment) {
+            return false;
+        }
+
+        const contentType = (attachment.contentType || '').toLowerCase();
+        if (contentType.indexOf('image/') === 0) {
+            return true;
+        }
+
+        const candidateName = attachment.name || deriveFileName(attachment.url);
+        const extension = extractExtension(candidateName || attachment.url || '');
+        const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+        return extension ? imageExtensions.indexOf(extension) >= 0 : false;
+    }
+
+    function formatFileSize(bytes) {
+        const size = Number(bytes);
+        if (!Number.isFinite(size) || size <= 0) {
+            return '';
+        }
+
+        const units = [
+            { unit: 'GB', value: 1024 * 1024 * 1024 },
+            { unit: 'MB', value: 1024 * 1024 },
+            { unit: 'KB', value: 1024 }
+        ];
+
+        for (let i = 0; i < units.length; i += 1) {
+            if (size >= units[i].value) {
+                return `${(size / units[i].value).toFixed(1)} ${units[i].unit}`;
+            }
+        }
+
+        return `${Math.max(1, Math.round(size))} B`;
     }
 
     function formatTimestamp(value) {

@@ -72,6 +72,24 @@
                               placeholder="Type your message&hellip;"
                               aria-label="Message text"></textarea>
                     <div class="project-chat__composer-actions">
+                        <div class="project-chat__attachments">
+                            <label class="project-chat__attachment-trigger btn btn-link mb-2 mb-sm-0 mr-sm-2" for="projectChatAttachments">
+                                <i class="fas fa-paperclip" aria-hidden="true"></i>
+                                <span class="ml-1">Attach files</span>
+                            </label>
+                            <input id="projectChatAttachments"
+                                   type="file"
+                                   class="d-none"
+                                   data-chat-attachments
+                                   multiple
+                                   aria-label="Add attachments to this message" />
+                            <div class="project-chat__attachment-chips mt-2"
+                                 data-chat-attachment-list
+                                 role="list"></div>
+                            <div class="project-chat__attachment-errors text-danger small mt-2"
+                                 data-chat-attachment-errors
+                                 aria-live="polite"></div>
+                        </div>
                         <button type="submit" class="btn btn-primary" data-action="send-chat" disabled>Send</button>
                     </div>
                 </div>
