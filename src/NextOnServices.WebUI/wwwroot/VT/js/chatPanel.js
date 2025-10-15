@@ -876,7 +876,8 @@
 
         attachments.forEach(function (attachment) {
             const $item = $('<li/>', { class: 'chat-message__attachment d-flex align-items-center mb-2' }).appendTo($list);
-            const name = attachment.name || deriveFileName(attachment.url) || 'Attachment';
+            const derivedName = deriveFileName(attachment.url);
+            const name = attachment.name || derivedName || 'Attachment';
 
             if (attachment.pending) {
                 $('<span/>', { class: 'chat-message__attachment-name font-italic', text: `${name} (uploading…)` }).appendTo($item);
@@ -897,6 +898,15 @@
                 if (typeof attachment.size === 'number' && attachment.size > 0) {
                     $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
                 }
+
+                const downloadFileName = derivedName || name;
+                $('<a/>', {
+                    href: attachment.url,
+                    class: 'chat-message__attachment-download ml-2',
+                    text: 'Download',
+                    download: downloadFileName,
+                    'aria-label': `Download ${downloadFileName}`
+                }).appendTo($item);
 
                 if (isImageAttachment(attachment)) {
                     const previewSource = attachment.previewUrl || attachment.url;
