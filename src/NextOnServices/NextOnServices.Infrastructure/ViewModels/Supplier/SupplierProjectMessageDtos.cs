@@ -42,30 +42,21 @@ public class SupplierProjectMessageListItemDto : SupplierProjectMessageDto
 
 public class SupplierProjectMessageAttachmentDto
 {
-    public string? Id { get; set; }
-
-    public string? FileName { get; set; }
-
-    public string? Url { get; set; }
-
-    public string? ContentType { get; set; }
-
-    public long? Size { get; set; }
-}
-
-public class SupplierProjectMessageAttachmentDto
-{
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 
     public string? ClientId { get; set; }
 
     public string FileName { get; set; } = string.Empty;
 
+    public string? Url { get; set; }
+
     public string ContentType { get; set; } = string.Empty;
 
     public long Length { get; set; }
 
+    public long? Size { get; set; }
+
     public string StoragePath { get; set; } = string.Empty;
 
-    public DateTimeOffset UploadedUtc { get; set; }
+    public DateTimeOffset? UploadedUtc { get; set; }
 }

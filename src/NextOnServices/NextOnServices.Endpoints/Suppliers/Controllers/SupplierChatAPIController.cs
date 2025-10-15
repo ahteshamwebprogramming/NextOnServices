@@ -493,6 +493,7 @@ public class SupplierChatAPIController : ControllerBase
                     FileName = Path.GetFileName(file.FileName),
                     ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
                     Length = file.Length,
+                    Size = file.Length,
                     StoragePath = Path.Combine(projectMappingId.ToString(), uniqueFileName).Replace('\\', '/'),
                     UploadedUtc = uploadedUtc
                 };
@@ -580,24 +581,6 @@ public class SupplierChatAPIController : ControllerBase
 
         var utcDateTime = DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Utc);
         return new DateTimeOffset(utcDateTime);
-    }
-
-    private static List<SupplierProjectMessageAttachmentDto> DeserializeAttachments(string? payload)
-    {
-        if (string.IsNullOrWhiteSpace(payload))
-        {
-            return new List<SupplierProjectMessageAttachmentDto>();
-        }
-
-        try
-        {
-            var attachments = JsonSerializer.Deserialize<List<SupplierProjectMessageAttachmentDto>>(payload, AttachmentSerializerOptions);
-            return attachments ?? new List<SupplierProjectMessageAttachmentDto>();
-        }
-        catch (JsonException)
-        {
-            return new List<SupplierProjectMessageAttachmentDto>();
-        }
     }
 
     private bool TryResolveSupplierContext(int? requestedSupplierId, out int? supplierId, out bool isSupplierUser, out IActionResult? failureResult)
