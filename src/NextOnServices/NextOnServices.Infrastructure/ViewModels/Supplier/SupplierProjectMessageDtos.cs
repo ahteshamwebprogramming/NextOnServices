@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace NextOnServices.Infrastructure.ViewModels.Supplier;
 
@@ -25,8 +27,30 @@ public class SupplierProjectMessageDto
     public bool IsRead { get; set; }
 
     public DateTimeOffset? ReadUtc { get; set; }
+
+    [JsonIgnore]
+    public string? AttachmentsSerialized { get; set; }
+
+    public List<SupplierProjectMessageAttachmentDto> Attachments { get; set; } = new();
 }
 
 public class SupplierProjectMessageListItemDto : SupplierProjectMessageDto
 {
+}
+
+public class SupplierProjectMessageAttachmentDto
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
+    public string? ClientId { get; set; }
+
+    public string FileName { get; set; } = string.Empty;
+
+    public string ContentType { get; set; } = string.Empty;
+
+    public long Length { get; set; }
+
+    public string StoragePath { get; set; } = string.Empty;
+
+    public DateTimeOffset UploadedUtc { get; set; }
 }
