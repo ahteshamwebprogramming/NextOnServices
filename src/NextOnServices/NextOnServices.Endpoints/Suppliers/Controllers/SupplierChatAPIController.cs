@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +21,10 @@ public class SupplierChatAPIController : ControllerBase
     private const int DefaultPageSize = 50;
     private const int DefaultPollPageSize = 20;
     private const int MaxPageSize = 200;
+    private static readonly JsonSerializerOptions AttachmentSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SupplierChatAPIController> _logger;
@@ -144,7 +149,8 @@ public class SupplierChatAPIController : ControllerBase
                 CreatedUtc = NormalizeUtc(entity.CreatedUtc),
                 FromSupplier = entity.FromSupplier,
                 IsRead = entity.IsRead,
-                ReadUtc = NormalizeUtc(entity.ReadUtc)
+                ReadUtc = NormalizeUtc(entity.ReadUtc),
+                Attachments = DeserializeAttachments(entity.Attachments)
             };
 
             return Ok(dto);
@@ -200,6 +206,7 @@ public class SupplierChatAPIController : ControllerBase
                                 ProjectId,
                                 SupplierId,
                                 Message,
+                                Attachments AS AttachmentsPayload,
                                 CreatedBy,
                                 CreatedByName,
                                 CreatedUtc,
@@ -237,6 +244,7 @@ public class SupplierChatAPIController : ControllerBase
                                 ProjectId,
                                 SupplierId,
                                 Message,
+                                Attachments AS AttachmentsPayload,
                                 CreatedBy,
                                 CreatedByName,
                                 CreatedUtc,
@@ -269,7 +277,15 @@ public class SupplierChatAPIController : ControllerBase
                     .ThenBy(m => m.Id)
                     .ToList();
             }
-foreach (var row in rows)
+
+            rows ??= new List<SupplierProjectMessageListItemDto>();
+
+            foreach (var row in rows)
+            {
+                row.Attachments = DeserializeAttachments(row.AttachmentsPayload);
+            }
+
+            foreach (var row in rows)
             {
                 row.CreatedUtc = NormalizeUtc(row.CreatedUtc);
                 row.ReadUtc = NormalizeUtc(row.ReadUtc);
@@ -286,8 +302,7 @@ foreach (var row in rows)
                         message.ReadUtc = readUtc;
                     }
                 }
-                }
-            
+            }
 
             var nextCursorDate = rows.LastOrDefault()?.CreatedUtc;
             DateTimeOffset? nextCursor = NormalizeUtc(nextCursorDate);
@@ -338,6 +353,24 @@ foreach (var row in rows)
 
         var utcDateTime = DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Utc);
         return new DateTimeOffset(utcDateTime);
+    }
+
+    private static List<SupplierProjectMessageAttachmentDto> DeserializeAttachments(string? payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return new List<SupplierProjectMessageAttachmentDto>();
+        }
+
+        try
+        {
+            var attachments = JsonSerializer.Deserialize<List<SupplierProjectMessageAttachmentDto>>(payload, AttachmentSerializerOptions);
+            return attachments ?? new List<SupplierProjectMessageAttachmentDto>();
+        }
+        catch (JsonException)
+        {
+            return new List<SupplierProjectMessageAttachmentDto>();
+        }
     }
 
     private bool TryResolveSupplierContext(int? requestedSupplierId, out int? supplierId, out bool isSupplierUser, out IActionResult? failureResult)
