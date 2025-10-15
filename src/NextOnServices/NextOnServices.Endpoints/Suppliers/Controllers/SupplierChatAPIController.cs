@@ -42,7 +42,11 @@ public class SupplierChatAPIController : ControllerBase
         ".csv"
     };
 
-    private static readonly JsonSerializerOptions AttachmentSerializerOptions = new(JsonSerializerDefaults.Web);
+    //private static readonly JsonSerializerOptions AttachmentSerializerOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions AttachmentSerializerOptions = new(JsonSerializerDefaults.Web)
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SupplierChatAPIController> _logger;
@@ -232,6 +236,7 @@ public class SupplierChatAPIController : ControllerBase
                 ReadUtc = NormalizeUtc(entity.ReadUtc),
                 Attachments = storedAttachments.Select(a => a.Descriptor).ToList(),
                 AttachmentsSerialized = entity.Attachments
+                //Attachments = DeserializeAttachments(entity.Attachments)
             };
 
             return Ok(dto);
@@ -322,6 +327,7 @@ public class SupplierChatAPIController : ControllerBase
                                 ProjectId,
                                 SupplierId,
                                 Message,
+                                Attachments AS AttachmentsPayload,
                                 CreatedBy,
                                 CreatedByName,
                                 CreatedUtc,
@@ -360,6 +366,7 @@ public class SupplierChatAPIController : ControllerBase
                                 ProjectId,
                                 SupplierId,
                                 Message,
+                                Attachments AS AttachmentsPayload,
                                 CreatedBy,
                                 CreatedByName,
                                 CreatedUtc,
@@ -395,6 +402,18 @@ public class SupplierChatAPIController : ControllerBase
             }
 
             PrepareMessagesForResponse(rows);
+            rows ??= new List<SupplierProjectMessageListItemDto>();
+
+            foreach (var row in rows)
+            {
+                row.Attachments = DeserializeAttachments(row.AttachmentsPayload);
+            }
+
+            foreach (var row in rows)
+            {
+                row.CreatedUtc = NormalizeUtc(row.CreatedUtc);
+                row.ReadUtc = NormalizeUtc(row.ReadUtc);
+            }
             if (!isSupplierUser)
             {
                 var readUtc = DateTime.UtcNow;
@@ -561,6 +580,24 @@ public class SupplierChatAPIController : ControllerBase
 
         var utcDateTime = DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Utc);
         return new DateTimeOffset(utcDateTime);
+    }
+
+    private static List<SupplierProjectMessageAttachmentDto> DeserializeAttachments(string? payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return new List<SupplierProjectMessageAttachmentDto>();
+        }
+
+        try
+        {
+            var attachments = JsonSerializer.Deserialize<List<SupplierProjectMessageAttachmentDto>>(payload, AttachmentSerializerOptions);
+            return attachments ?? new List<SupplierProjectMessageAttachmentDto>();
+        }
+        catch (JsonException)
+        {
+            return new List<SupplierProjectMessageAttachmentDto>();
+        }
     }
 
     private bool TryResolveSupplierContext(int? requestedSupplierId, out int? supplierId, out bool isSupplierUser, out IActionResult? failureResult)
