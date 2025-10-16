@@ -125,7 +125,7 @@
                     </div>
                     <input type="hidden" asp-for="Supplier.Id" />
                     <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddSupplier()">@(Model == null ? "Submit" : Model.Supplier == null ? "Submit" : Model.Supplier.Id > 0 ? "Update" : "Submit")  </button>
-                    <input type="button" class="btn btn-light btn-sm" onclick="javascript:window.location.href='/VT/Supplier/AddSupplier'" value="Cancel"/>
+                    <button type="button" class="btn btn-light btn-sm" onclick="window.history.back()">Cancel</button>
                 </form>
             </div>
         </div>

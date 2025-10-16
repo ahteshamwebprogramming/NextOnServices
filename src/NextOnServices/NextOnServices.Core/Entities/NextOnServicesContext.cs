@@ -56,7 +56,9 @@ public partial class NextOnServicesContext : DbContext
 
     public virtual DbSet<SupplierProjectMessage> SupplierProjectMessages { get; set; }
 
-    
+    public virtual DbSet<SupplierProjectMessageAttachment> SupplierProjectMessageAttachments { get; set; }
+
+
 
     public virtual DbSet<TblIpmapping> TblIpmappings { get; set; }
 
@@ -497,6 +499,29 @@ public partial class NextOnServicesContext : DbContext
             entity.Property(e => e.FromSupplier).HasColumnName("FromSupplier");
             entity.Property(e => e.IsRead).HasColumnName("IsRead");
             entity.Property(e => e.ReadUtc).HasColumnName("ReadUtc").HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<SupplierProjectMessageAttachment>(entity =>
+        {
+            entity.ToTable("SupplierProjectMessageAttachments");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.ClientId).HasMaxLength(100);
+            entity.Property(e => e.FileName).HasMaxLength(255);
+            entity.Property(e => e.ContentType).HasMaxLength(100);
+            entity.Property(e => e.FileSize).HasColumnType("bigint");
+            entity.Property(e => e.FileData).HasColumnType("varbinary(max)");
+            entity.Property(e => e.UploadedUtc).HasColumnType("datetimeoffset(7)");
+
+            entity.HasIndex(e => e.MessageId, "IX_SupplierProjectMessageAttachments_MessageId");
+
+            entity.HasOne<SupplierProjectMessage>()
+                .WithMany()
+                .HasForeignKey(e => e.MessageId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_SupplierProjectMessageAttachments_SupplierProjectMessages");
         });
 
         modelBuilder.Entity<CountryMaster>(entity =>

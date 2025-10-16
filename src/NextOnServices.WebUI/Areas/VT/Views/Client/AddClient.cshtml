@@ -80,7 +80,7 @@
                     </div>
                     <input type="hidden" asp-for="Client.ClientId" />
                     <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddClient()">@(Model == null ? "Submit" : Model.Client == null ? "Submit" : Model.Client.ClientId > 0 ? "Update" : "Submit")  </button>
-                    <input type="button" class="btn btn-light btn-sm" onclick="javascript:window.location.href='/VT/Client/AddClient'" value="Cancel" />
+                    <button type="button" class="btn btn-light btn-sm" onclick="window.history.back()">Cancel</button>
                 </form>
             </div>
         </div>
