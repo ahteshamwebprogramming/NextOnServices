@@ -13,6 +13,7 @@ using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Masters;
 using NextOnServices.Infrastructure.Models.Projects;
 using NextOnServices.Infrastructure.ViewModels.Project;
+using System.Linq;
 
 namespace NextOnServices.WebUI.VT.Controllers;
 [Area("VT")]
@@ -97,12 +98,20 @@ public class ProjectsController : Controller
             var resStatus = await _statusMasterAPIController.GetStatusMaster();
             if (resStatus != null)
             {
-                if (((Microsoft.AspNetCore.Mvc.ObjectResult)resCountries).StatusCode == 200)
+                if (((Microsoft.AspNetCore.Mvc.ObjectResult)resStatus).StatusCode == 200)
                 {
                     statusMasterDTOs = ((List<StatusMasterDTO>)((Microsoft.AspNetCore.Mvc.ObjectResult)resStatus).Value);
                 }
             }
 
+            if ((projectDTO.ProjectId == 0) && (!projectDTO.Status.HasValue || projectDTO.Status == 0))
+            {
+                var defaultStatus = statusMasterDTOs.FirstOrDefault(x => string.Equals(x.Pstatus, "Awarded", StringComparison.OrdinalIgnoreCase));
+                if (defaultStatus?.Pvalue != null)
+                {
+                    projectDTO.Status = defaultStatus.Pvalue;
+                }
+            }
         }
         catch (Exception ex)
         {
