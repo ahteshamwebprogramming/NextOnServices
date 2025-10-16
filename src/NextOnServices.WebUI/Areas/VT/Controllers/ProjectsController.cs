@@ -171,6 +171,36 @@ public class ProjectsController : Controller
         }
     }
 
+    [HttpPost]
+    public async Task<IActionResult> ChangeProjectStatus([FromBody] ProjectDTO inputDTO)
+    {
+        try
+        {
+            if (inputDTO == null)
+            {
+                throw new ArgumentNullException(nameof(inputDTO));
+            }
+
+            var response = await _projectsAPIController.ChangeProjectStatus(inputDTO.Status ?? 0, inputDTO.ProjectId);
+
+            if (response is ObjectResult objectResult)
+            {
+                if (objectResult.StatusCode == StatusCodes.Status200OK)
+                {
+                    return Ok("Status Changed Successfully");
+                }
+
+                throw new Exception(objectResult.Value?.ToString() ?? "Unable to change project status");
+            }
+
+            throw new Exception("Unexpected response while changing project status");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
     public IActionResult ProjectsList()
     {
         return View();

@@ -82,12 +82,16 @@
                             }
                         },
                         {
-                            "data": "projectId",
+                            "data": "status",
                             "autoWidth": true,
                             "searchable": true,
-                            render: function (v, d, rowData, row_col_details) {
-                                let res = '<input  style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-success" value="Yes">                                 <input  style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-danger" value="No">';
-                                return res;
+                            render: function (status, d, rowData) {
+                                const numericStatus = parseInt(status ?? 0);
+                                const isActive = numericStatus === 1;
+                                const buttonText = isActive ? "Yes" : "No";
+                                const nextStatus = isActive ? 0 : 1;
+                                const buttonClass = isActive ? "btn-success" : "btn-danger";
+                                return '<button type="button" class="btn ' + buttonClass + '" style="width: 100px;padding: 9px;font-size: 12px;" onclick="ChangeStatus(' + rowData.projectId + ',' + nextStatus + ',this)">' + buttonText + '</button>';
                             }, createdCell: function (td, cellData, rowData, row, col) {
                                 let res = "<td style='padding-top:0px;padding-bottom:0px;'>" + td.innerHTML + "</td>";
                                 $(td).replaceWith(res);
@@ -99,8 +103,50 @@
             );
         });
 
-        function buildActionButtons() {
-            return "";
+        function ChangeStatus(projectId, status, curObj) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You want to change the status!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, change it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    var inputDTO = {};
+                    inputDTO.ProjectId = projectId;
+                    inputDTO.Status = status;
+                    $.ajax({
+                        type: "POST",
+                        url: "/VT/Projects/ChangeProjectStatus",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function (data) {
+                            UnblockUI();
+                            $successalert("success", "Status Changed");
+                            const numericStatus = parseInt(status ?? 0);
+                            const isActive = numericStatus === 1;
+                            const nextStatus = isActive ? 0 : 1;
+                            const buttonText = isActive ? "Yes" : "No";
+                            const buttonClass = isActive ? "btn-success" : "btn-danger";
+                            var element = $(curObj);
+                            element.removeClass('btn-success btn-danger');
+                            element.addClass(buttonClass);
+                            element.text(buttonText);
+                            element.attr('onclick', 'ChangeStatus(' + projectId + ',' + nextStatus + ',this)');
+                        },
+                        error: function (error) {
+                            $erroralert("Error!", error.responseText);
+                            UnblockUI();
+                        }
+                    });
+                }
+            });
         }
     </script>
 }
