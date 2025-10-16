@@ -583,7 +583,7 @@ public class SupplierChatAPIController : ControllerBase
 
             rows ??= new List<SupplierProjectMessageListItemDto>();
 
-            await PrepareMessagesForResponseAsync(rows);
+            await PrepareMessagesForResponseAsync(rows.Cast<SupplierProjectMessageDto>().ToList());
             if (!isSupplierUser)
             {
                 var readUtc = DateTime.UtcNow;
@@ -825,19 +825,19 @@ public class SupplierChatAPIController : ControllerBase
             return NotFound(new { message = "The requested attachment could not be located." });
         }
 
-        var fileName = string.IsNullOrWhiteSpace(legacyAttachment.FileName)
+        var downloadFileName = string.IsNullOrWhiteSpace(legacyAttachment.FileName)
             ? Path.GetFileName(fullPath)
             : legacyAttachment.FileName;
 
         var contentTypeProvider = new FileExtensionContentTypeProvider();
-        if (!contentTypeProvider.TryGetContentType(fileName, out var contentType) || string.IsNullOrWhiteSpace(contentType))
+        if (!contentTypeProvider.TryGetContentType(downloadFileName, out var downloadContentType) || string.IsNullOrWhiteSpace(downloadContentType))
         {
-            contentType = string.IsNullOrWhiteSpace(legacyAttachment.ContentType)
+            downloadContentType = string.IsNullOrWhiteSpace(legacyAttachment.ContentType)
                 ? "application/octet-stream"
                 : legacyAttachment.ContentType;
         }
 
-        return PhysicalFile(fullPath, contentType!, fileName);
+        return PhysicalFile(fullPath, downloadContentType!, downloadFileName);
     }
 
     private static DateTimeOffset NormalizeUtc(DateTime value)
