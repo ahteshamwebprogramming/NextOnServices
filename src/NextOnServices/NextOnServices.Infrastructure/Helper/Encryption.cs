@@ -38,7 +38,7 @@ public class Encryption
         var hashAlgorithm = new Org.BouncyCastle.Crypto.Digests.Sha3Digest(256);
         byte[] input = Encoding.ASCII.GetBytes(URL + SecretKey);
         hashAlgorithm.BlockUpdate(input, 0, input.Length);
-        byte[] result = new byte[32]; // 256 / 8 = 32
+        byte[] result = new byte[hashAlgorithm.GetDigestSize()];
         hashAlgorithm.DoFinal(result, 0);
         string hashString = BitConverter.ToString(result);
         hashString = hashString.Replace("-", "").ToLowerInvariant();
@@ -52,7 +52,7 @@ public class Encryption
         var hashAlgorithm = new Org.BouncyCastle.Crypto.Digests.Sha1Digest();
         byte[] input = Encoding.ASCII.GetBytes(URL + SecretKey);
         hashAlgorithm.BlockUpdate(input, 0, input.Length);
-        byte[] result = new byte[32]; // 256 / 8 = 32
+        byte[] result = new byte[hashAlgorithm.GetDigestSize()];
         hashAlgorithm.DoFinal(result, 0);
         string hashString = BitConverter.ToString(result);
         hashString = hashString.Replace("-", "").ToLowerInvariant();
