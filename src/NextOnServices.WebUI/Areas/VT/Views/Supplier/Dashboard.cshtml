@@ -502,6 +502,7 @@
                                             data-project-id="@item.ProjectMappingId"
                                             data-project-name="@item.ProjectName"
                                             data-pid="@item.PID"
+                                            data-country="@countryDisplay"
                                             data-supplier-id="@item.SupplierId"
                                             data-unread-count="@unreadCount"
                                             data-last-message="@lastMessageTimestamp"
@@ -901,6 +902,7 @@
                             const historyUrl = row?.chatHistoryUrl ?? '';
                             const sendUrl = row?.chatSendUrl ?? '';
                             const pollUrl = row?.chatPollUrl ?? '';
+                            const country = row?.country ?? row?.Country ?? '';
 
                             const encode = (value) => $('<div>').text(value ?? '').html();
                             const srLabel = encode([pid, projectName].filter(Boolean).join(' - '));
@@ -911,6 +913,7 @@
                             const historyUrlEncoded = encode(historyUrl);
                             const sendUrlEncoded = encode(sendUrl);
                             const pollUrlEncoded = encode(pollUrl);
+                            const countryEncoded = encode(country);
 
                             const displayCount = unreadCount > 99 ? '99+' : unreadCount.toString();
                             const srText = unreadCount === 1 ? '1 unread message' : `${unreadCount} unread messages`;
@@ -924,7 +927,7 @@
                             return `
                                 <button class="btn btn-sm btn-outline-primary project-chat-trigger" type="button" title="Open project chat" aria-haspopup="dialog"
                                         data-project-id="${projectMappingId}" data-pid="${pidEncoded}" data-project-name="${projectNameEncoded}"
-                                        data-supplier-id="${supplierIdEncoded}" data-unread-count="${unreadCount}" data-last-message="${lastMessageEncoded}"
+                                        data-supplier-id="${supplierIdEncoded}" data-country="${countryEncoded}" data-unread-count="${unreadCount}" data-last-message="${lastMessageEncoded}"
                                         data-history-url="${historyUrlEncoded}" data-send-url="${sendUrlEncoded}" data-poll-url="${pollUrlEncoded}">
                                     <span class="sr-only">Open chat for ${srLabel}</span>
                                     <i class="fas fa-comments" aria-hidden="true"></i>

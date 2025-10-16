@@ -273,6 +273,7 @@
             supplierId: normalizeId($trigger.data('supplierId')),
             pid: decode($trigger.data('pid')) || '',
             projectName: decode($trigger.data('project-name')) || '',
+            country: decode($trigger.data('country')) || '',
             unreadCount: Number($trigger.data('unread-count') ?? 0) || 0,
             lastMessage: $trigger.data('last-message') || '',
             historyUrl: $trigger.data('history-url') || '',
@@ -335,17 +336,19 @@
             return;
         }
 
-        const title = project.projectName || project.pid || 'Project chat';
-        state.$title.text(`Project #${project.pid}`);
+        const title = project.projectName || (project.pid ? `Project #${project.pid}` : 'Project chat');
+        state.$title.text(title);
 
         const subtitleParts = [];
         if (project.pid) {
             subtitleParts.push(`Project #${project.pid}`);
         }
-        if (project.projectMappingId) {
-            /*subtitleParts.push(`Mapping ID ${project.projectMappingId}`);*/
+        if (project.country) {
+            subtitleParts.push(project.country);
         }
-        state.$subtitle.text(subtitleParts.join(' · '));
+        const subtitle = subtitleParts.join(' · ');
+        state.$subtitle.text(subtitle);
+        state.$subtitle.toggle(!!subtitle);
 
         if (state.$meta) {
             const lastMessage = project.lastMessage ? formatTimestamp(project.lastMessage) : '';
