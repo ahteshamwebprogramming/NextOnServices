@@ -193,7 +193,7 @@ public class SupplierChatAPIController : ControllerBase
 
             if (hasAttachments)
             {
-                storedAttachments = await StoreAttachmentsAsync(request, request.ProjectMappingId, utcNow);
+                storedAttachments = await StoreAttachmentsAsync(request, utcNow);
             }
 
             var entity = new SupplierProjectMessage
@@ -208,13 +208,36 @@ public class SupplierChatAPIController : ControllerBase
                 FromSupplier = isSupplierUser,
                 IsRead = false,
                 ReadUtc = null,
-                Attachments = storedAttachments.Count > 0 ? SerializeAttachments(storedAttachments.Select(a => a.Descriptor)) : null
+                Attachments = storedAttachments.Count > 0
+                    ? SerializeAttachments(storedAttachments.Select(a => a.Descriptor.Id))
+                    : null
             };
 
             try
             {
                 var newId = await _unitOfWork.SupplierProjectMessages.AddAsync(entity);
                 entity.Id = newId;
+
+                if (storedAttachments.Count > 0)
+                {
+                    foreach (var attachment in storedAttachments)
+                    {
+                        attachment.Entity.MessageId = entity.Id;
+                    }
+
+                    try
+                    {
+                        await _unitOfWork.SupplierProjectMessageAttachments.AddRangeAsync(
+                            storedAttachments.Select(a => a.Entity));
+                    }
+                    catch
+                    {
+                        await _unitOfWork.SupplierProjectMessages.ExecuteQueryAsync(
+                            "DELETE FROM SupplierProjectMessages WHERE Id = @Id",
+                            new { Id = entity.Id });
+                        throw;
+                    }
+                }
             }
             catch
             {
@@ -242,6 +265,8 @@ public class SupplierChatAPIController : ControllerBase
 
             PopulateAttachmentUrls(dto.ProjectMappingId, dto.Attachments);
 
+            CleanupStoredAttachments(storedAttachments);
+
             return Ok(dto);
         }
         catch (Exception ex)
@@ -252,38 +277,162 @@ public class SupplierChatAPIController : ControllerBase
         }
     }
 
-    private static string SerializeAttachments(IEnumerable<SupplierProjectMessageAttachmentDto> attachments)
+    private static string SerializeAttachments(IEnumerable<string> attachmentIds)
     {
-        return JsonSerializer.Serialize(attachments, AttachmentSerializerOptions);
+        return JsonSerializer.Serialize(attachmentIds, AttachmentSerializerOptions);
     }
 
-    private List<SupplierProjectMessageAttachmentDto> DeserializeAttachments(string? serialized)
+    private AttachmentMetadata DeserializeAttachmentMetadata(string? serialized)
     {
         if (string.IsNullOrWhiteSpace(serialized))
         {
-            return new List<SupplierProjectMessageAttachmentDto>();
+            return new AttachmentMetadata(new List<string>(), new List<SupplierProjectMessageAttachmentDto>());
         }
+
+        var identifiers = new List<string>();
+        var legacyDescriptors = new List<SupplierProjectMessageAttachmentDto>();
 
         try
         {
-            return JsonSerializer.Deserialize<List<SupplierProjectMessageAttachmentDto>>(serialized, AttachmentSerializerOptions) ?? new List<SupplierProjectMessageAttachmentDto>();
+            using var document = JsonDocument.Parse(serialized);
+            if (document.RootElement.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var element in document.RootElement.EnumerateArray())
+                {
+                    if (element.ValueKind == JsonValueKind.String)
+                    {
+                        var id = element.GetString();
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            identifiers.Add(id);
+                        }
+                    }
+                    else if (element.ValueKind == JsonValueKind.Object)
+                    {
+                        var descriptor = element.Deserialize<SupplierProjectMessageAttachmentDto>(AttachmentSerializerOptions);
+                        if (descriptor != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(descriptor.Id))
+                            {
+                                identifiers.Add(descriptor.Id);
+                            }
+
+                            legacyDescriptors.Add(descriptor);
+                        }
+                    }
+                }
+            }
         }
         catch (JsonException jsonException)
         {
             _logger.LogWarning(jsonException, "Failed to deserialize supplier chat attachment payload.");
-            return new List<SupplierProjectMessageAttachmentDto>();
+
+            try
+            {
+                var attachments = JsonSerializer.Deserialize<List<SupplierProjectMessageAttachmentDto>>(serialized, AttachmentSerializerOptions);
+                if (attachments != null)
+                {
+                    foreach (var descriptor in attachments)
+                    {
+                        if (descriptor == null)
+                        {
+                            continue;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(descriptor.Id))
+                        {
+                            identifiers.Add(descriptor.Id);
+                        }
+
+                        legacyDescriptors.Add(descriptor);
+                    }
+                }
+            }
+            catch (JsonException secondaryException)
+            {
+                _logger.LogWarning(secondaryException, "Failed to deserialize supplier chat attachment payload via legacy path.");
+            }
         }
+
+        return new AttachmentMetadata(identifiers, legacyDescriptors);
     }
 
-    private void PrepareMessagesForResponse(IEnumerable<SupplierProjectMessageDto> messages)
+    private async Task PrepareMessagesForResponseAsync(ICollection<SupplierProjectMessageDto> messages)
     {
-        foreach (var message in messages)
+        if (messages == null || messages.Count == 0)
         {
-            message.Attachments = DeserializeAttachments(message.AttachmentsSerialized);
+            return;
+        }
+
+        var messageList = messages.ToList();
+        var metadataByMessage = new Dictionary<int, AttachmentMetadata>();
+
+        foreach (var message in messageList)
+        {
+            var metadata = DeserializeAttachmentMetadata(message.AttachmentsSerialized);
+            metadataByMessage[message.Id] = metadata;
+
+            message.Attachments = new List<SupplierProjectMessageAttachmentDto>();
             message.AttachmentsSerialized = null;
-            PopulateAttachmentUrls(message.ProjectMappingId, message.Attachments);
+            if (message is SupplierProjectMessageListItemDto listItem)
+            {
+                listItem.AttachmentsPayload = null;
+            }
             message.CreatedUtc = NormalizeUtc(message.CreatedUtc);
             message.ReadUtc = NormalizeUtc(message.ReadUtc);
+        }
+
+        var messageIdsWithAttachments = metadataByMessage
+            .Where(kvp => kvp.Value.AttachmentIds.Count > 0)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        IReadOnlyDictionary<Guid, SupplierProjectMessageAttachment>? attachmentsLookup = null;
+
+        if (messageIdsWithAttachments.Count > 0)
+        {
+            var attachments = await _unitOfWork.SupplierProjectMessageAttachments.GetByMessageIdsAsync(messageIdsWithAttachments);
+            attachmentsLookup = attachments.ToDictionary(a => a.Id, a => a);
+        }
+
+        foreach (var message in messageList)
+        {
+            var metadata = metadataByMessage[message.Id];
+
+            if (metadata.AttachmentIds.Count > 0 && attachmentsLookup != null)
+            {
+                foreach (var rawId in metadata.AttachmentIds)
+                {
+                    if (!Guid.TryParse(rawId, out var attachmentId) || !attachmentsLookup.TryGetValue(attachmentId, out var entity))
+                    {
+                        var legacy = metadata.LegacyDescriptors.FirstOrDefault(l => string.Equals(l.Id, rawId, StringComparison.OrdinalIgnoreCase));
+                        if (legacy != null)
+                        {
+                            message.Attachments.Add(legacy);
+                        }
+
+                        continue;
+                    }
+
+                    var descriptor = new SupplierProjectMessageAttachmentDto
+                    {
+                        Id = entity.Id.ToString("N"),
+                        ClientId = entity.ClientId,
+                        FileName = entity.FileName,
+                        ContentType = string.IsNullOrWhiteSpace(entity.ContentType) ? "application/octet-stream" : entity.ContentType,
+                        FileSize = entity.FileSize,
+                        UploadedUtc = NormalizeUtc(entity.UploadedUtc)
+                    };
+
+                    message.Attachments.Add(descriptor);
+                }
+            }
+            else if (metadata.LegacyDescriptors.Count > 0)
+            {
+                message.Attachments.AddRange(metadata.LegacyDescriptors);
+            }
+
+            PopulateAttachmentUrls(message.ProjectMappingId, message.Attachments);
         }
     }
 
@@ -432,19 +581,9 @@ public class SupplierChatAPIController : ControllerBase
                     .ToList();
             }
 
-            PrepareMessagesForResponse(rows);
             rows ??= new List<SupplierProjectMessageListItemDto>();
 
-            foreach (var row in rows)
-            {
-                row.Attachments = DeserializeAttachments(row.AttachmentsPayload);
-            }
-
-            foreach (var row in rows)
-            {
-                row.CreatedUtc = NormalizeUtc(row.CreatedUtc);
-                row.ReadUtc = NormalizeUtc(row.ReadUtc);
-            }
+            await PrepareMessagesForResponseAsync(rows);
             if (!isSupplierUser)
             {
                 var readUtc = DateTime.UtcNow;
@@ -479,7 +618,7 @@ public class SupplierChatAPIController : ControllerBase
         }
     }
 
-    private async Task<List<StoredAttachment>> StoreAttachmentsAsync(SupplierChatSendRequest request, int projectMappingId, DateTime utcNow)
+    private async Task<List<StoredAttachment>> StoreAttachmentsAsync(SupplierChatSendRequest request, DateTime utcNow)
     {
         var storedAttachments = new List<StoredAttachment>();
 
@@ -487,11 +626,6 @@ public class SupplierChatAPIController : ControllerBase
         {
             return storedAttachments;
         }
-
-        var rootPath = GetAttachmentRootPath();
-        var mappingFolder = Path.Combine(rootPath, projectMappingId.ToString());
-
-        Directory.CreateDirectory(mappingFolder);
 
         var clientIds = request.AttachmentClientIds ?? new List<string>();
         var uploadedUtc = NormalizeUtc(utcNow);
@@ -506,30 +640,37 @@ public class SupplierChatAPIController : ControllerBase
                     continue;
                 }
 
-                var extension = Path.GetExtension(file.FileName);
-                var sanitizedExtension = string.IsNullOrWhiteSpace(extension) ? string.Empty : extension.ToLowerInvariant();
-                var attachmentId = Guid.NewGuid().ToString("N");
-                var uniqueFileName = $"{attachmentId}{sanitizedExtension}";
-                var physicalPath = Path.Combine(mappingFolder, uniqueFileName);
+                await using var memoryStream = new MemoryStream();
+                await file.CopyToAsync(memoryStream);
+                var attachmentData = memoryStream.ToArray();
 
-                await using (var targetStream = new FileStream(physicalPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                {
-                    await file.CopyToAsync(targetStream);
-                }
+                var attachmentId = Guid.NewGuid();
+                var contentType = string.IsNullOrWhiteSpace(file.ContentType)
+                    ? "application/octet-stream"
+                    : file.ContentType;
 
                 var descriptor = new SupplierProjectMessageAttachmentDto
                 {
-                    Id = attachmentId,
+                    Id = attachmentId.ToString("N"),
                     ClientId = index < clientIds.Count ? clientIds[index] : null,
                     FileName = Path.GetFileName(file.FileName),
-                    ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
-                    Length = file.Length,
-                    Size = file.Length,
-                    StoragePath = Path.Combine(projectMappingId.ToString(), uniqueFileName).Replace('\\', '/'),
+                    ContentType = contentType,
+                    FileSize = file.Length,
                     UploadedUtc = uploadedUtc
                 };
 
-                storedAttachments.Add(new StoredAttachment(physicalPath, descriptor));
+                var entity = new SupplierProjectMessageAttachment
+                {
+                    Id = attachmentId,
+                    ClientId = descriptor.ClientId,
+                    FileName = descriptor.FileName,
+                    ContentType = contentType,
+                    FileSize = file.Length,
+                    FileData = attachmentData,
+                    UploadedUtc = uploadedUtc
+                };
+
+                storedAttachments.Add(new StoredAttachment(entity, descriptor));
             }
 
             return storedAttachments;
@@ -550,35 +691,19 @@ public class SupplierChatAPIController : ControllerBase
 
     private void CleanupStoredAttachments(IEnumerable<StoredAttachment> storedAttachments)
     {
-        var processedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
         foreach (var attachment in storedAttachments)
         {
-            if (string.IsNullOrWhiteSpace(attachment.PhysicalPath))
+            if (attachment?.Entity?.FileData == null)
             {
                 continue;
             }
 
-            try
+            if (attachment.Entity.FileData.Length > 0)
             {
-                if (System.IO.File.Exists(attachment.PhysicalPath))
-                {
-                    System.IO.File.Delete(attachment.PhysicalPath);
-                }
+                Array.Clear(attachment.Entity.FileData, 0, attachment.Entity.FileData.Length);
+            }
 
-                var directory = Path.GetDirectoryName(attachment.PhysicalPath);
-                if (!string.IsNullOrEmpty(directory) && processedDirectories.Add(directory) && Directory.Exists(directory))
-                {
-                    if (!Directory.EnumerateFileSystemEntries(directory).Any())
-                    {
-                        Directory.Delete(directory, false);
-                    }
-                }
-            }
-            catch (Exception cleanupException)
-            {
-                _logger.LogWarning(cleanupException, "Failed to clean up supplier chat attachment located at {AttachmentPath}.", attachment.PhysicalPath);
-            }
+            attachment.Entity.FileData = Array.Empty<byte>();
         }
     }
 
@@ -601,7 +726,8 @@ public class SupplierChatAPIController : ControllerBase
             return BadRequest(new { message = "A valid attachment identifier is required." });
         }
 
-        SupplierProjectMessageAttachmentDto? targetAttachment = null;
+        SupplierProjectMessageAttachment? attachmentEntity = null;
+        SupplierProjectMessageAttachmentDto? legacyAttachment = null;
 
         try
         {
@@ -624,28 +750,36 @@ public class SupplierChatAPIController : ControllerBase
                 return Forbid();
             }
 
-            const string attachmentsSql = @"SELECT Attachments FROM SupplierProjectMessages
+            if (Guid.TryParse(attachmentId, out var attachmentGuid))
+            {
+                attachmentEntity = await _unitOfWork.SupplierProjectMessageAttachments.GetByIdForProjectAsync(attachmentGuid, projectMappingId);
+            }
+
+            if (attachmentEntity == null)
+            {
+                const string attachmentsSql = @"SELECT Attachments FROM SupplierProjectMessages
                                             WHERE ProjectMappingId = @ProjectMappingId
                                               AND Attachments IS NOT NULL";
 
-            var payloads = await _unitOfWork.SupplierProjectMessages.GetTableData<string>(
-                attachmentsSql,
-                new { ProjectMappingId = projectMappingId });
+                var payloads = await _unitOfWork.SupplierProjectMessages.GetTableData<string>(
+                    attachmentsSql,
+                    new { ProjectMappingId = projectMappingId });
 
-            foreach (var payload in payloads)
-            {
-                if (string.IsNullOrWhiteSpace(payload))
+                foreach (var payload in payloads)
                 {
-                    continue;
-                }
+                    if (string.IsNullOrWhiteSpace(payload))
+                    {
+                        continue;
+                    }
 
-                var attachments = DeserializeAttachments(payload);
-                targetAttachment = attachments.FirstOrDefault(a =>
-                    a != null && string.Equals(a.Id, attachmentId, StringComparison.OrdinalIgnoreCase));
+                    var metadata = DeserializeAttachmentMetadata(payload);
+                    legacyAttachment = metadata.LegacyDescriptors.FirstOrDefault(a =>
+                        a != null && string.Equals(a.Id, attachmentId, StringComparison.OrdinalIgnoreCase));
 
-                if (targetAttachment != null)
-                {
-                    break;
+                    if (legacyAttachment != null)
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -655,12 +789,25 @@ public class SupplierChatAPIController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred while locating the attachment." });
         }
 
-        if (targetAttachment == null)
+        if (attachmentEntity != null)
+        {
+            var fileName = string.IsNullOrWhiteSpace(attachmentEntity.FileName)
+                ? attachmentEntity.Id.ToString("N")
+                : attachmentEntity.FileName;
+
+            var contentType = string.IsNullOrWhiteSpace(attachmentEntity.ContentType)
+                ? "application/octet-stream"
+                : attachmentEntity.ContentType;
+
+            return File(attachmentEntity.FileData, contentType, fileName);
+        }
+
+        if (legacyAttachment == null)
         {
             return NotFound(new { message = "The requested attachment could not be located." });
         }
 
-        var storagePath = targetAttachment.StoragePath;
+        var storagePath = legacyAttachment.StoragePath;
         if (string.IsNullOrWhiteSpace(storagePath))
         {
             return NotFound(new { message = "Attachment storage information is missing." });
@@ -678,16 +825,16 @@ public class SupplierChatAPIController : ControllerBase
             return NotFound(new { message = "The requested attachment could not be located." });
         }
 
-        var fileName = string.IsNullOrWhiteSpace(targetAttachment.FileName)
+        var fileName = string.IsNullOrWhiteSpace(legacyAttachment.FileName)
             ? Path.GetFileName(fullPath)
-            : targetAttachment.FileName;
+            : legacyAttachment.FileName;
 
         var contentTypeProvider = new FileExtensionContentTypeProvider();
         if (!contentTypeProvider.TryGetContentType(fileName, out var contentType) || string.IsNullOrWhiteSpace(contentType))
         {
-            contentType = string.IsNullOrWhiteSpace(targetAttachment.ContentType)
+            contentType = string.IsNullOrWhiteSpace(legacyAttachment.ContentType)
                 ? "application/octet-stream"
-                : targetAttachment.ContentType;
+                : legacyAttachment.ContentType;
         }
 
         return PhysicalFile(fullPath, contentType!, fileName);
@@ -741,14 +888,27 @@ public class SupplierChatAPIController : ControllerBase
 
     private sealed class StoredAttachment
     {
-        public StoredAttachment(string physicalPath, SupplierProjectMessageAttachmentDto descriptor)
+        public StoredAttachment(SupplierProjectMessageAttachment entity, SupplierProjectMessageAttachmentDto descriptor)
         {
-            PhysicalPath = physicalPath;
+            Entity = entity;
             Descriptor = descriptor;
         }
 
-        public string PhysicalPath { get; }
+        public SupplierProjectMessageAttachment Entity { get; }
 
         public SupplierProjectMessageAttachmentDto Descriptor { get; }
+    }
+
+    private sealed class AttachmentMetadata
+    {
+        public AttachmentMetadata(List<string> attachmentIds, List<SupplierProjectMessageAttachmentDto> legacyDescriptors)
+        {
+            AttachmentIds = attachmentIds;
+            LegacyDescriptors = legacyDescriptors;
+        }
+
+        public List<string> AttachmentIds { get; }
+
+        public List<SupplierProjectMessageAttachmentDto> LegacyDescriptors { get; }
     }
 }
