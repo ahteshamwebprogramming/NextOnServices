@@ -100,10 +100,7 @@ public class SupplierController : Controller
 
     private void PrepareChatApiController()
     {
-        _supplierChatApiController.ControllerContext = new ControllerContext
-        {
-            HttpContext = HttpContext
-        };
+        _supplierChatApiController.ControllerContext = ControllerContext;
     }
 
     private IActionResult ConvertApiResult(IActionResult apiResult)
