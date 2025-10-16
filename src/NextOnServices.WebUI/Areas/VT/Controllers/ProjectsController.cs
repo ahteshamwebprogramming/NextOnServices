@@ -1,5 +1,4 @@
 ﻿
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
@@ -245,41 +244,4 @@ public class ProjectsController : Controller
 
     }
 
-    [HttpPost]
-    public async Task<IActionResult> ChangeProjectStatus([FromBody] ProjectStatusUpdateInput? input)
-    {
-        if (input == null || input.ProjectId <= 0)
-        {
-            return BadRequest("Invalid request");
-        }
-
-        try
-        {
-            var result = await _projectsAPIController.ChangeProjectStatus(input.Status, input.ProjectId);
-
-            if (result is ObjectResult objectResult)
-            {
-                if (objectResult.StatusCode == StatusCodes.Status200OK)
-                {
-                    return Ok(new { message = "Status changed successfully." });
-                }
-
-                var statusCode = objectResult.StatusCode ?? StatusCodes.Status500InternalServerError;
-                return StatusCode(statusCode, objectResult.Value);
-            }
-
-            return StatusCode(StatusCodes.Status500InternalServerError, "Unexpected response from service.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-        }
-    }
-
-}
-
-public class ProjectStatusUpdateInput
-{
-    public int ProjectId { get; set; }
-    public int Status { get; set; }
 }
