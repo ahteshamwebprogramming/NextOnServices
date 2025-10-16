@@ -858,6 +858,10 @@
                                                         var unreadCount = item.UnreadCount ?? 0;
                                                         var lastMessageTimestamp = item.LastMessageUtc?.ToString("o") ?? string.Empty;
                                                         var supplierId = item.SupplierId?.ToString() ?? string.Empty;
+                                                        var country = string.IsNullOrWhiteSpace(item.Country)
+                                                            ? string.Empty
+                                                            : System.Text.RegularExpressions.Regex.Replace(item.Country, "\\s+", " ")
+                                                                .Trim();
                                                         <tr>
                                                             <td>@item.Country</td>
                                                             <td>@item.Name</td>
@@ -887,6 +891,7 @@
                                                                         data-project-id="@item.Id"
                                                                         data-project-name="@projectName"
                                                                         data-pid="@projectPid"
+                                                                        data-country="@country"
                                                                         data-supplier-id="@supplierId"
                                                                         data-unread-count="@unreadCount"
                                                                         data-last-message="@lastMessageTimestamp"
