@@ -4,6 +4,19 @@
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
 
+<style>
+    .tablebutton {
+        width: 100px !important;
+        padding: 9px !important;
+        font-size: 12px !important;
+    }
+
+    td:has(input.tablebutton) {
+        padding-top: 0px;
+        padding-bottom: 0px;
+    }
+</style>
+
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
@@ -32,6 +45,15 @@
 
 @section scripts {
     <script type="text/javascript">
+        function getStatusButtons(projectId, isActive) {
+            const active = Number(isActive) === 1;
+            if (active) {
+                return `<input type="button" class="btn btn-success tablebutton" value="Yes" onclick="ChangeProjectStatus(${projectId},0,this)" />`;
+            }
+
+            return `<input type="button" class="btn btn-danger tablebutton" value="No" onclick="ChangeProjectStatus(${projectId},1,this)" />`;
+        }
+
         $(document).ready(function () {
 
             $('#Projects').DataTable(
@@ -59,12 +81,11 @@
                             "data": "projectId",
                             "autoWidth": true,
                             "searchable": true,
-                            createdCell: function (td, cellData, rowData, row, col) {
-                                let res = "<td style='padding-top:0px;padding-bottom:0px;'>" + td.innerHTML + "</td>";
-                                $(td).replaceWith(res);
+                            createdCell: function (td) {
+                                $(td).addClass('p-0');
                             },
-                            render: function (v, d, rowData, row_col_details) {
-                                let res = '<input style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-primary btn-sm" value="URL Mapping">';
+                            render: function (v, d, rowData) {
+                                let res = '<input type="button" class="btn btn-primary btn-sm tablebutton" value="URL Mapping">';
                                 return res;
                             }
                         },
@@ -72,26 +93,24 @@
                             "data": "projectId",
                             "autoWidth": true,
                             "searchable": true,
-                            createdCell: function (td, cellData, rowData, row, col) {
-                                let res = "<td style='padding-top:0px;padding-bottom:0px;'>" + td.innerHTML + "</td>";
-                                $(td).replaceWith(res);
+                            createdCell: function (td) {
+                                $(td).addClass('p-0');
                             },
-                            render: function (v, d, rowData, row_col_details) {
-                                let res = '<input onclick="javascript:window.location.href=\'/VT/Projects/AddProject/' + rowData.projectIdEnc + '\'" style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-info" value="Edit">';
+                            render: function (v, d, rowData) {
+                                let res = '<input onclick="javascript:window.location.href=\'/VT/Projects/AddProject/' + rowData.projectIdEnc + '\'" type="button" class="btn btn-info tablebutton" value="Edit">';
                                 return res;
                             }
                         },
                         {
-                            "data": "projectId",
+                            "data": "isActive",
                             "autoWidth": true,
                             "searchable": true,
-                            render: function (v, d, rowData, row_col_details) {
-                                let res = '<input  style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-success" value="Yes">                                 <input  style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-danger" value="No">';
-                                return res;
-                            }, createdCell: function (td, cellData, rowData, row, col) {
-                                let res = "<td style='padding-top:0px;padding-bottom:0px;'>" + td.innerHTML + "</td>";
-                                $(td).replaceWith(res);
+                            createdCell: function (td) {
+                                $(td).addClass('p-0');
                             },
+                            render: function (v, d, rowData) {
+                                return getStatusButtons(rowData.projectId, rowData.isActive);
+                            }
                         }
                     ],
                     "order": []
@@ -99,8 +118,44 @@
             );
         });
 
-        function buildActionButtons() {
-            return "";
+        function ChangeProjectStatus(projectId, status, curObj) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You want to change the status!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, change it!',
+                customClass: {
+                    confirmButton: 'btn btn-primary me-3',
+                    cancelButton: 'btn btn-label-secondary'
+                },
+                buttonsStyling: false
+            }).then(function (result) {
+                if (result.value) {
+                    BlockUI();
+                    const inputDTO = {
+                        projectId: projectId,
+                        status: status
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "/VT/Projects/ChangeProjectStatus",
+                        contentType: 'application/json',
+                        data: JSON.stringify(inputDTO),
+                        success: function () {
+                            UnblockUI();
+                            $successalert("success", "Status Changed");
+                            const table = $('#Projects').DataTable();
+                            table.ajax.reload(null, false);
+                        },
+                        error: function (error) {
+                            UnblockUI();
+                            const message = error.responseText || 'Unable to change status';
+                            $erroralert("Error!", message);
+                        }
+                    });
+                }
+            });
         }
     </script>
 }
