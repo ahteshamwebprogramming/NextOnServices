@@ -995,7 +995,7 @@ public class SupplierChatAPIController : ControllerBase
             return null;
         }
 
-        var utcDateTime = DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Utc);
+        var utcDateTime = DateTime.SpecifyKind(value.Value.DateTime, DateTimeKind.Utc);
         return new DateTimeOffset(utcDateTime);
     }
 
