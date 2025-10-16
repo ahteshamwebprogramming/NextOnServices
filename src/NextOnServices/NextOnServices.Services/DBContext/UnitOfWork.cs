@@ -33,6 +33,7 @@ public class UnitOfWork : IUnitOfWork
         GenOperations = new GenOperationsRepository(dbSetting);
         SupplierProjects = new SupplierProjectsRepository(dbSetting);
         SupplierProjectMessages = new SupplierProjectMessageRepository(dbSetting);
+        SupplierProjectMessageAttachments = new SupplierProjectMessageAttachmentRepository(dbSetting);
     }
     public IUserRepository User
     { get; private set; }
@@ -54,6 +55,7 @@ public class UnitOfWork : IUnitOfWork
     public IGenOperationsRepository GenOperations { get; private set; }
     public ISupplierProjectsRepository SupplierProjects { get; private set; }
     public ISupplierProjectMessageRepository SupplierProjectMessages { get; private set; }
+    public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; private set; }
     public void Dispose()
     {
         try { _context.Dispose(); }

@@ -23,5 +23,6 @@ public interface IUnitOfWork : IDisposable
     public IGenOperationsRepository GenOperations { get; }
     public ISupplierProjectsRepository SupplierProjects { get; }
     public ISupplierProjectMessageRepository SupplierProjectMessages { get; }
+    public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; }
     int Save();
 }
