@@ -4,10 +4,11 @@ using Dapper.Contrib.Extensions;
 
 namespace NextOnServices.Core.Entities;
 
-[Table("SupplierProjectMessageAttachments")]
+[Dapper.Contrib.Extensions.Table("SupplierProjectMessageAttachments")]
 public class SupplierProjectMessageAttachment
 {
-    [ExplicitKey]
+    [Dapper.Contrib.Extensions.Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public Guid Id { get; set; }
 
     public int MessageId { get; set; }
