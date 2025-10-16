@@ -52,6 +52,8 @@ public class SupplierProjectMessageAttachmentDto
 
     public string? Url { get; set; }
 
+    public string? PreviewUrl { get; set; }
+
     public string ContentType { get; set; } = string.Empty;
 
     public long FileSize
