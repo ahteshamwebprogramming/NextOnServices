@@ -64,7 +64,7 @@
                                 $(td).replaceWith(res);
                             },
                             render: function (v, d, rowData, row_col_details) {
-                                let res = '<input style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-primary btn-sm" value="URL Mapping">';
+                                 let res = '<input onclick="javascript:window.location.href=\'/VT/Projects/ProjectMapping/' + rowData.projectIdEnc + '\'" style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-primary btn-sm" value="URL Mapping">';
                                 return res;
                             }
                         },

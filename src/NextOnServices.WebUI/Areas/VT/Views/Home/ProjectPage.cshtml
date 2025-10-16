@@ -1189,7 +1189,7 @@
 
             <!-- Modal Footer -->
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" id="mdlTrackingType" data-dismiss="modal">Close</button>
                 <button type="button" id="btnsavetrackingtype" class="btn btn-primary">Save changes</button>
             </div>
 
@@ -1909,50 +1909,54 @@
             };
 
             savetrackings(object);
+
+
         });
 
 
-                    function savetrackings(formdata) {
-           
-            $.ajax({
-                type: "POST",
-                contentType: "application/json; charset=utf-8",
-                url: '/VT/Home/UpdateRedirectsInProMap',
-                data: JSON.stringify(formdata),
-                cache: false,
-                dataType: "json",
-                success: function (data) {
-                    debugger
-                                    if (data.value.retVal === 1) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: data.retMessage,
-                            timer: 2000,
-                            showConfirmButton: false
-                        });
 
-                        // Close modal after slight delay to let user see message
-                        setTimeout(() => {
-                            $('#myModalHorizontal .close').click();
-                        }, 2000);
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: data.retMessage || "Please try again"
-                        });
-                    }
-                },
-                error: function (xhr) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Server Error',
-                        text: xhr.statusText || "An unexpected error occurred."
-                    });
-                }
-            });
+
+                            function savetrackings(formdata) {
+          $.ajax({
+            type: "POST",
+            contentType: "application/json; charset=utf-8",
+            url: '/VT/Home/UpdateRedirectsInProMap',
+            data: JSON.stringify(formdata),
+            cache: false,
+            dataType: "json",
+            success: function (data) {
+              if (data.value.retVal === 1) {
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Success',
+                  text: data.retMessage,
+                  timer: 2000,
+                  showConfirmButton: false
+                });
+
+                // auto-close modal after short delay
+                setTimeout(function () {
+                  $('#myModalHorizontal').modal('hide');
+                }, 2000);
+
+              } else {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Error',
+                  text: data.retMessage || "Please try again"
+                });
+              }
+            },
+            error: function (xhr) {
+              Swal.fire({
+                icon: 'error',
+                title: 'Server Error',
+                text: xhr.statusText || "An unexpected error occurred."
+              });
+            }
+          });
         }
+
 
 
                 
