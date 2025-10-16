@@ -336,7 +336,7 @@
         }
 
         const title = project.projectName || project.pid || 'Project chat';
-        state.$title.text(title);
+        state.$title.text(`Project #${project.pid}`);
 
         const subtitleParts = [];
         if (project.pid) {
