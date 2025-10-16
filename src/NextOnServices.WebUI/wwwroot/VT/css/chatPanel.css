@@ -222,20 +222,72 @@ body.project-chat-open {
 
 .project-chat__composer {
     display: flex;
+    flex-direction: column;
     gap: 0.75rem;
-    align-items: flex-end;
+}
+
+.project-chat__composer-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
 }
 
 .project-chat__composer textarea {
     resize: vertical;
     min-height: 3rem;
     max-height: 9rem;
+    width: 100%;
 }
 
-.project-chat__composer-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.project-chat__icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    background-color: #e2e8f0;
+    color: #0f172a;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.project-chat__icon-button i {
+    font-size: 1.1rem;
+}
+
+.project-chat__attachment-trigger {
+    color: #1e293b;
+}
+
+.project-chat__attachment-trigger:hover,
+.project-chat__attachment-trigger:focus-visible {
+    background-color: #cbd5f5;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    outline: none;
+}
+
+.project-chat__send-button {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.project-chat__send-button:hover,
+.project-chat__send-button:focus-visible {
+    background: linear-gradient(135deg, #1d4ed8, #1e40af);
+    box-shadow: 0 10px 24px -12px rgba(37, 99, 235, 0.6);
+    outline: none;
+}
+
+.project-chat__send-button[disabled] {
+    background: #cbd5f5;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .project-chat__status {
