@@ -336,8 +336,7 @@
             return;
         }
 
-        const title = project.projectName || (project.pid ? `Project #${project.pid}` : 'Project chat');
-        state.$title.text(title);
+        state.$title.text('Project chat');
 
         const subtitleParts = [];
         if (project.pid) {
