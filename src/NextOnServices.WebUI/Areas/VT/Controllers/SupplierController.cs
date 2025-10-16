@@ -98,6 +98,13 @@ public class SupplierController : Controller
         return ConvertApiResult(apiResult);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> DownloadAttachment(int projectMappingId, string attachmentId, bool preview = false)
+    {
+        PrepareChatApiController();
+        return await _supplierChatApiController.DownloadAttachment(projectMappingId, attachmentId, preview);
+    }
+
     private void PrepareChatApiController()
     {
         _supplierChatApiController.ControllerContext = ControllerContext;
