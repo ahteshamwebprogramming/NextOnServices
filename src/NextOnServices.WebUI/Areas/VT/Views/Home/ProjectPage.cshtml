@@ -856,9 +856,7 @@
                                                     foreach (var item in Model.SupplierDetailsList)
                                                     {
                                                         var unreadCount = item.UnreadCount ?? 0;
-                                                        var lastMessageTimestamp = item.LastMessageUtc.HasValue
-                                                            ? System.DateTime.SpecifyKind(item.LastMessageUtc.Value, System.DateTimeKind.Utc).ToString("o")
-                                                            : string.Empty;
+                                                        var lastMessageTimestamp = item.LastMessageUtc?.ToString("o") ?? string.Empty;
                                                         var supplierId = item.SupplierId?.ToString() ?? string.Empty;
                                                         var country = string.IsNullOrWhiteSpace(item.Country)
                                                             ? string.Empty

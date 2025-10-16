@@ -13,13 +13,13 @@ public class SupplierProjectMessageRepository : DapperGenericRepository<Supplier
     {
     }
 
-    public async Task<int> MarkMessagesAsReadAsync(int projectMappingId, bool fromSupplier, DateTime readUtc)
+    public async Task<int> MarkSupplierMessagesAsReadAsync(int projectMappingId, DateTime readUtc)
     {
         const string sql = @"UPDATE SupplierProjectMessages
                              SET IsRead = 1,
                                  ReadUtc = @ReadUtc
                              WHERE ProjectMappingId = @ProjectMappingId
-                               AND FromSupplier = @FromSupplier
+                               AND FromSupplier = 1
                                AND IsRead = 0;";
 
         if (DbConnection.State != System.Data.ConnectionState.Open)
@@ -29,12 +29,7 @@ public class SupplierProjectMessageRepository : DapperGenericRepository<Supplier
 
         try
         {
-            return await DbConnection.ExecuteAsync(sql, new
-            {
-                ProjectMappingId = projectMappingId,
-                ReadUtc = readUtc,
-                FromSupplier = fromSupplier ? 1 : 0
-            });
+            return await DbConnection.ExecuteAsync(sql, new { ProjectMappingId = projectMappingId, ReadUtc = readUtc });
         }
         finally
         {
