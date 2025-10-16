@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Logging;
 using NextOnServices.Core.Entities;
@@ -52,12 +53,14 @@ public class SupplierChatAPIController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<SupplierChatAPIController> _logger;
     private readonly IWebHostEnvironment _environment;
+    private readonly IUrlHelperFactory _urlHelperFactory;
 
-    public SupplierChatAPIController(IUnitOfWork unitOfWork, ILogger<SupplierChatAPIController> logger, IWebHostEnvironment environment)
+    public SupplierChatAPIController(IUnitOfWork unitOfWork, ILogger<SupplierChatAPIController> logger, IWebHostEnvironment environment, IUrlHelperFactory urlHelperFactory)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _environment = environment;
+        _urlHelperFactory = urlHelperFactory;
     }
 
     private static string? ValidateAttachments(IFormFileCollection? attachments)
@@ -443,6 +446,13 @@ public class SupplierChatAPIController : ControllerBase
             return;
         }
 
+        var urlHelper = GetUrlHelper();
+
+        if (urlHelper == null)
+        {
+            return;
+        }
+
         foreach (var attachment in attachments)
         {
             if (attachment == null || string.IsNullOrWhiteSpace(attachment.Id))
@@ -450,7 +460,7 @@ public class SupplierChatAPIController : ControllerBase
                 continue;
             }
 
-            var url = Url.ActionLink(nameof(DownloadAttachment), values: new
+            var url = urlHelper.ActionLink(nameof(DownloadAttachment), values: new
             {
                 projectMappingId,
                 attachmentId = attachment.Id
@@ -460,6 +470,23 @@ public class SupplierChatAPIController : ControllerBase
             {
                 attachment.Url = url;
             }
+        }
+    }
+
+    private IUrlHelper? GetUrlHelper()
+    {
+        if (Url != null)
+        {
+            return Url;
+        }
+
+        try
+        {
+            return _urlHelperFactory.GetUrlHelper(ControllerContext);
+        }
+        catch
+        {
+            return null;
         }
     }
 
