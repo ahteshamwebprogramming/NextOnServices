@@ -1714,34 +1714,12 @@
         return `${Math.max(1, Math.round(size))} B`;
     }
 
-    function parseTimestamp(value) {
-        if (value instanceof Date) {
-            return value;
-        }
-
-        if (typeof value === 'string') {
-            const trimmed = value.trim();
-            if (!trimmed) {
-                return new Date(NaN);
-            }
-
-            const isoWithoutOffsetPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/;
-            if (isoWithoutOffsetPattern.test(trimmed)) {
-                return new Date(`${trimmed}Z`);
-            }
-
-            return new Date(trimmed);
-        }
-
-        return new Date(value);
-    }
-
     function formatTimestamp(value) {
         if (!value) {
             return '';
         }
 
-        const date = parseTimestamp(value);
+        const date = new Date(value);
         if (Number.isNaN(date.getTime())) {
             return value;
         }

@@ -718,16 +718,17 @@ public class SupplierChatAPIController : ControllerBase
             rows ??= new List<SupplierProjectMessageListItemDto>();
 
             await PrepareMessagesForResponseAsync(rows.Cast<SupplierProjectMessageDto>().ToList());
-
-            var readUtc = DateTime.UtcNow;
-            var fromSupplierFlag = !isSupplierUser;
-            var updatedCount = await _unitOfWork.SupplierProjectMessages.MarkMessagesAsReadAsync(request.ProjectMappingId, fromSupplierFlag, readUtc);
-            if (updatedCount > 0)
+            if (!isSupplierUser)
             {
-                foreach (var message in rows.Where(m => m.FromSupplier == fromSupplierFlag && !m.IsRead))
+                var readUtc = DateTime.UtcNow;
+                var updatedCount = await _unitOfWork.SupplierProjectMessages.MarkSupplierMessagesAsReadAsync(request.ProjectMappingId, readUtc);
+                if (updatedCount > 0)
                 {
-                    message.IsRead = true;
-                    message.ReadUtc = NormalizeUtc(readUtc);
+                    foreach (var message in rows.Where(m => m.FromSupplier && !m.IsRead))
+                    {
+                        message.IsRead = true;
+                        message.ReadUtc = NormalizeUtc(readUtc);
+                    }
                 }
             }
 
