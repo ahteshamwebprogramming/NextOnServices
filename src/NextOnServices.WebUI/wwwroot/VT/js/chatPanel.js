@@ -1007,7 +1007,8 @@
             const message = shapeMessage(response, project);
             message.tempId = tempId;
             replaceOptimisticMessage(tempId, message);
-            project.lastMessage = message.timestamp || new Date().toISOString();
+            const normalisedTimestamp = normaliseTimestamp(message.timestamp);
+            project.lastMessage = normalisedTimestamp || new Date().toISOString();
             resetStatus();
         }).fail(function (xhr) {
             console.error('[chatPanel] Failed to send message', xhr);
@@ -1258,24 +1259,7 @@
             return;
         }
 
-        let isoString = null;
-
-        if (cursor instanceof Date && !Number.isNaN(cursor.getTime())) {
-            isoString = cursor.toISOString();
-        } else if (typeof cursor === 'number' && Number.isFinite(cursor)) {
-            const fromNumber = new Date(cursor);
-            if (!Number.isNaN(fromNumber.getTime())) {
-                isoString = fromNumber.toISOString();
-            }
-        } else if (typeof cursor === 'string') {
-            const trimmed = cursor.trim();
-            if (trimmed) {
-                const fromString = new Date(trimmed);
-                if (!Number.isNaN(fromString.getTime())) {
-                    isoString = fromString.toISOString();
-                }
-            }
-        }
+        const isoString = normaliseTimestamp(cursor);
 
         if (isoString) {
             project.lastMessage = isoString;
@@ -1326,7 +1310,13 @@
         }
 
         const text = extractField(message, messageFields.text) || '';
-        const timestamp = extractField(message, messageFields.timestamp) || new Date().toISOString();
+        const timestampCandidate = extractField(message, messageFields.timestamp);
+        let timestamp = normaliseTimestamp(timestampCandidate);
+
+        if (!timestamp) {
+            const fallback = new Date().toISOString();
+            timestamp = normaliseTimestamp(fallback) || fallback;
+        }
         const sender = extractField(message, messageFields.sender) || '';
         const id = extractField(message, messageFields.id) || message?.tempId || '';
 
@@ -1714,13 +1704,74 @@
         return `${Math.max(1, Math.round(size))} B`;
     }
 
+    function ensureUtcDesignator(timestampString) {
+        if (!timestampString) {
+            return timestampString;
+        }
+
+        const timezonePattern = /(Z|[+-]\d{2}:?\d{2})$/i;
+        if (timezonePattern.test(timestampString)) {
+            return timestampString;
+        }
+
+        const isoLikePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,})?)?$/;
+        if (isoLikePattern.test(timestampString)) {
+            return `${timestampString}Z`;
+        }
+
+        return timestampString;
+    }
+
+    function parseTimestampToDate(value) {
+        if (value === undefined || value === null || value === '') {
+            return null;
+        }
+
+        let date = null;
+
+        if (value instanceof Date) {
+            date = value;
+        } else if (typeof value === 'number' && Number.isFinite(value)) {
+            date = new Date(value);
+        } else if (typeof value === 'string') {
+            const trimmed = value.trim();
+
+            if (!trimmed) {
+                return null;
+            }
+
+            if (/^-?\d+$/.test(trimmed)) {
+                const numeric = Number(trimmed);
+                if (Number.isFinite(numeric)) {
+                    date = new Date(numeric);
+                }
+            }
+
+            if (!date) {
+                const prepared = ensureUtcDesignator(trimmed);
+                date = new Date(prepared);
+            }
+        }
+
+        if (date && !Number.isNaN(date.getTime())) {
+            return date;
+        }
+
+        return null;
+    }
+
+    function normaliseTimestamp(value) {
+        const date = parseTimestampToDate(value);
+        return date ? date.toISOString() : null;
+    }
+
     function formatTimestamp(value) {
         if (!value) {
             return '';
         }
 
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) {
+        const date = parseTimestampToDate(value);
+        if (!date) {
             return value;
         }
 
