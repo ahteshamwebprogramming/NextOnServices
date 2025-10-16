@@ -77,7 +77,7 @@ public class ProjectsAPIController : ControllerBase
                 string sWhere = $" where (lower(PID) like('%" + pagedListParams.searchValue + "%') or lower(PName) like('%" + pagedListParams.searchValue + "%') or lower(c.Company) like('%" + pagedListParams.searchValue + "%') or lower(u.Username) like('%" + pagedListParams.searchValue + "%') or lower(LOI) like('%" + pagedListParams.searchValue + "%') or lower(Convert(nvarchar,Convert(date,SDate,101),106)) like('%" + pagedListParams.searchValue + "%') or lower(Convert(nvarchar,Convert(date,EDate,101),106)) like('%" + pagedListParams.searchValue + "%')) and p.isactive=1 ";
                 string sOrderBy = " ORDER BY " + orderbyColumn + " " + pagedListParams.sortColumnDirection;
                 string sPaging = " OFFSet " + pagedListParams.skip + " rows fetch next " + pagedListParams.pageSize + " rows only";
-                string sQuery = "select ProjectId,PID,PName,c.Company,u.Username,LOI,Convert(nvarchar,Convert(date,SDate,101),106)sdate,Convert(nvarchar,Convert(date,EDate,101),106)edate from Projects P join Clients c on p.ClientID = c.clientId Join Users u on p.pmanager=u.UserID" + sWhere + sOrderBy + sPaging;
+                string sQuery = "select ProjectId,PID,PName,c.Company,u.Username,LOI,p.Status,Convert(nvarchar,Convert(date,SDate,101),106)sdate,Convert(nvarchar,Convert(date,EDate,101),106)edate from Projects P join Clients c on p.ClientID = c.clientId Join Users u on p.pmanager=u.UserID" + sWhere + sOrderBy + sPaging;
                 List<ListProject> data = _mapper.Map<List<ListProject>>(await _unitOfWork.Project.GetTableData<ListProject>(sQuery));
                 return Ok(data);
             }
