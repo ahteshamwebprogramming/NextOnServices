@@ -144,6 +144,16 @@
             handleAttachmentSelection(event);
         });
 
+        state.$panel.on('keydown', '.project-chat__attachment-trigger', function (event) {
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+                event.preventDefault();
+
+                if (state.$attachmentInput && state.$attachmentInput.length) {
+                    state.$attachmentInput.trigger('click');
+                }
+            }
+        });
+
         state.$panel.on('click', '[data-action="remove-attachment"]', function (event) {
             event.preventDefault();
             const attachmentId = $(this).attr('data-attachment-id');

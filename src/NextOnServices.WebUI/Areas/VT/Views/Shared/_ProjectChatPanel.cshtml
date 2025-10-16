@@ -65,33 +65,40 @@
             <form data-chat-form novalidate>
                 <div class="project-chat__composer">
                     <label class="sr-only" for="projectChatComposer">Type a message</label>
-                    <textarea id="projectChatComposer"
-                              class="form-control"
-                              rows="2"
-                              data-chat-input
-                              placeholder="Type your message&hellip;"
-                              aria-label="Message text"></textarea>
-                    <div class="project-chat__composer-actions">
-                        <div class="project-chat__attachments">
-                            <label class="project-chat__attachment-trigger btn btn-link mb-2 mb-sm-0 mr-sm-2" for="projectChatAttachments">
-                                <i class="fas fa-paperclip" aria-hidden="true"></i>
-                                <span class="ml-1">Attach files</span>
-                            </label>
-                            <input id="projectChatAttachments"
-                                   type="file"
-                                   class="d-none"
-                                   data-chat-attachments
-                                   multiple
-                                   aria-label="Add attachments to this message" />
-                            <div class="project-chat__attachment-chips mt-2"
-                                 data-chat-attachment-list
-                                 role="list"></div>
-                            <div class="project-chat__attachment-errors text-danger small mt-2"
-                                 data-chat-attachment-errors
-                                 aria-live="polite"></div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" data-action="send-chat" disabled>Send</button>
+                    <div class="project-chat__composer-row">
+                        <label class="project-chat__icon-button project-chat__attachment-trigger"
+                               for="projectChatAttachments"
+                               role="button"
+                               tabindex="0">
+                            <i class="fas fa-paperclip" aria-hidden="true"></i>
+                            <span class="sr-only">Attach files</span>
+                        </label>
+                        <textarea id="projectChatComposer"
+                                  class="form-control"
+                                  rows="2"
+                                  data-chat-input
+                                  placeholder="Type your message&hellip;"
+                                  aria-label="Message text"></textarea>
+                        <button type="submit"
+                                class="project-chat__icon-button project-chat__send-button"
+                                data-action="send-chat"
+                                disabled>
+                            <span class="sr-only">Send message</span>
+                            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                        </button>
                     </div>
+                    <input id="projectChatAttachments"
+                           type="file"
+                           class="d-none"
+                           data-chat-attachments
+                           multiple
+                           aria-label="Add attachments to this message" />
+                    <div class="project-chat__attachment-chips mt-2"
+                         data-chat-attachment-list
+                         role="list"></div>
+                    <div class="project-chat__attachment-errors text-danger small mt-2"
+                         data-chat-attachment-errors
+                         aria-live="polite"></div>
                 </div>
                 <div class="project-chat__status" data-chat-status aria-live="polite"></div>
             </form>
