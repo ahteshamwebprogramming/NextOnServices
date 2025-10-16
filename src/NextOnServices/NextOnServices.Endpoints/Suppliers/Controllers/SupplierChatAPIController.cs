@@ -473,7 +473,7 @@ public class SupplierChatAPIController : ControllerBase
                 continue;
             }
 
-            var url = urlHelper.ActionLink(nameof(DownloadAttachment), values: new
+            var url = urlHelper.Action(nameof(DownloadAttachment), values: new
             {
                 projectMappingId,
                 attachmentId = attachment.Id
