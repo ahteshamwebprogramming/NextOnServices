@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using NextOnServices.Core.Entities;
 using NextOnServices.Core.Repository;
 using NextOnServices.Infrastructure.ViewModels.Supplier;
@@ -42,6 +45,16 @@ public class SupplierChatAPIController : ControllerBase
         ".pptx",
         ".txt",
         ".csv"
+    };
+
+    private static readonly HashSet<string> PreviewableAttachmentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".bmp",
+        ".webp"
     };
 
     //private static readonly JsonSerializerOptions AttachmentSerializerOptions = new(JsonSerializerDefaults.Web);
@@ -469,8 +482,102 @@ public class SupplierChatAPIController : ControllerBase
             if (!string.IsNullOrWhiteSpace(url))
             {
                 attachment.Url = url;
+                if (SupportsInlinePreview(attachment))
+                {
+                    attachment.PreviewUrl = QueryHelpers.AddQueryString(url, "preview", "true");
+                }
+                else
+                {
+                    attachment.PreviewUrl = null;
+                }
+            }
+            else
+            {
+                attachment.PreviewUrl = null;
             }
         }
+    }
+
+    private static bool SupportsInlinePreview(SupplierProjectMessageAttachmentDto attachment)
+    {
+        if (attachment == null)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(attachment.ContentType) &&
+            attachment.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var candidate = attachment.FileName;
+
+        if (string.IsNullOrWhiteSpace(candidate) && !string.IsNullOrWhiteSpace(attachment.Url))
+        {
+            candidate = attachment.Url;
+        }
+
+        if (string.IsNullOrWhiteSpace(candidate) && !string.IsNullOrWhiteSpace(attachment.StoragePath))
+        {
+            candidate = attachment.StoragePath;
+        }
+
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return false;
+        }
+
+        var sanitized = candidate;
+        var queryIndex = sanitized.IndexOf('?');
+        if (queryIndex >= 0)
+        {
+            sanitized = sanitized[..queryIndex];
+        }
+
+        var fragmentIndex = sanitized.IndexOf('#');
+        if (fragmentIndex >= 0)
+        {
+            sanitized = sanitized[..fragmentIndex];
+        }
+
+        var extension = Path.GetExtension(sanitized);
+
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            return false;
+        }
+
+        return PreviewableAttachmentExtensions.Contains(extension);
+    }
+
+    private void ApplyContentDisposition(FileResult fileResult, string fileName, bool preview)
+    {
+        if (fileResult == null)
+        {
+            return;
+        }
+
+        if (preview)
+        {
+            fileResult.FileDownloadName = null;
+            SetInlineContentDisposition(fileName);
+            return;
+        }
+
+        fileResult.FileDownloadName = fileName;
+    }
+
+    private void SetInlineContentDisposition(string fileName)
+    {
+        var contentDisposition = new ContentDispositionHeaderValue("inline");
+
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            contentDisposition.SetHttpFileName(fileName);
+        }
+
+        Response.Headers[HeaderNames.ContentDisposition] = contentDisposition.ToString();
     }
 
     private IUrlHelper? GetUrlHelper()
@@ -746,7 +853,7 @@ public class SupplierChatAPIController : ControllerBase
     }
 
     [HttpGet("attachments/{projectMappingId:int}/{attachmentId}")]
-    public async Task<IActionResult> DownloadAttachment(int projectMappingId, string attachmentId)
+    public async Task<IActionResult> DownloadAttachment(int projectMappingId, string attachmentId, [FromQuery] bool preview = false)
     {
         if (projectMappingId <= 0 || string.IsNullOrWhiteSpace(attachmentId))
         {
@@ -826,7 +933,9 @@ public class SupplierChatAPIController : ControllerBase
                 ? "application/octet-stream"
                 : attachmentEntity.ContentType;
 
-            return File(attachmentEntity.FileData, contentType, fileName);
+            var fileResult = File(attachmentEntity.FileData, contentType);
+            ApplyContentDisposition(fileResult, fileName, preview);
+            return fileResult;
         }
 
         if (legacyAttachment == null)
@@ -864,7 +973,9 @@ public class SupplierChatAPIController : ControllerBase
                 : legacyAttachment.ContentType;
         }
 
-        return PhysicalFile(fullPath, downloadContentType!, downloadFileName);
+        var physicalFile = PhysicalFile(fullPath, downloadContentType!);
+        ApplyContentDisposition(physicalFile, downloadFileName, preview);
+        return physicalFile;
     }
 
     private static DateTimeOffset NormalizeUtc(DateTime value)
