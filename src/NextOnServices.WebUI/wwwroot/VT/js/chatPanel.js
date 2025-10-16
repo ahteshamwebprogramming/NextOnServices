@@ -336,7 +336,7 @@
             return;
         }
 
-        state.$title.text('Project chat');
+        state.$title.text('').attr('aria-hidden', 'true').hide();
 
         const subtitleParts = [];
         if (project.pid) {
