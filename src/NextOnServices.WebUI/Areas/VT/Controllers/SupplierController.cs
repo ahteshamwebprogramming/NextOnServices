@@ -87,7 +87,7 @@ public class SupplierController : Controller
 
     [HttpPost]
     public async Task<IActionResult> PostProjectChatMessage([FromForm] SupplierChatSendRequest request)
-    {
+        {
         if (request == null)
         {
             return BadRequest(new { message = "Message payload is required." });

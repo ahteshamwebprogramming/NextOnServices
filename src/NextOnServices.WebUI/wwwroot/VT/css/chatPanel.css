@@ -155,7 +155,7 @@ body.project-chat-open {
     margin: 1.25rem 0;
    /* padding: 1.25rem;*/
     /*padding-right: 1.5rem;*/
-    padding-bottom: calc(1.25rem + 4.5rem);
+    padding-bottom: calc(3.25rem + 4.5rem);
     scroll-padding-bottom: calc(1.25rem + 3.5rem);
     /*background: #f8fafc;
     border-radius: 1rem;
