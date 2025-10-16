@@ -5,6 +5,7 @@
     ViewData["Title"] = "AddProject";
     //Layout = "~/Views/Shared/_Layout.cshtml";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var returnUrl = Context.Request.Headers["Referer"].ToString();
 }
 <style>
     input[type="date"]::-webkit-calendar-picker-indicator {
@@ -224,10 +225,11 @@
                         </div>
                     </div>
                     <input type="hidden" value="@(Model == null ? 0 : Model.Project == null ? 0 : Model.Project.ProjectId)" name="ProjectId" id="ProjectId" />
+                    <input type="hidden" value="@returnUrl" name="ReturnUrl" id="ReturnUrl" />
                     @*<input type="hidden" value="" name="ProjectId" id="ProjectId" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId) />*@
                     @*<input type="hidden" value="" name="ProjectId" id="ProjectId" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId) />*@
                     <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddUser()">@(Model == null ? "" : Model.Project == null ? "" : Model.Project.ProjectId > 0 ? "Update" : "Submit")  </button>
-                    <button class="btn btn-light btn-sm">Cancel</button>
+                    <button type="button" class="btn btn-light btn-sm" id="CancelButton">Cancel</button>
                 </form>
             </div>
         </div>
@@ -240,6 +242,19 @@
         $(document).ready(function () {
 
             $("select").select2();
+
+            var returnUrlField = $("#ReturnUrl");
+            if ($.trim(returnUrlField.val()) === "") {
+                returnUrlField.val(document.referrer || "");
+            }
+
+            $("#CancelButton").on("click", function () {
+                var redirectUrl = $.trim($("#ReturnUrl").val());
+                if (redirectUrl === "") {
+                    redirectUrl = "/VT/Projects/ProjectsList";
+                }
+                window.location.href = redirectUrl;
+            });
 
             //UsersListPartialView();
         });
@@ -316,9 +331,14 @@
                 success: function (data) {
                     UnblockUI();
                     //Confirmation OK
-                    Swal.fire({ title: 'Success!', text: "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                    var message = (typeof data === "string" && data !== "") ? data : "Project Added";
+                    var redirectUrl = $.trim($("#ReturnUrl").val());
+                    if (redirectUrl === "") {
+                        redirectUrl = "/VT/Projects/ProjectsList";
+                    }
+                    Swal.fire({ title: 'Success!', text: message, icon: 'success', confirmButtonText: 'OK' }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = "/VT/Projects/ProjectsList";
+                            window.location.href = redirectUrl;
                         }
                     });
                 },
