@@ -584,7 +584,9 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             if (summaryLookup.TryGetValue(supplier.Id.Value, out var summary))
             {
                 supplier.UnreadCount = summary.UnreadCount;
-                supplier.LastMessageUtc = summary.LastMessageUtc;
+                supplier.LastMessageUtc = summary.LastMessageUtc.HasValue
+                    ? DateTime.SpecifyKind(summary.LastMessageUtc.Value, DateTimeKind.Utc)
+                    : null;
             }
         }
     }
