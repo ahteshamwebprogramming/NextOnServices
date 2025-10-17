@@ -100,7 +100,65 @@ public class SuppliersAPIController : ControllerBase
     {
         try
         {
-            string sQuery = "WITH SupplierCounts AS (\r\n    SELECT \r\n        pm.ID ProjectMappingId,\r\n        pm.ProjectID ProjectId,\r\n        pm.SupplierID SupplierId,\r\n        s.Name SupplierName,\r\n        p.PName ProjectName,\r\n        p.STATUS Status,\r\n        cm.Country,\r\n        pm.CPI,\r\n        pm.Respondants,\r\n        COUNT(sp.Status) AS Total,\r\n        SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END) AS Complete,\r\n        SUM(CASE WHEN sp.Status = 'Terminate' THEN 1 ELSE 0 END) AS Terminate,\r\n        SUM(CASE WHEN sp.Status = 'OVERQUOTA' THEN 1 ELSE 0 END) AS Overquota,\r\n        SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,\r\n        SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,\r\n        SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,\r\n\t\tLOI = AVG(CASE \r\n                    WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL \r\n                    THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate) \r\n                    ELSE NULL \r\n                  END)\r\n    FROM \r\n        ProjectMapping pm\r\n    JOIN \r\n        Projects p ON pm.ProjectID = p.ProjectId\r\n    JOIN \r\n        Suppliers s ON pm.SupplierID = s.ID\r\n    JOIN \r\n        CountryMaster cm ON pm.CountryID = cm.CountryId\r\n    LEFT JOIN \r\n        SupplierProjects sp ON sp.SID = pm.SID\r\n    WHERE \r\n        pm.SupplierID = @SupplierID \r\n        AND p.IsActive = 1 \r\n        AND s.IsActive = 1\r\n    GROUP BY \r\n        pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants\r\n)\r\nSELECT *,\r\n    IRPercent = CASE \r\n        WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0\r\n        ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))\r\n    END \r\nFROM SupplierCounts order by ProjectName;\r\n";
+            string sQuery = @"
+            WITH SupplierCounts AS (
+                SELECT
+                    pm.ID ProjectMappingId,
+                    pm.ProjectID ProjectId,
+                    pm.SupplierID SupplierId,
+                    s.Name SupplierName,
+                    p.PName ProjectName,
+                    p.STATUS Status,
+                    cm.Country,
+                    pm.CPI,
+                    pm.Respondants,
+                    COUNT(sp.Status) AS Total,
+                    SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END) AS Complete,
+                    SUM(CASE WHEN sp.Status = 'Terminate' THEN 1 ELSE 0 END) AS Terminate,
+                    SUM(CASE WHEN sp.Status = 'OVERQUOTA' THEN 1 ELSE 0 END) AS Overquota,
+                    SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,
+                    SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,
+                    SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,
+                    ISNULL(chat.UnreadCount, 0) AS UnreadCount,
+                    chat.LastMessageUtc,
+                    LOI = AVG(CASE
+                        WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL
+                            THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate)
+                        ELSE NULL
+                    END)
+                FROM
+                    ProjectMapping pm
+                JOIN
+                    Projects p ON pm.ProjectID = p.ProjectId
+                JOIN
+                    Suppliers s ON pm.SupplierID = s.ID
+                JOIN
+                    CountryMaster cm ON pm.CountryID = cm.CountryId
+                LEFT JOIN
+                    SupplierProjects sp ON sp.SID = pm.SID
+                LEFT JOIN
+                    (
+                        SELECT
+                            ProjectMappingId,
+                            SUM(CASE WHEN FromSupplier = 0 AND IsRead = 0 THEN 1 ELSE 0 END) AS UnreadCount,
+                            MAX(CreatedUtc) AS LastMessageUtc
+                        FROM SupplierProjectMessages
+                        GROUP BY ProjectMappingId
+                    ) chat ON chat.ProjectMappingId = pm.ID
+                WHERE
+                    pm.SupplierID = @SupplierID
+                    AND p.IsActive = 1
+                    AND s.IsActive = 1
+                GROUP BY
+                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants, chat.UnreadCount, chat.LastMessageUtc
+            )
+            SELECT *,
+                IRPercent = CASE
+                    WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0
+                    ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))
+                END
+            FROM SupplierCounts ORDER BY ProjectName;
+            ";
             //var sParam = new { @SupplierID = SupplierId };
 
             var orderDirection = orderByDirection.ToLower() == "desc" ? "DESC" : "ASC";
@@ -135,7 +193,7 @@ public class SuppliersAPIController : ControllerBase
 
             string sQuery = @"
             WITH SupplierCounts AS (
-                SELECT 
+                SELECT
                     pm.ID ProjectMappingId,
                     pm.ProjectID ProjectId,
                     pm.SupplierID SupplierId,
@@ -153,36 +211,47 @@ public class SuppliersAPIController : ControllerBase
                     SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,
                     SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,
                     SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,
-                    LOI = AVG(CASE 
-                        WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL 
-                        THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate) 
-                        ELSE NULL 
+                    ISNULL(chat.UnreadCount, 0) AS UnreadCount,
+                    chat.LastMessageUtc,
+                    LOI = AVG(CASE
+                        WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL
+                        THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate)
+                        ELSE NULL
                     END)
-                FROM 
+                FROM
                     ProjectMapping pm
-                JOIN 
+                JOIN
                     Projects p ON pm.ProjectID = p.ProjectId
-                JOIN 
+                JOIN
                     Suppliers s ON pm.SupplierID = s.ID
-                JOIN 
+                JOIN
                     CountryMaster cm ON pm.CountryID = cm.CountryId
-                LEFT JOIN 
+                LEFT JOIN
                     SupplierProjects sp ON sp.SID = pm.SID
-                WHERE 
-                    pm.SupplierID = @SupplierID 
-                    AND p.IsActive = 1 
+                LEFT JOIN
+                    (
+                        SELECT
+                            ProjectMappingId,
+                            SUM(CASE WHEN FromSupplier = 0 AND IsRead = 0 THEN 1 ELSE 0 END) AS UnreadCount,
+                            MAX(CreatedUtc) AS LastMessageUtc
+                        FROM SupplierProjectMessages
+                        GROUP BY ProjectMappingId
+                    ) chat ON chat.ProjectMappingId = pm.ID
+                WHERE
+                    pm.SupplierID = @SupplierID
+                    AND p.IsActive = 1
                     AND s.IsActive = 1
-                    AND (p.PName LIKE '%' + @SearchValue + '%' OR cm.Country LIKE '%' + @SearchValue + '%')  
-                GROUP BY 
-                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked
+                    AND (p.PName LIKE '%' + @SearchValue + '%' OR cm.Country LIKE '%' + @SearchValue + '%')
+                GROUP BY
+                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked, chat.UnreadCount, chat.LastMessageUtc
             ORDER BY " + orderByColumnName + " " + orderDirection + @"
             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY
             )
-            SELECT *, 
-                IRPercent = CASE 
+            SELECT *,
+                IRPercent = CASE
                     WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0
                     ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))
-                END 
+                END
             FROM SupplierCounts; ";
 
             var whereClause = new StringBuilder();
@@ -235,7 +304,7 @@ public class SuppliersAPIController : ControllerBase
 
             string sQuery = @"
             WITH SupplierCounts AS (
-                SELECT 
+                SELECT
                     pm.ID ProjectMappingId,
                     pm.ProjectID ProjectId,
                     pm.SupplierID SupplierId,
@@ -247,8 +316,8 @@ public class SuppliersAPIController : ControllerBase
                     pm.CPI,
                     pm.Respondants,
                     pm.Notes,
-					pm.MLink,
-					pm.OLink,
+                                        pm.MLink,
+                                        pm.OLink,
                     ISNULL(pm.IsChecked,0) ProjectMappingChecked,
                     COUNT(sp.Status) AS Total,
                     SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END) AS Complete,
@@ -257,49 +326,60 @@ public class SuppliersAPIController : ControllerBase
                     SUM(CASE WHEN sp.Status = 'SEC_TERM' THEN 1 ELSE 0 END) AS SecurityTerm,
                     SUM(CASE WHEN sp.Status = 'F_ERROR' THEN 1 ELSE 0 END) AS FraudError,
                     SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END) AS Incomplete,
-                    LOI = AVG(CASE 
-                        WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL 
-                        THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate) 
-                        ELSE NULL 
+                    ISNULL(chat.UnreadCount, 0) AS UnreadCount,
+                    chat.LastMessageUtc,
+                    LOI = AVG(CASE
+                        WHEN sp.Status = 'Complete' AND sp.StartDate IS NOT NULL AND sp.EndDate IS NOT NULL
+                        THEN DATEDIFF(MINUTE, sp.StartDate, sp.EndDate)
+                        ELSE NULL
                     END)
-                FROM 
+                FROM
                     ProjectMapping pm
-                JOIN 
+                JOIN
                     Projects p ON pm.ProjectID = p.ProjectId
-                JOIN 
+                JOIN
                     Suppliers s ON pm.SupplierID = s.ID
-                JOIN 
+                JOIN
                     CountryMaster cm ON pm.CountryID = cm.CountryId
-                LEFT JOIN 
+                LEFT JOIN
                     SupplierProjects sp ON sp.SID = pm.SID
-                WHERE 
-                    pm.SupplierID = @SupplierID 
-                    AND p.IsActive = 1 
-                    AND s.IsActive = 1                    
-                GROUP BY 
-                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked,p.PID,pm.Notes,pm.OLink,pm.MLink            
+                LEFT JOIN
+                    (
+                        SELECT
+                            ProjectMappingId,
+                            SUM(CASE WHEN FromSupplier = 0 AND IsRead = 0 THEN 1 ELSE 0 END) AS UnreadCount,
+                            MAX(CreatedUtc) AS LastMessageUtc
+                        FROM SupplierProjectMessages
+                        GROUP BY ProjectMappingId
+                    ) chat ON chat.ProjectMappingId = pm.ID
+                WHERE
+                    pm.SupplierID = @SupplierID
+                    AND p.IsActive = 1
+                    AND s.IsActive = 1
+                GROUP BY
+                    pm.ID, pm.ProjectID, pm.SupplierID, s.Name, p.PName, p.STATUS, cm.Country, pm.CPI, pm.Respondants,pm.IsChecked,p.PID,pm.Notes,pm.OLink,pm.MLink, chat.UnreadCount, chat.LastMessageUtc
             ),
-            SupplierCountsWithIR as (SELECT *, 
-                IRPercent = CASE 
+            SupplierCountsWithIR as (SELECT *,
+                IRPercent = CASE
                     WHEN (Complete + Terminate) = 0 OR Complete = 0 THEN 0
                     ELSE CAST(Complete * 100.0 / (Complete + Terminate) AS DECIMAL(10, 2))
-                END 
+                END
             FROM SupplierCounts)
             SELECT " + select + @" FROM SupplierCountsWithIR
-			where  (ProjectName LIKE '%' + @SearchValue + '%' 
-					OR Country LIKE '%' + @SearchValue + '%' 
-					OR CPI LIKE '%' + @SearchValue + '%' 
-					OR Respondants LIKE '%' + @SearchValue + '%' 
-					OR Total LIKE '%' + @SearchValue + '%' 
-					OR Complete LIKE '%' + @SearchValue + '%' 
-					OR Terminate LIKE '%' + @SearchValue + '%'
-					OR Overquota LIKE '%' + @SearchValue + '%'
-					OR SecurityTerm LIKE '%' + @SearchValue + '%'
-					OR FraudError LIKE '%' + @SearchValue + '%'
-					OR Incomplete LIKE '%' + @SearchValue + '%'
-					OR LOI LIKE '%' + @SearchValue + '%'
-					OR IRPercent LIKE '%' + @SearchValue + '%'
-					)  			
+                        where  (ProjectName LIKE '%' + @SearchValue + '%'
+                                        OR Country LIKE '%' + @SearchValue + '%'
+                                        OR CPI LIKE '%' + @SearchValue + '%'
+                                        OR Respondants LIKE '%' + @SearchValue + '%'
+                                        OR Total LIKE '%' + @SearchValue + '%'
+                                        OR Complete LIKE '%' + @SearchValue + '%'
+                                        OR Terminate LIKE '%' + @SearchValue + '%'
+                                        OR Overquota LIKE '%' + @SearchValue + '%'
+                                        OR SecurityTerm LIKE '%' + @SearchValue + '%'
+                                        OR FraudError LIKE '%' + @SearchValue + '%'
+                                        OR Incomplete LIKE '%' + @SearchValue + '%'
+                                        OR LOI LIKE '%' + @SearchValue + '%'
+                                        OR IRPercent LIKE '%' + @SearchValue + '%'
+                                        )
               " + orderbyoffsetAndPages + @" ; ";
 
             // Map parameters
