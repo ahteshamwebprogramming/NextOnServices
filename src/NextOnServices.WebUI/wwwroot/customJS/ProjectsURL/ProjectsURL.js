@@ -16,6 +16,7 @@
 function AddProjectURLPartialView() {
     let inputDTO = {};
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -71,6 +72,8 @@ function AddURL() {
     inputDTO.TokenRaw = $(userData).find("[name='ProjectsURL.TokenRaw']").val();
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
 
+    const isUpdate = Number(inputDTO.Id) > 0;
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -79,8 +82,13 @@ function AddURL() {
         data: JSON.stringify(inputDTO),
         success: function (data) {
             UnblockUI();
-            Swal.fire({ title: 'Success!', text: "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
-                AddProjectURLPartialView();
+            Swal.fire({ title: 'Success!', text: isUpdate ? "Project Updated" : "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                if (isUpdate) {
+                    EditProjectURL(inputDTO.Id);
+                }
+                else {
+                    AddProjectURLPartialView();
+                }
                 ListProjectURLPartialView();
             });
         },
