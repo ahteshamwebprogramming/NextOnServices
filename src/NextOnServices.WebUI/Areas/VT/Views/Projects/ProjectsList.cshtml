@@ -50,7 +50,21 @@
                     serverSide: true,
                     filter: true,
                     columns: [
-                        { data: "pid", name: "pid" },
+                        {
+                            data: "pid",
+                            name: "pid",
+                            render: function (data, type, rowData) {
+                                if (type !== "display") {
+                                    return data;
+                                }
+
+                                const safeProjectNumber = $('<div/>').text(data ?? '').html();
+                                const projectId = rowData?.projectId ?? '';
+                                const projectUrl = '/VT/Home/ProjectPage?projectId=' + encodeURIComponent(projectId);
+
+                                return '<a href="' + projectUrl + '">' + safeProjectNumber + '</a>';
+                            }
+                        },
                         { data: "pname", name: "pname" },
                         { data: "loi", name: "loi" },
                         { data: "sdate", name: "sdate" },
