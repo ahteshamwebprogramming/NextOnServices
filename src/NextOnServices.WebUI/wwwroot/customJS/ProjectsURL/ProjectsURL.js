@@ -80,9 +80,8 @@ function AddURL() {
         success: function (data) {
             UnblockUI();
             Swal.fire({ title: 'Success!', text: "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "/VT/Projects/ProjectsList";
-                }
+                AddProjectURLPartialView();
+                ListProjectURLPartialView();
             });
         },
         error: function (error) {
