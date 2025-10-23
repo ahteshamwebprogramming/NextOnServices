@@ -40,7 +40,11 @@
                                     foreach (var item in Model.Clients)
                                     {
                                         <tr>
-                                            <td>@item.Company</td>
+                                            <td>
+                                                <a class="text-primary fw-semibold text-decoration-none" href="@Url.Action("ClientPreview", "Client", new { area = "VT", eClientId = item.encClientId })">
+                                                    @item.Company
+                                                </a>
+                                            </td>
                                             <td>@item.Cperson</td>
                                             <td>@item.Cnumber</td>
                                             <td>@item.Cemail</td>

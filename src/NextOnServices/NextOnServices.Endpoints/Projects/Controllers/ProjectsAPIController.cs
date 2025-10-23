@@ -10,6 +10,7 @@ using NextOnServices.Core.Entities;
 using NextOnServices.Core.Repository;
 using NextOnServices.Infrastructure.Helper;
 using NextOnServices.Infrastructure.Models.Account;
+using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Projects;
 using NextOnServices.Infrastructure.ViewModels.Dashboard;
 using NextOnServices.Infrastructure.ViewModels.Project;
@@ -270,6 +271,37 @@ public class ProjectsAPIController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error in retriving Attendance {nameof(GetProjectById)}");
+            throw;
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GetClientProjects(int clientId)
+    {
+        try
+        {
+            string query = @"SELECT p.ProjectId,
+                                     p.PName AS ProjectName,
+                                     cm.Country,
+                                     p.Quota,
+                                     p.Loi,
+                                     p.Cpi,
+                                     p.Irate,
+                                     p.Status AS StatusId,
+                                     sm.Pstatus AS StatusLabel
+                              FROM Projects p
+                              LEFT JOIN CountryMaster cm ON cm.CountryId = p.CountryId
+                              LEFT JOIN StatusMaster sm ON sm.Pvalue = p.Status
+                              WHERE p.ClientId = @ClientId
+                              ORDER BY p.PName";
+
+            var parameters = new { ClientId = clientId };
+            var projects = await _unitOfWork.Project.GetTableData<ClientProjectSummary>(query, parameters);
+            return Ok(projects);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retrieving client projects {nameof(GetClientProjects)}");
             throw;
         }
     }
