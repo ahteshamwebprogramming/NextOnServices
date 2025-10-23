@@ -187,7 +187,10 @@ public class HomeController : Controller
                 using var workbook = new XLWorkbook();
 
                 string worksheetname = $"{projectDTO.Pid}_{projectDTO.Pname}";
-                worksheetname = worksheetname.Substring(0, 30);
+                if (worksheetname.Length > 30)
+                {
+                    worksheetname = worksheetname[..30];
+                }
 
                 var worksheet = workbook.Worksheets.Add(worksheetname);
 
