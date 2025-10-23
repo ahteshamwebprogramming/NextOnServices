@@ -14,6 +14,8 @@ public class SupplierViewModel
     public SupplierDTO? Supplier { get; set; }
     public SupplierWithChild? SupplierWithChild { get; set; }
     public List<SupplierWithChild>? SupplierWithChildList { get; set; }
+    public List<SupplierPanelSizeWithChild>? SupplierPanelSizes { get; set; }
+    public List<SupplierDeliverySummary>? SupplierDeliveryDetails { get; set; }
     public List<CountryMasterDTO>? Countries { get; set; }
-   
+
 }

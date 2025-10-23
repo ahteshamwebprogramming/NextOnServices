@@ -440,6 +440,37 @@ public class SuppliersAPIController : ControllerBase
             throw;
         }
     }
+    public async Task<IActionResult> GetSupplierDeliverySummary(int supplierId)
+    {
+        try
+        {
+            const string query = @"SELECT
+                                        ISNULL(cm.Country, 'N/A') AS Country,
+                                        COUNT(sp.ID) AS Total,
+                                        ISNULL(SUM(CASE WHEN sp.Status = 'Complete' THEN 1 ELSE 0 END), 0) AS Completes,
+                                        ISNULL(SUM(CASE WHEN sp.Status = 'InComplete' THEN 1 ELSE 0 END), 0) AS Incompletes,
+                                        ISNULL(SUM(CASE WHEN sp.Status = 'Terminate' THEN 1 ELSE 0 END), 0) AS Screened,
+                                        ISNULL(SUM(CASE WHEN sp.Status = 'OVERQUOTA' THEN 1 ELSE 0 END), 0) AS QuotaFull
+                                   FROM ProjectMapping pm
+                                   LEFT JOIN Projects p ON pm.ProjectID = p.ProjectId
+                                   LEFT JOIN Suppliers s ON pm.SupplierID = s.ID
+                                   LEFT JOIN CountryMaster cm ON pm.CountryID = cm.CountryId
+                                   LEFT JOIN SupplierProjects sp ON sp.SID = pm.SID
+                                   WHERE pm.SupplierID = @SupplierId
+                                     AND (p.IsActive = 1 OR p.IsActive IS NULL)
+                                     AND (s.IsActive = 1 OR s.IsActive IS NULL)
+                                   GROUP BY ISNULL(cm.Country, 'N/A')
+                                   ORDER BY Country;";
+            var parameters = new { @SupplierId = supplierId };
+            var res = await _unitOfWork.Suppliers.GetTableData<SupplierDeliverySummary>(query, parameters);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retrieving Supplier Delivery Summary {nameof(GetSupplierDeliverySummary)}");
+            throw;
+        }
+    }
     public async Task<IActionResult> AddSupplier(SupplierDTO inputData)
     {
         try

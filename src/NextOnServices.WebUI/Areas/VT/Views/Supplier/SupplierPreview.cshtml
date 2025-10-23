@@ -1,0 +1,294 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierViewModel
+@using NextOnServices.Infrastructure.Models.Supplier
+
+@{
+    ViewData["Title"] = "Supplier Preview";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var supplier = Model?.Supplier ?? new SupplierDTO();
+    var statusRedirects = new List<(string Label, string Url)>();
+
+    if (!string.IsNullOrWhiteSpace(supplier.Completes))
+    {
+        statusRedirects.Add(("Completes", supplier.Completes!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Terminate))
+    {
+        statusRedirects.Add(("Terminate", supplier.Terminate!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Quotafull))
+    {
+        statusRedirects.Add(("Quota Full", supplier.Quotafull!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Screened))
+    {
+        statusRedirects.Add(("Screened", supplier.Screened!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Overquota))
+    {
+        statusRedirects.Add(("Over Quota", supplier.Overquota!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Incomplete))
+    {
+        statusRedirects.Add(("Incomplete", supplier.Incomplete!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Security))
+    {
+        statusRedirects.Add(("Security Termination", supplier.Security!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Fraud))
+    {
+        statusRedirects.Add(("Fraud", supplier.Fraud!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Success))
+    {
+        statusRedirects.Add(("Success", supplier.Success!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Default))
+    {
+        statusRedirects.Add(("Default", supplier.Default!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.Failure))
+    {
+        statusRedirects.Add(("Failure", supplier.Failure!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.QualityTermination))
+    {
+        statusRedirects.Add(("Quality Termination", supplier.QualityTermination!));
+    }
+    if (!string.IsNullOrWhiteSpace(supplier.OverQuota1))
+    {
+        statusRedirects.Add(("Over Quota (Alt)", supplier.OverQuota1!));
+    }
+}
+
+<style>
+    .supplier-detail-list dt {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: #6c757d;
+        margin-bottom: .25rem;
+    }
+
+    .supplier-detail-list dd {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        overflow-wrap: anywhere;
+    }
+
+    .supplier-detail-list dd:last-child {
+        margin-bottom: 0;
+    }
+
+    .supplier-section-title {
+        font-weight: 600;
+    }
+
+    .redirect-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        flex-wrap: wrap;
+        color: var(--accent, #0d6efd);
+    }
+
+    .redirect-link:hover {
+        text-decoration: none;
+    }
+
+    .redirect-link-text {
+        overflow-wrap: anywhere;
+    }
+
+    .supplier-table th {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6c757d;
+    }
+
+    .supplier-table td {
+        font-size: 0.95rem;
+    }
+</style>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-lg-8 col-md-7 col-sm-12">
+        <h4 class="mb-1">Supplier Preview</h4>
+        <p class="text-muted mb-0">@(!string.IsNullOrWhiteSpace(supplier.Name) ? supplier.Name : "Supplier overview")</p>
+    </div>
+    <div class="col-lg-4 col-md-5 col-sm-12 text-md-end text-sm-start mt-3 mt-md-0">
+        <a href="@Url.Action("SupplierList", "Supplier", new { area = "VT" })" class="btn btn-outline-primary btn-sm me-2">Back to Supplier List</a>
+        @if (!string.IsNullOrWhiteSpace(supplier.encId))
+        {
+            <a href="@Url.Action("AddSupplier", "Supplier", new { area = "VT", eSupplierId = supplier.encId })" class="btn btn-primary btn-sm">Edit Supplier</a>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 grid-margin stretch-card">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title supplier-section-title mb-3">Supplier Details</h5>
+                <dl class="row supplier-detail-list mb-0">
+                    <dt class="col-sm-4">Supplier Name</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Name) ? supplier.Name : "-")</dd>
+
+                    <dt class="col-sm-4">Supplier Code</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.SupplierCode) ? supplier.SupplierCode : "-")</dd>
+
+                    <dt class="col-sm-4">Contact Number</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Number) ? supplier.Number : "-")</dd>
+
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(supplier.Email))
+                        {
+                            <a href="mailto:@supplier.Email" class="text-decoration-none">@supplier.Email</a>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Country</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Country) ? supplier.Country : "-")</dd>
+
+                    <dt class="col-sm-4">Declared Panel Size</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Psize) ? supplier.Psize : "-")</dd>
+
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Description) ? supplier.Description : "-")</dd>
+
+                    @if (!string.IsNullOrWhiteSpace(supplier.Notes))
+                    {
+                        <dt class="col-sm-4">Notes</dt>
+                        <dd class="col-sm-8">@supplier.Notes</dd>
+                    }
+
+                    @if (supplier.CreationDate.HasValue)
+                    {
+                        <dt class="col-sm-4">Created On</dt>
+                        <dd class="col-sm-8">@supplier.CreationDate.Value.ToString("dd MMM yyyy")</dd>
+                    }
+
+                    <dt class="col-sm-4">Status</dt>
+                    <dd class="col-sm-8">@((supplier.IsActive ?? 0) == 1 ? "Active" : "Inactive")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 grid-margin stretch-card">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title supplier-section-title mb-3">Supplier Specs</h5>
+                @if (Model?.SupplierPanelSizes != null && Model.SupplierPanelSizes.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle supplier-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th class="text-end">Panel Size</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var panel in Model.SupplierPanelSizes)
+                                {
+                                    <tr>
+                                        <td>@(!string.IsNullOrWhiteSpace(panel.Country) ? panel.Country : "-")</td>
+                                        <td class="text-end">@(panel.Psize.HasValue ? panel.Psize.Value.ToString("N0") : "-")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No supplier specs have been configured.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 grid-margin stretch-card">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title supplier-section-title mb-3">Supplier Delivery Details</h5>
+                @if (Model?.SupplierDeliveryDetails != null && Model.SupplierDeliveryDetails.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle supplier-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end">Completes</th>
+                                    <th class="text-end">Incompletes</th>
+                                    <th class="text-end">Screened</th>
+                                    <th class="text-end">Quota Full</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var delivery in Model.SupplierDeliveryDetails)
+                                {
+                                    <tr>
+                                        <td>@(!string.IsNullOrWhiteSpace(delivery.Country) ? delivery.Country : "-")</td>
+                                        <td class="text-end">@delivery.Total.ToString("N0")</td>
+                                        <td class="text-end">@delivery.Completes.ToString("N0")</td>
+                                        <td class="text-end">@delivery.Incompletes.ToString("N0")</td>
+                                        <td class="text-end">@delivery.Screened.ToString("N0")</td>
+                                        <td class="text-end">@delivery.QuotaFull.ToString("N0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No delivery details are available for this supplier.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 grid-margin stretch-card">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title supplier-section-title mb-3">Status &amp; Redirects</h5>
+                @if (statusRedirects.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-borderless align-middle mb-0">
+                            <tbody>
+                                @foreach (var redirect in statusRedirects)
+                                {
+                                    <tr>
+                                        <td class="text-muted" style="width: 40%; font-size: 0.8rem; text-transform: uppercase;">@redirect.Label</td>
+                                        <td>
+                                            <a href="@redirect.Url" class="redirect-link" target="_blank" rel="noopener">
+                                                <span class="redirect-link-text">@redirect.Url</span>
+                                                <i class="mdi mdi-open-in-new"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No redirect URLs have been configured for this supplier.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
