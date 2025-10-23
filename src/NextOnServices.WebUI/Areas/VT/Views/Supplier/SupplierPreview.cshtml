@@ -62,27 +62,39 @@
 }
 
 <style>
-    .supplier-detail-list dt {
+    .supplier-section-title {
+        font-weight: 600;
+    }
+
+    .supplier-info-card {
+        border: 1px solid #e9ecef;
+        border-radius: .75rem;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        height: 100%;
+    }
+
+    .supplier-info-card-title {
         font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: .05em;
         color: #6c757d;
-        margin-bottom: .25rem;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: .5rem;
     }
 
-    .supplier-detail-list dd {
+    .supplier-info-card-title .mdi {
+        font-size: 1.25rem;
+        color: var(--accent, #0d6efd);
+    }
+
+    .supplier-info-card-text {
         font-size: 1rem;
         font-weight: 500;
-        margin-bottom: 1rem;
-        overflow-wrap: anywhere;
-    }
-
-    .supplier-detail-list dd:last-child {
         margin-bottom: 0;
-    }
-
-    .supplier-section-title {
-        font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
     .redirect-link {
@@ -131,52 +143,113 @@
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title supplier-section-title mb-3">Supplier Details</h5>
-                <dl class="row supplier-detail-list mb-0">
-                    <dt class="col-sm-4">Supplier Name</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Name) ? supplier.Name : "-")</dd>
-
-                    <dt class="col-sm-4">Supplier Code</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.SupplierCode) ? supplier.SupplierCode : "-")</dd>
-
-                    <dt class="col-sm-4">Contact Number</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Number) ? supplier.Number : "-")</dd>
-
-                    <dt class="col-sm-4">Email</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrWhiteSpace(supplier.Email))
-                        {
-                            <a href="mailto:@supplier.Email" class="text-decoration-none">@supplier.Email</a>
-                        }
-                        else
-                        {
-                            <span>-</span>
-                        }
-                    </dd>
-
-                    <dt class="col-sm-4">Country</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Country) ? supplier.Country : "-")</dd>
-
-                    <dt class="col-sm-4">Declared Panel Size</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Psize) ? supplier.Psize : "-")</dd>
-
-                    <dt class="col-sm-4">Description</dt>
-                    <dd class="col-sm-8">@(!string.IsNullOrWhiteSpace(supplier.Description) ? supplier.Description : "-")</dd>
-
+                <div class="row g-3">
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-account-badge-outline"></i>
+                                <span>Supplier Name</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.Name) ? supplier.Name : "-")</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-identifier"></i>
+                                <span>Supplier Code</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.SupplierCode) ? supplier.SupplierCode : "-")</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-phone"></i>
+                                <span>Contact Number</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.Number) ? supplier.Number : "-")</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-email-outline"></i>
+                                <span>Email</span>
+                            </div>
+                            <p class="supplier-info-card-text">
+                                @if (!string.IsNullOrWhiteSpace(supplier.Email))
+                                {
+                                    <a href="mailto:@supplier.Email" class="text-decoration-none">@supplier.Email</a>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-earth"></i>
+                                <span>Country</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.Country) ? supplier.Country : "-")</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-account-group"></i>
+                                <span>Declared Panel Size</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.Psize) ? supplier.Psize : "-")</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-text-box-outline"></i>
+                                <span>Description</span>
+                            </div>
+                            <p class="supplier-info-card-text">@(!string.IsNullOrWhiteSpace(supplier.Description) ? supplier.Description : "-")</p>
+                        </div>
+                    </div>
                     @if (!string.IsNullOrWhiteSpace(supplier.Notes))
                     {
-                        <dt class="col-sm-4">Notes</dt>
-                        <dd class="col-sm-8">@supplier.Notes</dd>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="supplier-info-card">
+                                <div class="supplier-info-card-title">
+                                    <i class="mdi mdi-note-text-outline"></i>
+                                    <span>Notes</span>
+                                </div>
+                                <p class="supplier-info-card-text">@supplier.Notes</p>
+                            </div>
+                        </div>
                     }
-
                     @if (supplier.CreationDate.HasValue)
                     {
-                        <dt class="col-sm-4">Created On</dt>
-                        <dd class="col-sm-8">@supplier.CreationDate.Value.ToString("dd MMM yyyy")</dd>
+                        <div class="col-sm-6 col-xl-4">
+                            <div class="supplier-info-card">
+                                <div class="supplier-info-card-title">
+                                    <i class="mdi mdi-calendar-clock"></i>
+                                    <span>Created On</span>
+                                </div>
+                                <p class="supplier-info-card-text">@supplier.CreationDate.Value.ToString("dd MMM yyyy")</p>
+                            </div>
+                        </div>
                     }
-
-                    <dt class="col-sm-4">Status</dt>
-                    <dd class="col-sm-8">@((supplier.IsActive ?? 0) == 1 ? "Active" : "Inactive")</dd>
-                </dl>
+                    <div class="col-sm-6 col-xl-4">
+                        <div class="supplier-info-card">
+                            <div class="supplier-info-card-title">
+                                <i class="mdi mdi-toggle-switch"></i>
+                                <span>Status</span>
+                            </div>
+                            <p class="supplier-info-card-text">@((supplier.IsActive ?? 0) == 1 ? "Active" : "Inactive")</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
