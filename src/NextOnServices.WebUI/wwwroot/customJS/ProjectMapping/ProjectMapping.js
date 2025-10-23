@@ -80,8 +80,8 @@ function AddProjectMapping() {
             UnblockUI();
             Swal.fire({ title: 'Success!', text: "Project Mapped", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
                 if (result.isConfirmed) {
-                    window.history.back();
-                    //window.location.href = "/VT/Projects/ProjectsList";
+                    ListProjectMappingPartialView();
+                    AddProjectMappingPartialView();
                 }
             });
         },
