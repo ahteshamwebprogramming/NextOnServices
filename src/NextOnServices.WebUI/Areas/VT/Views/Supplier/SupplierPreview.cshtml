@@ -6,6 +6,22 @@
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
     var supplier = Model?.Supplier ?? new SupplierDTO();
     var statusRedirects = new List<(string Label, string Url)>();
+    var statusIconClasses = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Completes"] = "fas fa-check",
+        ["Terminate"] = "fas fa-times",
+        ["Quota Full"] = "fas fa-exclamation-triangle",
+        ["Screened"] = "fas fa-filter",
+        ["Over Quota"] = "fas fa-tachometer-alt",
+        ["Over Quota (Alt)"] = "fas fa-tachometer-alt",
+        ["Incomplete"] = "fas fa-hourglass-half",
+        ["Security Termination"] = "fas fa-shield-alt",
+        ["Fraud"] = "fas fa-exclamation-circle",
+        ["Success"] = "fas fa-check-circle",
+        ["Default"] = "fas fa-star",
+        ["Failure"] = "fas fa-times-circle",
+        ["Quality Termination"] = "fas fa-ban"
+    };
 
     if (!string.IsNullOrWhiteSpace(supplier.Completes))
     {
@@ -111,6 +127,60 @@
 
     .redirect-link-text {
         overflow-wrap: anywhere;
+    }
+
+    .status-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .status-card-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .85rem;
+        padding: .9rem 1rem;
+        border-radius: .75rem;
+        border: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    }
+
+    .status-card-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: .75rem;
+        background: rgba(13, 110, 253, 0.12);
+        color: #0d6efd;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .status-card-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .status-card-label {
+        font-size: 0.75rem;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: .35rem;
+    }
+
+    .status-card-url {
+        font-size: .95rem;
+        font-weight: 500;
+        color: #212529;
+    }
+
+    .status-card-url .mdi {
+        font-size: .9rem;
     }
 
     .supplier-table th {
@@ -257,6 +327,44 @@
     <div class="col-lg-6 grid-margin stretch-card">
         <div class="card h-100">
             <div class="card-body">
+                <h5 class="card-title supplier-section-title mb-3">Status &amp; Redirects</h5>
+                @if (statusRedirects.Count > 0)
+                {
+                    <div class="status-card-list">
+                        @foreach (var redirect in statusRedirects)
+                        {
+                            var iconClass = statusIconClasses.TryGetValue(redirect.Label, out var resolvedIcon)
+                                ? resolvedIcon
+                                : "fas fa-link";
+
+                            <div class="status-card-item">
+                                <div class="status-card-icon">
+                                    <i class="@iconClass"></i>
+                                </div>
+                                <div class="status-card-content">
+                                    <div class="status-card-label">@redirect.Label</div>
+                                    <a href="@redirect.Url" class="redirect-link status-card-url" target="_blank" rel="noopener">
+                                        <span class="redirect-link-text">@redirect.Url</span>
+                                        <i class="mdi mdi-open-in-new"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No redirect URLs have been configured for this supplier.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 grid-margin stretch-card">
+        <div class="card h-100">
+            <div class="card-body">
                 <h5 class="card-title supplier-section-title mb-3">Supplier Specs</h5>
                 @if (Model?.SupplierPanelSizes != null && Model.SupplierPanelSizes.Count > 0)
                 {
@@ -287,10 +395,7 @@
             </div>
         </div>
     </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-8 grid-margin stretch-card">
+    <div class="col-lg-6 grid-margin stretch-card">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title supplier-section-title mb-3">Supplier Delivery Details</h5>
@@ -327,39 +432,6 @@
                 else
                 {
                     <p class="text-muted mb-0">No delivery details are available for this supplier.</p>
-                }
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4 grid-margin stretch-card">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title supplier-section-title mb-3">Status &amp; Redirects</h5>
-                @if (statusRedirects.Count > 0)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-borderless align-middle mb-0">
-                            <tbody>
-                                @foreach (var redirect in statusRedirects)
-                                {
-                                    <tr>
-                                        <td class="text-muted" style="width: 40%; font-size: 0.8rem; text-transform: uppercase;">@redirect.Label</td>
-                                        <td>
-                                            <a href="@redirect.Url" class="redirect-link" target="_blank" rel="noopener">
-                                                <span class="redirect-link-text">@redirect.Url</span>
-                                                <i class="mdi mdi-open-in-new"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">No redirect URLs have been configured for this supplier.</p>
                 }
             </div>
         </div>
