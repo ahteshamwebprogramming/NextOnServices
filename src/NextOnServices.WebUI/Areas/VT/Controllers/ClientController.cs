@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using NextOnServices.Endpoints.Clients;
 using NextOnServices.Endpoints.Masters;
+using NextOnServices.Endpoints.Projects;
 using NextOnServices.Endpoints.Suppliers;
 using NextOnServices.Infrastructure.Helper;
 using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Masters;
-using NextOnServices.Infrastructure.Models.Supplier;
 using NextOnServices.VT.Infrastructure.ViewModels.Client;
-using NextOnServices.VT.Infrastructure.ViewModels.Supplier;
 
 namespace NextOnServices.WebUI.VT.Controllers;
 [Area("VT")]
@@ -17,12 +17,14 @@ public class ClientController : Controller
     private readonly SuppliersAPIController _suppliersAPIController;
     private readonly CountryAPIController _countryAPIController;
     private readonly ClientsAPIController _clientsAPIController;
-    public ClientController(ILogger<ClientController> logger, SuppliersAPIController suppliersAPIController, CountryAPIController countryAPIController, ClientsAPIController clientsAPIController)
+    private readonly ProjectsAPIController _projectsAPIController;
+    public ClientController(ILogger<ClientController> logger, SuppliersAPIController suppliersAPIController, CountryAPIController countryAPIController, ClientsAPIController clientsAPIController, ProjectsAPIController projectsAPIController)
     {
         _logger = logger;
         _suppliersAPIController = suppliersAPIController;
         this._countryAPIController = countryAPIController;
         this._clientsAPIController = clientsAPIController;
+        _projectsAPIController = projectsAPIController;
     }
 
     [Route("/VT/Client/AddClient/{eClientId=null}")]
@@ -75,6 +77,68 @@ public class ClientController : Controller
                 }
             }
         }
+        return View(dto);
+    }
+
+    [Route("/VT/Client/Preview/{eClientId}")]
+    public async Task<IActionResult> ClientPreview(string? eClientId)
+    {
+        if (string.IsNullOrWhiteSpace(eClientId))
+        {
+            return RedirectToAction(nameof(ClientList));
+        }
+
+        ClientViewModel dto = new ClientViewModel();
+        int clientId;
+
+        try
+        {
+            string decryptedClientId = CommonHelper.DecryptURLHTML(eClientId);
+            if (!int.TryParse(decryptedClientId, out clientId))
+            {
+                return RedirectToAction(nameof(ClientList));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unable to decrypt client identifier");
+            return RedirectToAction(nameof(ClientList));
+        }
+
+        try
+        {
+            var clientResponse = await _clientsAPIController.GetClient(clientId);
+            if (clientResponse is ObjectResult clientResult && clientResult.StatusCode == StatusCodes.Status200OK)
+            {
+                dto.Client = clientResult.Value as ClientDTO;
+                if (dto.Client != null)
+                {
+                    dto.Client.encClientId = eClientId;
+                }
+            }
+
+            var projectsResponse = await _projectsAPIController.GetClientProjects(clientId);
+            if (projectsResponse is ObjectResult projectsResult && projectsResult.StatusCode == StatusCodes.Status200OK)
+            {
+                dto.ProjectSummaries = projectsResult.Value as List<ClientProjectSummary>;
+            }
+
+            if (dto.ProjectSummaries != null)
+            {
+                foreach (var project in dto.ProjectSummaries)
+                {
+                    project.EncProjectId = CommonHelper.EncryptURLHTML(project.ProjectId.ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while loading client preview");
+        }
+
+        dto.ProjectSummaries ??= new List<ClientProjectSummary>();
+        dto.Client ??= new ClientDTO();
+
         return View(dto);
     }
     public async Task<IActionResult> ManageClient([FromBody] ClientDTO inputDTO)

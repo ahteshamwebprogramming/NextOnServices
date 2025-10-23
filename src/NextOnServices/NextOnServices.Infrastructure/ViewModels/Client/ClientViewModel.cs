@@ -15,4 +15,5 @@ public class ClientViewModel
     public List<ClientWithChild>? ClientWithChildren { get; set; }
     public ClientWithChild? ClientWithChild { get; set; }
     public List<CountryMasterDTO>? Countries { get; set; }
+    public List<ClientProjectSummary>? ProjectSummaries { get; set; }
 }
