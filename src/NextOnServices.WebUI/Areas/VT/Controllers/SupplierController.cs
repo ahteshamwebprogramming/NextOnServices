@@ -636,6 +636,60 @@ public class SupplierController : Controller
         }
         return View(dto);
     }
+    [Route("/VT/Supplier/SupplierPreview/{eSupplierId}")]
+    public async Task<IActionResult> SupplierPreview(string eSupplierId)
+    {
+        if (string.IsNullOrWhiteSpace(eSupplierId))
+        {
+            return RedirectToAction(nameof(SupplierList));
+        }
+
+        SupplierViewModel dto = new SupplierViewModel();
+
+        try
+        {
+            int supplierId = Convert.ToInt32(CommonHelper.DecryptURLHTML(eSupplierId));
+
+            var resSupplier = await _suppliersAPIController.GetSupplier(supplierId);
+            if (resSupplier is ObjectResult supplierResult && (supplierResult.StatusCode ?? StatusCodes.Status200OK) == StatusCodes.Status200OK)
+            {
+                if (supplierResult.Value is SupplierDTO supplier)
+                {
+                    dto.Supplier = supplier;
+                    dto.Supplier.encId = eSupplierId;
+                }
+            }
+
+            var resPanelSizes = await _suppliersAPIController.GetSupplierCountryPanelSizeBySupplierId(supplierId);
+            if (resPanelSizes is ObjectResult panelSizeResult && (panelSizeResult.StatusCode ?? StatusCodes.Status200OK) == StatusCodes.Status200OK)
+            {
+                if (panelSizeResult.Value is IEnumerable<SupplierPanelSizeWithChild> panelSizes)
+                {
+                    dto.SupplierPanelSizes = panelSizes.ToList();
+                }
+            }
+
+            var resDeliveries = await _suppliersAPIController.GetSupplierDeliverySummary(supplierId);
+            if (resDeliveries is ObjectResult deliveryResult && (deliveryResult.StatusCode ?? StatusCodes.Status200OK) == StatusCodes.Status200OK)
+            {
+                if (deliveryResult.Value is IEnumerable<SupplierDeliverySummary> deliveries)
+                {
+                    dto.SupplierDeliveryDetails = deliveries.ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error while loading supplier preview for {SupplierKey}", eSupplierId);
+        }
+
+        if (dto.Supplier == null)
+        {
+            dto.Supplier = new SupplierDTO { encId = eSupplierId };
+        }
+
+        return View(dto);
+    }
     public async Task<IActionResult> ManageSupplier([FromBody] SupplierDTO inputDTO)
     {
         try
