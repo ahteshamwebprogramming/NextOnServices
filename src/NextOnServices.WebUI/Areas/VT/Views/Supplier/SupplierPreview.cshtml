@@ -327,44 +327,6 @@
     <div class="col-lg-6 grid-margin stretch-card">
         <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title supplier-section-title mb-3">Status &amp; Redirects</h5>
-                @if (statusRedirects.Count > 0)
-                {
-                    <div class="status-card-list">
-                        @foreach (var redirect in statusRedirects)
-                        {
-                            var iconClass = statusIconClasses.TryGetValue(redirect.Label, out var resolvedIcon)
-                                ? resolvedIcon
-                                : "fas fa-link";
-
-                            <div class="status-card-item">
-                                <div class="status-card-icon">
-                                    <i class="@iconClass"></i>
-                                </div>
-                                <div class="status-card-content">
-                                    <div class="status-card-label">@redirect.Label</div>
-                                    <a href="@redirect.Url" class="redirect-link status-card-url" target="_blank" rel="noopener">
-                                        <span class="redirect-link-text">@redirect.Url</span>
-                                        <i class="mdi mdi-open-in-new"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">No redirect URLs have been configured for this supplier.</p>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-6 grid-margin stretch-card">
-        <div class="card h-100">
-            <div class="card-body">
                 <h5 class="card-title supplier-section-title mb-3">Supplier Specs</h5>
                 @if (Model?.SupplierPanelSizes != null && Model.SupplierPanelSizes.Count > 0)
                 {
@@ -395,44 +357,84 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-6 grid-margin stretch-card">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="card-title supplier-section-title mb-3">Supplier Delivery Details</h5>
-                @if (Model?.SupplierDeliveryDetails != null && Model.SupplierDeliveryDetails.Count > 0)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-sm align-middle supplier-table mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Country</th>
-                                    <th class="text-end">Total</th>
-                                    <th class="text-end">Completes</th>
-                                    <th class="text-end">Incompletes</th>
-                                    <th class="text-end">Screened</th>
-                                    <th class="text-end">Quota Full</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var delivery in Model.SupplierDeliveryDetails)
-                                {
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-6">
+        <div class="grid-margin stretch-card">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title supplier-section-title mb-3">Status &amp; Redirects</h5>
+                    @if (statusRedirects.Count > 0)
+                    {
+                        <div class="status-card-list">
+                            @foreach (var redirect in statusRedirects)
+                            {
+                                var iconClass = statusIconClasses.TryGetValue(redirect.Label, out var resolvedIcon)
+                                    ? resolvedIcon
+                                    : "fas fa-link";
+
+                                <div class="status-card-item">
+                                    <div class="status-card-icon">
+                                        <i class="@iconClass"></i>
+                                    </div>
+                                    <div class="status-card-content">
+                                        <div class="status-card-label">@redirect.Label</div>
+                                        <a href="@redirect.Url" class="redirect-link status-card-url" target="_blank" rel="noopener">
+                                            <span class="redirect-link-text">@redirect.Url</span>
+                                            <i class="mdi mdi-open-in-new"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No redirect URLs have been configured for this supplier.</p>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="grid-margin stretch-card mt-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title supplier-section-title mb-3">Supplier Delivery Details</h5>
+                    @if (Model?.SupplierDeliveryDetails != null && Model.SupplierDeliveryDetails.Count > 0)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle supplier-table mb-0">
+                                <thead>
                                     <tr>
-                                        <td>@(!string.IsNullOrWhiteSpace(delivery.Country) ? delivery.Country : "-")</td>
-                                        <td class="text-end">@delivery.Total.ToString("N0")</td>
-                                        <td class="text-end">@delivery.Completes.ToString("N0")</td>
-                                        <td class="text-end">@delivery.Incompletes.ToString("N0")</td>
-                                        <td class="text-end">@delivery.Screened.ToString("N0")</td>
-                                        <td class="text-end">@delivery.QuotaFull.ToString("N0")</td>
+                                        <th>Country</th>
+                                        <th class="text-end">Total</th>
+                                        <th class="text-end">Completes</th>
+                                        <th class="text-end">Incompletes</th>
+                                        <th class="text-end">Screened</th>
+                                        <th class="text-end">Quota Full</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">No delivery details are available for this supplier.</p>
-                }
+                                </thead>
+                                <tbody>
+                                    @foreach (var delivery in Model.SupplierDeliveryDetails)
+                                    {
+                                        <tr>
+                                            <td>@(!string.IsNullOrWhiteSpace(delivery.Country) ? delivery.Country : "-")</td>
+                                            <td class="text-end">@delivery.Total.ToString("N0")</td>
+                                            <td class="text-end">@delivery.Completes.ToString("N0")</td>
+                                            <td class="text-end">@delivery.Incompletes.ToString("N0")</td>
+                                            <td class="text-end">@delivery.Screened.ToString("N0")</td>
+                                            <td class="text-end">@delivery.QuotaFull.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">No delivery details are available for this supplier.</p>
+                    }
+                </div>
             </div>
         </div>
     </div>
