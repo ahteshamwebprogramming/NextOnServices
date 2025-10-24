@@ -1,0 +1,152 @@
+@{
+    ViewData["Title"] = "Candidate CVs";
+}
+
+<div class="container py-4" id="cv-page">
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h1 class="h3 mb-1">Candidate CVs</h1>
+            <p class="text-muted mb-0">Unlock CVs to contact candidates. Remaining unlock balance updates automatically.</p>
+        </div>
+        <div class="col-auto">
+            <div class="card border-info">
+                <div class="card-body py-2 px-3">
+                    <span class="fw-semibold">Remaining unlocks:</span>
+                    <span class="fw-bold" data-role="cv-remaining">--</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert d-none" role="alert" data-role="cv-message"></div>
+
+    <div class="row g-3" data-role="cv-card-container">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm cv-card" data-role="cv-card" data-jobseeker-id="101">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">Sample Candidate</h5>
+                    <p class="card-text text-muted flex-grow-1">Use the unlock button to simulate unlocking a CV.</p>
+                    <button type="button" class="btn btn-primary mt-2" data-role="cv-unlock" data-jobseeker-id="101">
+                        Unlock CV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const quotaTarget = document.querySelector('[data-role="cv-remaining"]');
+            const messageBox = document.querySelector('[data-role="cv-message"]');
+            const unlockButtons = document.querySelectorAll('[data-role="cv-unlock"]');
+
+            const formatRemaining = (remaining) => {
+                if (remaining === null || remaining === undefined) {
+                    return 'Unlimited';
+                }
+
+                return Math.max(remaining, 0);
+            };
+
+            const showMessage = (message, type) => {
+                if (!messageBox) {
+                    return;
+                }
+
+                messageBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+                messageBox.classList.add(type === 'error' ? 'alert-danger' : 'alert-success');
+                messageBox.textContent = message;
+            };
+
+            const hideMessage = () => {
+                if (!messageBox) {
+                    return;
+                }
+
+                messageBox.classList.add('d-none');
+            };
+
+            const refreshQuota = async () => {
+                if (!quotaTarget) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('@Url.Action("QuotaSummary", "Cv", new { area = "VT" })');
+                    if (!response.ok) {
+                        quotaTarget.textContent = '—';
+                        if (response.status === 404) {
+                            showMessage('No active subscription found. Unlocking CVs is currently disabled.', 'error');
+                        }
+                        return;
+                    }
+
+                    const payload = await response.json();
+                    quotaTarget.textContent = formatRemaining(payload.remaining);
+                    hideMessage();
+                } catch (error) {
+                    quotaTarget.textContent = '—';
+                    showMessage('Unable to load your CV unlock balance. Please try again later.', 'error');
+                }
+            };
+
+            const disableButton = (button, disabled) => {
+                if (!button) {
+                    return;
+                }
+
+                if (disabled) {
+                    button.dataset.originalText = button.dataset.originalText || button.textContent;
+                    button.textContent = 'Processing...';
+                    button.setAttribute('disabled', 'disabled');
+                } else {
+                    if (button.dataset.originalText) {
+                        button.textContent = button.dataset.originalText;
+                    }
+                    button.removeAttribute('disabled');
+                }
+            };
+
+            unlockButtons.forEach(button => {
+                button.addEventListener('click', async (event) => {
+                    event.preventDefault();
+
+                    const jobseekerId = Number(button.dataset.jobseekerId);
+                    if (!jobseekerId) {
+                        showMessage('Missing jobseeker information for this CV.', 'error');
+                        return;
+                    }
+
+                    disableButton(button, true);
+
+                    try {
+                        const response = await fetch('@Url.Action("Unlock", "Cv", new { area = "VT" })', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ jobseekerId })
+                        });
+
+                        const payload = await response.json();
+                        if (!response.ok) {
+                            showMessage(payload.message || 'Unable to unlock CV. Please review your plan allowance.', 'error');
+                            quotaTarget.textContent = formatRemaining(payload.remaining);
+                        } else {
+                            showMessage(payload.message || 'CV unlocked successfully.', 'success');
+                            quotaTarget.textContent = formatRemaining(payload.remaining);
+                        }
+                    } catch (error) {
+                        showMessage('An unexpected error occurred while unlocking the CV.', 'error');
+                    } finally {
+                        disableButton(button, false);
+                    }
+                });
+            });
+
+            refreshQuota();
+        })();
+    </script>
+}

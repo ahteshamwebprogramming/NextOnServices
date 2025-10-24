@@ -81,6 +81,10 @@ public partial class NextOnServicesDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserSubscription> UserSubscriptions { get; set; }
+
+    public virtual DbSet<EmployerCvSearchDatum> EmployerCvSearchData { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Data Source=182.18.138.217;Initial Catalog=NextOnServicesCore_BK;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;");
@@ -183,6 +187,48 @@ public partial class NextOnServicesDbContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("SDate");
             entity.Property(e => e.Status).HasDefaultValueSql("((1))");
+        });
+
+        modelBuilder.Entity<UserSubscription>(entity =>
+        {
+            entity.HasKey(e => e.UserSubscriptionId);
+
+            entity.ToTable("UserSubscription");
+
+            entity.Property(e => e.UserSubscriptionId).HasColumnName("UserSubscriptionId");
+            entity.Property(e => e.PlanCode).HasMaxLength(100);
+            entity.Property(e => e.PlanDescription).HasMaxLength(2000);
+            entity.Property(e => e.PlanMetadata).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.PlanName).HasMaxLength(200);
+            entity.Property(e => e.PlanType).HasMaxLength(100);
+            entity.Property(e => e.PlanPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UnlockCv)
+                .HasColumnName("UnlockCV")
+                .HasDefaultValue(0);
+            entity.Property(e => e.ValidFrom).HasColumnType("datetime");
+            entity.Property(e => e.ValidTo).HasColumnType("datetime");
+            entity.Property(e => e.CreatedOn).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedOn).HasColumnType("datetime");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<EmployerCvSearchDatum>(entity =>
+        {
+            entity.HasKey(e => e.EmployerCvSearchDataId);
+
+            entity.ToTable("EmployerCVSearchData");
+
+            entity.Property(e => e.EmployerCvSearchDataId).HasColumnName("EmployerCVSearchDataId");
+            entity.Property(e => e.SubscriptionId).HasColumnName("SubscriptionId");
+            entity.Property(e => e.JobseekerId).HasColumnName("JobseekerId");
+            entity.Property(e => e.CreatedOn).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedOn).HasColumnType("datetime");
+
+            entity.HasOne(d => d.Subscription)
+                .WithMany(p => p.EmployerCvSearchData)
+                .HasForeignKey(d => d.SubscriptionId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_EmployerCVSearchData_UserSubscription");
         });
 
         modelBuilder.Entity<ProjectMapping>(entity =>

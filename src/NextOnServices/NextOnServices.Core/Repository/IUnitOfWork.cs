@@ -24,5 +24,7 @@ public interface IUnitOfWork : IDisposable
     public ISupplierProjectsRepository SupplierProjects { get; }
     public ISupplierProjectMessageRepository SupplierProjectMessages { get; }
     public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; }
+    public IUserSubscriptionRepository UserSubscription { get; }
+    public IEmployerCvSearchDataRepository EmployerCvSearchData { get; }
     int Save();
 }

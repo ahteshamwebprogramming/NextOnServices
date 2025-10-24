@@ -25,6 +25,7 @@ builder.Services.AddDbContext<NSD.NextOnServicesDbContext>();
 builder.Services.AddScoped<NSD.DapperDBSetting>();
 builder.Services.AddScoped<NCR.IUnitOfWork, NSD.UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(NSC.MapperInitializer));
+builder.Services.AddScoped<NS.IEmployerSubscriptionService, NS.EmployerSubscriptionService>();
 
 
 builder.Services.AddDbContext<GRPSD.GRPDbContext>();
