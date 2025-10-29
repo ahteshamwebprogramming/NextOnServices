@@ -5,6 +5,32 @@
 }
 
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css" />
+<style>
+    /* Tighter buttons + consistent icon size */
+    .dt-buttons .dt-button {
+        padding: .25rem .5rem;
+        line-height: 1;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 .4rem !important;
+        line-height: 0 !important;
+        cursor: pointer;
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+        .dt-buttons .dt-button img {
+            height: 40px; /* change to 48/56 if you want larger */
+            width: auto;
+            display: block;
+
+
+        }
+</style>
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
@@ -60,15 +86,13 @@
                     dom: 'Bfrtip',
                     buttons: [
                         {
-                            text: 'Export Excel',
-                            className: 'btn btn-sm btn-primary',
+                            text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
                             action: async function (e, dt) {
                                 await exportAllProjects(dt, 'excel');
                             }
                         },
                         {
-                            text: 'Export CSV',
-                            className: 'btn btn-sm btn-secondary',
+                            text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
                             action: async function (e, dt) {
                                 await exportAllProjects(dt, 'csv');
                             }
