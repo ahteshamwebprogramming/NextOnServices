@@ -6,7 +6,7 @@ using NextOnServices.Endpoints.Accounts;
 using NextOnServices.Endpoints.Clients;
 using NextOnServices.Endpoints.Masters;
 using NextOnServices.Endpoints.Projects;
-
+using Microsoft.AspNetCore.Http;
 using NextOnServices.Infrastructure.Helper;
 using NextOnServices.Infrastructure.Models.Account;
 using NextOnServices.Infrastructure.Models.Client;
@@ -283,4 +283,86 @@ public class ProjectsController : Controller
 
     }
 
+    [HttpPost]
+    public async Task<IActionResult> GetProjectListTotals([FromBody] ProjectListExportRequest request)
+    {
+        try
+        {
+            var pagedListParams = BuildPagedListParams(request);
+            var resProjectCount = await _projectsAPIController.TotalProjectsFiltered(pagedListParams);
+
+            if (resProjectCount is not ObjectResult objectResult || objectResult.StatusCode != StatusCodes.Status200OK)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to retrieve project totals");
+            }
+
+            var totals = objectResult.Value as IEnumerable<int?>;
+            var totalRecords = totals?.FirstOrDefault() ?? 0;
+
+            return Ok(new { totalRecords });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GetProjectListExportData([FromBody] ProjectListExportRequest request)
+    {
+        try
+        {
+            var pagedListParams = BuildPagedListParams(request);
+            var resProject = await _projectsAPIController.GetProjectsList(pagedListParams);
+
+            if (resProject is not ObjectResult objectResult || objectResult.StatusCode != StatusCodes.Status200OK)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to retrieve project data");
+            }
+
+            if (objectResult.Value is not IEnumerable<ListProject> data)
+            {
+                return Ok(Array.Empty<ListProject>());
+            }
+
+            var projectList = data.ToList();
+
+            foreach (var item in projectList)
+            {
+                item.ProjectIdEnc = CommonHelper.EncryptURLHTML(item.ProjectId.ToString());
+            }
+
+            return Ok(projectList);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
+    private static PagedListParams BuildPagedListParams(ProjectListExportRequest request)
+    {
+        var safeRequest = request ?? new ProjectListExportRequest();
+
+        return new PagedListParams
+        {
+            searchValue = safeRequest.SearchValue ?? string.Empty,
+            sortColumn = string.IsNullOrWhiteSpace(safeRequest.SortColumn) ? "pid" : safeRequest.SortColumn,
+            sortColumnDirection = string.IsNullOrWhiteSpace(safeRequest.SortDirection) ? "desc" : safeRequest.SortDirection,
+            sortColumnIndex = safeRequest.SortColumnIndex ?? 0,
+            skip = safeRequest.Start < 0 ? 0 : safeRequest.Start,
+            pageSize = safeRequest.Length > 0 ? safeRequest.Length : 10
+        };
+    }
+
+}
+
+public class ProjectListExportRequest
+{
+    public int Start { get; set; }
+    public int Length { get; set; }
+    public string? SearchValue { get; set; }
+    public string? SortColumn { get; set; }
+    public string? SortDirection { get; set; }
+    public int? SortColumnIndex { get; set; }
 }

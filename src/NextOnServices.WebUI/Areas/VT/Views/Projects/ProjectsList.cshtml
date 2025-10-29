@@ -4,11 +4,19 @@
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
 
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css" />
+
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
                 <p class="card-title mb-0">Project List</p>
+                <div id="exportStatus" style="display:none" class="mb-3">
+                    <p id="statusMessage" class="mb-1">Preparing download...</p>
+                    <div id="progressContainer" style="width: 100%; background-color: #f3f3f3;">
+                        <div id="progressBar" style="width: 0%; height: 20px; background-color: #4caf50; text-align: center; color: white; font-size: 12px;">0%</div>
+                    </div>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-striped table-borderless" id="Projects">
                         <thead>
@@ -31,6 +39,9 @@
 </div>
 
 @section scripts {
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
 
@@ -38,10 +49,7 @@
                 {
                     ajax: {
                         url: "/VT/Projects/GetProjectList",
-                        type: "POST",
-                        //success: function (response) {
-                        //    //alert("S");
-                        //}
+                        type: "POST"
                     },
                     "createdRow": function (row, data, dataIndex) {
                         $(row).attr('vendorid', data.Id);
@@ -49,6 +57,23 @@
                     processing: true,
                     serverSide: true,
                     filter: true,
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            text: 'Export Excel',
+                            className: 'btn btn-sm btn-primary',
+                            action: async function (e, dt) {
+                                await exportAllProjects(dt, 'excel');
+                            }
+                        },
+                        {
+                            text: 'Export CSV',
+                            className: 'btn btn-sm btn-secondary',
+                            action: async function (e, dt) {
+                                await exportAllProjects(dt, 'csv');
+                            }
+                        }
+                    ],
                     columns: [
                         {
                             data: "pid",
@@ -78,7 +103,7 @@
                                 $(td).replaceWith(res);
                             },
                             render: function (v, d, rowData, row_col_details) {
-                                 let res = '<input onclick="javascript:window.location.href=\'/VT/Projects/ProjectMapping/' + rowData.projectIdEnc + '\'" style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-primary btn-sm" value="URL Mapping">';
+                                let res = '<input onclick="javascript:window.location.href=\'/VT/Projects/ProjectMapping/' + rowData.projectIdEnc + '\'" style="width: 100px;padding: 9px;font-size: 12px;" type="button" class="btn btn-primary btn-sm" value="URL Mapping">';
                                 return res;
                             }
                         },
@@ -112,10 +137,215 @@
                             },
                         }
                     ],
-                    "order": []
+                    columnDefs: [
+                        {
+                            targets: [5, 6, 7],
+                            orderable: false,
+                            searchable: false
+                        }
+                    ],
+                    order: []
                 }
             );
         });
+
+        function buildProjectExportParams(dt) {
+            const order = dt.order();
+            let sortColumnIndex = 0;
+            let sortDirection = 'asc';
+
+            if (order && order.length > 0) {
+                sortColumnIndex = order[0][0];
+                sortDirection = order[0][1];
+            }
+
+            const settings = dt.settings()[0] || {};
+            const columnInfo = (settings.aoColumns || [])[sortColumnIndex] || {};
+            const sortColumn = columnInfo.name || columnInfo.data || 'pid';
+
+            return {
+                searchValue: dt.search() || '',
+                sortColumn: sortColumn,
+                sortDirection: sortDirection,
+                sortColumnIndex: sortColumnIndex
+            };
+        }
+
+        async function exportAllProjects(dt, format) {
+            try {
+                const params = buildProjectExportParams(dt);
+                const batchSize = 500;
+                let offset = 0;
+                let totalRecords = 0;
+                const allData = [];
+
+                $('#exportStatus').show();
+                $('#statusMessage').text('Preparing download...');
+                $('#progressBar').css('width', '0%').text('0%');
+
+                const totalResponse = await fetch('/VT/Projects/GetProjectListTotals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start: 0,
+                        length: 1,
+                        ...params
+                    })
+                });
+
+                if (!totalResponse.ok) {
+                    throw new Error('Unable to determine record count for export.');
+                }
+
+                const totalPayload = await totalResponse.json();
+                totalRecords = parseInt(totalPayload?.totalRecords ?? 0);
+
+                if (!totalRecords) {
+                    $('#statusMessage').text('No records available for export.');
+                    $('#progressBar').css('width', '0%').text('0%');
+                    setTimeout(function () {
+                        $('#exportStatus').hide();
+                    }, 3000);
+                    return;
+                }
+
+                while (offset < totalRecords) {
+                    const batchResponse = await fetch('/VT/Projects/GetProjectListExportData', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            start: offset,
+                            length: batchSize,
+                            ...params
+                        })
+                    });
+
+                    if (!batchResponse.ok) {
+                        throw new Error('Error fetching project data for export.');
+                    }
+
+                    const batch = await batchResponse.json();
+
+                    if (!Array.isArray(batch) || batch.length === 0) {
+                        break;
+                    }
+
+                    allData.push(...batch);
+                    offset += batch.length;
+
+                    const progress = Math.min((offset / totalRecords) * 100, 100);
+                    $('#statusMessage').text(`Data download in process... ${Math.min(offset, totalRecords)} of ${totalRecords} records processed.`);
+                    $('#progressBar').css('width', `${progress}%`).text(`${Math.round(progress)}%`);
+
+                    if (batch.length < batchSize) {
+                        break;
+                    }
+                }
+
+                if (format === 'excel') {
+                    exportProjectsToExcel(allData);
+                } else {
+                    exportProjectsToCsv(allData);
+                }
+
+                $('#statusMessage').text('Data download complete.');
+                $('#progressBar').css('width', '100%').text('100%');
+            } catch (error) {
+                console.error(error);
+                $('#statusMessage').text(error.message || 'An unexpected error occurred during export.');
+                $('#progressBar').css('width', '0%').text('0%');
+            } finally {
+                setTimeout(function () {
+                    $('#exportStatus').hide();
+                }, 3000);
+            }
+        }
+
+        function getProjectExportMatrix(data) {
+            const headers = ['Project Number', 'Project Name', 'LOI', 'Project Start Date', 'Project End Date', 'Active (Yes/No)'];
+
+            const rows = data.map(function (item) {
+                const statusValue = parseInt(item?.status ?? 0);
+                const activeLabel = statusValue === 1 ? 'Yes' : 'No';
+                return [
+                    item?.pid ?? '',
+                    item?.pname ?? '',
+                    item?.loi ?? '',
+                    item?.sdate ?? '',
+                    item?.edate ?? '',
+                    activeLabel
+                ];
+            });
+
+            return [headers, ...rows];
+        }
+
+        function exportProjectsToExcel(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                $('#statusMessage').text('No records available for export.');
+                return;
+            }
+
+            const sheetData = getProjectExportMatrix(data);
+            const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+
+            const headerStyle = { font: { bold: true } };
+            const headerRow = sheetData[0];
+
+            for (let columnIndex = 0; columnIndex < headerRow.length; columnIndex++) {
+                const cellRef = XLSX.utils.encode_cell({ c: columnIndex, r: 0 });
+                if (!worksheet[cellRef]) {
+                    worksheet[cellRef] = {};
+                }
+                worksheet[cellRef].s = headerStyle;
+            }
+
+            const columnWidths = sheetData[0].map(function (_, columnIndex) {
+                return Math.max(...sheetData.map(function (row) {
+                    return (row[columnIndex] || '').toString().length;
+                }));
+            });
+
+            worksheet['!cols'] = columnWidths.map(function (width) {
+                return { wch: width + 2 };
+            });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Projects');
+            XLSX.writeFile(workbook, 'Projects.xlsx');
+        }
+
+        function exportProjectsToCsv(data) {
+            if (!Array.isArray(data) || data.length === 0) {
+                $('#statusMessage').text('No records available for export.');
+                return;
+            }
+
+            const matrix = getProjectExportMatrix(data);
+            const csvContent = matrix.map(function (row) {
+                return row.map(function (value) {
+                    const text = (value ?? '').toString();
+                    if (text.includes('"') || text.includes(',') || text.includes('\n')) {
+                        return '"' + text.replace(/"/g, '""') + '"';
+                    }
+                    return text;
+                }).join(',');
+            }).join('\r\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Projects.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
 
         function ChangeStatus(projectId, status, curObj) {
             Swal.fire({
