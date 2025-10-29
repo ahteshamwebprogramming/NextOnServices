@@ -3,6 +3,8 @@
     ViewData["Title"] = "ClientList";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 <style>
     .tablebutton {
         width: 100px !important;
@@ -14,6 +16,29 @@
         padding-top: 0px;
         padding-bottom: 0px;
     }
+
+    /* Tighter buttons + consistent icon size */
+    .dt-buttons .dt-button {
+        padding: .25rem .5rem;
+        line-height: 1;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 .4rem !important;
+        line-height: 0 !important;
+        cursor: pointer;
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+        .dt-buttons .dt-button img {
+            height: 40px;
+            width: auto;
+            display: block
+        }
 </style>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
@@ -79,8 +104,23 @@
 @section scripts {
     <script type="text/javascript">
         $(document).ready(function () {
-            $("table").DataTable({
-                "order": []
+            $('#Projects').DataTable({
+                aaSorting: [],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
+                        titleAttr: 'Export to Excel',
+                        filename: 'Data_Export'
+                    },
+                    {
+                        extend: 'csvHtml5',
+                        text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
+                        titleAttr: 'Export to CSV',
+                        filename: 'Data_Export'
+                    }
+                ]
             });
         });
 
