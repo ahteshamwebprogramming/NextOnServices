@@ -38,7 +38,12 @@
             <div class="card-body">
                 <p class="card-title mb-0">Project List</p>
                 <div id="exportStatus" style="display:none" class="mb-3">
-                    <p id="statusMessage" class="mb-1">Preparing download...</p>
+                    <div class="d-flex align-items-center mb-1">
+                        <p id="statusMessage" class="mb-0 flex-grow-1">Preparing download...</p>
+                        <div id="exportSpinner" class="spinner-border spinner-border-sm text-primary ms-2" role="status" style="display:none;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                     <div id="progressContainer" style="width: 100%; background-color: #f3f3f3;">
                         <div id="progressBar" style="width: 0%; height: 20px; background-color: #4caf50; text-align: center; color: white; font-size: 12px;">0%</div>
                     </div>
@@ -204,6 +209,7 @@
                 const allData = [];
 
                 $('#exportStatus').show();
+                $('#exportSpinner').show();
                 $('#statusMessage').text('Preparing download...');
                 $('#progressBar').css('width', '0%').text('0%');
 
@@ -229,6 +235,7 @@
                 if (!totalRecords) {
                     $('#statusMessage').text('No records available for export.');
                     $('#progressBar').css('width', '0%').text('0%');
+                    $('#exportSpinner').hide();
                     setTimeout(function () {
                         $('#exportStatus').hide();
                     }, 3000);
@@ -283,6 +290,7 @@
                 $('#statusMessage').text(error.message || 'An unexpected error occurred during export.');
                 $('#progressBar').css('width', '0%').text('0%');
             } finally {
+                $('#exportSpinner').hide();
                 setTimeout(function () {
                     $('#exportStatus').hide();
                 }, 3000);
@@ -311,6 +319,7 @@
         function exportProjectsToExcel(data) {
             if (!Array.isArray(data) || data.length === 0) {
                 $('#statusMessage').text('No records available for export.');
+                $('#exportSpinner').hide();
                 return;
             }
 
@@ -346,6 +355,7 @@
         function exportProjectsToCsv(data) {
             if (!Array.isArray(data) || data.length === 0) {
                 $('#statusMessage').text('No records available for export.');
+                $('#exportSpinner').hide();
                 return;
             }
 
