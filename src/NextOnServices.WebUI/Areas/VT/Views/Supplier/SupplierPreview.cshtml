@@ -204,10 +204,12 @@
         flex-wrap: wrap;
     }
 
-        #supplier-delivery-table_wrapper .row:first-of-type > *,
-        #supplier-delivery-table_wrapper .dt-layout-row:first-of-type > * {
-            flex: 0 0 auto;
-        }
+    #supplier-delivery-table_wrapper .row:first-of-type > *,
+    #supplier-delivery-table_wrapper .dt-layout-row:first-of-type > * {
+        flex: 0 0 auto;
+        width: auto !important;
+        max-width: 100%;
+    }
 
     .dt-buttons {
         display: flex;
@@ -216,27 +218,32 @@
         gap: .75rem;
     }
 
-    #supplier-delivery-table_filter {
+    #supplier-delivery-table_filter,
+    #supplier-delivery-table_wrapper .dt-search {
         display: flex;
         align-items: center;
+        justify-content: flex-end;
         margin-left: auto;
         text-align: right;
+        gap: .5rem;
     }
 
-        #supplier-delivery-table_filter label {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            margin-bottom: 0;
-        }
+    #supplier-delivery-table_filter label,
+    #supplier-delivery-table_wrapper .dt-search label {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        margin-bottom: 0;
+    }
 
-        #supplier-delivery-table_filter input[type=search] {
-            width: auto;
-            display: inline-block;
-            border-top: none !important;
-            border-left: none !important;
-            border-right: none !important;
-        }
+    #supplier-delivery-table_filter input[type=search],
+    #supplier-delivery-table_wrapper .dt-search input[type=search] {
+        width: auto;
+        display: inline-block;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+    }
 
     .dt-buttons .dt-button {
         padding: .25rem .5rem;
