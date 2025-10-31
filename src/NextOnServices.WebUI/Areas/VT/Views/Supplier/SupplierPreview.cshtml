@@ -195,21 +195,39 @@
     }
     .supplier-table thead th{color:#fff}
 
+    #supplier-delivery-table_wrapper .row:first-of-type,
+    #supplier-delivery-table_wrapper .dt-layout-row:first-of-type {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+        #supplier-delivery-table_wrapper .row:first-of-type > *,
+        #supplier-delivery-table_wrapper .dt-layout-row:first-of-type > * {
+            flex: 0 0 auto;
+        }
+
     .dt-buttons {
-        width: 50%;
-        display: inline-block;
-        vertical-align: top;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: .75rem;
     }
 
     #supplier-delivery-table_filter {
-        width: 50%;
-        display: inline-block;
+        display: flex;
+        align-items: center;
+        margin-left: auto;
         text-align: right;
-        vertical-align: top;
     }
 
         #supplier-delivery-table_filter label {
-            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: 0;
         }
 
         #supplier-delivery-table_filter input[type=search] {
