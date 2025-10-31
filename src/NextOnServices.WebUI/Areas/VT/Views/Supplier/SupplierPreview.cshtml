@@ -216,6 +216,17 @@
             width: auto;
             display: block;
         }
+
+    .supplier-delivery-search .input-group-text {
+        background: transparent;
+        border-right: 0;
+        color: #6c757d;
+    }
+
+    .supplier-delivery-search .form-control {
+        border-left: 0;
+        box-shadow: none;
+    }
 </style>
 
 <div class="row mb-3 align-items-center">
@@ -426,6 +437,15 @@
                     <h5 class="card-title supplier-section-title mb-3">Supplier Delivery Details</h5>
                     @if (Model?.SupplierDeliveryDetails != null && Model.SupplierDeliveryDetails.Count > 0)
                     {
+                        <div class="row align-items-center justify-content-between g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="visually-hidden" for="supplier-delivery-search">Search deliveries</label>
+                                <div class="input-group input-group-sm supplier-delivery-search">
+                                    <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+                                    <input type="search" class="form-control" id="supplier-delivery-search" placeholder="Search deliveries" aria-label="Search deliveries" autocomplete="off" />
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive-md">
                             <table class="table table-bordered table-sm align-middle supplier-table mb-0" id="supplier-delivery-table">
                                 <thead>
@@ -469,7 +489,7 @@
         $(document).ready(function () {
             const $deliveryTable = $("#supplier-delivery-table");
             if ($deliveryTable.length) {
-                $deliveryTable.DataTable({
+                const table = $deliveryTable.DataTable({
                     aaSorting: [],
                     dom: 'Bfrtip',
                     buttons: [
@@ -487,6 +507,18 @@
                         }
                     ]
                 });
+
+                const $searchInput = $("#supplier-delivery-search");
+                if ($searchInput.length) {
+                    $searchInput.on("input", function () {
+                        table.search(this.value).draw();
+                    });
+
+                    $searchInput.trigger("input");
+                }
+
+                const $tableContainer = $(table.table().container());
+                $tableContainer.find('.dataTables_filter').hide();
             }
         });
     </script>
