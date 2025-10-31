@@ -1,7 +1,7 @@
 @model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierViewModel
 @using NextOnServices.Infrastructure.Models.Supplier
 
-@{
+@{ 
     ViewData["Title"] = "Supplier Preview";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
     var supplier = Model?.Supplier ?? new SupplierDTO();
@@ -77,6 +77,7 @@
     }
 }
 
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
 <style>
     .supplier-section-title {
         font-weight: 600;
@@ -193,6 +194,28 @@
         font-size: 0.95rem;
     }
     .supplier-table thead th{color:#fff}
+
+    .dt-buttons .dt-button {
+        padding: .25rem .5rem;
+        line-height: 1;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 .4rem !important;
+        line-height: 0 !important;
+        cursor: pointer;
+        border: 0 !important;
+        outline: 0 !important;
+        box-shadow: none !important;
+        background: transparent !important;
+    }
+
+        .dt-buttons .dt-button img {
+            height: 40px;
+            width: auto;
+            display: block;
+        }
 </style>
 
 <div class="row mb-3 align-items-center">
@@ -404,7 +427,7 @@
                     @if (Model?.SupplierDeliveryDetails != null && Model.SupplierDeliveryDetails.Count > 0)
                     {
                         <div class="table-responsive-md">
-                            <table class="table table-bordered table-sm align-middle supplier-table mb-0">
+                            <table class="table table-bordered table-sm align-middle supplier-table mb-0" id="supplier-delivery-table">
                                 <thead>
                                     <tr>
                                         <th>Country</th>
@@ -440,3 +463,31 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            const $deliveryTable = $("#supplier-delivery-table");
+            if ($deliveryTable.length) {
+                $deliveryTable.DataTable({
+                    aaSorting: [],
+                    dom: 'Bfrtip',
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            text: '<img src="/AdminImg/download%20(1).jpeg" alt="Excel" />',
+                            titleAttr: 'Export to Excel',
+                            filename: 'Data_Export'
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            text: '<img src="/AdminImg/download%20(2).jpeg" alt="CSV" />',
+                            titleAttr: 'Export to CSV',
+                            filename: 'Data_Export'
+                        }
+                    ]
+                });
+            }
+        });
+    </script>
+}
