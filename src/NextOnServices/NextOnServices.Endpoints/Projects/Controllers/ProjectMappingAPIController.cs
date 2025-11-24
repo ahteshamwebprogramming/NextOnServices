@@ -178,6 +178,12 @@ public class ProjectMappingAPIController : ControllerBase
                 var res = await _unitOfWork.ProjectMapping.UpdateAsync(projectMappingInDB);
                 if (res)
                 {
+                    // Create notification for project mapping change
+                    if (projectMappingInDB.SupplierId.HasValue && projectMappingInDB.ProjectId.HasValue)
+                    {
+                        await CreateProjectChangeNotificationAsync(projectMappingInDB.Id, projectMappingInDB.ProjectId.Value, projectMappingInDB.SupplierId.Value, "Project mapping details have been updated (CPI, Quota, Country, Notes, etc.).");
+                    }
+                    
                     return Ok(inputData);
                 }
                 else
@@ -194,6 +200,57 @@ public class ProjectMappingAPIController : ControllerBase
         {
             _logger.LogError(ex, $"Error in retriving Attendance {nameof(AddProjectMapping)}");
             throw;
+        }
+    }
+
+    private async Task CreateProjectChangeNotificationAsync(int projectMappingId, int projectId, int supplierId, string changeDescription)
+    {
+        try
+        {
+            var message = $"[PROJECT_UPDATE]{changeDescription}";
+            
+            var notificationSql = @"
+                INSERT INTO SupplierProjectMessages 
+                (ProjectMappingId, ProjectId, SupplierId, Message, CreatedBy, CreatedByName, CreatedUtc, FromSupplier, IsRead)
+                VALUES 
+                (@ProjectMappingId, @ProjectId, @SupplierId, @Message, @CreatedBy, @CreatedByName, @CreatedUtc, @FromSupplier, @IsRead)";
+
+            var senderName = "System";
+            int? createdBy = null;
+            
+            if (HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = HttpContext.User.FindFirst("Id")?.Value;
+                if (int.TryParse(userIdClaim, out var userId))
+                {
+                    createdBy = userId;
+                }
+                
+                var userNameClaim = HttpContext.User.FindFirst("Name")?.Value ?? 
+                                   HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(userNameClaim))
+                {
+                    senderName = userNameClaim;
+                }
+            }
+
+            await _unitOfWork.ProjectMapping.ExecuteQueryAsync(notificationSql, new
+            {
+                ProjectMappingId = projectMappingId,
+                ProjectId = projectId,
+                SupplierId = supplierId,
+                Message = message,
+                CreatedBy = createdBy,
+                CreatedByName = senderName,
+                CreatedUtc = DateTime.UtcNow,
+                FromSupplier = false,
+                IsRead = false
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating project change notification for ProjectMappingId {ProjectMappingId}", projectMappingId);
+            // Don't throw - notification failure shouldn't break the update
         }
     }
 

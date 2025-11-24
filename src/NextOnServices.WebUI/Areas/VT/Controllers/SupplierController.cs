@@ -158,6 +158,44 @@ public class SupplierController : Controller
         }
         return View(dto);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Notifications()
+    {
+        var SupplierId = User.FindFirst("Id")?.Value;
+        var loginSourceClaim = User.Claims
+                .FirstOrDefault(c => c.Type == "LoginSource")?.Value;
+        
+        var dto = new SupplierDashboardViewModel();
+
+        if (SupplierId != null)
+        {
+            var res = await _suppliersAPIController.GetSupplier(Convert.ToInt32(SupplierId));
+            if (res != null && ((Microsoft.AspNetCore.Mvc.ObjectResult)res).StatusCode == 200)
+            {
+                dto.Supplier = (SupplierDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)res).Value;
+            }
+        }
+
+        return View(dto);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllProjectNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 50, [FromQuery] bool unreadOnly = false, [FromQuery] DateTimeOffset? since = null)
+    {
+        PrepareChatApiController();
+        var apiResult = await _supplierChatApiController.GetAllProjectNotifications(page, pageSize, unreadOnly, since);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetUnreadNotificationCount()
+    {
+        PrepareChatApiController();
+        var apiResult = await _supplierChatApiController.GetUnreadNotificationCount();
+        return ConvertApiResult(apiResult);
+    }
+
     public async Task<JsonResult> GetSupplierProjectsBySupplierId([FromBody] DataTablesRequest request)
     {
         try

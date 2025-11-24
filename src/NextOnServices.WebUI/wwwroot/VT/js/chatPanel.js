@@ -140,6 +140,10 @@
             }
         });
 
+        state.$input.on('paste', function (event) {
+            handlePasteEvent(event);
+        });
+
         state.$panel.on('change', '[data-chat-attachments]', function (event) {
             handleAttachmentSelection(event);
         });
@@ -481,6 +485,142 @@
             $placeholderText.text('No chats to display');
         } else {
             $placeholder.text('No chats to display');
+        }
+    }
+
+    function handlePasteEvent(event) {
+        const originalEvent = event.originalEvent || event;
+        const clipboardData = originalEvent.clipboardData || window.clipboardData;
+
+        if (!clipboardData) {
+            return;
+        }
+
+        const items = clipboardData.items || clipboardData.files || [];
+        const imagePromises = [];
+
+        // Process clipboard items asynchronously
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+
+            // Check if the pasted item is an image
+            if (item && item.type && item.type.indexOf('image/') === 0) {
+                try {
+                    // Use getAsFile() for DataTransferItem
+                    if (typeof item.getAsFile === 'function') {
+                        const blob = item.getAsFile();
+                        if (blob && blob instanceof Blob && blob.size > 0) {
+                            const imageType = item.type || 'image/png';
+                            const extension = imageType.split('/')[1] || 'png';
+                            const fileName = `screenshot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${extension}`;
+                            
+                            // Read the blob completely to ensure we have all data
+                            const promise = new Promise(function (resolve, reject) {
+                                const reader = new FileReader();
+                                
+                                reader.onload = function () {
+                                    try {
+                                        // Create a new blob from the complete ArrayBuffer
+                                        // This ensures we have the complete image data
+                                        const arrayBuffer = reader.result;
+                                        const completeBlob = new Blob([arrayBuffer], { type: imageType });
+                                        
+                                        // Create File object from the complete blob
+                                        const file = new File([completeBlob], fileName, {
+                                            type: imageType,
+                                            lastModified: Date.now()
+                                        });
+                                        
+                                        // Verify file was created correctly
+                                        if (file && file.size > 0 && file.size === arrayBuffer.byteLength) {
+                                            resolve(file);
+                                        } else {
+                                            // If verification fails, still try to use the file
+                                            // Sometimes File constructor adjusts size slightly
+                                            resolve(file);
+                                        }
+                                    } catch (err) {
+                                        console.warn('[chatPanel] Error creating file from blob:', err);
+                                        // Fallback: try with original blob
+                                        try {
+                                            const file = new File([blob], fileName, {
+                                                type: imageType,
+                                                lastModified: Date.now()
+                                            });
+                                            resolve(file);
+                                        } catch (fallbackErr) {
+                                            reject(err);
+                                        }
+                                    }
+                                };
+                                
+                                reader.onerror = function () {
+                                    // Fallback: try to create file directly from blob
+                                    try {
+                                        const file = new File([blob], fileName, {
+                                            type: imageType,
+                                            lastModified: Date.now()
+                                        });
+                                        resolve(file);
+                                    } catch (err) {
+                                        reject(new Error('Failed to read clipboard image data'));
+                                    }
+                                };
+                                
+                                // Read the entire blob as ArrayBuffer to ensure complete data
+                                reader.readAsArrayBuffer(blob);
+                            });
+                            
+                            imagePromises.push(promise);
+                        }
+                    }
+                    // Fallback: item might already be a File
+                    else if (item instanceof File && item.size > 0) {
+                        imagePromises.push(Promise.resolve(item));
+                    }
+                } catch (err) {
+                    console.warn('[chatPanel] Error processing pasted image:', err);
+                }
+            }
+        }
+
+        // If we found image files, process them asynchronously
+        if (imagePromises.length > 0) {
+            event.preventDefault();
+            
+            // Wait for all images to be fully read
+            Promise.all(imagePromises)
+                .then(function (imageFiles) {
+                    // Filter out any null/undefined files and ensure they have valid size
+                    const validFiles = imageFiles.filter(function (file) {
+                        return file && file instanceof File && file.size > 0;
+                    });
+
+                    if (validFiles.length > 0) {
+                        const result = addAttachments(validFiles);
+                        renderAttachmentErrors(result.errors);
+
+                        if ((!result.errors || !result.errors.length) && state.attachments.length) {
+                            resetStatus();
+                            showStatus(`Pasted ${validFiles.length} image${validFiles.length > 1 ? 's' : ''}`, 'success');
+                            setTimeout(function () {
+                                resetStatus();
+                            }, 2000);
+                        }
+                    } else {
+                        showStatus('Failed to paste image. Please try again.', 'error');
+                        setTimeout(function () {
+                            resetStatus();
+                        }, 3000);
+                    }
+                })
+                .catch(function (err) {
+                    console.error('[chatPanel] Error processing pasted images:', err);
+                    showStatus('Failed to paste image. Please try again.', 'error');
+                    setTimeout(function () {
+                        resetStatus();
+                    }, 3000);
+                });
         }
     }
 
@@ -887,10 +1027,12 @@
         const $list = $('<ul/>', { class: 'chat-message__attachment-list list-unstyled mb-0' }).appendTo($container);
 
         attachments.forEach(function (attachment) {
-            const $item = $('<li/>', { class: 'chat-message__attachment d-flex align-items-center mb-2' }).appendTo($list);
+            const $item = $('<li/>', { class: 'chat-message__attachment mb-2' }).appendTo($list);
             const name = attachment.name || deriveFileName(attachment.url) || 'Attachment';
+            const isImage = isImageAttachment(attachment);
 
             if (attachment.pending) {
+                $item.addClass('d-flex align-items-center');
                 $('<span/>', { class: 'chat-message__attachment-name font-italic', text: `${name} (uploading…)` }).appendTo($item);
                 if (typeof attachment.size === 'number' && attachment.size > 0) {
                     $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
@@ -899,29 +1041,51 @@
             }
 
             if (attachment.url) {
-                const $link = $('<a/>', {
-                    href: attachment.url,
-                    text: name,
-                    target: '_blank',
-                    rel: 'noopener'
-                }).appendTo($item);
-
-                if (typeof attachment.size === 'number' && attachment.size > 0) {
-                    $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
-                }
-
-                if (isImageAttachment(attachment)) {
+                // For images, display image prominently with link/text below
+                if (isImage) {
                     const previewSource = attachment.previewUrl || attachment.url;
                     if (previewSource) {
+                        const $imageContainer = $('<div/>', { class: 'chat-message__image-container' }).appendTo($item);
                         $('<img/>', {
                             src: previewSource,
                             alt: name,
-                            class: 'chat-message__attachment-preview rounded ml-2',
+                            class: 'chat-message__attachment-preview',
                             loading: 'lazy'
-                        }).appendTo($item);
+                        }).appendTo($imageContainer);
+                    }
+                    
+                    // Add filename and link below image
+                    const $imageInfo = $('<div/>', { class: 'chat-message__attachment-info mt-1' }).appendTo($item);
+                    const $link = $('<a/>', {
+                        href: attachment.url,
+                        text: name,
+                        target: '_blank',
+                        rel: 'noopener',
+                        class: 'chat-message__attachment-link'
+                    }).appendTo($imageInfo);
+
+                    if (typeof attachment.size === 'number' && attachment.size > 0) {
+                        $('<small/>', { 
+                            class: 'text-muted ml-2', 
+                            text: formatFileSize(attachment.size) 
+                        }).appendTo($imageInfo);
+                    }
+                } else {
+                    // For non-image files, display as before
+                    $item.addClass('d-flex align-items-center');
+                    const $link = $('<a/>', {
+                        href: attachment.url,
+                        text: name,
+                        target: '_blank',
+                        rel: 'noopener'
+                    }).appendTo($item);
+
+                    if (typeof attachment.size === 'number' && attachment.size > 0) {
+                        $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);
                     }
                 }
             } else {
+                $item.addClass('d-flex align-items-center');
                 $('<span/>', { class: 'chat-message__attachment-name', text: name }).appendTo($item);
                 if (typeof attachment.size === 'number' && attachment.size > 0) {
                     $('<small/>', { class: 'text-muted ml-2', text: formatFileSize(attachment.size) }).appendTo($item);

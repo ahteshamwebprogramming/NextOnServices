@@ -320,7 +320,19 @@ body.project-chat-open {
     color: #111827;
     line-height: 1.4;
     word-break: break-word;
-    max-width:90%;
+    max-width: 90%;
+    overflow: hidden;
+}
+
+.chat-message__bubble .chat-message__attachments {
+    margin-top: 0.75rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    padding: 0 0.5rem;
+}
+
+.chat-message__bubble .chat-message__attachments:first-child {
+    margin-top: 0;
 }
 
 .chat-message--incoming .chat-message__bubble {
@@ -377,6 +389,94 @@ body.project-chat-open {
 .chat-message__error {
     font-size: 0.75rem;
     margin-top: 0.35rem;
+}
+
+.chat-message__attachments {
+    max-width: 100%;
+    margin-top: 0.5rem;
+}
+
+.chat-message__attachment-list {
+    max-width: 100%;
+}
+
+.chat-message__attachment {
+    max-width: 100%;
+    flex-wrap: wrap;
+}
+
+.chat-message__image-container {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    overflow: hidden;
+}
+
+.chat-message--outgoing .chat-message__image-container {
+    justify-content: flex-end;
+}
+
+.chat-message__attachment-preview {
+    display: block;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+    max-height: 300px;
+    max-width: 280px;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 0.75rem;
+    margin: 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@media (max-width: 767.98px) {
+    .chat-message__attachment-preview {
+        max-width: 220px;
+        max-height: 250px;
+    }
+}
+
+.chat-message__attachment-preview:hover {
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.chat-message__attachment-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.chat-message__attachment-link {
+    color: inherit;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.chat-message__attachment-link:hover {
+    text-decoration: underline;
+}
+
+.chat-message--outgoing .chat-message__attachment-link {
+    color: #ffffff;
+}
+
+/* Ensure images fit within message bubbles */
+.chat-message__bubble .chat-message__attachments {
+    width: 100%;
+    max-width: 100%;
+}
+
+.chat-message__attachment a {
+    display: inline-block;
+    max-width: 100%;
+    word-break: break-all;
 }
 
 .project-chat-trigger {

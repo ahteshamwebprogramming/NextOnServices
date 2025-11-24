@@ -100,6 +100,42 @@
             gap: 10px;
         }
 
+        .notification-icon-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            order: -1;
+            position: relative;
+        }
+
+        .notification-icon-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .notification-icon-link.active {
+            background-color: rgba(13, 110, 253, 0.3);
+            border-color: rgba(13, 110, 253, 0.5);
+        }
+
+        .notification-icon-link i {
+            font-size: 1.2rem;
+            color: #fff;
+            transition: transform 0.3s ease;
+        }
+
+        .notification-icon-link:hover i {
+            transform: rotate(-15deg);
+        }
+
         html, body {
             margin: 0;
             padding: 0;
@@ -273,7 +309,11 @@
                 </li>
             </ul>
 
-            <div class="vendor-info ml-auto">
+            <div class="vendor-info ml-auto d-flex align-items-center">
+                <a class="nav-link position-relative notification-icon-link" href="/VT/Supplier/Notifications" style="margin-right: 1rem;" title="View Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="badge badge-danger badge-pill notification-count-badge" id="navbarNotificationBadge" style="display: none; position: absolute; top: 0; right: 0; transform: translate(25%, -25%); font-size: 0.7rem; min-width: 18px; height: 18px; line-height: 18px;">0</span>
+                </a>
                 <span class="mr-3">Welcome, <strong>@Model?.Supplier?.Name</strong></span>
                 <a href="/VT/Supplier/Login" style=" white-space: nowrap;" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
@@ -556,6 +596,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="~/customJS/Common.js"></script>
     <script src="~/VT/js/chatPanel.js"></script>
+    <script src="~/VT/js/notificationBadge.js"></script>
     <script>
         var table;
 

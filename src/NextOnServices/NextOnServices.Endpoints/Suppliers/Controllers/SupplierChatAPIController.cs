@@ -1062,4 +1062,150 @@ public class SupplierChatAPIController : ControllerBase
 
         public List<SupplierProjectMessageAttachmentDto> LegacyDescriptors { get; }
     }
+
+    [HttpGet("notifications/all")]
+    public async Task<IActionResult> GetAllProjectNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = 50, [FromQuery] bool unreadOnly = false, [FromQuery] DateTimeOffset? since = null)
+    {
+        if (!TryResolveSupplierContext(null, out var supplierId, out var isSupplierUser, out var failureResult))
+        {
+            return failureResult!;
+        }
+
+        if (!isSupplierUser || !supplierId.HasValue)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "Supplier authentication required." });
+        }
+
+        try
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1 || pageSize > 200) pageSize = 50;
+
+            var offset = (page - 1) * pageSize;
+            var sinceDate = since?.UtcDateTime;
+
+            // Build SQL query to get all notifications across all projects for this supplier
+            var whereConditions = new List<string> { "pm.SupplierID = @SupplierId", "spm.FromSupplier = 0" };
+            var parameters = new Dictionary<string, object> { { "SupplierId", supplierId.Value } };
+
+            if (unreadOnly)
+            {
+                whereConditions.Add("spm.IsRead = 0");
+            }
+
+            if (sinceDate.HasValue)
+            {
+                whereConditions.Add("spm.CreatedUtc >= @SinceDate");
+                parameters.Add("SinceDate", sinceDate.Value);
+            }
+
+            var whereClause = string.Join(" AND ", whereConditions);
+
+            // Parameters for data query (includes Offset and PageSize)
+            var dataParameters = new Dictionary<string, object>(parameters);
+            dataParameters.Add("Offset", offset);
+            dataParameters.Add("PageSize", pageSize);
+
+            var sql = $@"SELECT 
+                        spm.Id,
+                        spm.ProjectMappingId,
+                        spm.ProjectId,
+                        p.PID,
+                        p.PName AS ProjectName,
+                        cm.Country,
+                        spm.Message,
+                        spm.CreatedByName AS SenderName,
+                        TODATETIMEOFFSET(spm.CreatedUtc, '+00:00') AS CreatedUtc,
+                        spm.IsRead,
+                        CASE WHEN spm.ReadUtc IS NULL THEN NULL ELSE TODATETIMEOFFSET(spm.ReadUtc, '+00:00') END AS ReadUtc,
+                        CASE WHEN spm.Message LIKE '[PROJECT_UPDATE]%' THEN 1 ELSE 0 END AS IsProjectChange
+                    FROM SupplierProjectMessages spm
+                    INNER JOIN ProjectMapping pm ON spm.ProjectMappingId = pm.ID
+                    INNER JOIN Projects p ON pm.ProjectID = p.ProjectId
+                    INNER JOIN CountryMaster cm ON pm.CountryID = cm.CountryId
+                    WHERE {whereClause}
+                    ORDER BY spm.CreatedUtc DESC
+                    OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+            var countSql = $@"SELECT COUNT(*)
+                    FROM SupplierProjectMessages spm
+                    INNER JOIN ProjectMapping pm ON spm.ProjectMappingId = pm.ID
+                    WHERE {whereClause}";
+
+            var notifications = await _unitOfWork.ProjectMapping.GetTableData<SupplierNotificationItemDto>(sql, dataParameters);
+            
+            // Count query doesn't need Offset and PageSize
+            var totalCount = await _unitOfWork.ProjectMapping.GetEntityCount(countSql, parameters);
+            var totalPages = totalCount > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 0;
+
+            return Ok(new
+            {
+                notifications = notifications ?? new List<SupplierNotificationItemDto>(),
+                pagination = new
+                {
+                    page = page,
+                    pageSize = pageSize,
+                    totalCount = totalCount,
+                    totalPages = totalPages,
+                    hasNextPage = page < totalPages,
+                    hasPreviousPage = page > 1
+                },
+                timestamp = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching all project notifications for supplier {SupplierId}", supplierId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred while fetching notifications." });
+        }
+    }
+
+    [HttpGet("notifications/count")]
+    public async Task<IActionResult> GetUnreadNotificationCount()
+    {
+        if (!TryResolveSupplierContext(null, out var supplierId, out var isSupplierUser, out var failureResult))
+        {
+            return failureResult!;
+        }
+
+        if (!isSupplierUser || !supplierId.HasValue)
+        {
+            return Ok(new { count = 0 });
+        }
+
+        try
+        {
+            var sql = @"SELECT COUNT(*) 
+                    FROM SupplierProjectMessages spm
+                    INNER JOIN ProjectMapping pm ON spm.ProjectMappingId = pm.ID
+                    WHERE pm.SupplierID = @SupplierId 
+                    AND spm.FromSupplier = 0 
+                    AND spm.IsRead = 0";
+
+            var count = await _unitOfWork.ProjectMapping.GetEntityCount(sql, new { SupplierId = supplierId.Value });
+
+            return Ok(new { count = count });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching unread notification count for supplier {SupplierId}", supplierId);
+            return Ok(new { count = 0 });
+        }
+    }
+
+    public class SupplierNotificationItemDto
+    {
+        public int Id { get; set; }
+        public int ProjectMappingId { get; set; }
+        public int? ProjectId { get; set; }
+        public string? PID { get; set; }
+        public string? ProjectName { get; set; }
+        public string? Country { get; set; }
+        public string? Message { get; set; }
+        public string? SenderName { get; set; }
+        public DateTimeOffset? CreatedUtc { get; set; }
+        public bool IsRead { get; set; }
+        public DateTimeOffset? ReadUtc { get; set; }
+        public bool? IsProjectChange { get; set; }
+    }
 }

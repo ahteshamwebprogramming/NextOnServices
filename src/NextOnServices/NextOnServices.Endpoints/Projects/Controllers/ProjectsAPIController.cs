@@ -362,6 +362,10 @@ public class ProjectsAPIController : ControllerBase
                     project.Notes = inputData.Notes;
                     await _unitOfWork.Project.UpdateAsync(project);
                     _unitOfWork.Save();
+                    
+                    // Create notifications for all suppliers associated with this project
+                    await NotifyAllSuppliersForProjectUpdateAsync(inputData.ProjectId, "Project details have been updated (Name, CPI, Quota, Dates, Status, etc.).");
+                    
                     return Ok("Success");
                 }
                 else
@@ -633,6 +637,10 @@ public class ProjectsAPIController : ControllerBase
 
     public async Task<IActionResult> UpdateCPIMapping(ProjectDTO model)
     {
+        // Get project mapping to find supplier - Note: model.ProjectId is actually ProjectMapping.ID
+        var projectMappingSql = "SELECT * FROM ProjectMapping WHERE ID = @Id";
+        var projectMapping = await _unitOfWork.ProjectMapping.GetEntityData<ProjectMapping>(projectMappingSql, new { Id = model.ProjectId });
+        
         string sql = @"UPDATE projectmapping 
                    SET Respondants = @Quota, CPI = @CPI, Notes = @Notes 
                    WHERE ID = @Id";
@@ -645,13 +653,96 @@ public class ProjectsAPIController : ControllerBase
             Notes = model.Notes
         });
 
-        if (success)
+        if (success && projectMapping != null)
         {
+            // Create notification for project change
+            if (projectMapping.SupplierId.HasValue && projectMapping.ProjectId.HasValue)
+            {
+                await CreateProjectChangeNotificationAsync(projectMapping.Id, projectMapping.ProjectId.Value, projectMapping.SupplierId.Value, "Project CPI, Quota, or Notes have been updated.");
+            }
+            
             return Ok(new { RetVal = 1, RetMessage = "CPI Mapping updated successfully." });
         }
         else
         {
             return Ok(new { RetVal = -1, RetMessage = "Failed to update CPI Mapping." });
+        }
+    }
+
+    private async Task CreateProjectChangeNotificationAsync(int projectMappingId, int projectId, int supplierId, string changeDescription)
+    {
+        try
+        {
+            var message = $"[PROJECT_UPDATE]{changeDescription}";
+            
+            var notificationSql = @"
+                INSERT INTO SupplierProjectMessages 
+                (ProjectMappingId, ProjectId, SupplierId, Message, CreatedBy, CreatedByName, CreatedUtc, FromSupplier, IsRead)
+                VALUES 
+                (@ProjectMappingId, @ProjectId, @SupplierId, @Message, @CreatedBy, @CreatedByName, @CreatedUtc, @FromSupplier, @IsRead)";
+
+            var senderName = "System";
+            int? createdBy = null;
+            
+            if (HttpContext?.User?.Identity?.IsAuthenticated == true)
+            {
+                var userIdClaim = HttpContext.User.FindFirst("Id")?.Value;
+                if (int.TryParse(userIdClaim, out var userId))
+                {
+                    createdBy = userId;
+                }
+                
+                var userNameClaim = HttpContext.User.FindFirst("Name")?.Value ?? 
+                                   HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                if (!string.IsNullOrEmpty(userNameClaim))
+                {
+                    senderName = userNameClaim;
+                }
+            }
+
+            await _unitOfWork.ProjectMapping.ExecuteQueryAsync(notificationSql, new
+            {
+                ProjectMappingId = projectMappingId,
+                ProjectId = projectId,
+                SupplierId = supplierId,
+                Message = message,
+                CreatedBy = createdBy,
+                CreatedByName = senderName,
+                CreatedUtc = DateTime.UtcNow,
+                FromSupplier = false,
+                IsRead = false
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating project change notification for ProjectMappingId {ProjectMappingId}", projectMappingId);
+            // Don't throw - notification failure shouldn't break the update
+        }
+    }
+
+    private async Task NotifyAllSuppliersForProjectUpdateAsync(int projectId, string changeDescription)
+    {
+        try
+        {
+            // Get all project mappings for this project
+            var mappingsSql = "SELECT * FROM ProjectMapping WHERE ProjectID = @ProjectId AND SupplierID IS NOT NULL";
+            var mappings = await _unitOfWork.ProjectMapping.GetTableData<ProjectMapping>(mappingsSql, new { ProjectId = projectId });
+
+            if (mappings != null && mappings.Any())
+            {
+                foreach (var mapping in mappings)
+                {
+                    if (mapping.SupplierId.HasValue && mapping.Id > 0)
+                    {
+                        await CreateProjectChangeNotificationAsync(mapping.Id, projectId, mapping.SupplierId.Value, changeDescription);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error notifying suppliers for project update - ProjectId {ProjectId}", projectId);
+            // Don't throw - notification failure shouldn't break the update
         }
     }
 
