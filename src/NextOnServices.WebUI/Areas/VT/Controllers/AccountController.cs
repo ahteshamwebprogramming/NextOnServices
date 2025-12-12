@@ -28,7 +28,10 @@ public class AccountController : Controller
     public async Task<IActionResult> Login(UserDTO user)
     {
         IActionResult actionResult = _accountsApiController.GetLoginDetail(user);
-        ObjectResult objResult = (ObjectResult)actionResult;
+        if (actionResult == null || !(actionResult is ObjectResult objResult) || objResult.Value == null)
+        {
+            return RedirectToAction("Login");
+        }
 
         UserDTO objResultData = (UserDTO)objResult.Value;
         HttpResponseMessage getdata = objResultData.HttpMessage;

@@ -193,14 +193,14 @@
                              <p class="fs-30 mb-2">
                             @(Model == null ? "0%" : Model.FractionComplete1 == null ? "0%" : Model.FractionComplete1.IRPercent + "%")
                             @{
-                                if (Model != null)
+                                if (Model != null && Model.FractionComplete1 != null && Model.FractionComplete3 != null)
                                 {
                                     float flagIR = 0;
                                     float flagLOI = 0;
-                                    float EXPIR = Model.FractionComplete1.ExpectedIR == null ? 0 : Model.FractionComplete1.ExpectedIR;
-                                    float ACTIR = Model.FractionComplete1.ActualIR == null ? 0 : Model.FractionComplete1.ActualIR;
-                                    float EXPLOI = Model.FractionComplete3.Expected_LOI == null ? 0 : Model.FractionComplete3.Expected_LOI;
-                                    float ACTLOI = Model.FractionComplete3.Actual_LOI == null ? 0 : Model.FractionComplete3.Actual_LOI;
+                                    float EXPIR = (float)Model.FractionComplete1.ExpectedIR;
+                                    float ACTIR = (float)Model.FractionComplete1.ActualIR;
+                                    float EXPLOI = Model.FractionComplete3.Expected_LOI;
+                                    float ACTLOI = Model.FractionComplete3.Actual_LOI;
                                     if (EXPIR > ACTIR)
                                     {
                                         float drop = EXPIR - ACTIR;
@@ -421,10 +421,7 @@
                                                 {
                                                     if (Model.FractionComplete1 != null)
                                                     {
-                                                        if (Model.FractionComplete1.ExpectedIR != null)
-                                                        {
-                                                            <span> @Model.FractionComplete1.ExpectedIR</span>
-                                                        }
+                                                        <span> @Model.FractionComplete1.ExpectedIR</span>
                                                     }
                                                 }
                                             }
@@ -728,6 +725,22 @@
                 <div class="form-horizontal" role="form" style="padding-right: 15px; padding-left: 15px">
                     <div class="form-group">
                         <input type="hidden" id="hdnMapCountry1" value="">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-10">Mode:</label>
+                        <div style="margin-bottom: 15px;">
+                            <label style="margin-right: 20px; font-weight: normal;">
+                                <input type="radio" name="countryMode" id="rbInclude" value="include" checked style="margin-right: 5px;">
+                                Include Countries
+                            </label>
+                            <label style="font-weight: normal;">
+                                <input type="radio" name="countryMode" id="rbExclude" value="exclude" style="margin-right: 5px;">
+                                Exclude Countries
+                            </label>
+                        </div>
+                        <small class="form-text text-muted" id="modeHelpText">
+                            <strong>Include:</strong> Message will be shown only for selected countries. <strong>Exclude:</strong> Message will be shown for all countries except selected ones.
+                        </small>
                     </div>
                     <div class="form-group">
                         <label class="control-label mb-10">Select Country/Countries</label>
@@ -1505,81 +1518,131 @@
             alert(`${type}: ${message}`);
         }
         function ShowCountryModal(ID) {
-            debugger
-            $("#MapIPModal").css("display", "block");
+            // open modal through bootstrap and reset state
+            $('#MapIPModal').modal('show');
             $('#hdnMapCountry1').val(ID);
-            if ($("#mulddlCountries option").length === 0) {
-                LoadCountries();
+            resetCountrySelection();
+
+            // load list + preselect already mapped countries
+            LoadCountries()
+                .done(function () {
+                    prefillMappedCountries(ID);
+                })
+                .fail(function () {
+                    Swal.fire('Error', 'Unable to load countries.', 'error');
+                });
+        }
+
+        function resetCountrySelection() {
+            $('#rbInclude').prop('checked', true);
+            $('#rbExclude').prop('checked', false);
+            updateModeHelpText();
+
+            var $countrySelect = $("#mulddlCountries");
+            if ($countrySelect.data('select2')) {
+                $countrySelect.val(null).trigger('change');
+            } else {
+                $countrySelect.val([]);
             }
         }
+
+        function updateModeHelpText() {
+            var mode = $('input[name="countryMode"]:checked').val();
+            if (mode === 'include') {
+                $('#modeHelpText').html('<strong>Include:</strong> Message will be shown only for selected countries.');
+            } else {
+                $('#modeHelpText').html('<strong>Exclude:</strong> Message will be shown for all countries except selected ones.');
+            }
+        }
+
+        // Update help text when radio button changes
+        $(document).on('change', 'input[name="countryMode"]', function() {
+            updateModeHelpText();
+        });
 
 
         
 
          function LoadCountries() {
-            
-            $.ajax({
+            var $countrySelect = $("#mulddlCountries");
+
+            // avoid duplicate select2 instances
+            if ($countrySelect.data('select2')) {
+                $countrySelect.select2('destroy');
+            }
+
+            return $.ajax({
                 type: "POST",
-                url: '/VT/Home/GetCountries',
-                success: function (data) {
-                    if (data.length > 0) {
-                        let optionsHtml = "";
+                url: '/VT/Home/GetCountries'
+            }).done(function (data) {
+                if (data && data.length > 0) {
+                    let optionsHtml = "";
 
-                        for (var i = 0; i < data.length; i++) {
-                            optionsHtml += `<option value="${data[i].countryId}">${data[i].country}</option>`;
-                        }
-
-                        // Add options dynamically
-                        $("#mulddlCountries").html(optionsHtml);
-
-                        // Initialize Select2
-                        $("#mulddlCountries").select2({
-                            placeholder: "Select Country/Countries", // Placeholder text
-                            allowClear: true, // Allow clearing selections
-                            width: '100%' // Set width to 100%
-                        });
-
-                    } else {
-                        console.warn("No countries returned from server.");
+                    for (var i = 0; i < data.length; i++) {
+                        optionsHtml += `<option value="${data[i].countryId}">${data[i].country}</option>`;
                     }
-                },
-                error: function (result) {
-                    console.error("Error fetching countries:", result);
+
+                    $countrySelect.html(optionsHtml);
+                } else {
+                    console.warn("No countries returned from server.");
                 }
+
+                $countrySelect.select2({
+                    placeholder: "Select Country/Countries",
+                    allowClear: true,
+                    width: '100%'
+                });
+            }).fail(function (result) {
+                console.error("Error fetching countries:", result);
             });
         }
 
        function SaveSelectedCountries() {
        
     const selectedCountries = $("#mulddlCountries").val(); 
+    const mode = $('input[name="countryMode"]:checked').val(); // "include" or "exclude"
     
             if (!selectedCountries || selectedCountries.length === 0) {
                 alert("Please select at least one country."); 
                 return; 
             }
+    
+    BlockUI();
     $.ajax({
         type: "POST",
         url: '/VT/Home/SaveMapIP', 
         contentType: "application/json", 
         data: JSON.stringify({ 
             id: $("#hdnMapCountry1").val(), 
-            countries: selectedCountries 
+            countries: selectedCountries,
+            mode: mode
         }),
         success: function (response) {
+            UnblockUI();
             console.log("Countries saved successfully:", response);
 
-                    Swal.fire({
+            var modeText = mode === 'include' ? 'included' : 'excluded';
+            
+            // Close modal immediately for better UX
+            $('#MapIPModal').modal('hide');
+            $("#mulddlCountries").val(null).trigger('change');
+            
+            // Show success message without blocking
+            Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: 'Countries saved successfully!',
-                confirmButtonColor: '#3085d6'
-            }).then(() => {
-                $('#MapIPModal').modal('hide');
-                MappedCountriesView();
+                text: 'Countries ' + modeText + ' successfully!',
+                confirmButtonColor: '#3085d6',
+                timer: 1500,
+                showConfirmButton: false
             });
+            
+            // Refresh view immediately
+            MappedCountriesView();
         },
 
         error: function (error) {
+            UnblockUI();
             console.error("Error saving countries:", error);
 
             Swal.fire({
@@ -1592,9 +1655,37 @@
     });
 }
 
-        
-        $('#MapIPModal').on('shown.bs.modal', function () {
-            LoadCountries();
+        function prefillMappedCountries(id) {
+            GetMappedCountries(id).done(function (data) {
+                var response = data.value || data || {};
+                var mode = response.mode || response.Mode || 'include';
+                var selectedCountries = response.selectedCountries || response.SelectedCountries || [];
+
+                $('#rbInclude').prop('checked', mode === 'include');
+                $('#rbExclude').prop('checked', mode === 'exclude');
+                updateModeHelpText();
+
+                if (selectedCountries && selectedCountries.length > 0) {
+                    var selectedIds = selectedCountries
+                        .map(function (item) {
+                            return (item.countryId || item.CountryId || item.countryid || item.Countryid || item.countryID || item.CountryID || '').toString();
+                        })
+                        .filter(function (val) { return val !== ''; });
+
+                    if ($("#mulddlCountries").data('select2')) {
+                        $("#mulddlCountries").val(selectedIds).trigger('change');
+                    } else {
+                        $("#mulddlCountries").val(selectedIds);
+                    }
+                }
+            }).fail(function (error) {
+                console.error("Error pre-filling mapped countries:", error);
+            });
+        }
+
+        $('#MapIPModal').on('hidden.bs.modal', function () {
+            resetCountrySelection();
+            $('#hdnMapCountry1').val('');
         });
        
 
@@ -1605,26 +1696,49 @@
 
         }
         function MappedCountriesView() {
-            //debugger
             $('#tblSurveySpecs').find('tbody').find('tr').each(function () {
                 var row = $(this);
                 var id = row.find('td[data-itemid]').data('itemid'); 
-                var rowcol = '';
+                var displayHtml = '';
 
                 if (id) {
                     GetMappedCountries(id).done(function (data) {
-                        if (data.value.length > 0) {
-                            data.value.forEach(function (item) {
-                                rowcol += '<label class="B_grnd" style="display: inline-block!important; color: black">' +
-                                    item.country +
-                                    '<i class="delete icon" id="' + item.Id + '_' + id + '" onclick="deleteMappedCountry(\'' + item.id + '\', \'' + id + '\')"></i>' +
-                                    '</label>';
+                        // Handle both direct response and wrapped response
+                        var response = data.value || data || {};
+                        var mode = response.mode || response.Mode || 'include';
+                        var selectedCountries = response.selectedCountries || response.SelectedCountries || [];
+
+                        if (selectedCountries && selectedCountries.length > 0) {
+                            // Create badges for each country with remove option
+                            var countryBadges = '';
+                            selectedCountries.forEach(function(item) {
+                                var countryId = item.countryId || item.CountryId || 0;
+                                var countryName = item.countryName || item.CountryName || '';
+                                if (countryName) {
+                                    countryBadges += '<label class="B_grnd" style="display: inline-block!important; color: black; background-color: #e6f3ff; padding: 2px 5px; margin: 2px; border-radius: 3px; border: 1px solid #b3d9ff;">' +
+                                        countryName +
+                                        '<i class="fa fa-times" style="margin-left: 5px; cursor: pointer; color: #0066cc;" onclick="deleteMappedCountry(\'' + countryId + '\', \'' + id + '\', \'' + mode + '\')" title="Remove"></i>' +
+                                        '</label>';
+                                }
                             });
+                            
+                            // Add the message text
+                            var messageText = '';
+                            if (mode === 'exclude') {
+                                messageText = '<span style="color: #666; font-style: italic; margin-left: 5px;">all countries except the selected ones.</span>';
+                            } else {
+                                messageText = '<span style="color: #666; font-style: italic; margin-left: 5px;">only for the countries chosen.</span>';
+                            }
+                            
+                            displayHtml = countryBadges + messageText;
+                        } else {
+                            displayHtml = '<span style="color:#888;">No countries mapped.</span>';
                         }
                        
-                        row.find('td:last').html(rowcol);
+                        row.find('td[data-itemid]').html(displayHtml);
                     }).fail(function (error) {
                         console.error("Error fetching mapped countries: ", error);
+                        row.find('td[data-itemid]').html('');
                     });
                 }
             });
@@ -1640,17 +1754,19 @@
             });
         }
 
-               function deleteMappedCountry(countryId, projectUrlId) {
+               function deleteMappedCountry(countryId, projectUrlId, mode) {
+            var modeText = mode === 'exclude' ? 'excluded' : 'included';
             Swal.fire({
                 title: 'Are you sure?',
-                text: "This country will be unmapped from the project.",
+                text: "This country will be removed from the " + modeText + " list.",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#aaa',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, remove it!'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    BlockUI();
                     $.ajax({
                         type: "POST",
                         url: '/VT/Home/DeleteMappingCountries',
@@ -1658,19 +1774,26 @@
                         contentType: "application/json",
                         dataType: "json",
                         success: function (response) {
+                            UnblockUI();
                             Swal.fire({
                                 icon: 'success',
-                                title: 'Deleted!',
-                                text: 'Mapping deleted successfully.',
-                                confirmButtonColor: '#3085d6'
+                                title: 'Removed!',
+                                text: 'Country removed successfully.',
+                                confirmButtonColor: '#3085d6',
+                                timer: 1500,
+                                showConfirmButton: false
                             });
-                            MappedCountriesView();
+                            // Refresh the view after a short delay
+                            setTimeout(function() {
+                                MappedCountriesView();
+                            }, 300);
                         },
                         error: function (error) {
+                            UnblockUI();
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: 'Failed to delete mapping. Please try again.',
+                                text: 'Failed to remove country. Please try again.',
                                 confirmButtonColor: '#d33'
                             });
                             console.error("Error deleting mapped country: ", error);

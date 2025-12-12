@@ -14,4 +14,6 @@ public partial class TblIpmapping
     public int? Stat { get; set; }
 
     public int? Isactive { get; set; }
+
+    public string? MappingMode { get; set; } // "Include" or "Exclude"
 }

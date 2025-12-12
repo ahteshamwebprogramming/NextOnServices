@@ -69,33 +69,61 @@ public class HomeController : Controller
             inputData.ProjectId = projectId;
 
             IActionResult actionResultStatus = await _statusMasterAPIController.GetStatusMaster();
-            ObjectResult objectResultStatus = (ObjectResult)actionResultStatus;
-            List<StatusMasterDTO> statusMasterDTO = ((List<StatusMasterDTO>)objectResultStatus.Value);
-
-            IActionResult actionResultProjectSum = await _projectsAPIController.GetDataProjectDetailsPage(inputData);
-            ObjectResult objectResultProjectSum = (ObjectResult)actionResultProjectSum;
-            outputData = ((ProjectDetailPageViewModel)objectResultProjectSum.Value);
-
-            IActionResult actionResultFractionComplete0 = await _projectsAPIController.GetFractionComplete<FractionComplete0>(inputData, 0);
-            ObjectResult objectResultFractionComplete0 = (ObjectResult)actionResultFractionComplete0;
-            outputData.FractionComplete0 = ((FractionComplete0)objectResultFractionComplete0.Value);
-
-            IActionResult actionResultFractionComplete1 = await _projectsAPIController.GetFractionComplete<FractionComplete1>(inputData, 1);
-            ObjectResult objectResultFractionComplete1 = (ObjectResult)actionResultFractionComplete1;
-            outputData.FractionComplete1 = ((FractionComplete1)objectResultFractionComplete1.Value);
-
-            IActionResult actionResultFractionComplete3 = await _projectsAPIController.GetFractionComplete<FractionComplete3>(inputData, 3);
-            ObjectResult objectResultFractionComplete3 = (ObjectResult)actionResultFractionComplete3;
-            outputData.FractionComplete3 = ((FractionComplete3)objectResultFractionComplete3.Value);
-
-            foreach (var item in outputData.ProjectDetailList)
+            List<StatusMasterDTO> statusMasterDTO = new List<StatusMasterDTO>();
+            if (actionResultStatus != null && actionResultStatus is ObjectResult objectResultStatus && objectResultStatus.Value != null)
             {
-                item.StatusName = statusMasterDTO.Where(x => x.Pvalue == item.Status).Select(x => x.Pstatus).FirstOrDefault();
+                statusMasterDTO = ((List<StatusMasterDTO>)objectResultStatus.Value) ?? new List<StatusMasterDTO>();
             }
 
-            foreach (var item in outputData.SurveySpecsList)
+            IActionResult actionResultProjectSum = await _projectsAPIController.GetDataProjectDetailsPage(inputData);
+            if (actionResultProjectSum != null && actionResultProjectSum is ObjectResult objectResultProjectSum && objectResultProjectSum.Value != null)
             {
-                item.StatusName = statusMasterDTO.Where(x => x.Pvalue == item.Status).Select(x => x.Pstatus).FirstOrDefault();
+                outputData = ((ProjectDetailPageViewModel)objectResultProjectSum.Value) ?? new ProjectDetailPageViewModel();
+            }
+            else
+            {
+                outputData = new ProjectDetailPageViewModel();
+                _logger.LogWarning($"GetDataProjectDetailsPage returned null or invalid result for ProjectId: {projectId}");
+            }
+
+            IActionResult actionResultFractionComplete0 = await _projectsAPIController.GetFractionComplete<FractionComplete0>(inputData, 0);
+            if (actionResultFractionComplete0 != null && actionResultFractionComplete0 is ObjectResult objectResultFractionComplete0 && objectResultFractionComplete0.Value != null)
+            {
+                outputData.FractionComplete0 = ((FractionComplete0)objectResultFractionComplete0.Value);
+            }
+
+            IActionResult actionResultFractionComplete1 = await _projectsAPIController.GetFractionComplete<FractionComplete1>(inputData, 1);
+            if (actionResultFractionComplete1 != null && actionResultFractionComplete1 is ObjectResult objectResultFractionComplete1 && objectResultFractionComplete1.Value != null)
+            {
+                outputData.FractionComplete1 = ((FractionComplete1)objectResultFractionComplete1.Value);
+            }
+
+            IActionResult actionResultFractionComplete3 = await _projectsAPIController.GetFractionComplete<FractionComplete3>(inputData, 3);
+            if (actionResultFractionComplete3 != null && actionResultFractionComplete3 is ObjectResult objectResultFractionComplete3 && objectResultFractionComplete3.Value != null)
+            {
+                outputData.FractionComplete3 = ((FractionComplete3)objectResultFractionComplete3.Value);
+            }
+
+            if (outputData.ProjectDetailList != null)
+            {
+                foreach (var item in outputData.ProjectDetailList)
+                {
+                    if (item != null)
+                    {
+                        item.StatusName = statusMasterDTO.Where(x => x.Pvalue == item.Status).Select(x => x.Pstatus).FirstOrDefault();
+                    }
+                }
+            }
+
+            if (outputData.SurveySpecsList != null)
+            {
+                foreach (var item in outputData.SurveySpecsList)
+                {
+                    if (item != null)
+                    {
+                        item.StatusName = statusMasterDTO.Where(x => x.Pvalue == item.Status).Select(x => x.Pstatus).FirstOrDefault();
+                    }
+                }
             }
 
             outputData.Project = inputData;
@@ -116,12 +144,21 @@ public class HomeController : Controller
         {
             DashboardViewModel outputData = new DashboardViewModel();
             IActionResult actionResultUsers = await _accountAPIController.GetUsers();
-            ObjectResult objectResultUsers = (ObjectResult)actionResultUsers;
-            outputData.Managers = (List<UserDTO>)objectResultUsers.Value;
+            if (actionResultUsers != null && actionResultUsers is ObjectResult objectResultUsers && objectResultUsers.Value != null)
+            {
+                outputData.Managers = ((List<UserDTO>)objectResultUsers.Value) ?? new List<UserDTO>();
+            }
+            else
+            {
+                outputData.Managers = new List<UserDTO>();
+            }
 
             IActionResult actionResultProjectSum = await _projectsAPIController.GetProjectsCount(UserId ?? default(int));
-            ObjectResult objectResultProjectSum = (ObjectResult)actionResultProjectSum;
-            outputData.ProjectCountSummary = ((IEnumerable<DashboardProjectCountSummaryViewModel>)objectResultProjectSum.Value).FirstOrDefault();
+            if (actionResultProjectSum != null && actionResultProjectSum is ObjectResult objectResultProjectSum && objectResultProjectSum.Value != null)
+            {
+                var projectCountSummary = ((IEnumerable<DashboardProjectCountSummaryViewModel>)objectResultProjectSum.Value);
+                outputData.ProjectCountSummary = projectCountSummary?.FirstOrDefault();
+            }
 
             UserDTO currentUser = new UserDTO();
             currentUser.UserId = UserId ?? default(int);
@@ -139,8 +176,15 @@ public class HomeController : Controller
     {
         DashboardViewModel outputData = new DashboardViewModel();
         IActionResult actionResult = await _projectsAPIController.GetProjects(inputData);
-        ObjectResult objResult = (ObjectResult)actionResult;
-        outputData.ListOfProjects = (List<ProjectTableViewModel>)objResult.Value;
+        
+        if (actionResult != null && actionResult is ObjectResult objResult && objResult.Value != null)
+        {
+            outputData.ListOfProjects = ((List<ProjectTableViewModel>)objResult.Value) ?? new List<ProjectTableViewModel>();
+        }
+        else
+        {
+            outputData.ListOfProjects = new List<ProjectTableViewModel>();
+        }
 
         return PartialView("_Dashboard/_ProjectTable", outputData);
     }
@@ -473,9 +517,12 @@ public class HomeController : Controller
     }
     public async Task<IActionResult> GetMappedCountries([FromBody] ProUrlIDModel ProUrlID)
     {
-       
         var res = await _projectsAPIController.GetMappedCountries(ProUrlID.ProUrlID);
-        return Ok(res);
+        if (res is ObjectResult objectResult && objectResult.Value != null)
+        {
+            return Ok(new { value = objectResult.Value });
+        }
+        return Ok(new { value = new List<object>() });
     }
     [HttpPost]
     public async Task<IActionResult> GetProjectsDetailsbyid([FromBody]ProjectDTO model)

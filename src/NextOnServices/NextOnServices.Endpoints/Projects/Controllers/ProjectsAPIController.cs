@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Drawing.Printing;
+using System.Linq;
 using System.Linq.Expressions;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -390,34 +391,112 @@ public class ProjectsAPIController : ControllerBase
     {
         try
         {
-                var projecturlid = inputDTO.Id;
-                var countries = inputDTO.Countries;
+            var projecturlid = inputDTO.Id;
+            var selectedCountries = inputDTO.Countries;
+            var mode = inputDTO.Mode ?? "include"; // Default to include if not specified
 
-                
-                if (countries == null || countries.Count == 0)
-                {
-                    return BadRequest(new { success = false, message = "No countries selected." });
-                }
-
-                foreach (var countryid in countries)
-                {   
-                    string sQuery = @"
-                IF ((SELECT COUNT(*) FROM tblIPMapping WHERE prourlid = @prourlid AND countryid = @countryid AND isactive = 1) = 0)
-                BEGIN
-                    INSERT INTO tblIPMapping (prourlid, countryid, stat, isactive) 
-                    VALUES (@prourlid, @countryid, 0, 1)
-                END";
-
-                    var sParam = new { @prourlid = projecturlid, @countryid = countryid };
-    
-                    await _unitOfWork.Project.ExecuteQueryAsync(sQuery, sParam);
-                }
-
-                return Ok(new { success = true, message = "Countries saved successfully." });
-            
-               
+            if (selectedCountries == null || selectedCountries.Count == 0)
+            {
+                return BadRequest(new { success = false, message = "No countries selected." });
             }
-        catch (Exception ex) { return null; }
+
+            // NEW APPROACH: Store only selected countries, not all mapped countries
+            // For Include mode: Store only the included countries
+            // For Exclude mode: Store only the excluded countries (much faster!)
+            var countriesToStore = selectedCountries; // Store only what user selected
+            string mappingMode = mode.ToLower() == "exclude" ? "Exclude" : "Include";
+
+            // Store the mode in stat column: 0 = include, 1 = exclude
+            int statValue = mode.ToLower() == "exclude" ? 1 : 0;
+
+            // Optimized: Store only selected countries (not all mapped ones)
+            // Convert country IDs to integers
+            var countryIdList = countriesToStore.Select(c => int.Parse(c)).ToList();
+            
+            if (countryIdList.Any())
+            {
+                // Use a single optimized SQL statement that does everything at once
+                // This is the fastest approach - one query instead of multiple operations
+                var countryIdsString = string.Join(",", countryIdList);
+                
+                // Use stat column only (works without MappingMode column)
+                // This stores only selected countries, not all mapped ones - much faster!
+                string optimizedBatchQuery = $@"
+                    -- Step 1: Deactivate all existing mappings for this project
+                    UPDATE tblIPMapping 
+                    SET isactive = 0 
+                    WHERE prourlid = {projecturlid} AND isactive = 1;
+                    
+                    -- Step 2: Insert new mappings that don't exist (batch insert) - only selected countries
+                    INSERT INTO tblIPMapping (prourlid, countryid, stat, isactive)
+                    SELECT {projecturlid}, CountryId, {statValue}, 1
+                    FROM CountryMaster
+                    WHERE CountryId IN ({countryIdsString})
+                    AND NOT EXISTS (
+                        SELECT 1 FROM tblIPMapping 
+                        WHERE prourlid = {projecturlid} AND countryid = CountryMaster.CountryId
+                    );
+                    
+                    -- Step 3: Reactivate existing mappings
+                    UPDATE tblIPMapping 
+                    SET isactive = 1, stat = {statValue}
+                    WHERE prourlid = {projecturlid} 
+                    AND countryid IN ({countryIdsString})
+                    AND isactive = 0;";
+
+                await _unitOfWork.Project.ExecuteQueryAsync(optimizedBatchQuery, null);
+            }
+            else
+            {
+                // If no countries to map, just deactivate all
+                string deactivateQuery = @"
+                    UPDATE tblIPMapping 
+                    SET isactive = 0 
+                    WHERE prourlid = @prourlid AND isactive = 1";
+                await _unitOfWork.Project.ExecuteQueryAsync(deactivateQuery, new { prourlid = projecturlid });
+            }
+
+            // Get country names for selected countries (do this after the main operation for better UX)
+            List<SelectedCountryInfo> selectedCountriesInfo = new List<SelectedCountryInfo>();
+            if (selectedCountries != null && selectedCountries.Any())
+            {
+                var selectedCountryIds = selectedCountries.Select(c => int.Parse(c)).ToList();
+                string placeholders = string.Join(",", selectedCountryIds);
+                string getSelectedCountriesQuery = $@"
+                    SELECT CountryId, Country 
+                    FROM CountryMaster 
+                    WHERE CountryId IN ({placeholders})";
+                var selectedCountriesData = await _unitOfWork.Project.GetTableData<CountryMaster>(getSelectedCountriesQuery, null);
+                
+                if (selectedCountriesData != null)
+                {
+                    selectedCountriesInfo = selectedCountriesData.Select(country => new SelectedCountryInfo
+                    {
+                        CountryId = country.CountryId,
+                        CountryName = country.Country ?? ""
+                    }).ToList();
+                }
+            }
+
+            // For exclude mode, also store the excluded countries in a special record
+            // We'll use a negative countryid or special marker to store excluded countries
+            // Actually, let's store them in a JSON-like format or use a different approach
+            // For now, we'll calculate them when retrieving
+
+            string modeText = mode.ToLower() == "exclude" ? "excluded" : "included";
+            return Ok(new { 
+                success = true, 
+                message = $"Countries {modeText} successfully.", 
+                mode = mode, 
+                mappedCount = countryIdList.Count,
+                selectedCountries = selectedCountriesInfo
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in UpdateMappings - ProjectUrlId: {inputDTO?.Id}, Mode: {inputDTO?.Mode}, Error: {ex.Message}");
+            return StatusCode(500, new { success = false, message = "An error occurred while saving countries.", error = ex.Message });
+        }
     
 
 
@@ -429,27 +508,29 @@ public class ProjectsAPIController : ControllerBase
         try
         {
             var projecturlid = inputDTO.ProjectURLID;
-            var countries = inputDTO.CountryID;
+            var countryId = inputDTO.CountryID;
 
+            // NEW APPROACH: Simply remove the country from stored list (works for both modes)
+            // In both Include and Exclude modes, we just remove the selected country
             string sQuery = @"
-        UPDATE tblIPMapping 
-        SET isactive=0 
-        WHERE Id=@countryId AND prourlid=@projecturlid AND isactive=1";
+                UPDATE tblIPMapping 
+                SET isactive = 0 
+                WHERE countryid = @countryid AND prourlid = @projecturlid AND isactive = 1";
 
             var sParam = new
             {
                 projecturlid = projecturlid,
-                countryId = countries
+                countryid = countryId
             };
 
             await _unitOfWork.Project.ExecuteQueryAsync(sQuery, sParam);
 
-            return Ok(new { success = true, message = "Countries updated successfully." });
+            return Ok(new { success = true, message = "Country removed successfully." });
         }
         catch (Exception ex)
         {
-            // Log the exception if necessary
-            return StatusCode(500, new { success = false, message = "An error occurred while updating countries.", error = ex.Message });
+            _logger.LogError(ex, $"Error in DeleteMappings - ProjectUrlId: {inputDTO?.ProjectURLID}, CountryId: {inputDTO?.CountryID}, Error: {ex.Message}");
+            return StatusCode(500, new { success = false, message = "An error occurred while removing country.", error = ex.Message });
         }
     }
     public async Task<IActionResult> GetMappedCountries(int id)
@@ -458,16 +539,58 @@ public class ProjectsAPIController : ControllerBase
         {
             var projecturlid = id;
 
-           
-            string sQuery = @"
-            SELECT tp.id, tc.country 
-            FROM tblIPMapping tp 
-            INNER JOIN CountryMaster tc ON tp.countryid = tc.countryid  
-            WHERE tp.prourlid = @projecturlid AND tp.isactive = 1";
-            var sParam = new { projecturlid };
-            var mappedCountries = await _unitOfWork.Project.GetTableData<MappedCountryResponse>(sQuery, sParam);
+            // Get the mode from the first active mapping using stat column
+            // stat: 0 = include, 1 = exclude
+            string mode = "include";
+            var modeParam = new { projecturlid };
+            
+            string getModeQuery = @"
+                SELECT TOP 1 stat
+                FROM tblIPMapping 
+                WHERE prourlid = @projecturlid AND isactive = 1";
+            var modeResult = await _unitOfWork.Project.GetTableData<dynamic>(getModeQuery, modeParam);
+            if (modeResult != null && modeResult.Any())
+            {
+                var stat = modeResult.First();
+                // Use stat column (0 = include, 1 = exclude)
+                if (stat.stat != null && Convert.ToInt32(stat.stat) == 1)
+                {
+                    mode = "exclude";
+                }
+            }
 
-            return Ok(mappedCountries);
+            // NEW APPROACH: Get only the stored selected countries (much faster!)
+            // The stored countries are the ones the user selected, not all mapped countries
+            List<SelectedCountryInfo> selectedCountries = new List<SelectedCountryInfo>();
+            
+            // Get stored countries (these are the selected countries, not all mapped ones)
+            string sQuery = @"
+                SELECT DISTINCT tp.countryid, tc.country 
+                FROM tblIPMapping tp 
+                INNER JOIN CountryMaster tc ON tp.countryid = tc.countryid  
+                WHERE tp.prourlid = @projecturlid AND tp.isactive = 1";
+            var sParam = new { projecturlid };
+            var storedCountries = await _unitOfWork.Project.GetTableData<dynamic>(sQuery, sParam);
+            
+            if (storedCountries != null)
+            {
+                foreach (var item in storedCountries)
+                {
+                    selectedCountries.Add(new SelectedCountryInfo
+                    {
+                        CountryId = Convert.ToInt32(item.countryid),
+                        CountryName = item.country?.ToString() ?? ""
+                    });
+                }
+            }
+
+            var response = new IPMappingConfigResponse
+            {
+                Mode = mode,
+                SelectedCountries = selectedCountries
+            };
+
+            return Ok(response);
         }
         catch (Exception ex)
         {

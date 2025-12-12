@@ -218,69 +218,90 @@ public class ProjectsController : Controller
     [HttpPost]
     public async Task<JsonResult> GetProjectList()
     {
+        var draw = Request.Form["draw"].FirstOrDefault();
+        int drawValue = 0;
+        int.TryParse(draw, out drawValue);
+
         try
         {
-            int totalRecord = 0;
-            int filterRecord = 0;
-            var draw = Request.Form["draw"].FirstOrDefault();
             var sortColumn = Request.Form["columns[" + Request.Form["order[0][column]"].FirstOrDefault() + "][name]"].FirstOrDefault();
-            var sortColumnIndex = Convert.ToInt32(Request.Form["order[0][column]"].FirstOrDefault());
+            var sortColumnIndexStr = Request.Form["order[0][column]"].FirstOrDefault();
+            int sortColumnIndex = 0;
+            int.TryParse(sortColumnIndexStr, out sortColumnIndex);
             var sortColumnDirection = Request.Form["order[0][dir]"].FirstOrDefault();
             var searchValue = Request.Form["search[value]"].FirstOrDefault();
             int pageSize = Convert.ToInt32(Request.Form["length"].FirstOrDefault() ?? "0");
             int skip = Convert.ToInt32(Request.Form["start"].FirstOrDefault() ?? "0");
 
             PagedListParams pagedListParams = new PagedListParams();
-            pagedListParams.searchValue = searchValue;
+            pagedListParams.searchValue = searchValue ?? string.Empty;
             pagedListParams.sortColumn = sortColumn;
-            pagedListParams.sortColumnDirection = sortColumnDirection;
             pagedListParams.sortColumnDirection = sortColumnDirection;
             pagedListParams.sortColumnIndex = sortColumnIndex;
             pagedListParams.skip = skip;
             pagedListParams.pageSize = pageSize;
 
-
-
             var resProject = await _projectsAPIController.GetProjectsList(pagedListParams);
             var resProjectCount = await _projectsAPIController.TotalProjectsFiltered(pagedListParams);
 
-            if (resProject == null)
+            // Always return a valid DataTables response format, even on errors
+            if (resProject == null || !(resProject is ObjectResult objectResultProject) || objectResultProject.StatusCode != 200)
             {
-                return null;
+                _logger.LogWarning("GetProjectList: resProject is null or invalid status code");
+                return Json(new
+                {
+                    draw = drawValue,
+                    recordsTotal = 0,
+                    recordsFiltered = 0,
+                    data = new List<ListProject>()
+                });
             }
-            if (((Microsoft.AspNetCore.Mvc.ObjectResult)resProject).StatusCode != 200)
+
+            if (resProjectCount == null || !(resProjectCount is ObjectResult objectResultCount) || objectResultCount.StatusCode != 200)
             {
-                return null;
+                _logger.LogWarning("GetProjectList: resProjectCount is null or invalid status code");
+                return Json(new
+                {
+                    draw = drawValue,
+                    recordsTotal = 0,
+                    recordsFiltered = 0,
+                    data = new List<ListProject>()
+                });
             }
-            if (resProjectCount == null)
-            {
-                return null;
-            }
-            if (((Microsoft.AspNetCore.Mvc.ObjectResult)resProjectCount).StatusCode != 200)
-            {
-                return null;
-            }
-            IEnumerable<ListProject> data = ((IEnumerable<ListProject>)((Microsoft.AspNetCore.Mvc.ObjectResult)resProject).Value);   //_context.Set<Employees>().AsQueryable();
+
+            IEnumerable<ListProject> data = objectResultProject.Value as IEnumerable<ListProject> ?? new List<ListProject>();
 
             foreach (var item in data)
             {
-                item.ProjectIdEnc = CommonHelper.EncryptURLHTML(item.ProjectId.ToString());
+                if (item != null)
+                {
+                    item.ProjectIdEnc = CommonHelper.EncryptURLHTML(item.ProjectId.ToString());
+                }
             }
 
-            List<int?> totalProjectCount = (List<int?>)((Microsoft.AspNetCore.Mvc.ObjectResult)resProjectCount).Value;   //_context.Set<Employees>().AsQueryable();
+            List<int?> totalProjectCount = objectResultCount.Value as List<int?> ?? new List<int?>();
+            int totalCount = totalProjectCount.FirstOrDefault() ?? 0;
+
             return Json(new
             {
-                draw = draw,
-                recordsTotal = totalProjectCount[0],
-                recordsFiltered = totalProjectCount[0],
+                draw = drawValue,
+                recordsTotal = totalCount,
+                recordsFiltered = totalCount,
                 data = data
             });
         }
         catch (Exception ex)
         {
-            return null;
+            _logger.LogError(ex, "Error in GetProjectList");
+            // Always return a valid DataTables response format on exception
+            return Json(new
+            {
+                draw = drawValue,
+                recordsTotal = 0,
+                recordsFiltered = 0,
+                data = new List<ListProject>()
+            });
         }
-
     }
 
     [HttpPost]

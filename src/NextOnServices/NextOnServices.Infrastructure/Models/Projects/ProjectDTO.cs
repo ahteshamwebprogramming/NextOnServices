@@ -75,6 +75,12 @@ public class SaveMapIPRequest
 {
     public int Id { get; set; }
     public List<string> Countries { get; set; }
+    public string Mode { get; set; } = "include"; // "include" or "exclude"
+}
+
+public class CountryIdModel
+{
+    public int CountryId { get; set; }
 }
 
 public class DeleteMapIPRequest
@@ -86,6 +92,18 @@ public class MappedCountryResponse
 {
     public int Id { get; set; }
     public string Country { get; set; }
+}
+
+public class IPMappingConfigResponse
+{
+    public string Mode { get; set; }
+    public List<SelectedCountryInfo> SelectedCountries { get; set; }
+}
+
+public class SelectedCountryInfo
+{
+    public int CountryId { get; set; }
+    public string CountryName { get; set; }
 }
 public class ProUrlIDModel
 {

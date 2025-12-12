@@ -12,116 +12,618 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Login</title>
-    <link href="https://fonts.googleapis.com/css?family=Assistant:400,700" rel="stylesheet">
-    <link rel="stylesheet" href="~/LoginRoot/style.css">
+    <title>VT Login</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="~/theme/images/favicon.png" />
+    <meta name="robots" content="noindex, follow">
+
+    <!-- External libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
+            integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        .login .form .btn-login {
-            background: none;
-            text-decoration: none;
-            color: white;
-            box-shadow: none;
-            border-radius: 3px;
-            padding: 8px 2em;
-            transition: 0.5s;
-            background: #089387;
-            border: 0 !important;
-        }
-        input{padding:10px; border-radius:8px;}
-        .login {
-            padding: 0px;
-            border-radius: 20px;
-            overflow:hidden;
-            box-shadow: none;
-            border: #fff solid 0px;
-            background:#fff;
-        }
-        .login_middle{
-            padding-right: 50px;
-            padding-left: 50px;
-            padding-bottom: 50px;
-            padding-top: 40px;
-            background: linear-gradient(to right, #006767, #0785b4);
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --dark: #1e1b4b;
+            --light: #f8fafc;
         }
 
-        body {
-            /*background: #cbdbea;*/
-            background: #ebebeb;
-            /*background: #EEF5FF;*/
-            /*background: #FFEBD8;*/
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: transparent;
+            z-index: 1;
+        }
+
+        /* Beautiful Animated Background - Flowing Waves & Morphing Blobs */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a2e 50%, #16213e 100%);
+        }
+
+        /* Morphing blob 1 */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: blobMorph 20s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .blob-2 {
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, #ec4899, #f97316);
+            bottom: -10%;
+            right: -10%;
+            animation-delay: 5s;
+        }
+
+        .blob-3 {
+            width: 450px;
+            height: 450px;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 10s;
+        }
+
+        @@keyframes blobMorph {
+            0%, 100% {
+                border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+                transform: translate(50px, -50px) scale(1.1);
+            }
+            50% {
+                border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+                transform: translate(-30px, 30px) scale(0.9);
+            }
+            75% {
+                border-radius: 40% 60% 30% 60% / 60% 30% 60% 40%;
+                transform: translate(30px, 50px) scale(1.05);
+            }
+        }
+
+        /* Animated wave */
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, 
+                rgba(99, 102, 241, 0.1) 0%, 
+                transparent 25%,
+                rgba(139, 92, 246, 0.1) 50%,
+                transparent 75%,
+                rgba(236, 72, 153, 0.1) 100%);
+            animation: waveMove 15s linear infinite;
+            opacity: 0.5;
+        }
+
+        .wave-1 {
+            top: -50%;
+            left: -50%;
+            animation-delay: 0s;
+        }
+
+        .wave-2 {
+            top: -50%;
+            left: -50%;
+            animation-delay: 5s;
+            animation-duration: 20s;
+        }
+
+        @@keyframes waveMove {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            100% {
+                transform: translate(50px, 50px) rotate(360deg);
+            }
+        }
+
+        /* Floating particles with trail */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(99, 102, 241, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 1),
+                        0 0 20px rgba(99, 102, 241, 0.5);
+            animation: particleFloat 15s infinite ease-in-out;
+        }
+
+        .particle:nth-child(1) {
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .particle:nth-child(2) {
+            top: 40%;
+            left: 80%;
+            animation-delay: 2s;
+            background: rgba(139, 92, 246, 0.8);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 1),
+                        0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .particle:nth-child(3) {
+            top: 70%;
+            left: 20%;
+            animation-delay: 4s;
+            background: rgba(236, 72, 153, 0.8);
+            box-shadow: 0 0 10px rgba(236, 72, 153, 1),
+                        0 0 20px rgba(236, 72, 153, 0.5);
+        }
+
+        .particle:nth-child(4) {
+            top: 30%;
+            left: 60%;
+            animation-delay: 6s;
+        }
+
+        .particle:nth-child(5) {
+            top: 80%;
+            left: 70%;
+            animation-delay: 8s;
+            background: rgba(139, 92, 246, 0.8);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 1),
+                        0 0 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .particle:nth-child(6) {
+            top: 10%;
+            left: 50%;
+            animation-delay: 10s;
+            background: rgba(236, 72, 153, 0.8);
+            box-shadow: 0 0 10px rgba(236, 72, 153, 1),
+                        0 0 20px rgba(236, 72, 153, 0.5);
+        }
+
+        @@keyframes particleFloat {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.6;
+            }
+            25% {
+                transform: translate(100px, -150px) scale(1.5);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-80px, -100px) scale(0.8);
+                opacity: 0.7;
+            }
+            75% {
+                transform: translate(120px, 50px) scale(1.2);
+                opacity: 0.9;
+            }
+        }
+
+        /* Shimmer effect */
+        .shimmer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                transparent 100%
+            );
+            animation: shimmerMove 8s infinite;
+        }
+
+        @@keyframes shimmerMove {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Left side - Animated background - Hidden */
+        .left-panel {
+            display: none;
+        }
+
+        #three-canvas {
+            display: none;
+        }
+
+        .left-content {
+            display: none;
+        }
+
+        /* Centered Login form */
+        .right-panel {
+            width: 500px;
+            max-width: 90%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px 50px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(99, 102, 241, 0.1);
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .login-header p {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(0,0,0,0.4);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1), 0 0 20px rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            transition: left 0.5s ease;
+            z-index: -1;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+
+        .login-btn:hover::before {
+            left: 0;
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .forgot-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-link:hover {
+            color: var(--primary);
+        }
+
+        .footer-info {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .footer-info i {
+            margin-right: 6px;
+            color: var(--primary);
         }
 
         .text-danger {
-            color: red;
-            font-size: 14px;
-            font-weight: 600;
+            background: rgba(220, 53, 69, 0.15);
+            backdrop-filter: blur(10px);
+            color: #ff6b6b;
+            margin-top: 12px;
+            font-size: 0.9rem;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 3px solid #ff6b6b;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+            animation: shake 0.5s ease;
         }
 
-            .text-danger ul {
-                list-style: none;
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .text-danger ul {
+            list-style: none;
+            font-size: 13px;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        /* Logo from Supplier/Login */
+        #container > .brand-logo {
+            position: fixed;
+            top: 16px;
+            left: 16px;
+            width: 190px;
+            z-index: 2147483647;
+            background: transparent !important;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @@media (max-width: 968px) {
+            .right-panel {
+                width: 95%;
+                padding: 40px 30px;
             }
-
-        .login .form input[type=text].text, .login .form input[type=text].text:active, .login .form input[type=text].text:hover, .login .form input[type=text].text:focus, .login .form input[type=text].text:visited, .login .form input[type=text].text:focus-within, .login .form input[type=text].text:focus-visible, .login .form input[type=text].text:target, .login .form input[type=password].password, .login .form input[type=password].password:active, .login .form input[type=password].password:hover, .login .form input[type=password].password:focus, .login .form input[type=password].password:visited, .login .form input[type=password].password:focus-within, .login .form input[type=password].password:focus-visible, .login .form input[type=password].password:target {
-            background: none !important;
         }
 
-        .logoSection {
-           
-            padding-bottom: 15px;
-            padding-top: 15px;
-            text-align: center;
-            background-color: white;
+        /* Floating animation */
+        @@keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
 
-        .footerSection {
-            padding: 15px;
-            text-align: center;
-            background-color: white;
-           
-            color: #026467;
+        .left-content {
+            animation: float 6s ease-in-out infinite;
         }
-
     </style>
 </head>
+
+<!-- SVG filters for logo (from Supplier/Login) -->
+<svg width="0" height="0" style="position:absolute; left:-9999px; top:-9999px; overflow:hidden;" aria-hidden="true" focusable="false">
+    <filter id="knockoutWhite" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+     -1 -1 -1 3 0" />
+    </filter>
+    <filter id="knockoutWhiteSoft" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="
+      1 0 0 0 0
+      0 1 0 0 0
+      0 0 1 0 0
+     -1 -1 -1 3 0" result="alphaFix" />
+        <feGaussianBlur in="alphaFix" stdDeviation="0.4" result="blurred" />
+        <feComponentTransfer>
+            <feFuncA type="linear" slope="1.15" intercept="-0.08" />
+        </feComponentTransfer>
+    </filter>
+</svg>
+
 <body>
-    @*<img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;position:absolute;top:50px;right:100px;" />*@
-    <!-- partial:index.partial.html -->
-    <section class='login' id='login' style="width:28%;min-height:30vh">
-        <div style="" class="logoSection">
-            <img src="~/LoginRoot/NextonLogo.png" style="width:190px;mix-blend-mode: multiply;" />
-        </div>
+    <!-- Beautiful Animated Background -->
+    <div class="animated-bg">
+        <!-- Morphing Blobs -->
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+        
+        <!-- Animated Waves -->
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        
+        <!-- Floating Particles -->
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        
+        <!-- Shimmer Effect -->
+        <div class="shimmer"></div>
+    </div>
 
-        @*<div class='head'>
-        <!--<h1 class='company'>Universe Explorer</h1>-->
-        <img src="~/LoginRoot/NextonLogo.png" style="height:50px;mix-blend-mode: multiply;" />
-        </div>*@
-        <div class="login_middle">
-            <p class='msg' style="margin-top: 0px;margin-bottom: 25px; font-size:22px;">Welcome back</p>
-            <div class='form'>
-                <form method="post" action="/VT/Account/Login">
-                    @Html.ValidationSummary("" ,new{@class = "text-danger"})
-                    <input style="padding-left:10px" type="text" placeholder='Username' class='text' id='username' required asp-for="UserName"><br>
-                    <input style="padding-left:10px" type="password" placeholder='••••••••••••••' class='password' asp-for="Password"><br><br>
-                    @*<a href="/Account/Login" class='btn-login' id='do-login'>Login</a>*@
-                    <button type="submit" class='btn-login' id='do-login'>Login</button>
-                    <a href="#" class='forgot'>Forgot?</a>
+    <div id="container">
+        <!-- Logo from Supplier/Login -->
+        <img src="/LoginRoot/NextonLogo.png"
+             alt="NextOnServices"
+             class="brand-logo"
+             style="
+       position:fixed; top:16px; left:16px; width:190px;
+       z-index:2147483647; pointer-events:none;
+       filter:url(#knockoutWhiteSoft);
+     ">
 
+        <!-- Centered Login Form -->
+        <div class="right-panel">
+            <div class="login-header">
+                <h2>Login</h2>
+                <p>Enter your credentials to access your account</p>
+            </div>
 
+            <form method="post" action="/VT/Account/Login" id="login-form" novalidate>
+                <div class="form-group">
+                    <input asp-for="UserName" 
+                           id="username" 
+                           class="form-control" 
+                           placeholder="Enter your username" 
+                           aria-label="Username" 
+                           required />
+                </div>
 
-                </form>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input asp-for="Password" 
+                           id="password" 
+                           type="password" 
+                           class="form-control" 
+                           placeholder="Enter your password" 
+                           aria-label="Password" />
+                </div>
+
+                <button type="submit" class="login-btn">Sign In</button>
+
+                <a href="#" class="forgot-link">Forgot password?</a>
+            </form>
+
+            <div class="footer-info">
+                <p>
+                    <i class="fas fa-envelope"></i>info@nextonservices.com | 
+                    <i class="fas fa-phone"></i>+1-818-453-1793
+                </p>
             </div>
         </div>
-        <div style="" class="footerSection">
-            <p style="margin-bottom:0px;margin-top:0px;"><i class="fa fa-envelope"></i>info@nextonservices.com | <i class="fa fa-mobile"></i>+1-818-453-1793</p>
-        </div>
-    </section>
-    <footer>
-        @*<p><i class="fa fa-envelope"></i>info@nextonservices.com | <i class="fa fa-mobile"></i>+1-818-453-1793</p>*@
+    </div>
 
-    </footer>
-    <!-- partial -->
-    @*<script src="~/LoginRoot/script.js"></script>*@
+    <!-- Three.js animated background - Removed -->
 
+        // GSAP animations
+        gsap.from('.right-panel', { 
+            duration: 1, 
+            y: 50, 
+            opacity: 0, 
+            scale: 0.95,
+            ease: 'power3.out',
+            delay: 0.3
+        });
+        
+        gsap.from('.login-header', {
+            duration: 0.8,
+            y: -20,
+            opacity: 0,
+            ease: 'power2.out',
+            delay: 0.6
+        });
+        
+        gsap.from('.form-group', {
+            duration: 0.6,
+            x: -30,
+            opacity: 0,
+            stagger: 0.1,
+            ease: 'power2.out',
+            delay: 0.8
+        });
+        
+        gsap.from('.login-btn', {
+            duration: 0.6,
+            y: 20,
+            opacity: 0,
+            ease: 'back.out(1.7)',
+            delay: 1.2
+        });
+    </script>
 </body>
 </html>

@@ -19,6 +19,7 @@
     <!-- DataTables CSS -->
     @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"> *@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/rowgroup/1.4.0/css/rowGroup.bootstrap4.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-confirm/3.3.2/jquery-confirm.min.css">
 
     <style>
@@ -281,7 +282,70 @@
             color: #040404
         }
 
-      
+        /* Row grouping styles */
+        tr.group {
+            background-color: #e7f3ff !important;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        tr.group:hover {
+            background-color: #d0e7ff !important;
+        }
+
+        tr.group td {
+            border-top: 2px solid #0056b3;
+            border-bottom: 2px solid #0056b3;
+        }
+
+        .group-toggle {
+            margin-right: 8px;
+            display: inline-block;
+            width: 12px;
+            text-align: center;
+        }
+
+        .country-link-group {
+            margin-top: 5px;
+            padding-left: 20px;
+        }
+
+        .country-link-item {
+            margin: 3px 0;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-left: 3px solid #007bff;
+            border-radius: 3px;
+        }
+
+        .country-link-item strong {
+            color: #0056b3;
+            margin-right: 8px;
+        }
+
+        .country-link-item a {
+            color: #007bff;
+            word-break: break-all;
+        }
+
+        .country-link-item a:hover {
+            text-decoration: underline;
+        }
+
+        .grouped-links-container {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 5px;
+            margin-top: 10px;
+        }
+        
+        tr.group.expanded .grouped-links-container {
+            display: block !important;
+        }
+        
+        tr.group:not(.expanded) .grouped-links-container {
+            display: none !important;
+        }
 
     </style>
 </head>
@@ -582,6 +646,7 @@
     <!-- DataTables JS -->
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/rowgroup/1.4.0/js/dataTables.rowGroup.min.js"></script>
 
     <script src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -834,15 +899,22 @@
                     "type": "POST",
                     "contentType": "application/json; charset=utf-8",
                     "data": function (d) {
-                        // d.pageNumber = Math.floor(d.start / d.length) + 1;  // Calculate the page number
-                        // d.pageSize = d.length;  // Number of records per page
-                        // d.searchValue = d.search.value;  // Capture search value
-                        // d.orderByColumn = d.order[0].column;  // Get the column to sort by
-                        // d.orderByDirection = d.order[0].dir;  // Ascending or descending
-                        // d.draw = d.draw;  // Ascending or descending
-                        console.log(d);
+                        // Ensure data is always sorted by PID (column index 1) for proper grouping
+                        // Map column index to column data property name for server
+                        if (d.order && d.order.length > 0) {
+                            const orderColIndex = d.order[0].column;
+                            if (d.columns && d.columns[orderColIndex]) {
+                                // Ensure the column data property is set correctly
+                                if (orderColIndex === 1 && d.columns[orderColIndex].data !== 'pid') {
+                                    d.columns[orderColIndex].data = 'pid';
+                                }
+                            }
+                        } else {
+                            // Default to sorting by PID
+                            d.order = [{ column: 1, dir: 'asc' }];
+                        }
+                        console.log('DataTables request:', d);
                         return JSON.stringify(d);
-                        //return d;
                     },
                     "dataSrc": function (json) {
                         console.log("Server Response:", json); // Log the response to the console
@@ -883,10 +955,13 @@
                             return `<span class="status-badge ${statusInfo.className}">${statusInfo.text}</span>`;
                         }
                     },
-                    { "data": "pid" },
+                    { 
+                        "data": "pid",
+                        "visible": true
+                    },
                     {
                         "data": "country",
-                        "render": function (data, type) {
+                        "render": function (data, type, row) {
                             if (!data) {
                                 return '';
                             }
@@ -903,7 +978,7 @@
                     { "data": "respondants" },
                     {
                         "data": "oLink",
-                        "render": function (data, type) {
+                        "render": function (data, type, row) {
                             if (!data) {
                                 return '';
                             }
@@ -913,7 +988,14 @@
                             }
 
                             const safeText = $('<div>').text(data).html().replace(/\s+/g, ' ').trim();
-                            return `<div class="cell-nowrap" title="${safeText}">${safeText}</div>`;
+                            
+                            // Check if it's a valid URL
+                            const isUrl = safeText.startsWith('http://') || safeText.startsWith('https://');
+                            const linkHtml = isUrl 
+                                ? `<a href="${safeText}" target="_blank" title="${safeText}">${safeText}</a>`
+                                : safeText;
+                            
+                            return `<div class="cell-nowrap" title="${safeText}">${linkHtml}</div>`;
                         }
                     },
                     // { "data": "mLink" },
@@ -989,7 +1071,62 @@
                         // }
                     }
                 ],
-                "order": [[1, 'asc']],
+                "order": [[1, 'asc']], // Sort by PID first (column index 1)
+                "rowGroup": {
+                    "dataSrc": function(row) {
+                        // Explicitly return the PID value for grouping
+                        // Normalize the PID value to ensure consistent grouping
+                        const pid = (row.pid || row.PID || '').toString().trim();
+                        // Debug: log if PID is missing or unexpected
+                        if (!pid) {
+                            console.warn('Row missing PID:', row);
+                        }
+                        return pid;
+                    },
+                    "startRender": function (rows, group) {
+                        // Simple group header - just show the NXT Entry without countries/links
+                        const groupText = (group || 'N/A').toString().trim();
+                        
+                        return $('<tr class="group expanded">')
+                            .append('<td colspan="17" style="padding: 12px 15px; background-color: #e7f3ff; border-top: 2px solid #0056b3; border-bottom: 2px solid #0056b3;">' +
+                                '<span class="group-toggle"><i class="fas fa-chevron-up"></i></span>' +
+                                '<strong style="color: #0056b3; font-size: 1.1em;">NXT Entry: ' + groupText + '</strong>' +
+                                '</td>');
+                    },
+                    "endRender": null
+                }
+            });
+            
+            // Handle group toggle click - expand/collapse country rows
+            $('#supplierTable tbody').on('click', 'tr.group', function (e) {
+                // Don't toggle if clicking on a link
+                if ($(e.target).is('a') || $(e.target).closest('a').length) {
+                    return;
+                }
+                
+                const tr = $(this);
+                const isExpanded = tr.hasClass('expanded');
+                const icon = tr.find('.group-toggle i');
+                const groupedLinksContainer = tr.find('.grouped-links-container');
+                
+                if (isExpanded) {
+                    tr.removeClass('expanded');
+                    tr.nextUntil('tr.group').hide();
+                    groupedLinksContainer.slideUp(200);
+                    icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                } else {
+                    tr.addClass('expanded');
+                    tr.nextUntil('tr.group').show();
+                    groupedLinksContainer.slideDown(200);
+                    icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                }
+            });
+            
+            // Initially show all rows (groups are expanded by default)
+            table.on('draw', function () {
+                $('#supplierTable tbody tr.group.expanded').each(function() {
+                    $(this).nextUntil('tr.group').show();
+                });
             });
         }
 
