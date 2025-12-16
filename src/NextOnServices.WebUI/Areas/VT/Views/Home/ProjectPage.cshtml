@@ -572,10 +572,10 @@
         <div class="card">
             <div class="card-body">
                 <p class="card-title mb-0">Survey Specs</p>
-                <div class="row mt-5">
+                <div class="row mt-3">
                     <div class="col-md-12">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered" id="tblSurveySpecs">
+                            <table class="table table-striped display expandable-table dataTable table-bordered" id="tblSurveySpecs">
                                 <thead>
                                     <tr>
                                         <th>Country</th>
@@ -2085,7 +2085,50 @@
           });
         }
 
+        // Initialize Survey Specs DataTable with pagination left, search right (same row)
+        $(document).ready(function () {
+            var surveySpecsTable;
+            if ($.fn.DataTable.isDataTable('#tblSurveySpecs')) {
+                surveySpecsTable = $('#tblSurveySpecs').DataTable();
+            } else {
+                surveySpecsTable = $('#tblSurveySpecs').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "ordering": true,
+                    "info": true,
+                    "autoWidth": false,
+                    "pageLength": 10,
+                    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    // Search bar above table (right), pagination in bottom with info (original position)
+                    "dom": '<"row mb-2"<"col-sm-12 d-flex justify-content-end"f>>rt<"bottom"ip><"clear">',
+                    "language": {
+                        search: "",
+                        searchPlaceholder: "",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+            }
 
+            // Style the search input: single bottom line, no placeholder
+            var filterInput = $('#tblSurveySpecs_filter').find('input');
+            filterInput.attr('placeholder', '');
+            filterInput.css({
+                'border': 'none',
+                'border-bottom': '1px solid #ced4da',
+                'border-radius': '0',
+                'box-shadow': 'none',
+                'outline': 'none'
+            });
+        });
 
                 
     </script>
