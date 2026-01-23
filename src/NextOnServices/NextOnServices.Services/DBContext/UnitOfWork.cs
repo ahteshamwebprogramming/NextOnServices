@@ -34,6 +34,8 @@ public class UnitOfWork : IUnitOfWork
         SupplierProjects = new SupplierProjectsRepository(dbSetting);
         SupplierProjectMessages = new SupplierProjectMessageRepository(dbSetting);
         SupplierProjectMessageAttachments = new SupplierProjectMessageAttachmentRepository(dbSetting);
+        QuestionsMaster = new QuestionsMasterRepository(dbSetting);
+        QuestionOption = new QuestionOptionRepository(dbSetting);
     }
     public IUserRepository User
     { get; private set; }
@@ -56,6 +58,8 @@ public class UnitOfWork : IUnitOfWork
     public ISupplierProjectsRepository SupplierProjects { get; private set; }
     public ISupplierProjectMessageRepository SupplierProjectMessages { get; private set; }
     public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; private set; }
+    public IQuestionsMasterRepository QuestionsMaster { get; private set; }
+    public IQuestionOptionRepository QuestionOption { get; private set; }
     public void Dispose()
     {
         try { _context.Dispose(); }

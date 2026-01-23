@@ -24,5 +24,7 @@ public interface IUnitOfWork : IDisposable
     public ISupplierProjectsRepository SupplierProjects { get; }
     public ISupplierProjectMessageRepository SupplierProjectMessages { get; }
     public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; }
+    public IQuestionsMasterRepository QuestionsMaster { get; }
+    public IQuestionOptionRepository QuestionOption { get; }
     int Save();
 }

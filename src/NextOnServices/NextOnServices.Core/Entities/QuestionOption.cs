@@ -1,10 +1,15 @@
-﻿using System;
+﻿using Dapper.Contrib.Extensions;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NextOnServices.Core.Entities;
 
-public partial class QuestionOption
+[Dapper.Contrib.Extensions.Table("QuestionOptions")]
+public class QuestionOption
 {
+    [Dapper.Contrib.Extensions.Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int? Qid { get; set; }

@@ -695,7 +695,7 @@
                                                                 }
                                                             </td>
                                                             <td><input type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#MapIPModal" value="Map IP" onclick="ShowCountryModal(@item?.PUID)"> </td>
-                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Pre Screening"> </td>
+                                                            <td><input type="button" class="btn btn-primary btn-sm" value="Pre Screening" onclick="window.location.href='/VT/PreScreening/Mapping/@(CommonHelper.EncryptURLHTML(Model?.Project?.ProjectId.ToString()))'"> </td>
                                                             <td data-itemid="@item?.PUID"></td>
                                                         </tr>
                                                     }

@@ -40,6 +40,7 @@
     <ProjectReference Include="..\NextOnServices\NextOnServices.Endpoints\Clients\Clients.csproj" />
     <ProjectReference Include="..\NextOnServices\NextOnServices.Endpoints\Masters\Masters.csproj" />
     <ProjectReference Include="..\NextOnServices\NextOnServices.Endpoints\Projects\Projects.csproj" />
+    <ProjectReference Include="..\NextOnServices\NextOnServices.Endpoints\Questionnaire\Questionnaire.csproj" />
     <ProjectReference Include="..\NextOnServices\NextOnServices.Endpoints\Suppliers\Suppliers.csproj" />
     <ProjectReference Include="..\NextOnServices\NextOnServices.Infrastructure\NextOnServices.Infrastructure.csproj" />
     <ProjectReference Include="..\NextOnServices\NextOnServices.Services\NextOnServices.Services.csproj" />

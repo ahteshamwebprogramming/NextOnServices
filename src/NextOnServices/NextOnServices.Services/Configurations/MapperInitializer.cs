@@ -4,6 +4,7 @@ using NextOnServices.Infrastructure.Models.Account;
 using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Masters;
 using NextOnServices.Infrastructure.Models.Projects;
+using NextOnServices.Infrastructure.Models.Questionnaire;
 using NextOnServices.Infrastructure.Models.Supplier;
 using System;
 using System.Collections.Generic;
@@ -27,5 +28,7 @@ public class MapperInitializer : Profile
         CreateMap<Supplier, SupplierDTO>().ReverseMap();
         CreateMap<SupplierPanelSize, SupplierPanelSizeDTO>().ReverseMap();
         CreateMap<SupplierLogin, SupplierLoginDTO>().ReverseMap();
+        CreateMap<QuestionsMaster, QuestionsMasterDTO>().ReverseMap();
+        CreateMap<QuestionOption, QuestionOptionDTO>().ReverseMap();
     }
 }

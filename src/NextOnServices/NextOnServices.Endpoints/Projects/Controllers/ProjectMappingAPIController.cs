@@ -331,4 +331,177 @@ public class ProjectMappingAPIController : ControllerBase
             throw;
         }
     }
+
+    #region ProjectQuestionsMapping
+
+    [HttpGet]
+    public async Task<IActionResult> GetProjectQuestionsMapping(int projectId, int? countryId = null)
+    {
+        try
+        {
+            string query = "SELECT * FROM ProjectQuestionsMapping WHERE PID = @ProjectId";
+            object parameters;
+            
+            if (countryId.HasValue && countryId.Value > 0)
+            {
+                query += " AND CID = @CountryId";
+                parameters = new { ProjectId = projectId, CountryId = countryId.Value };
+            }
+            else
+            {
+                parameters = new { ProjectId = projectId };
+            }
+            
+            var res = await _unitOfWork.ProjectsUrl.GetTableData<ProjectQuestionsMappingDTO>(query, parameters);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retrieving ProjectQuestionsMapping {nameof(GetProjectQuestionsMapping)}");
+            return StatusCode(500, "Error retrieving project questions mapping");
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetProjectQuestionsMappingByProjectAndCountry(int projectId, int countryId)
+    {
+        try
+        {
+            string query = "SELECT * FROM ProjectQuestionsMapping WHERE PID = @ProjectId AND CID = @CountryId";
+            var parameters = new { ProjectId = projectId, CountryId = countryId };
+            var res = await _unitOfWork.ProjectsUrl.GetTableData<ProjectQuestionsMappingDTO>(query, parameters);
+            
+            if (res != null && res.Any())
+            {
+                return Ok(res.FirstOrDefault());
+            }
+            return Ok((ProjectQuestionsMappingDTO?)null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retrieving ProjectQuestionsMapping {nameof(GetProjectQuestionsMappingByProjectAndCountry)}");
+            return StatusCode(500, "Error retrieving project questions mapping");
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveProjectQuestionsMapping(ProjectQuestionsMappingDTO inputData)
+    {
+        try
+        {
+            if (ModelState.IsValid && inputData != null)
+            {
+                // Convert selected question IDs to comma-separated string
+                string qidsString = "";
+                if (inputData.SelectedQuestionIds != null && inputData.SelectedQuestionIds.Any())
+                {
+                    qidsString = string.Join(",", inputData.SelectedQuestionIds);
+                }
+
+                if (inputData.Id > 0)
+                {
+                    // Update existing
+                    string query = "SELECT * FROM ProjectQuestionsMapping WHERE ID = @Id";
+                    var parameters = new { Id = inputData.Id };
+                    var existing = await _unitOfWork.ProjectsUrl.GetEntityData<ProjectQuestionsMapping>(query, parameters);
+                    
+                    if (existing != null)
+                    {
+                        existing.Cid = inputData.Cid;
+                        existing.Pid = inputData.Pid;
+                        existing.PreviousButton = inputData.PreviousButton;
+                        existing.QuestionQid = inputData.QuestionQid;
+                        existing.Logo = inputData.Logo;
+                        existing.Qids = qidsString;
+                        
+                        // Use ProjectsUrl repository's ExecuteQueryAsync for update
+                        string updateQuery = @"UPDATE ProjectQuestionsMapping 
+                                             SET CID = @Cid, PID = @Pid, PreviousButton = @PreviousButton, 
+                                                 QuestionQID = @QuestionQid, Logo = @Logo, QIDs = @Qids
+                                             WHERE ID = @Id";
+                        await _unitOfWork.ProjectMapping.ExecuteQueryAsync(updateQuery, new
+                        {
+                            Cid = existing.Cid,
+                            Pid = existing.Pid,
+                            PreviousButton = existing.PreviousButton,
+                            QuestionQid = existing.QuestionQid,
+                            Logo = existing.Logo,
+                            Qids = existing.Qids,
+                            Id = existing.Id
+                        });
+                        
+                        inputData.Id = existing.Id;
+                        return Ok(inputData);
+                    }
+                    else
+                    {
+                        return NotFound("Mapping not found");
+                    }
+                }
+                else
+                {
+                    // Insert new
+                    string insertQuery = @"INSERT INTO ProjectQuestionsMapping (CID, PID, PreviousButton, QuestionQID, Logo, QIDs, CRDate)
+                                         VALUES (@Cid, @Pid, @PreviousButton, @QuestionQid, @Logo, @Qids, GETDATE())";
+                    
+                    var insertParameters = new
+                    {
+                        Cid = inputData.Cid,
+                        Pid = inputData.Pid,
+                        PreviousButton = inputData.PreviousButton ?? 0,
+                        QuestionQid = inputData.QuestionQid ?? 0,
+                        Logo = inputData.Logo ?? 0,
+                        Qids = qidsString
+                    };
+                    
+                    await _unitOfWork.ProjectMapping.ExecuteQueryAsync(insertQuery, insertParameters);
+                    
+                    // Get the inserted ID by querying the last inserted record
+                    string getLastQuery = @"SELECT TOP 1 * FROM ProjectQuestionsMapping 
+                                           WHERE CID = @Cid AND PID = @Pid 
+                                           ORDER BY ID DESC";
+                    var lastRecord = await _unitOfWork.ProjectsUrl.GetEntityData<ProjectQuestionsMapping>(getLastQuery, new { Cid = inputData.Cid, Pid = inputData.Pid });
+                    if (lastRecord != null)
+                    {
+                        inputData.Id = lastRecord.Id;
+                        inputData.Cid = lastRecord.Cid;
+                        inputData.Pid = lastRecord.Pid;
+                        inputData.PreviousButton = lastRecord.PreviousButton;
+                        inputData.QuestionQid = lastRecord.QuestionQid;
+                        inputData.Logo = lastRecord.Logo;
+                        inputData.Qids = lastRecord.Qids;
+                        return Ok(inputData);
+                    }
+                    return BadRequest("Failed to insert mapping");
+                }
+            }
+            else
+            {
+                return StatusCode(StatusCodes.Status400BadRequest, "Validation Error");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in saving ProjectQuestionsMapping {nameof(SaveProjectQuestionsMapping)}");
+            return StatusCode(500, "Error saving project questions mapping");
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAllQuestions()
+    {
+        try
+        {
+            string query = "SELECT Id, QuestionID, QuestionLabel, QuestionType, CreationDate FROM QuestionsMaster ORDER BY QuestionID";
+            var res = await _unitOfWork.ProjectsUrl.GetTableData<Infrastructure.Models.Questionnaire.QuestionsMasterDTO>(query);
+            return Ok(res);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in retrieving questions {nameof(GetAllQuestions)}");
+            return StatusCode(500, "Error retrieving questions");
+        }
+    }
+
+    #endregion
 }
