@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -47,6 +47,42 @@
 
         .main-panel {
             padding-bottom: 80px;
+        }
+
+        /* Fix icon and arrow visibility in active menu states */
+        .sidebar .nav .nav-item.active > .nav-link i.menu-icon,
+        .sidebar .nav .nav-item.active > .nav-link i.menu-arrow,
+        .sidebar .nav .nav-item.active > .nav-link .menu-arrow {
+            color: #fff !important;
+        }
+
+        .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link[aria-expanded="true"] i.menu-icon,
+        .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link[aria-expanded="true"] i.menu-arrow,
+        .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link[aria-expanded="true"] .menu-arrow {
+            color: #fff !important;
+        }
+
+        .sidebar .nav:not(.sub-menu) > .nav-item:hover > .nav-link i.menu-icon,
+        .sidebar .nav:not(.sub-menu) > .nav-item:hover > .nav-link i.menu-arrow,
+        .sidebar .nav:not(.sub-menu) > .nav-item:hover > .nav-link .menu-arrow {
+            color: #fff !important;
+        }
+
+        /* Menu arrow: right when closed, down when open (override theme's .active arrow) */
+        .sidebar .nav .nav-item.active > .nav-link i.menu-arrow::before {
+            content: "\e649" !important;
+        }
+        .sidebar .nav .nav-item.active > .nav-link[aria-expanded="true"] i.menu-arrow::before {
+            -moz-transform: rotate(90deg);
+            -o-transform: rotate(90deg);
+            -ms-transform: rotate(90deg);
+            -webkit-transform: rotate(90deg);
+            transform: rotate(90deg);
+        }
+
+        /* Sub-menu bullets: position relative to each item so they scroll with the page */
+        .sidebar .nav.sub-menu .nav-item {
+            position: relative;
         }
     </style>
 
@@ -331,7 +367,7 @@
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
                 <ul class="nav">
                     @{
-                        if (User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" href="/VT/Home/Dashboard">
@@ -346,7 +382,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#projects" aria-expanded="false" aria-controls="ui-basic">
-                                    <i class="icon-layout menu-icon"></i>
+                                    <i class="icon-briefcase menu-icon"></i>
                                     <span class="menu-title">Projects</span>
                                     <i class="menu-arrow"></i>
                                 </a>
@@ -354,6 +390,28 @@
                                     <ul class="nav flex-column sub-menu">
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Projects/AddProject">Add</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Projects/ProjectsList">List</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Respondents/IDSearch">ID Search</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ManageStatus">Reconciliation</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/RecontactProjects">Recontact Projects</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/RecontactCreate">Create Recontact</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
+                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#apiProjects" aria-expanded="false" aria-controls="apiProjects">
+                                    <i class="icon-link menu-icon"></i>
+                                    <span class="menu-title">API Projects</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="apiProjects">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ApiProjects/SurveysLucid">Surveys(Lucid)</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ApiProjects/SurveysSpectrum">Surveys(Spectrum)</a></li>
                                     </ul>
                                 </div>
                             </li>
@@ -365,7 +423,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#supplier" aria-expanded="false" aria-controls="ui-basic">
-                                    <i class="icon-layout menu-icon"></i>
+                                    <i class="ti-truck menu-icon"></i>
                                     <span class="menu-title">Supplier</span>
                                     <i class="menu-arrow"></i>
                                 </a>
@@ -383,7 +441,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#client" aria-expanded="false" aria-controls="ui-basic">
-                                    <i class="icon-layout menu-icon"></i>
+                                    <i class="ti-user menu-icon"></i>
                                     <span class="menu-title">Client</span>
                                     <i class="menu-arrow"></i>
                                 </a>
@@ -502,7 +560,7 @@
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#questionnaire" aria-expanded="false" aria-controls="questionnaire">
-                                    <i class="icon-paper menu-icon"></i>
+                                    <i class="icon-clipboard menu-icon"></i>
                                     <span class="menu-title">Questionnaire</span>
                                     <i class="menu-arrow"></i>
                                 </a>

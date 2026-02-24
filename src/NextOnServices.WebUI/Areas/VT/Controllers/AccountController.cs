@@ -44,12 +44,12 @@ public class AccountController : Controller
 
             string routePage = "";
 
-            if (objResultData.UserType == "A")
+            if (objResultData.UserType == "A" || objResultData.UserType == "U")
             {
                 routePage = "/VT/Home/Dashboard";
             }
             else
-            {
+            {                
                 routePage = "/VT/Projects/ProjectsList";
             }
 

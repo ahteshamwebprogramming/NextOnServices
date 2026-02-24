@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Z.BulkOperations;
 using Dapper.Contrib.Extensions;
 using System;
@@ -55,13 +55,12 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
     private readonly SqlConnection _connection;
     public DapperGenericRepository(DapperDBSetting dbSettings)
     {
-        _dbSettings = dbSettings;
-        if (_dbSettings.ConnectionString.IsNullOrEmpty())
-            //_dbSettings.ConnectionString = "Data Source=SHIVANSHJUYAL\\SQLEXPRESS;Initial Catalog=SimpliHRDB;Integrated Security=True;TrustServerCertificate=True";
-            _dbSettings.ConnectionString = "Data Source=182.18.138.217;Initial Catalog=GRPCore;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;";
+        _dbSettings = dbSettings ?? throw new ArgumentNullException(nameof(dbSettings));
+        if (string.IsNullOrWhiteSpace(_dbSettings.ConnectionString))
+            throw new InvalidOperationException("Connection string is not configured. Set 'ConnectionStrings:GRP' in appsettings.");
         DbConnection = new DapperDBContext().SetStrategy()
             .GetDbContext(_dbSettings.ConnectionString);
-        _connection = new SqlConnection("Data Source=182.18.138.217;Initial Catalog=GRPCore;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;");
+        _connection = new SqlConnection(_dbSettings.ConnectionString);
     }
     public object UpdateFields<TS>(T param, IDbConnection connection, IDbTransaction transaction = null, int? commandTimeOut = null)
     {

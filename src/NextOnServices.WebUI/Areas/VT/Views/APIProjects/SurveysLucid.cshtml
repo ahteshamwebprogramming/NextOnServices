@@ -1,0 +1,585 @@
+@{
+    ViewData["Title"] = "Surveys (Lucid)";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    #tbl thead tr th, #tbl tbody tr td {
+        white-space: nowrap;
+    }
+
+    .actiontd {
+        padding: 1px 1px 1px 16px !important;
+    }
+
+    .card {
+        border: 1px solid;
+        box-shadow: 1px 1px 1px gray;
+        margin-top: 5px;
+    }
+
+    #qualificationmodel table tbody tr td:nth-child(1) {
+        width: 25%;
+    }
+
+    /* DataTable Layout Fixes */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_length {
+        float: left;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        text-align: right;
+    }
+
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        margin: 0 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        float: left;
+        padding-top: 0.755em;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+        text-align: right;
+        padding-top: 0.25em;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5em 1em;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        color: #007bff !important;
+        background-color: #fff;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        color: #0056b3 !important;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        color: #fff !important;
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        color: #6c757d !important;
+        cursor: not-allowed;
+        background-color: #fff;
+    }
+
+    .dataTables_wrapper:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    @@media screen and (max-width: 767px) {
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            float: none;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Surveys From Lucid</h4>
+                <div class="d-flex justify-content-end mb-3">
+                    <button type="button" class="btn btn-primary" id="btnPullSurveys">Pull Surveys</button>
+                    <button style="display: none" type="button" class="btn btn-primary" data-toggle="modal" data-target="#qualificationmodel" id="btnqualificationmodel">modal</button>
+                </div>
+                <div class="table-responsive" style="overflow-x: scroll;">
+                    <table id="tbl" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Project ID</th>
+                                <th>Survey ID</th>
+                                <th>Language</th>
+                                <th>Study Type</th>
+                                <th>Industry Type</th>
+                                <th>Survey Status</th>
+                                <th>Total Remaining</th>
+                                <th>IR</th>
+                                <th>CPI</th>
+                                <th>LOI</th>
+                                <th>Mobile Allowed</th>
+                                <th>Non-Mobile Allowed</th>
+                                <th>Tablet Allowed</th>
+                                <th>Manual Inc.</th>
+                                <th>PID Enabled</th>
+                                <th>Quota Level CPI</th>
+                                <th>Survey Group</th>
+                                <th>New Sample Source</th>
+                                <th>Live Link</th>
+                                <th>Test Link</th>
+                                <th>URL Type</th>
+                                <th>Recommended</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Qualifications Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="qualificationmodel">
+    <div class="modal-dialog modal-lg" style="width: 70%" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="display: inline">Qualifications</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="Qualifications_12">
+                                    <table class="table table-striped">
+                                        <tbody>
+                                            <tr>
+                                                <td>Question Text</td>
+                                                <td>: What is your age?</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Type</td>
+                                                <td>: Numeric - Open-end</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Allowed Answer Options</td>
+                                                <td>25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" name="surveyId" value="" />
+                <button type="button" class="btn btn-primary" onclick="AccceptProject()">Add Project</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+    <script type="text/javascript">
+        let QualificationTypes;
+        let dataTable;
+
+        function alertt(message1, message2, message3) {
+            Swal.fire({
+                title: message1 || '',
+                text: message2 || '',
+                icon: message3 || 'info',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
+            });
+        }
+
+        $(document).ready(function () {
+            $("#btnPullSurveys").click(function () {
+                $.blockUI({ message: '<h5>Please wait</h5>' });
+                pullSurveysFromLucid();
+            });
+        });
+
+        function pullSurveysFromLucidAPI() {
+            return new Promise((resolve, reject) => {
+                $.when(
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidSurveys",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidLanguages",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidIndustries",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidStudyTypes",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidSurveyStatuses",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidRedirectTypes",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    }),
+                    $.ajax({
+                        type: 'GET',
+                        url: "/VT/ApiProjects/GetLucidQualificationTypes",
+                        headers: { 'Cache-Control': 'no-cache' }
+                    })
+                ).then(function (surveys, languages, industries, studytypes, surveyStatuses, redirectTypes, qualificationTypes) {
+                    // $.when returns [data, textStatus, jqXHR] for each ajax call
+                    var surveysData = surveys[0];
+                    var languagesData = languages[0];
+                    var industriesData = industries[0];
+                    var studytypesData = studytypes[0];
+                    var surveyStatusesData = surveyStatuses[0];
+                    var redirectTypesData = redirectTypes[0];
+                    var qualificationTypesData = qualificationTypes[0];
+
+                    console.log("Surveys Response:", surveysData);
+                    console.log("Languages Response:", languagesData);
+
+                    var returnData = {};
+                    // Extract the data - handle both direct object and nested structure
+                    returnData["Surveys"] = surveysData?.Surveys || (Array.isArray(surveysData) ? surveysData : []);
+                    returnData["Languages"] = languagesData?.Languages || (Array.isArray(languagesData) ? languagesData : []);
+                    returnData["Industries"] = industriesData?.Industries || (Array.isArray(industriesData) ? industriesData : []);
+                    returnData["StudyTypes"] = studytypesData?.StudyTypes || (Array.isArray(studytypesData) ? studytypesData : []);
+                    returnData["SurveyStatuses"] = surveyStatusesData?.SurveyStatuses || (Array.isArray(surveyStatusesData) ? surveyStatusesData : []);
+                    returnData["RedirectTypes"] = redirectTypesData?.RedirectTypes || (Array.isArray(redirectTypesData) ? redirectTypesData : []);
+                    returnData["QualificationTypes"] = qualificationTypesData?.QualificationTypes || (Array.isArray(qualificationTypesData) ? qualificationTypesData : []);
+
+                    console.log("Parsed Surveys:", returnData["Surveys"]);
+                    console.log("Parsed Languages:", returnData["Languages"]);
+                    
+                    resolve(returnData);
+                }).fail(function (err) {
+                    console.error("API Error:", err);
+                    console.error("Response Text:", err.responseText);
+                    alert(err.responseText || "Error fetching data");
+                    reject(err);
+                });
+            });
+        }
+
+        function pullSurveysFromLucid() {
+            // Destroy existing DataTable if it exists
+            if (dataTable) {
+                try {
+                    dataTable.destroy();
+                } catch (e) {
+                    console.log("DataTable already destroyed or not initialized");
+                }
+                dataTable = null;
+            }
+            
+            // Clear the table body completely
+            $("#tbl tbody").html("");
+
+            pullSurveysFromLucidAPI().then((data) => {
+                var Surveys = data.Surveys || [];
+                var Languages = data.Languages || [];
+                var Industries = data.Industries || [];
+                var StudyTypes = data.StudyTypes || [];
+                var SurveyStatuses = data.SurveyStatuses || [];
+                var RedirectTypes = data.RedirectTypes || [];
+                QualificationTypes = data.QualificationTypes || [];
+
+                console.log("Surveys count:", Surveys.length);
+                console.log("Languages count:", Languages.length);
+                console.log("First survey:", Surveys[0]);
+
+                if (!Surveys || Surveys.length === 0) {
+                    alertt("Warning", "No surveys found", "warning");
+                    $.unblockUI();
+                    return;
+                }
+
+                Surveys.forEach((v, i) => {
+                    if (!v) return;
+
+                    // Safely get values with fallbacks
+                    let surveyId = v.SurveyId || "";
+                    let projectId = v.ProjectId || "";
+                    let languageId = v.LanguageId || "";
+                    let industryId = v.IndustryId || "";
+                    let studyTypeId = v.StudyTypeId || "";
+                    let surveyStatusId = v.SurveyStatusId || "";
+                    let urlTypeId = v.UrlTypeId || "";
+
+                    let Language = "";
+                    if (Languages && Languages.length > 0 && languageId) {
+                        let lang = Languages.find(x => (x.LanguageId || x.languageId) == languageId);
+                        Language = lang ? (lang.LanguageCode || lang.languageCode || "") : "";
+                    }
+
+                    let Industry = "";
+                    if (Industries && Industries.length > 0 && industryId) {
+                        let ind = Industries.find(x => (x.IndustryId || x.industryId) == industryId);
+                        Industry = ind ? (ind.Description || ind.description || "") : "";
+                    }
+
+                    let UrlType = "";
+                    if (RedirectTypes && RedirectTypes.length > 0 && urlTypeId) {
+                        let rt = RedirectTypes.find(x => (x.RedirectTypeId || x.redirectTypeId) == urlTypeId);
+                        UrlType = rt ? (rt.Description || rt.description || "") : "";
+                    }
+
+                    let StudyType = "";
+                    if (StudyTypes && StudyTypes.length > 0 && studyTypeId) {
+                        let st = StudyTypes.find(x => (x.StudyTypeId || x.studyTypeId) == studyTypeId);
+                        StudyType = st ? (st.Description || st.description || "") : "";
+                    }
+
+                    let SurveyStatus = "";
+                    if (SurveyStatuses && SurveyStatuses.length > 0 && surveyStatusId) {
+                        let ss = SurveyStatuses.find(x => (x.SurveyStatusId || x.surveyStatusId) == surveyStatusId);
+                        SurveyStatus = ss ? (ss.Description || ss.description || "") : "";
+                    }
+
+                    // Get all other properties safely
+                    let totalRemaining = v.TotalRemaining || "";
+                    let ir = v.IR || "";
+                    let cpi = v.CPI || "";
+                    let loi = v.LOI || "";
+                    let isMobileAllowed = v.IsMobileAllowed || "";
+                    let isNonMobileAllowed = v.IsNonMobileAllowed || "";
+                    let isTabletAllowed = v.IsTabletAllowed || "";
+                    let isManualInc = v.IsManualInc || "";
+                    let isPIDEnabled = v.IsPIDEnabled || "";
+                    let isQuotaLevelCPI = v.IsQuotaLevelCPI || "";
+                    let isSurveyGroupExist = v.IsSurveyGroupExist || "";
+                    let newSampleSource = v.NewSampleSource || "";
+                    let liveLink = v.LiveLink || "";
+                    let testLink = v.TestLink || "";
+                    let recommended = v.Recommended || "";
+
+                    // Escape values for HTML
+                    function escapeHtml(str) {
+                        if (str === null || str === undefined) return "";
+                        return String(str).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+                    }
+
+                    $("#tbl tbody").append("<tr surveyId='" + escapeHtml(surveyId) + "'><td>" + escapeHtml(projectId) + "</td><td surveyId='" + escapeHtml(surveyId) + "'>" + escapeHtml(surveyId) + "</td><td languageId='" + escapeHtml(languageId) + "'>" + escapeHtml(Language) + "</td><td>" + escapeHtml(StudyType) + "</td><td>" + escapeHtml(Industry) + "</td><td>" + escapeHtml(SurveyStatus) + "</td><td totalRemaining='" + escapeHtml(totalRemaining) + "'>" + escapeHtml(totalRemaining) + "</td><td ir='" + escapeHtml(ir) + "'>" + escapeHtml(ir) + "</td><td cpi='" + escapeHtml(cpi) + "'>" + escapeHtml(cpi) + "</td><td loi='" + escapeHtml(loi) + "'>" + escapeHtml(loi) + "</td><td>" + escapeHtml(isMobileAllowed) + "</td><td>" + escapeHtml(isNonMobileAllowed) + "</td><td>" + escapeHtml(isTabletAllowed) + "</td><td>" + escapeHtml(isManualInc) + "</td><td>" + escapeHtml(isPIDEnabled) + "</td><td>" + escapeHtml(isQuotaLevelCPI) + "</td><td>" + escapeHtml(isSurveyGroupExist) + "</td><td>" + escapeHtml(newSampleSource) + "</td><td livelink='" + escapeHtml(liveLink) + "'>" + escapeHtml(liveLink) + "</td><td>" + escapeHtml(testLink) + "</td><td>" + escapeHtml(UrlType) + "</td><td>" + escapeHtml(recommended) + "</td><td class='actiontd'><input type='button' class='btn btn-primary btn-sm' value='Add Project' onclick=\"addToProject('" + escapeHtml(surveyId) + "','" + escapeHtml(cpi) + "','" + escapeHtml(loi) + "','" + escapeHtml(ir) + "','" + escapeHtml(totalRemaining) + "','" + escapeHtml(liveLink) + "')\" /><input type='button' style='margin-left:5px;' class='btn btn-primary btn-sm' value='Get Qualifications' onclick=\"getQualifications('" + escapeHtml(surveyId) + "','" + escapeHtml(languageId) + "')\" /></td></tr>");
+                });
+
+                // Initialize DataTable only after all rows are added
+                // Use destroy: true to allow re-initialization
+                dataTable = $("#tbl").DataTable({
+                    destroy: true,
+                    retrieve: false,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        },
+                        emptyTable: "No data available in table",
+                        zeroRecords: "No matching records found"
+                    },
+                    responsive: true,
+                    order: [],
+                    columnDefs: [
+                        { orderable: true, targets: '_all' }
+                    ]
+                });
+                $.unblockUI();
+            }).catch((err) => {
+                console.error("Error in pullSurveysFromLucid:", err);
+                $.unblockUI();
+                alertt("Error", "Failed to pull surveys. Check console for details.", "error");
+            });
+        }
+
+        function AccceptProject() {
+            let surveyId = $("#qualificationmodel").find("[name='surveyId']").val();
+            let cpi = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[cpi]").attr("cpi");
+            let loi = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[loi]").attr("loi");
+            let ir = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[ir]").attr("ir");
+            let totalRemaining = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[totalRemaining]").attr("totalRemaining");
+            let livelink = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[livelink]").attr("livelink");
+            addToProject(surveyId, cpi, loi, ir, totalRemaining, livelink);
+        }
+
+        function addToProject(projectId, cpi, loi, ir, totalRemaining, livelink) {
+            $.blockUI({ message: '<h5>Please wait</h5>' });
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/ApiProjects/AddProjectFromLucid',
+                data: JSON.stringify({ ProjectId: projectId, CPI: cpi, LOI: loi, IR: ir, TotalRemaining: totalRemaining, LiveLink: livelink }),
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    // Response uses lowercase: result and message
+                    let result = data.result !== undefined ? data.result : false;
+                    let message = data.message || "Failed to add project";
+                    
+                    if (result === true || result === "true") {
+                        alertt("Successfully added", "", "success");
+                        $("#qualificationmodel").modal('hide');
+                    }
+                    else {
+                        alertt("Error", message, "error");
+                    }
+                    $.unblockUI();
+                },
+                error: function (xhr, status, error) {
+                    console.error("AddProjectFromLucid Error:", xhr, status, error);
+                    console.error("Response Text:", xhr.responseText);
+                    
+                    let errorMessage = "An error occurred while adding the project";
+                    try {
+                        if (xhr.responseJSON) {
+                            errorMessage = xhr.responseJSON.Message || xhr.responseJSON.message || errorMessage;
+                        } else if (xhr.responseText) {
+                            let parsed = JSON.parse(xhr.responseText);
+                            errorMessage = parsed.Message || parsed.message || errorMessage;
+                        }
+                    } catch (e) {
+                        console.error("Error parsing error response:", e);
+                    }
+                    
+                    alertt("Error", errorMessage, "error");
+                    $.unblockUI();
+                }
+            });
+        }
+
+        function getQualifications(surveyId, languageId) {
+            $("#qualificationmodel").find(".modal-body").empty();
+            $.blockUI({ message: '<h5>Please wait</h5>' });
+            getQualificationsFromAPI(surveyId).then((qualifications) => {
+                getBundledQualificationsFromAPI(languageId).then((bundledQualifications) => {
+                    let Qualshtml = "";
+                    qualifications.forEach((v, i) => {
+                        let Quals = bundledQualifications.filter(x => x.QualificationId == v.QualificationId)[0];
+                        if (!Quals) return;
+                        
+                        let ansHTML = "";
+                        if (v.QualificationTypeId == 1 || v.QualificationTypeId == 2) {
+                            let qualAnswers = Quals.QualificationAnswers;
+                            let answerIds = v.AnswerIds;
+                            answerIds.forEach((answerValue, answerIndex) => {
+                                let answer = qualAnswers.filter(x => x.AnswerId == answerValue)[0];
+                                if (answer) {
+                                    ansHTML += answer.Text + " ,";
+                                }
+                            });
+                        } else {
+                            ansHTML = v.AnswerIds[0];
+                        }
+
+                        let lQualificationType = QualificationTypes.filter(x => x.QualificationTypeId == Quals.QualificationTypeId)[0]?.Description || "";
+                        Qualshtml += '<div class="row"><div class="col-md-12"><div class="card"><div class="card-body"><div id="Qualifications_' + Quals.QualificationId + '"><table class="table table-striped"><tbody><tr><td>Question Text</td><td>: ' + Quals.Text + '</td></tr><tr><td>Type</td><td>: ' + lQualificationType + '</td></tr><tr><td>Allowed Answer Options</td><td>' + ansHTML + '</td></tr></tbody></table></div></div></div></div></div>';
+                    });
+
+                    $("#qualificationmodel").find("[name='surveyId']").val(surveyId);
+                    $("#qualificationmodel").find(".modal-body").append(Qualshtml);
+                    $("#btnqualificationmodel").click();
+                    $.unblockUI();
+                }).catch(() => {
+                    $.unblockUI();
+                    alertt("Error", "Failed to load bundled qualifications", "error");
+                });
+            }).catch(() => {
+                $.unblockUI();
+                alertt("Error", "Failed to load qualifications", "error");
+            });
+        }
+
+        function getQualificationsFromAPI(surveyId) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "GET",
+                    url: "/VT/ApiProjects/GetLucidQualifications/" + surveyId,
+                    headers: { 'Cache-Control': 'no-cache' },
+                    success: function (qualifications) {
+                        resolve(qualifications.SurveyQualifications || qualifications);
+                    },
+                    error: function (result) {
+                        reject(result);
+                    }
+                });
+            });
+        }
+
+        function getBundledQualificationsFromAPI(languageId) {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "GET",
+                    url: "/VT/ApiProjects/GetLucidBundledQualifications/" + languageId,
+                    headers: { 'Cache-Control': 'no-cache' },
+                    success: function (bundledQualifications) {
+                        resolve(bundledQualifications.Qualifications || bundledQualifications);
+                    },
+                    error: function (result) {
+                        reject(result);
+                    }
+                });
+            });
+        }
+    </script>
+}

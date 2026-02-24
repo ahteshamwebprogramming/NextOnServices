@@ -16,9 +16,9 @@ public class SupplierProjectMessageAttachmentRepository : ISupplierProjectMessag
 
     public SupplierProjectMessageAttachmentRepository(DapperDBSetting dbSetting)
     {
-        _connectionString = string.IsNullOrWhiteSpace(dbSetting.ConnectionString)
-            ? "Data Source=182.18.138.217;Initial Catalog=NextOnServicesCore_BK;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;"
-            : dbSetting.ConnectionString;
+        if (dbSetting == null || string.IsNullOrWhiteSpace(dbSetting.ConnectionString))
+            throw new InvalidOperationException("Connection string is not configured. Set 'ConnectionStrings:NextOnServices' in appsettings.");
+        _connectionString = dbSetting.ConnectionString;
     }
 
     public async Task AddRangeAsync(IEnumerable<SupplierProjectMessageAttachment> attachments)

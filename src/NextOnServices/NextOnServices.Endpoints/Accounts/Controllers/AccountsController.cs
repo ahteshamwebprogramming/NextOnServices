@@ -32,7 +32,7 @@ namespace NextOnServices.Endpoints.Accounts
         {
             try
             {
-                Expression<Func<User, bool>> expression = u => u.UserName.ToLower() == userDTO.UserName.ToLower() && (userDTO.Password != null ? u.Password == userDTO.Password : true);
+                Expression<Func<User, bool>> expression = u => u.UserCode.ToLower() == userDTO.UserName.ToLower() && (userDTO.Password != null ? u.Password == userDTO.Password : true);
                 User user = _unitOfWork.User.Find(expression).FirstOrDefault();
                 UserDTO outputDTO = _mapper.Map<UserDTO>(user);
 

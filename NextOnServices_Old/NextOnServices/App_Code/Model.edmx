@@ -1,0 +1,396 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+    <Schema Namespace="NextOnServicesModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2008" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="ProjectMapping">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ProjectID" Type="int" />
+          <Property Name="CountryID" Type="int" />
+          <Property Name="SUpplierID" Type="int" />
+          <Property Name="OLink" Type="nvarchar(max)" />
+          <Property Name="CPI" Type="float" />
+          <Property Name="MLink" Type="nvarchar(max)" />
+          <Property Name="SID" Type="nvarchar" MaxLength="50" />
+          <Property Name="Code" Type="nvarchar" MaxLength="50" />
+          <Property Name="SCode" Type="nvarchar" MaxLength="50" />
+          <Property Name="NID" Type="nvarchar" MaxLength="50" />
+          <Property Name="IsUsed" Type="int" />
+          <Property Name="Status" Type="nvarchar" MaxLength="50" />
+          <Property Name="ClientIP" Type="nvarchar" MaxLength="50" />
+          <Property Name="ClientBrowser" Type="nvarchar" MaxLength="50" />
+          <Property Name="CreationDate" Type="datetime" />
+          <Property Name="Respondants" Type="int" />
+          <Property Name="IsSent" Type="int" />
+          <Property Name="Notes" Type="varchar" MaxLength="500" />
+          <Property Name="IsChecked" Type="int" />
+          <Property Name="Completes" Type="nvarchar(max)" />
+          <Property Name="Terminate" Type="nvarchar(max)" />
+          <Property Name="Quotafull" Type="nvarchar(max)" />
+          <Property Name="Screened" Type="nvarchar(max)" />
+          <Property Name="Overquota" Type="nvarchar(max)" />
+          <Property Name="Incomplete" Type="nvarchar(max)" />
+          <Property Name="Security" Type="nvarchar(max)" />
+          <Property Name="Fraud" Type="nvarchar(max)" />
+          <Property Name="SUCCESS" Type="nvarchar(max)" />
+          <Property Name="DEFAULT" Type="nvarchar(max)" />
+          <Property Name="FAILURE" Type="nvarchar(max)" />
+          <Property Name="QUALITY TERMINATION" Type="nvarchar(max)" />
+          <Property Name="OVER QUOTA" Type="nvarchar(max)" />
+          <Property Name="IsActive" Type="int" />
+          <Property Name="Block" Type="int" />
+          <Property Name="TrackingType" Type="int" />
+          <Property Name="Prescreening" Type="int" />
+          <Property Name="RC" Type="int" />
+          <Property Name="AddHashing" Type="int" />
+          <Property Name="ParameterName" Type="nvarchar" MaxLength="50" />
+          <Property Name="HashingType" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="Projects">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="PName" Type="nvarchar" MaxLength="500" />
+          <Property Name="Descriptions" Type="nvarchar(max)" />
+          <Property Name="ClientID" Type="int" />
+          <Property Name="PID" Type="varchar" MaxLength="100" />
+          <Property Name="PManager" Type="nvarchar" MaxLength="500" />
+          <Property Name="LOI" Type="nvarchar" MaxLength="50" />
+          <Property Name="IRate" Type="nvarchar" MaxLength="50" />
+          <Property Name="CPI" Type="float" />
+          <Property Name="Status" Type="int" />
+          <Property Name="SampleSize" Type="nvarchar" MaxLength="50" />
+          <Property Name="Quota" Type="nvarchar" MaxLength="50" />
+          <Property Name="SDate" Type="varchar" MaxLength="50" />
+          <Property Name="EDate" Type="varchar" MaxLength="50" />
+          <Property Name="Country" Type="nvarchar" MaxLength="50" />
+          <Property Name="LType" Type="int" />
+          <Property Name="Notes" Type="nvarchar(max)" />
+          <Property Name="CreationDate" Type="datetime" />
+          <Property Name="IsActive" Type="int" />
+          <Property Name="BlockDevice" Type="nvarchar" MaxLength="10" />
+          <Property Name="IPCount" Type="int" />
+          <Property Name="ProjectIdFromAPI" Type="nvarchar" MaxLength="150" />
+          <Property Name="ProjectFrom" Type="nvarchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="ProjectsUrl">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="PID" Type="int" />
+          <Property Name="CID" Type="int" />
+          <Property Name="Url" Type="nvarchar(max)" />
+          <Property Name="CreationDate" Type="datetime" />
+          <Property Name="Notes" Type="varchar" MaxLength="500" />
+          <Property Name="CPI" Type="float" />
+          <Property Name="Quota" Type="nvarchar" MaxLength="50" />
+          <Property Name="Status" Type="int" />
+          <Property Name="Token" Type="int" />
+          <Property Name="ParameterName" Type="nvarchar" MaxLength="50" />
+          <Property Name="ParameterValue" Type="nvarchar" MaxLength="50" />
+          <Property Name="ApplytoSupplier" Type="int" />
+          <Property Name="OriginalURL" Type="nvarchar(max)" />
+          <Property Name="ApplyToSupplier1" Type="int" />
+        </EntityType>
+        <EntityType Name="SupplierProjects">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="PMID" Type="nvarchar" MaxLength="50" />
+          <Property Name="SID" Type="nvarchar" MaxLength="50" />
+          <Property Name="UID" Type="nvarchar" MaxLength="50" />
+          <Property Name="Status" Type="nvarchar" MaxLength="50" />
+          <Property Name="ClientIP" Type="nvarchar" MaxLength="50" />
+          <Property Name="ClientBrowser" Type="nvarchar" MaxLength="50" />
+          <Property Name="IsSent" Type="int" />
+          <Property Name="Device" Type="nvarchar" MaxLength="50" />
+          <Property Name="StartDate" Type="datetime" />
+          <Property Name="EndDate" Type="datetime" />
+          <Property Name="CreationDate" Type="datetime" />
+          <Property Name="ActStatus" Type="nvarchar" MaxLength="50" />
+          <Property Name="ENC" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityContainer Name="NextOnServicesModelStoreContainer">
+          <EntitySet Name="ProjectMapping" EntityType="Self.ProjectMapping" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Projects" EntityType="Self.Projects" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="ProjectsUrl" EntityType="Self.ProjectsUrl" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="SupplierProjects" EntityType="Self.SupplierProjects" Schema="dbo" store:Type="Tables" />
+        </EntityContainer>
+      </Schema></edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="NextOnServicesModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityContainer Name="NextOnServicesEntities3" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="SupplierProjects" EntityType="NextOnServicesModel.SupplierProject" />
+          <EntitySet Name="ProjectMappinggs" EntityType="NextOnServicesModel.ProjectMappingg" />
+          <EntitySet Name="Projects" EntityType="NextOnServicesModel.Project" />
+          <EntitySet Name="ProjectsUrls" EntityType="NextOnServicesModel.ProjectsUrl" />
+        </EntityContainer>
+        <EntityType Name="SupplierProject">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="PMID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="UID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Status" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ClientIP" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ClientBrowser" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="IsSent" Type="Int32" />
+          <Property Name="Device" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="StartDate" Type="DateTime" Precision="3" />
+          <Property Name="EndDate" Type="DateTime" Precision="3" />
+          <Property Name="CreationDate" Type="DateTime" Precision="3" />
+          <Property Name="ActStatus" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ENC" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ProjectMappingg">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ProjectID" Type="Int32" />
+          <Property Name="CountryID" Type="Int32" />
+          <Property Name="SUpplierID" Type="Int32" />
+          <Property Name="OLink" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CPI" Type="Double" />
+          <Property Name="MLink" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="SID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Code" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SCode" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="NID" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="IsUsed" Type="Int32" />
+          <Property Name="Status" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ClientIP" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ClientBrowser" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CreationDate" Type="DateTime" Precision="3" />
+          <Property Name="Respondants" Type="Int32" />
+          <Property Name="IsSent" Type="Int32" />
+          <Property Name="Notes" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="IsChecked" Type="Int32" />
+          <Property Name="Completes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Terminate" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Quotafull" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Screened" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Overquota" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Incomplete" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Security" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="Fraud" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="SUCCESS" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="DEFAULT" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="FAILURE" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="QUALITY_TERMINATION" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="OVER_QUOTA" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="IsActive" Type="Int32" />
+          <Property Name="Block" Type="Int32" />
+          <Property Name="TrackingType" Type="Int32" />
+          <Property Name="Prescreening" Type="Int32" />
+          <Property Name="RC" Type="Int32" />
+          <Property Name="AddHashing" Type="Int32" />
+          <Property Name="ParameterName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="HashingType" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="Project">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="PName" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="Descriptions" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ClientID" Type="Int32" />
+          <Property Name="PID" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="PManager" Type="String" MaxLength="500" FixedLength="false" Unicode="true" />
+          <Property Name="LOI" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="IRate" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="CPI" Type="Double" />
+          <Property Name="Status" Type="Int32" />
+          <Property Name="SampleSize" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Quota" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="SDate" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="EDate" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Country" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="LType" Type="Int32" />
+          <Property Name="Notes" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CreationDate" Type="DateTime" Precision="3" />
+          <Property Name="IsActive" Type="Int32" />
+          <Property Name="BlockDevice" Type="String" MaxLength="10" FixedLength="false" Unicode="true" />
+          <Property Name="IPCount" Type="Int32" />
+          <Property Name="ProjectIdFromAPI" Type="String" MaxLength="150" FixedLength="false" Unicode="true" />
+          <Property Name="ProjectFrom" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+        </EntityType>
+        <EntityType Name="ProjectsUrl">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="PID" Type="Int32" />
+          <Property Name="CID" Type="Int32" />
+          <Property Name="Url" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="CreationDate" Type="DateTime" Precision="3" />
+          <Property Name="Notes" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="CPI" Type="Double" />
+          <Property Name="Quota" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="Status" Type="Int32" />
+          <Property Name="Token" Type="Int32" />
+          <Property Name="ParameterName" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ParameterValue" Type="String" MaxLength="50" FixedLength="false" Unicode="true" />
+          <Property Name="ApplytoSupplier" Type="Int32" />
+          <Property Name="OriginalURL" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="ApplyToSupplier1" Type="Int32" />
+        </EntityType>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="NextOnServicesModelStoreContainer" CdmEntityContainer="NextOnServicesEntities3">
+          <EntitySetMapping Name="SupplierProjects">
+            <EntityTypeMapping TypeName="NextOnServicesModel.SupplierProject">
+              <MappingFragment StoreEntitySet="SupplierProjects">
+                <ScalarProperty Name="ENC" ColumnName="ENC" />
+                <ScalarProperty Name="ActStatus" ColumnName="ActStatus" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="EndDate" ColumnName="EndDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="Device" ColumnName="Device" />
+                <ScalarProperty Name="IsSent" ColumnName="IsSent" />
+                <ScalarProperty Name="ClientBrowser" ColumnName="ClientBrowser" />
+                <ScalarProperty Name="ClientIP" ColumnName="ClientIP" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="UID" ColumnName="UID" />
+                <ScalarProperty Name="SID" ColumnName="SID" />
+                <ScalarProperty Name="PMID" ColumnName="PMID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProjectMappinggs">
+            <EntityTypeMapping TypeName="NextOnServicesModel.ProjectMappingg">
+              <MappingFragment StoreEntitySet="ProjectMapping">
+                <ScalarProperty Name="HashingType" ColumnName="HashingType" />
+                <ScalarProperty Name="ParameterName" ColumnName="ParameterName" />
+                <ScalarProperty Name="AddHashing" ColumnName="AddHashing" />
+                <ScalarProperty Name="RC" ColumnName="RC" />
+                <ScalarProperty Name="Prescreening" ColumnName="Prescreening" />
+                <ScalarProperty Name="TrackingType" ColumnName="TrackingType" />
+                <ScalarProperty Name="Block" ColumnName="Block" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="OVER_QUOTA" ColumnName="OVER QUOTA" />
+                <ScalarProperty Name="QUALITY_TERMINATION" ColumnName="QUALITY TERMINATION" />
+                <ScalarProperty Name="FAILURE" ColumnName="FAILURE" />
+                <ScalarProperty Name="DEFAULT" ColumnName="DEFAULT" />
+                <ScalarProperty Name="SUCCESS" ColumnName="SUCCESS" />
+                <ScalarProperty Name="Fraud" ColumnName="Fraud" />
+                <ScalarProperty Name="Security" ColumnName="Security" />
+                <ScalarProperty Name="Incomplete" ColumnName="Incomplete" />
+                <ScalarProperty Name="Overquota" ColumnName="Overquota" />
+                <ScalarProperty Name="Screened" ColumnName="Screened" />
+                <ScalarProperty Name="Quotafull" ColumnName="Quotafull" />
+                <ScalarProperty Name="Terminate" ColumnName="Terminate" />
+                <ScalarProperty Name="Completes" ColumnName="Completes" />
+                <ScalarProperty Name="IsChecked" ColumnName="IsChecked" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="IsSent" ColumnName="IsSent" />
+                <ScalarProperty Name="Respondants" ColumnName="Respondants" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="ClientBrowser" ColumnName="ClientBrowser" />
+                <ScalarProperty Name="ClientIP" ColumnName="ClientIP" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="IsUsed" ColumnName="IsUsed" />
+                <ScalarProperty Name="NID" ColumnName="NID" />
+                <ScalarProperty Name="SCode" ColumnName="SCode" />
+                <ScalarProperty Name="Code" ColumnName="Code" />
+                <ScalarProperty Name="SID" ColumnName="SID" />
+                <ScalarProperty Name="MLink" ColumnName="MLink" />
+                <ScalarProperty Name="CPI" ColumnName="CPI" />
+                <ScalarProperty Name="OLink" ColumnName="OLink" />
+                <ScalarProperty Name="SUpplierID" ColumnName="SUpplierID" />
+                <ScalarProperty Name="CountryID" ColumnName="CountryID" />
+                <ScalarProperty Name="ProjectID" ColumnName="ProjectID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Projects">
+            <EntityTypeMapping TypeName="NextOnServicesModel.Project">
+              <MappingFragment StoreEntitySet="Projects">
+                <ScalarProperty Name="ProjectFrom" ColumnName="ProjectFrom" />
+                <ScalarProperty Name="ProjectIdFromAPI" ColumnName="ProjectIdFromAPI" />
+                <ScalarProperty Name="IPCount" ColumnName="IPCount" />
+                <ScalarProperty Name="BlockDevice" ColumnName="BlockDevice" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="LType" ColumnName="LType" />
+                <ScalarProperty Name="Country" ColumnName="Country" />
+                <ScalarProperty Name="EDate" ColumnName="EDate" />
+                <ScalarProperty Name="SDate" ColumnName="SDate" />
+                <ScalarProperty Name="Quota" ColumnName="Quota" />
+                <ScalarProperty Name="SampleSize" ColumnName="SampleSize" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="CPI" ColumnName="CPI" />
+                <ScalarProperty Name="IRate" ColumnName="IRate" />
+                <ScalarProperty Name="LOI" ColumnName="LOI" />
+                <ScalarProperty Name="PManager" ColumnName="PManager" />
+                <ScalarProperty Name="PID" ColumnName="PID" />
+                <ScalarProperty Name="ClientID" ColumnName="ClientID" />
+                <ScalarProperty Name="Descriptions" ColumnName="Descriptions" />
+                <ScalarProperty Name="PName" ColumnName="PName" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="ProjectsUrls">
+            <EntityTypeMapping TypeName="NextOnServicesModel.ProjectsUrl">
+              <MappingFragment StoreEntitySet="ProjectsUrl">
+                <ScalarProperty Name="ApplyToSupplier1" ColumnName="ApplyToSupplier1" />
+                <ScalarProperty Name="OriginalURL" ColumnName="OriginalURL" />
+                <ScalarProperty Name="ApplytoSupplier" ColumnName="ApplytoSupplier" />
+                <ScalarProperty Name="ParameterValue" ColumnName="ParameterValue" />
+                <ScalarProperty Name="ParameterName" ColumnName="ParameterName" />
+                <ScalarProperty Name="Token" ColumnName="Token" />
+                <ScalarProperty Name="Status" ColumnName="Status" />
+                <ScalarProperty Name="Quota" ColumnName="Quota" />
+                <ScalarProperty Name="CPI" ColumnName="CPI" />
+                <ScalarProperty Name="Notes" ColumnName="Notes" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="Url" ColumnName="Url" />
+                <ScalarProperty Name="CID" ColumnName="CID" />
+                <ScalarProperty Name="PID" ColumnName="PID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="true" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="true" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="None" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

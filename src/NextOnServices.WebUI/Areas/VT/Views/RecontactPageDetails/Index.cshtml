@@ -1,0 +1,435 @@
+@{
+    ViewData["Title"] = "Recontact Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row heading-bg">
+    <div class="col-lg-3 col-md-4 col-sm-4 col-xs-12">
+        <h5 class="txt-dark">Project</h5>
+    </div>
+    <div class="col-lg-9 col-md-8 col-sm-8 col-xs-12">
+        <ol class="breadcrumb">
+            <li><a href="/VT/Home/Dashboard">Dashboard</a></li>
+            <li class="active"><a href="#"><span>Project Details</span></a></li>
+        </ol>
+    </div>
+    <input type="hidden" id="hfRecontactId" value="@(ViewData["RecontactId"] ?? 0)" />
+</div>
+
+<!-- Edit modal -->
+<div class="modal fade" id="modal_EditRecontactProject" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" id="modal_h4__cpi">Edit</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <div class="col-sm-10">
+                            <input type="hidden" id="hfId" />
+                            <label style="color: #006767; font-size: 14px; font-weight: 500" id="lblPname">Recontact Project</label>
+                            <br />
+                            <label style="color: #006767; font-size: 14px; font-weight: 500" id="lnlPnumber">NXT0001</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtRecontactDescription">Recontact Description</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtRecontactDescription" placeholder="Recontact Description" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtLOI">LOI</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtLOI" placeholder="LOI" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtIR">Incident Rate(%)</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtIR" placeholder="Incident Rate" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtCPI">CPI</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtCPI" placeholder="CPI" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtRCQ">Respondant Quota</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="txtRCQ" placeholder="Respondant Quota" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="txtNOTES">NOTES</label>
+                        <div class="col-sm-10">
+                            <textarea class="form-control" id="txtNOTES"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="SaveRecontactDetails()">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Survey details & KPIs -->
+<div class="row">
+    <div class="col-xs-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h6 class="card-title">Survey Details</h6>
+                    <div>
+                        <button type="button" class="btn btn-success btn-sm" onclick="GetRecontactProjectDetails()">Edit</button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-7">
+                        <table class="table table-bordered">
+                            <tr>
+                                <td class="font-weight-bold w-25">Survey ID</td>
+                                <td>
+                                    <span id="lblSurveyID"></span>
+                                    <input type="hidden" id="hflblSurveyID" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">Survey Name</td>
+                                <td>
+                                    <span id="lblSurvayname"></span>
+                                    <input type="hidden" id="hflblSurvayname" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">Length Of Interview</td>
+                                <td><span id="lblLOI">Yet to Come</span> <span>min</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">CPI</td>
+                                <td>$ <span id="lblCPI">Yet to Come</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">Expected IR</td>
+                                <td><span id="txtEIR">Yet to Come</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-bold">Notes</td>
+                                <td><span id="lblNotes"></span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-sm-5 text-center" style="padding-top: 40px">
+                        <h1 id="hstatus" style="color: #006767; font-weight: bold; font-size: 50px">STATUS</h1>
+                        <h1 style="color: #006767; font-weight: bold; font-size: 50px">
+                            <span id="lblCompletion">0</span>%
+                            <label style="font-size: 16px; color: #01c853; font-weight: normal">Achieved</label>
+                        </h1>
+                        <div class="mt-3" style="border-top: 1px solid #f1f1f1; box-shadow: 0 1px 4px 1px #f1f1f1; padding-top: 10px;">
+                            <span id="spncompletes" style="font-size: 40px; color: #006767; font-weight: bold">0</span>
+                            <span style="font-size: 16px; color: #01c853; font-weight: normal"> out of </span>
+                            <span id="spnTotalcomplete" style="font-size: 40px; color: #006767; font-weight: bold">0</span>
+                        </div>
+                        <div class="mt-3" style="border-top: 1px solid #f1f1f1; box-shadow: 0 1px 4px 1px #f1f1f1; padding-top: 10px;">
+                            <div>
+                                <span style="font-size: 14px; color: #01c853; font-weight: normal">Actual IR</span>
+                                <span id="spnpercentIR" style="font-size: 40px; color: #006767; font-weight: bold"></span>
+                                <span style="font-size: 16px; color: #01c853; font-weight: normal"> %</span>
+                            </div>
+                            <div>
+                                <span style="font-size: 14px; color: #01c853; font-weight: normal">Actual LOI</span>
+                                <span id="spnLOI" style="font-size: 40px; color: #006767; font-weight: bold">0</span>
+                                <span style="font-size: 16px; color: #01c853; font-weight: normal"> min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Country details -->
+<div class="row">
+    <div class="col-xs-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Country Details</h6>
+                <div class="table-responsive">
+                    <table id="tblCountry" class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Country</th>
+                                <th>Total</th>
+                                <th>Complete</th>
+                                <th>Terminate</th>
+                                <th>Overquota</th>
+                                <th>Security Term</th>
+                                <th>Fraud Error</th>
+                                <th>Incomplete</th>
+                                <th>Cancelled</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supplier details -->
+<div class="row">
+    <div class="col-xs-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Supplier Details</h6>
+                <div class="table-responsive">
+                    <table id="tblSupplierDetails" class="table table-hover table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="display:none">ID</th>
+                                <th>Supplier Name</th>
+                                <th>Total</th>
+                                <th>Complete</th>
+                                <th>Terminate</th>
+                                <th>Overquota</th>
+                                <th>Security Term</th>
+                                <th>Fraud Error</th>
+                                <th>Incomplete</th>
+                                <th>Cancelled</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Redirect links -->
+<div class="row">
+    <div class="col-xs-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">Redirect Links</h6>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Completes</label>
+                            <label class="form-control" id="lblComplete"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Terminate</label>
+                            <label class="form-control" id="lblTerminate"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Overquota</label>
+                            <label class="form-control" id="lblOverquota"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Security Term</label>
+                            <label class="form-control" id="lblS_Term"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Fraud Error</label>
+                            <label class="form-control" id="lblF_Error"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Variable 1</label>
+                            <label class="form-control" id="lblVar1"></label>
+                        </div>
+                    </div>
+                    <div class="col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Variable 2</label>
+                            <label class="form-control" id="lblVar2"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        (function () {
+            function getquerystringid() {
+                var qs = new URLSearchParams(window.location.search);
+                var id = qs.get('Id') || qs.get('ID');
+                if (!id || isNaN(parseInt(id, 10))) {
+                    var fallback = document.getElementById('hfRecontactId');
+                    if (fallback && fallback.value) {
+                        id = fallback.value;
+                    }
+                }
+                return id;
+            }
+
+            function LoadTable(id, opt) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactPageDetails/FetchRecontactProjects',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({ Id: parseInt(id, 10), Opt: opt }),
+                    success: function (response) {
+                        var data = response && response.d ? response.d : response || [];
+
+                        var countrydata = data[0] || [];
+                        var tbodycountry = '';
+                        $('#tblCountry tbody').empty();
+                        for (var i = 0; i < countrydata.length; i++) {
+                            var c = countrydata[i];
+                            var countryName = c.countryname ?? c.countryName ?? c.Countryname ?? '';
+                            tbodycountry += '<tr><td>' + (countryName || '') + '</td><td>' + (c.total ?? '') + '</td><td>' + (c.complete ?? '') + '</td><td>' + (c.terminate ?? '') + '</td><td>' + (c.overquota ?? '') + '</td><td>' + (c.s_term ?? '') + '</td><td>' + (c.f_error ?? '') + '</td><td>' + (c.incomplete ?? '') + '</td><td>' + (c.cancelled ?? '') + '</td></tr>';
+                        }
+                        if (tbodycountry) {
+                            $('#tblCountry tbody').html(tbodycountry);
+                        }
+
+                        var supplierdata = data[1] || [];
+                        var tbodysupp = '';
+                        $('#tblSupplierDetails tbody').empty();
+                        for (var j = 0; j < supplierdata.length; j++) {
+                            var s = supplierdata[j];
+                            var supplierName = s.suppliername ?? s.supplierName ?? s.Suppliername ?? '';
+                            tbodysupp += '<tr><td style="display:none">' + (s.id ?? '') + '</td><td>' + (supplierName || '') + '</td><td>' + (s.total ?? '') + '</td><td>' + (s.complete ?? '') + '</td><td>' + (s.terminate ?? '') + '</td><td>' + (s.overquota ?? '') + '</td><td>' + (s.s_term ?? '') + '</td><td>' + (s.f_error ?? '') + '</td><td>' + (s.incomplete ?? '') + '</td><td>' + (s.cancelled ?? '') + '</td></tr>';
+                        }
+                        if (tbodysupp) {
+                            $('#tblSupplierDetails tbody').html(tbodysupp);
+                        }
+
+                        var redirects = data[2] || [];
+                        if (redirects.length > 0) {
+                            var r = redirects[0];
+                            $('#lblComplete').text(r.complete ?? r.Complete ?? '');
+                            $('#lblTerminate').text(r.terminate ?? r.Terminate ?? '');
+                            $('#lblOverquota').text(r.overquota ?? r.Overquota ?? '');
+                            $('#lblS_Term').text(r.s_Term ?? r.S_Term ?? '');
+                            $('#lblF_Error').text(r.f_Error ?? r.F_Error ?? '');
+                            $('#lblVar1').text(r.variable1 ?? r.Variable1 ?? '');
+                            $('#lblVar2').text(r.variable2 ?? r.Variable2 ?? '');
+                        }
+
+                        var remainingdetails = data[3] || [];
+                        if (remainingdetails.length > 0) {
+                            var d = remainingdetails[0];
+                            var projectNumber = d.projectNumber ?? d.ProjectNumber ?? '';
+                            var rProjectName = d.rProjectName ?? d.RProjectName ?? '';
+                            var notes = d.notes ?? d.Notes ?? '';
+                            var status = d.status ?? d.Status ?? '';
+                            $('#lblSurveyID').text(projectNumber);
+                            $('#hflblSurveyID').val(projectNumber);
+                            $('#lblSurvayname').text(rProjectName);
+                            $('#hflblSurvayname').val(rProjectName);
+                            $('#lblLOI').text(d.loi ?? d.LOI ?? '');
+                            $('#lblCPI').text(d.cpi ?? d.CPI ?? '');
+                            $('#txtEIR').text(d.ir ?? d.IR ?? '');
+                            $('#hstatus').text(status);
+                            $('#lblNotes').text(notes);
+                        }
+                    },
+                    error: function () {
+                        // ignore for now
+                    }
+                });
+            }
+
+            function GetRecontactProjectDetails() {
+                var id = getquerystringid();
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactPageDetails/FetchRecontactProjects',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({ Id: parseInt(id, 10), Opt: 0 }),
+                    success: function (response) {
+                        var data = response && response.d ? response.d : response || [];
+                        var remainingdetails = data[3] || [];
+                        if (remainingdetails.length > 0) {
+                            var d = remainingdetails[0];
+                            $('#lnlPnumber').text(d.projectNumber ?? d.ProjectNumber ?? '');
+                            $('#lblPname').text(d.rProjectName ?? d.RProjectName ?? '');
+                            $('#txtRecontactDescription').val(d.rProjectDescription ?? d.RProjectDescription ?? '');
+                            $('#txtLOI').val(d.loi ?? d.LOI ?? '');
+                            $('#txtIR').val(d.ir ?? d.IR ?? '');
+                            $('#txtCPI').val(d.cpi ?? d.CPI ?? '');
+                            $('#txtRCQ').val(d.rcq ?? d.RCQ ?? '');
+                            $('#txtNOTES').val(d.notes ?? d.Notes ?? '');
+                            $('#hfId').val(id);
+                            $('#modal_EditRecontactProject').modal('show');
+                        }
+                    }
+                });
+            }
+            window.GetRecontactProjectDetails = GetRecontactProjectDetails;
+
+            function GetFormData() {
+                var obj = {};
+                obj.ID = parseInt($('#hfId').val() || getquerystringid(), 10);
+                obj.RecontactDescription = $('#txtRecontactDescription').val() || '';
+                obj.LOI = parseInt($('#txtLOI').val() || '0', 10);
+                obj.IR = parseInt($('#txtIR').val() || '0', 10);
+                obj.CPI = parseFloat($('#txtCPI').val() || '0');
+                obj.RCQ = parseInt($('#txtRCQ').val() || '0', 10);
+                obj.Notes = $('#txtNOTES').val() || '';
+                return obj;
+            }
+
+            function SaveRecontactDetails() {
+                var formdata = GetFormData();
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactPageDetails/UpdateRecontactProjects',
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify(formdata),
+                    success: function (data) {
+                        var result = (data && data.d) ? data.d : data;
+                        // SP updateRecontactProjects: @@output=0 means success, @@output=1 means error
+                        if (result === '0' || result === 0) {
+                            $('#modal_EditRecontactProject').modal('hide');
+                            LoadTable(formdata.ID, 0);
+                            Swal.fire('Saved', 'Recontact project details have been updated.', 'success');
+                        } else if (result === '1' || result === 1) {
+                            Swal.fire('Error', 'Please try again', 'error');
+                        } else {
+                            Swal.fire('Error', 'Please contact administrator', 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Please contact administrator', 'error');
+                    }
+                });
+            }
+            window.SaveRecontactDetails = SaveRecontactDetails;
+
+            $(document).ready(function () {
+                var id = getquerystringid();
+                if (id) {
+                    LoadTable(id, 0);
+                }
+            });
+        })();
+    </script>
+}
+

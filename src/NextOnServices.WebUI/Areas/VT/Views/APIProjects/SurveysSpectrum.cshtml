@@ -1,0 +1,452 @@
+@{
+    ViewData["Title"] = "Surveys (Spectrum)";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    #tbl thead tr th, #tbl tbody tr td {
+        white-space: nowrap;
+    }
+
+    .actiontd {
+        padding: 1px 1px 1px 16px !important;
+    }
+
+    .card {
+        border: 1px solid;
+        box-shadow: 1px 1px 1px gray;
+        margin-top: 5px;
+    }
+
+    #qualificationmodel table tbody tr td:nth-child(1) {
+        width: 25%;
+    }
+
+    /* DataTable Layout Fixes */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .dataTables_wrapper .dataTables_length {
+        float: left;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        text-align: right;
+    }
+
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0;
+        font-weight: normal;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        margin: 0 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        float: left;
+        padding-top: 0.755em;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+        text-align: right;
+        padding-top: 0.25em;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5em 1em;
+        margin-left: 2px;
+        margin-right: 2px;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        cursor: pointer;
+        color: #007bff !important;
+        background-color: #fff;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        color: #0056b3 !important;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        color: #fff !important;
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        color: #6c757d !important;
+        cursor: not-allowed;
+        background-color: #fff;
+    }
+
+    .dataTables_wrapper:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+
+    @@media screen and (max-width: 767px) {
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_paginate {
+            float: none;
+            text-align: center;
+        }
+    }
+</style>
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Surveys From Pure Spectrum</h4>
+                <div class="d-flex justify-content-end mb-3">
+                    <button type="button" class="btn btn-primary" id="btnPullSurveys">Pull Surveys</button>
+                    <button style="display: none" type="button" class="btn btn-primary" data-toggle="modal" data-target="#qualificationmodel" id="btnqualificationmodel">modal</button>
+                </div>
+                <div class="table-responsive" style="overflow-x: scroll;">
+                    <table id="tbl" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>survey_id</th>
+                                <th>survey_name</th>
+                                <th>cpi</th>
+                                <th>crtd_on</th>
+                                <th>field_end_date</th>
+                                <th>last_complete_date</th>
+                                <th>soft_launch</th>
+                                <th>supplier_completes : achieved</th>
+                                <th>supplier_completes : guaranteed_allocation</th>
+                                <th>supplier_completes : guaranteed_allocation_remaining</th>
+                                <th>supplier_completes : needed</th>
+                                <th>supplier_completes : remaining</th>
+                                <th>surveyLocalization</th>
+                                <th>survey_grouping : exclusion_period</th>
+                                <th>survey_performance : overall : ir</th>
+                                <th>survey_performance : overall : loi</th>
+                                <th>survey_status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Qualifications Modal -->
+<div class="modal fade" tabindex="-1" role="dialog" id="qualificationmodel">
+    <div class="modal-dialog modal-lg" style="width: 70%" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" style="display: inline">Qualifications</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="Qualifications_12">
+                                    <table class="table table-striped">
+                                        <tbody>
+                                            <tr>
+                                                <td>Question Text</td>
+                                                <td>: What is your age?</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Type</td>
+                                                <td>: Numeric - Open-end</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Allowed Answer Options</td>
+                                                <td>25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" name="surveyId" value="" />
+                <button type="button" class="btn btn-primary" onclick="AccceptProject()">Add Project</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+    <script type="text/javascript">
+        let dataTable;
+
+        function alertt(message1, message2, message3) {
+            Swal.fire({
+                title: message1 || '',
+                text: message2 || '',
+                icon: message3 || 'info',
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                },
+                buttonsStyling: false
+            });
+        }
+
+        $(document).ready(function () {
+            $("#btnPullSurveys").click(function () {
+                $.blockUI({ message: '<h5>Please wait</h5>' });
+                pullSurveysFromAPI();
+            });
+        });
+
+        function pullSurveysFromAPI() {
+            // Destroy existing DataTable if it exists
+            if (dataTable) {
+                try {
+                    dataTable.destroy();
+                } catch (e) {
+                    console.log("DataTable already destroyed or not initialized");
+                }
+                dataTable = null;
+            }
+            
+            // Clear the table body completely
+            $("#tbl tbody").html("");
+
+            pullSurveysFromSpectrumAPI().then((data) => {
+                var Surveys = Array.isArray(data) ? data : [];
+                
+                console.log("Surveys count:", Surveys.length);
+                console.log("First survey:", Surveys[0]);
+                
+                if (Surveys.length === 0) {
+                    alertt("Warning", "No surveys found", "warning");
+                    $.unblockUI();
+                    return;
+                }
+                
+                Surveys.forEach((v, i) => {
+                    if (!v) return;
+                    let surveyStatus = "";
+                    if (v.survey_status == 22) {
+                        surveyStatus = "Live";
+                    } else if (v.survey_status == 33) {
+                        surveyStatus = "Paused";
+                    } else if (v.survey_status == 44) {
+                        surveyStatus = "Closed";
+                    } else {
+                        surveyStatus = "Other";
+                    }
+
+                    $("#tbl tbody").append("<tr><td>" + v.survey_id + "</td><td>" + v.survey_name + "</td><td>" + v.cpi + "</td><td>" + v.crtd_on + "</td><td ir=''>" + v.field_end_date + "</td><td loi=''>" + v.last_complete_date + "</td><td>" + v.soft_launch + "</td><td>" + (v.supplier_completes?.achieved || "") + "</td><td>" + (v.supplier_completes?.guaranteed_allocation || "") + "</td><td>" + (v.supplier_completes?.guaranteed_allocation_remaining || "") + "</td><td>" + (v.supplier_completes?.needed || "") + "</td><td>" + (v.supplier_completes?.remaining || "") + "</td><td>" + v.surveyLocalization + "</td><td>" + (v.survey_grouping?.exclusion_period || "") + "</td><td>" + (v.survey_performance?.overall?.ir || "") + "</td><td>" + (v.survey_performance?.overall?.loi || "") + "</td><td>" + surveyStatus + "</td><td class='actiontd'><input type='button' class='btn btn-primary btn-sm' value='Add Project' onclick=\"addToProject('" + v.survey_id + "','" + v.survey_name + "','" + v.cpi + "','" + (v.survey_performance?.overall?.loi || "") + "','" + (v.survey_performance?.overall?.ir || "") + "','" + (v.supplier_completes?.remaining || "") + "','')\" /></td></tr>");
+                });
+
+                dataTable = $("#tbl").DataTable({
+                    destroy: true,
+                    retrieve: false,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+                    language: {
+                        search: "Search:",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        },
+                        emptyTable: "No data available in table",
+                        zeroRecords: "No matching records found"
+                    },
+                    responsive: true,
+                    order: [],
+                    columnDefs: [
+                        { orderable: true, targets: '_all' }
+                    ]
+                });
+                $.unblockUI();
+            }).catch((err) => {
+                console.error("Error in pullSurveysFromAPI:", err);
+                $.unblockUI();
+                let errorMsg = "Failed to pull surveys. Please try again.";
+                if (err && err.message) {
+                    errorMsg = err.message;
+                } else if (err && err.responseText) {
+                    errorMsg = err.responseText;
+                }
+                alertt("Error", errorMsg, "error");
+            });
+        }
+
+        function pullSurveysFromSpectrumAPI() {
+            return new Promise((resolve, reject) => {
+                $.ajax({
+                    type: "POST",
+                    url: '/VT/ApiProjects/GetSpectrumSurveys',
+                    data: JSON.stringify({}),
+                    contentType: "application/json; charset=utf-8",
+                    headers: { 'Cache-Control': 'no-cache' },
+                    cache: false,
+                    dataType: "json",
+                    success: function (data, textStatus, xhr) {
+                        console.log("Spectrum Surveys Response:", data);
+                        console.log("Response Type:", typeof data);
+                        console.log("Is Array:", Array.isArray(data));
+                        console.log("Response Status:", xhr.status);
+                        
+                        // Handle array response directly
+                        if (Array.isArray(data)) {
+                            console.log("Resolving as array, count:", data.length);
+                            resolve(data);
+                        }
+                        // Handle wrapped response
+                        else if (data && data.surveys) {
+                            console.log("Resolving from data.surveys");
+                            resolve(Array.isArray(data.surveys) ? data.surveys : [data.surveys]);
+                        }
+                        // Handle other structures
+                        else if (data && data.Surveys) {
+                            console.log("Resolving from data.Surveys");
+                            resolve(Array.isArray(data.Surveys) ? data.Surveys : [data.Surveys]);
+                        }
+                        else {
+                            console.warn("Unexpected response format:", data);
+                            console.warn("Response keys:", Object.keys(data || {}));
+                            // Try to resolve as empty array or the data itself
+                            resolve(Array.isArray(data) ? data : []);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Spectrum Surveys API Error Details:");
+                        console.error("Status:", status);
+                        console.error("Error:", error);
+                        console.error("Status Code:", xhr.status);
+                        console.error("Status Text:", xhr.statusText);
+                        console.error("Response Text:", xhr.responseText);
+                        console.error("Response JSON:", xhr.responseJSON);
+                        
+                        let errorMessage = "Failed to fetch surveys";
+                        try {
+                            if (xhr.responseJSON) {
+                                errorMessage = xhr.responseJSON.message || xhr.responseJSON.Message || 
+                                             xhr.responseJSON.error || xhr.responseJSON.Error || 
+                                             JSON.stringify(xhr.responseJSON);
+                            } else if (xhr.responseText) {
+                                try {
+                                    let parsed = JSON.parse(xhr.responseText);
+                                    errorMessage = parsed.message || parsed.Message || parsed.error || parsed.Error || xhr.responseText;
+                                } catch (e) {
+                                    errorMessage = xhr.responseText || errorMessage;
+                                }
+                            }
+                            
+                            if (xhr.status === 0) {
+                                errorMessage = "Network error. Please check your connection.";
+                            } else if (xhr.status >= 500) {
+                                errorMessage = `Server error (${xhr.status}): ${errorMessage}`;
+                            } else if (xhr.status >= 400) {
+                                errorMessage = `Request error (${xhr.status}): ${errorMessage}`;
+                            }
+                        } catch (e) {
+                            console.error("Error parsing error response:", e);
+                            errorMessage = `Error: ${xhr.status} - ${xhr.statusText}`;
+                        }
+                        
+                        reject(new Error(errorMessage));
+                    }
+                });
+            });
+        }
+
+        function AccceptProject() {
+            let surveyId = $("#qualificationmodel").find("[name='surveyId']").val();
+            let cpi = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[cpi]").attr("cpi");
+            let loi = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[loi]").attr("loi");
+            let ir = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[ir]").attr("ir");
+            let totalRemaining = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[totalRemaining]").attr("totalRemaining");
+            let livelink = $("#tbl tbody").find("tr[surveyId='" + surveyId + "']").find("td[livelink]").attr("livelink");
+            addToProject(surveyId, cpi, loi, ir, totalRemaining, livelink);
+        }
+
+        function addToProject(projectId, projectName, cpi, loi, ir, totalRemaining, livelink) {
+            $.blockUI({ message: '<h5>Please wait</h5>' });
+            $.ajax({
+                type: "POST",
+                contentType: "application/json; charset=utf-8",
+                url: '/VT/ApiProjects/AddProjectFromSpectrum',
+                data: JSON.stringify({ ProjectId: projectId, ProjectName: projectName, CPI: cpi, LOI: loi, IR: ir, TotalRemaining: totalRemaining, LiveLink: livelink }),
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    // Response uses lowercase: result and message
+                    let result = data.result !== undefined ? data.result : false;
+                    let message = data.message || "Failed to add project";
+                    
+                    if (result === true || result === "true") {
+                        alertt("Successfully added", "", "success");
+                        $("#qualificationmodel").modal('hide');
+                    }
+                    else {
+                        alertt("Error", message, "error");
+                    }
+                    $.unblockUI();
+                },
+                error: function (xhr, status, error) {
+                    let errorMessage = "An error occurred while adding the project";
+                    try {
+                        if (xhr.responseJSON) {
+                            errorMessage = xhr.responseJSON.message || xhr.responseJSON.Message || errorMessage;
+                        } else if (xhr.responseText) {
+                            let parsed = JSON.parse(xhr.responseText);
+                            errorMessage = parsed.message || parsed.Message || errorMessage;
+                        }
+                    } catch (e) {
+                        // Use default error message
+                    }
+                    alertt("Error", errorMessage, "error");
+                    $.unblockUI();
+                }
+            });
+        }
+    </script>
+}

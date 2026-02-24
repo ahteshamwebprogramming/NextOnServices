@@ -1,0 +1,16 @@
+﻿/*Style for Alerts*/
+.abc {
+    color: #006767;
+}
+
+    .abc h2 {
+        margin-bottom: 0px !important;
+    }
+
+    .abc .swal2-content {
+        margin-bottom: -20px !important;
+    }
+
+    .abc .swal2-icon {
+        margin-bottom: 20px !important;
+    }

@@ -1,0 +1,193 @@
+@{
+    ViewData["Title"] = "Recontact Projects";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Recontact Projects</h4>
+                <p class="card-description">
+                    Manage Recontact projects and update their status.
+                </p>
+                <div class="table-responsive">
+                    <table id="tblRecontact" class="table table-hover table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>P Number</th>
+                                <th>PName</th>
+                                <th>CPI</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>CO</th>
+                                <th>TR</th>
+                                <th>OQ</th>
+                                <th>ST</th>
+                                <th>FE</th>
+                                <th>IC</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        (function () {
+            var table = null;
+
+            function escapeHtml(t) {
+                if (t == null) return '';
+                var s = String(t);
+                return s.replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function toNumber(v) {
+                var n = parseFloat(v);
+                return isNaN(n) ? 0 : n;
+            }
+
+            function buildStatusSelect(id, statusInt) {
+                var current = parseInt(statusInt || 0);
+                var options = [
+                    { value: 1, text: 'Closed' },
+                    { value: 2, text: 'Live' },
+                    { value: 3, text: 'On Hold' },
+                    { value: 4, text: 'Cancelled' },
+                    { value: 5, text: 'Awarded' },
+                    { value: 6, text: 'Invoiced' }
+                ];
+                var html = '<select class="form-control form-control-sm recontact-status" id="' + id + '" onchange="changeRecontactStatus(this.id,' + current + ')">';
+                for (var i = 0; i < options.length; i++) {
+                    var o = options[i];
+                    var sel = (o.value === current) ? ' selected="selected"' : '';
+                    html += '<option value="' + o.value + '"' + sel + '>' + o.text + '</option>';
+                }
+                html += '</select>';
+                return html;
+            }
+
+            function renderRows(list) {
+                var tbodyHtml = '';
+                for (var i = 0; i < list.length; i++) {
+                    var r = list[i] || {};
+                    var id = r.id || r.ID;
+                    var pid = r.pid || r.PID || '';
+                    var name = r.recontactName || r.RecontactName || '';
+                    var cpi = typeof r.cpi !== 'undefined' ? r.cpi : (typeof r.CPI !== 'undefined' ? r.CPI : 0);
+                    var statusInt = r.statusint || r.Statusint || 0;
+                    var total = r.total || r.Total || 0;
+                    var complete = r.complete || r.Complete || 0;
+                    var terminate = r.terminate || r.Terminate || 0;
+                    var overquota = r.overquota || r.Overquota || 0;
+                    var sterm = r.s_term || r.S_term || 0;
+                    var ferror = r.f_error || r.F_error || 0;
+                    var incomplete = r.incomplete || r.Incomplete || 0;
+
+                    var dropdown = buildStatusSelect(id, statusInt);
+                    var detailsUrl = '/VT/RecontactPageDetails?Id=' + id;
+
+                    tbodyHtml += '<tr>' +
+                        '<td><a href=\"' + detailsUrl + '\" class=\"hover_blue\">' + escapeHtml(pid) + '</a></td>' +
+                        '<td><a href=\"' + detailsUrl + '\" class=\"hover_blue\">' + escapeHtml(name) + '</a></td>' +
+                        '<td>' + escapeHtml(toNumber(cpi).toFixed(2)) + '</td>' +
+                        '<td class="mw-150">' + dropdown + '</td>' +
+                        '<td>' + escapeHtml(total) + '</td>' +
+                        '<td>' + escapeHtml(complete) + '</td>' +
+                        '<td>' + escapeHtml(terminate) + '</td>' +
+                        '<td>' + escapeHtml(overquota) + '</td>' +
+                        '<td>' + escapeHtml(sterm) + '</td>' +
+                        '<td>' + escapeHtml(ferror) + '</td>' +
+                        '<td>' + escapeHtml(incomplete) + '</td>' +
+                        '</tr>';
+                }
+                if (table) {
+                    table.destroy();
+                    table = null;
+                }
+                var $tbody = $('#tblRecontact tbody');
+                if (!tbodyHtml) {
+                    $tbody.html('<tr><td colspan="11" class="text-center">No records found.</td></tr>');
+                    return;
+                }
+                $tbody.html(tbodyHtml);
+                table = $('#tblRecontact').DataTable({
+                    ordering: true,
+                    order: [[0, 'desc']],
+                    pageLength: 50
+                });
+            }
+
+            window.changeRecontactStatus = function (id, previousValue) {
+                var $sel = $('#' + id);
+                var newVal = $sel.val();
+                if (!newVal) {
+                    $sel.val(previousValue);
+                    return;
+                }
+                var intStatus = parseInt(newVal, 10);
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'You want to change the status?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#26d06c',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, update it!'
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        $sel.val(previousValue);
+                        return;
+                    }
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/RecontactProjects/UpdateStatus',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ Id: parseInt(id, 10), Status: intStatus }),
+                        success: function () {
+                            previousValue = intStatus;
+                            Swal.fire('Updated!', 'Status has been updated.', 'success');
+                        },
+                        error: function () {
+                            $sel.val(previousValue);
+                            Swal.fire('Error', 'Failed to update status.', 'error');
+                        }
+                    });
+                });
+            };
+
+            function loadTable() {
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactProjects/GetProjects',
+                    contentType: 'application/json',
+                    data: '{}',
+                    success: function (data) {
+                        var list = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+                        renderRows(list);
+                    },
+                    error: function () {
+                        var $tbody = $('#tblRecontact tbody');
+                        $tbody.html('<tr><td colspan="11" class="text-center text-danger">Failed to load data.</td></tr>');
+                    }
+                });
+            }
+
+            $(document).ready(function () {
+                loadTable();
+            });
+        })();
+    </script>
+}
+

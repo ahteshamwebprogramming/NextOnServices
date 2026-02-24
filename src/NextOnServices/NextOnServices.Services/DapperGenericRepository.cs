@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using Dapper.Contrib.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using NextOnServices.Core.Repository;
@@ -31,10 +31,9 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
     private readonly DapperDBSetting _dbSettings;
     public DapperGenericRepository(DapperDBSetting dbSettings)
     {
-        _dbSettings = dbSettings;
-        if (_dbSettings.ConnectionString.IsNullOrEmpty())
-            //_dbSettings.ConnectionString = "Data Source=SHIVANSHJUYAL\\SQLEXPRESS;Initial Catalog=SimpliHRDB;Integrated Security=True;TrustServerCertificate=True";
-            _dbSettings.ConnectionString = "Data Source=182.18.138.217;Initial Catalog=NextOnServicesCore_BK;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;";
+        _dbSettings = dbSettings ?? throw new ArgumentNullException(nameof(dbSettings));
+        if (string.IsNullOrWhiteSpace(_dbSettings.ConnectionString))
+            throw new InvalidOperationException("Connection string is not configured. Set 'ConnectionStrings:NextOnServices' in appsettings.");
         DbConnection = new DapperDBContext().SetStrategy()
             .GetDbContext(_dbSettings.ConnectionString);
     }

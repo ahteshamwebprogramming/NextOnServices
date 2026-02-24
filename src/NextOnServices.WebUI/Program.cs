@@ -1,5 +1,5 @@
 using Dapper;
-
+using Microsoft.EntityFrameworkCore;
 
 using NCR = NextOnServices.Core.Repository;
 using NS = NextOnServices.Services;
@@ -21,19 +21,32 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddControllers().AddControllersAsServices();
 
-builder.Services.AddDbContext<NSD.NextOnServicesDbContext>();
-builder.Services.AddScoped<NSD.DapperDBSetting>();
+builder.Services.AddDbContext<NSD.NextOnServicesDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("NextOnServices")
+        ?? throw new InvalidOperationException("Connection string 'NextOnServices' not found in configuration.")));
+builder.Services.AddScoped<NSD.DapperDBSetting>(sp => new NSD.DapperDBSetting
+{
+    ConnectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString("NextOnServices")
+        ?? throw new InvalidOperationException("Connection string 'NextOnServices' not found in configuration.")
+});
 builder.Services.AddScoped<NCR.IUnitOfWork, NSD.UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(NSC.MapperInitializer));
 
 
-builder.Services.AddDbContext<GRPSD.GRPDbContext>();
-builder.Services.AddScoped<GRPSD.DapperDBSetting>();
+builder.Services.AddDbContext<GRPSD.GRPDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("GRP")
+        ?? throw new InvalidOperationException("Connection string 'GRP' not found in configuration.")));
+builder.Services.AddScoped<GRPSD.DapperDBSetting>(sp => new GRPSD.DapperDBSetting
+{
+    ConnectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString("GRP")
+        ?? throw new InvalidOperationException("Connection string 'GRP' not found in configuration.")
+});
 builder.Services.AddScoped<GRPCR.IUnitOfWork, GRPSD.UnitOfWork>();
 builder.Services.AddAutoMapper(typeof(GRPSC.MapperInitializer));
 
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 //SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
 //SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
 

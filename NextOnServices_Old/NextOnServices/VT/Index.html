@@ -1,0 +1,207 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>login</title>
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <meta name="author" content="hencework" />
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="icon" href="favicon.png" type="image/x-icon">
+
+    <!-- vector map CSS -->
+    <link href="../vendors/bower_components/jasny-bootstrap/dist/css/jasny-bootstrap.min.css" rel="stylesheet" type="text/css" />
+
+    <!-- Custom CSS -->
+    <link href="../dist/css/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel1">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h5 class="modal-title" id="exampleModalLabel1">Enter User Name</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="ml-auto mr-auto no-float">
+                        <div class="ml-auto mr-auto no-float">
+                            <div class="row">
+                                <div class="col-sm-12 col-xs-12">
+                                    <div class="form-wrap">
+                                        <form action="#">
+                                            <div class="form-group">
+                                                <label class="control-label mb-10" for="exampleInputEmail_2">User Name</label>
+                                                <input type="text" class="form-control" required id="exampleInputEmail_2">
+                                            </div>
+                                            <!--<div class="form-group">
+                                                <label class="pull-left control-label mb-10" for="exampleInputpwd_2">Email Id</label>
+                                                <div class="clearfix"></div>
+                                                <input type="text" class="form-control" required id="exampleInputpwd_2" placeholder="Email Id">
+                                            </div>-->
+                                            <div class="clearfix"></div>
+                                            <div class="form-group text-right">
+                                                <button type="button" class="btn btn-info btn-rounded" onclick="javascript:alert('Work in progress');">Submit</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!--Preloader-->
+    <div class="preloader-it">
+        <div class="la-anim-1"></div>
+    </div>
+    <!--/Preloader-->
+
+    <div class="wrapper pa-0">
+        <header class="sp-header">
+
+            <div class="form-group mb-0 pull-right">
+                <span class="inline-block pr-10"><i class="fa fa-envelope"></i>info@nextonservices.com</span> <span class="inline-block pr-10">|</span> <span class="inline-block pr-10"><i class="fa fa-mobile"></i>+1-818-453-1793</span>
+            </div>
+            <div class="clearfix"></div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="page-wrapper pa-0 ma-0 auth-page">
+            <div class="container-fluid">
+                <!-- Row -->
+                <div class="table-struct full-width full-height">
+                    <div class="table-cell vertical-align-middle auth-form-wrap">
+                        <div class="auth-form  ml-auto mr-auto no-float bdr_login">
+                            <div class="row">
+                                <div class="col-sm-12 col-xs-12">
+                                    <div class="mb-30 text-center">
+                                        <a href="../Nexton.aspx">
+                                            <img class="brand-img mr-10" src="../dist/img/NextonLogo.png" alt="brand" style="height: 80px" />
+                                        </a>
+                                        <h6 class="text-center nonecase-font txt-grey">Enter your details below</h6>
+                                    </div>
+                                    <div class="form-wrap">
+                                        <form action="#">
+                                            <div class="form-group">
+                                                <label class="control-label mb-10" for="exampleInputEmail_2">User</label>
+                                                <input type="email" id="UN" name="UN" class="form-control" required id="exampleInputEmail_2">
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="pull-left control-label mb-10" for="exampleInputpwd_2">Password</label>
+                                                <a class="capitalize-font txt-primary block mb-10 pull-right font-12" href="#" data-toggle="modal" data-target="#exampleModal">forgot password ?</a>
+                                                <div class="clearfix"></div>
+                                                <input type="password" id="PWD" name="PWD" class="form-control" required id="exampleInputpwd_2">
+                                            </div>
+
+                                            <div class="form-group">
+                                                <div class="checkbox checkbox-primary pr-10 pull-left">
+                                                    <input id="checkbox_2" required type="checkbox">
+                                                    <label for="checkbox_2">Keep me logged in</label>
+                                                </div>
+                                                <div class="clearfix"></div>
+                                            </div>
+                                            <div class="form-group text-center">
+                                                <button type="button" id="btnsave" class="btn btn-info btn-rounded">Get in</button>
+                                                <input type="hidden" id="hfdevice" name="hfdevice" runat="server" />
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /Row -->
+            </div>
+
+        </div>
+        <!-- /Main Content -->
+
+    </div>
+    <!-- /#wrapper -->
+    <!-- JavaScript -->
+    <!-- jQuery -->
+    <script src="../vendors/bower_components/jquery/dist/jquery.min.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="../vendors/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="../vendors/bower_components/jasny-bootstrap/dist/js/jasny-bootstrap.min.js"></script>
+
+    <!-- Slimscroll JavaScript -->
+    <script src="../dist/js/jquery.slimscroll.js"></script>
+    <script src="../Scripts/DeviceDetection.js"></script>
+    <!-- Init JavaScript -->
+    <script src="../dist/js/init.js"></script>
+    <script type="text/javascript">
+        jQuery(document).ready(function () {
+            $("#btnsave").click(function () {
+                var hardware = Device();
+                $('#hfdevice').val(hardware);
+                var UN = $('#UN').val();
+                var PWD = $('#PWD').val();
+                //   alert('Welcome');
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json; charset=utf-8",
+                    url: 'UserProfile.aspx/checkuser',
+                    data: JSON.stringify({ username: UN, password: PWD, Device: hardware }),
+                    cache: false,
+                    dataType: "json",
+
+                    success: function (result) {
+
+                        if (result.d == "1") {
+                            alert("Usercannot be left blank");
+                        }
+                        else if (result.d == "2")
+                            alert("Password Cannot be left blank");
+                        else if (result.d == "4") {
+                            alert("Username or password is incorrect");
+                        }
+                        else if (result.d == "3") {
+                            var url = "Dashboard.aspx";
+                            window.location.href = url;
+                        }
+
+
+                        // alert(data);
+                    },
+                    error: function (result) {
+                        alert('Error');
+                    }
+                });
+
+
+
+                //if (UN == '') {
+                //    alert('User Name cannot be blank');
+                //}
+                //else if (PWD == '') {
+                //    alert('Password cannot be blank');
+                //}
+                //else {
+                //    if (UN == 'admin' && PWD == 'admin') {
+                //        var url = "/Dashboard.aspx";
+                //        window.location.href = url;
+                //    }
+                //    else {
+                //        alert('User Name or Password is wrong');
+                //    }
+                //}
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>

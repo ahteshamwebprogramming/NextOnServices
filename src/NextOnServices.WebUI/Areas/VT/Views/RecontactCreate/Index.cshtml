@@ -1,0 +1,432 @@
+@{
+    ViewData["Title"] = "Create Recontact";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    #ProjectRpt thead tr th { padding: 11px; }
+    #ProjectRpt tbody tr td { padding: 5px 15px !important; }
+    .cust_w_modal { max-width: 1100px; margin: 30px auto; }
+</style>
+
+<div class="row">
+    <div class="col-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Create Recontact</h4>
+                <p class="card-description">Create recontact from CSV (UID, ClientURL and optional variables).</p>
+
+                <div class="row">
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Recontact Name</label>
+                            <input type="text" class="form-control" id="txtRecontactName" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Recontact Description</label>
+                            <input type="text" class="form-control" id="txtRecontactDescription" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Project Status</label>
+                            <select class="form-control" id="ddlStatus">
+                                <option value="1">Closed</option>
+                                <option value="2">Live</option>
+                                <option value="3">On hold</option>
+                                <option value="4">Cancelled</option>
+                                <option value="5" selected="selected">Awarded</option>
+                                <option value="6">Invoiced</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">LOI (Mins)</label>
+                            <input type="text" id="txtLOI" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Incident Rate (%)</label>
+                            <input type="text" id="txtIR" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">CPI ($)</label>
+                            <input type="text" id="txtCPI" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Respondent Quota</label>
+                            <input type="text" id="txtRCQ" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Select No of Variables</label>
+                            <select id="ddlVarSelection" class="form-control">
+                                <option value="0">select</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="Varibales_div"></div>
+                <div class="row">
+                    <div class="col-sm-4 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Upload CSV</label>
+                            <input type="file" id="csvRecontacts" class="form-control" accept=".csv" />
+                        </div>
+                        <div class="form-group">
+                            <a href="/VT/RecontactCreate/ExampleCsv" class="btn btn-sm btn-outline-primary">Example File</a>
+                        </div>
+                    </div>
+                    <div class="col-sm-8 col-xs-12">
+                        <div class="form-group">
+                            <label class="control-label mb-10">Notes</label>
+                            <textarea id="txtNotes" class="form-control" rows="4" placeholder="Enter your notes here"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <button type="button" id="btnSubmit" class="btn btn-success">Submit</button>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="table-responsive">
+                            <table id="ProjectRpt" class="table table-hover display pb-30">
+                                <thead>
+                                    <tr>
+                                        <th>RPID</th>
+                                        <th>Recontact Name</th>
+                                        <th>CPI</th>
+                                        <th>SID</th>
+                                        <th>Vendor Links</th>
+                                        <th>Notes</th>
+                                        <th>View</th>
+                                        <th>Delete</th>
+                                        <th>Add More</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Data modal -->
+<div class="modal fade" id="mdlRecontacts" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl cust_w_modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recontacts</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="hiddenIDTokens" />
+                <div class="table-responsive">
+                    <table id="tblRecontactsForDownload" class="table table-hover table-responsive" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>UID</th>
+                                <th>Client Links</th>
+                                <th>Vendor Links</th>
+                                <th>PMID</th>
+                                <th>Used</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete / Add More modal -->
+<div class="modal fade" id="mdlDeleteRecontact" tabindex="-1" role="dialog">
+    <div class="modal-dialog cust_w_modal" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mymodalrecontact">Recontacts</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="hfid" />
+                <input type="hidden" id="hfoperation" />
+                <div class="form-group">
+                    <label for="uploaderdeleteduid">Upload CSV</label>
+                    <input type="file" id="uploaderdeleteduid" class="form-control" accept=".csv" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" id="btnDeleteUIDs" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
+    <script>
+        (function () {
+            var RecontactProjectTable = null;
+            var ViewDataTable = null;
+
+            function success(message, typee) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ position: 'top-center', icon: typee === 'success' ? 'success' : 'error', title: message, showConfirmButton: false, timer: 2000 });
+                } else {
+                    alert(message);
+                }
+            }
+
+            function VariablesTextBoxShow(value) {
+                $('#Varibales_div').empty();
+                var v = parseInt(value, 10) || 0;
+                if (v <= 0) return;
+                var divcontent = '<div class="row">';
+                for (var i = 0; i < v; i++) {
+                    var j = i + 1;
+                    divcontent += '<div class="col-sm-4 col-xs-12"><div class="form-group"><label class="control-label mb-10">Variable ' + j + '</label><input type="text" class="form-control" id="txtVar' + j + '" /></div></div>';
+                }
+                divcontent += '</div>';
+                $('#Varibales_div').append(divcontent);
+            }
+
+            function LoadRecontacts(opt) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactCreate/LoadRecontacts',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ PID: 0, CID: 0, SID: 0, OPT: opt || 2 }),
+                    success: function (data) {
+                        var list = Array.isArray(data) ? data : [];
+                        var tbody = '';
+                        for (var i = 0; i < list.length; i++) {
+                            var r = list[i];
+                            var id = r.id || r.ID;
+                            var pid = r.pid || r.PID || r.recontactProjectId || '';
+                            var name = r.recontactName || r.RecontactName || '';
+                            var cpi = r.cpi != null ? r.cpi : (r.CPI != null ? r.CPI : 0);
+                            var sid = r.sid || r.SID || '';
+                            var murl = r.murl || r.MURL || '';
+                            var notes = r.notes || r.Notes || '';
+                            tbody += '<tr><td>' + (pid || '') + '</td><td>' + (name || '') + '</td><td>' + cpi + '</td><td>' + (sid || '') + '</td><td>' + (murl || '') + '</td><td>' + (notes || '') + '</td>' +
+                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.btnDownloadData(' + id + ')">View Data</button></td>' +
+                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.popupDeleteAndAddMore(' + id + ',0)">Delete</button></td>' +
+                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.popupDeleteAndAddMore(' + id + ',1)">Add More</button></td></tr>';
+                        }
+                        $('#ProjectRpt tbody').html(tbody);
+                        if (RecontactProjectTable) {
+                            RecontactProjectTable.destroy();
+                            RecontactProjectTable = null;
+                        }
+                        RecontactProjectTable = $('#ProjectRpt').DataTable({ order: [[0, 'desc']], pageLength: 50 });
+                    },
+                    error: function () { success('Failed to load recontacts', 'error'); }
+                });
+            }
+
+            window.btnDownloadData = function (id) {
+                $('#hiddenIDTokens').val(id);
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/RecontactCreate/DownloadData1',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ ID: id }),
+                    success: function (data) {
+                        var list = Array.isArray(data) ? data : [];
+                        var $tbl = $('#tblRecontactsForDownload');
+                        if (ViewDataTable) { ViewDataTable.destroy(); ViewDataTable = null; }
+                        var tbody = '';
+                        for (var i = 0; i < list.length; i++) {
+                            var r = list[i];
+                            tbody += '<tr><td>' + (r.uid || r.UID || '') + '</td><td>' + (r.redirectLink || r.RedirectLink || '') + '</td><td>' + (r.maskingURL || r.MaskingURL || '') + '</td><td>' + (r.pmid || r.PMID || '') + '</td><td>' + (r.isUsed != null ? r.isUsed : (r.IsUsed != null ? r.IsUsed : '')) + '</td></tr>';
+                        }
+                        $tbl.find('tbody').html(tbody);
+                        ViewDataTable = $tbl.DataTable({ dom: 'Bfrtip', buttons: ['copy', 'csv', 'excel', 'pdf', 'print'], pageLength: 25 });
+                        $('#mdlRecontacts').modal('show');
+                    },
+                    error: function () { success('Failed to load view data', 'error'); }
+                });
+            };
+
+            window.popupDeleteAndAddMore = function (id, opt) {
+                $('#uploaderdeleteduid').val('');
+                $('#hfid').val(id);
+                $('#hfoperation').val(opt);
+                $('#mymodalrecontact').text(opt === 0 ? 'Delete UIDs' : 'Add More UIDs');
+                $('#mdlDeleteRecontact').modal('show');
+            };
+
+            $('#btnSubmit').on('click', function () {
+                var recontactname = $('#txtRecontactName').val();
+                var cpi = $('#txtCPI').val();
+                var notes = $('#txtNotes').val();
+                var VarCount = $('#ddlVarSelection').val() || '0';
+                var formData = {
+                    recontactname: recontactname,
+                    cpi: cpi || '0',
+                    notes: notes || '',
+                    NoOfVars: parseInt(VarCount, 10) || 0,
+                    Recontact_Description: $('#txtRecontactDescription').val() || '',
+                    Status: parseInt($('#ddlStatus').val(), 10) || 5,
+                    LOI: parseFloat($('#txtLOI').val()) || 0,
+                    IR: parseFloat($('#txtIR').val()) || 0,
+                    RCQ: parseInt($('#txtRCQ').val(), 10) || 0,
+                    Var1: '', Var2: '', Var3: '', Var4: '', Var5: '',
+                    Notes: notes || '',
+                    exceldata: '',
+                    opt: 0
+                };
+                for (var j = 1; j <= formData.NoOfVars; j++) formData['Var' + j] = $('#txtVar' + j).val() || '';
+                var fileInput = document.getElementById('csvRecontacts');
+                if (!fileInput.files || !fileInput.files[0]) {
+                    success('Please select a CSV file', 'error');
+                    return;
+                }
+                var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv)$/i;
+                if (!regex.test(fileInput.files[0].name)) {
+                    success('Please upload a .csv file', 'error');
+                    return;
+                }
+                $('#btnSubmit').prop('disabled', true);
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var mystr = e.target.result;
+                    var lines = mystr.split(/\r\n|\n|\r/).filter(function (x) { return x && x.trim().length > 0; });
+                    if (lines.length === 0) {
+                        success('CSV file is empty', 'error');
+                        $('#btnSubmit').prop('disabled', false);
+                        return;
+                    }
+                    // remove header ONLY if it looks like a header
+                    var first = lines[0].trim().toLowerCase();
+                    if (first.startsWith('uid,') || first.startsWith('"uid",')) {
+                        lines.shift();
+                    }
+                    formData.exceldata = lines.join('\n');
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/RecontactCreate/SaveData',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ StrData: JSON.stringify(formData) }),
+                        success: function (data) {
+                            var errs = Array.isArray(data) ? data : [];
+                            if (errs.length > 0) {
+                                for (var i = 0; i < errs.length; i++) {
+                                    if (errs[i].ErrorReturnDBStatus !== '1') success(errs[i].ErrorReturnDBMessage || 'Error', 'error');
+                                    else success('Some UIDs failed', 'error');
+                                }
+                            } else {
+                                success('Success', 'success');
+                                $('#csvRecontacts').val('');
+                                $('#txtRecontactName').val('');
+                                $('#txtCPI').val('');
+                                $('#ddlVarSelection').val(0);
+                                $('#txtNotes').val('');
+                                $('#Varibales_div').empty();
+                                $('#txtRecontactDescription').val('');
+                                $('#ddlStatus').val(5);
+                                $('#txtLOI').val('');
+                                $('#txtIR').val('');
+                                $('#txtRCQ').val('');
+                            }
+                            LoadRecontacts(2);
+                            $('#btnSubmit').prop('disabled', false);
+                        },
+                        error: function (xhr, status, err) {
+                            var msg = 'Request failed';
+                            if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message;
+                            else if (xhr.responseText) { try { var o = JSON.parse(xhr.responseText); if (o && o.message) msg = o.message; } catch (e) { if (xhr.responseText.length < 200) msg = xhr.responseText; } }
+                            success(msg + (xhr.status ? ' (' + xhr.status + ')' : ''), 'error');
+                            $('#btnSubmit').prop('disabled', false);
+                        }
+                    });
+                };
+                reader.readAsText(fileInput.files[0]);
+            });
+
+            $('#btnDeleteUIDs').on('click', function () {
+                var fileInput = document.getElementById('uploaderdeleteduid');
+                if (!fileInput.files || !fileInput.files[0]) {
+                    success('Please select a CSV file', 'error');
+                    return;
+                }
+                var id = parseInt($('#hfid').val(), 10);
+                var opt = parseInt($('#hfoperation').val(), 10);
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var mystr = e.target.result;
+                    var rows = mystr.indexOf('\n') >= 0 ? mystr.substring(mystr.indexOf('\n') + 1) : mystr;
+                    if (opt === 0) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/VT/RecontactCreate/DeleteData1',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ ROWS: rows, ID: id }),
+                            success: function (d) {
+                                var cnt = typeof d === 'number' ? d : (d && d.d !== undefined ? d.d : -1);
+                                if (cnt === 0) { success('Deleted successfully', 'success'); LoadRecontacts(2); $('#mdlDeleteRecontact').modal('hide'); }
+                                else if (cnt > 0) success('Unable to delete ' + cnt + ' records', 'error');
+                                else success('Error', 'error');
+                            },
+                            error: function (xhr) {
+                                var msg = 'Request failed'; if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message; else if (xhr.responseText) { try { var o = JSON.parse(xhr.responseText); if (o && o.message) msg = o.message; } catch (e) { } } success(msg, 'error');
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/VT/RecontactCreate/AddMore',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ ROWS: rows, ID: id }),
+                            success: function (d) {
+                                var cnt = typeof d === 'number' ? d : (d && d.d !== undefined ? d.d : -1);
+                                if (cnt === 0) { success('Updated successfully', 'success'); LoadRecontacts(2); $('#mdlDeleteRecontact').modal('hide'); }
+                                else if (cnt > 0) success('Unable to update ' + cnt + ' records', 'error');
+                                else success('Error', 'error');
+                            },
+                            error: function (xhr) {
+                                var msg = 'Request failed'; if (xhr.responseJSON && xhr.responseJSON.message) msg = xhr.responseJSON.message; else if (xhr.responseText) { try { var o = JSON.parse(xhr.responseText); if (o && o.message) msg = o.message; } catch (e) { } } success(msg, 'error');
+                            }
+                        });
+                    }
+                };
+                reader.readAsText(fileInput.files[0]);
+            });
+
+            $('#ddlVarSelection').on('change', function () { VariablesTextBoxShow($(this).val()); });
+
+            $(document).ready(function () {
+                LoadRecontacts(2);
+            });
+        })();
+    </script>
+}

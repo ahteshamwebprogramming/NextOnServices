@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Azure.Core;
 using Dapper;
 using Microsoft.AspNetCore.Components.Forms;
@@ -257,6 +257,28 @@ public class ProjectsAPIController : ControllerBase
         }
     }
     [HttpPost]
+    [HttpGet]
+    [Route("GetProjectByProjectIdFromAPI")]
+    public async Task<IActionResult> GetProjectByProjectIdFromAPI(string projectIdFromAPI, string projectFrom)
+    {
+        try
+        {
+            string query = "SELECT TOP 1 ProjectId FROM Projects WHERE ProjectIdFromAPI = @ProjectIdFromAPI AND ProjectFrom = @ProjectFrom and IsActive=1    ORDER BY ProjectId DESC";
+            var parameters = new { ProjectIdFromAPI = projectIdFromAPI, ProjectFrom = projectFrom };
+            var projectId = await _unitOfWork.Project.GetEntityData<int?>(query, parameters);
+            if (projectId.HasValue && projectId.Value > 0)
+            {
+                return Ok(projectId.Value);
+            }
+            return Ok(0);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(GetProjectByProjectIdFromAPI)}");
+            return Ok(0);
+        }
+    }
+
     public async Task<IActionResult> GetProjectById(int projectId)
     {
         try
@@ -608,7 +630,7 @@ public class ProjectsAPIController : ControllerBase
         {
             if (ModelState.IsValid && inputData != null)
             {
-                string query = "SELECT max(p.PID) FROM dbo.Projects p";
+                string query = "SELECT max(p.PID) FROM dbo.Projects p where projectfrom is null";
                 var res = await _unitOfWork.Project.GetEntityData<string>(query);
                 inputData.Pid = await GenerateProjectId(res);
                 inputData.Sdate = CommonHelper.ConvertStringToDateTime(inputData.Sdate, "yyyy-MM-dd")?.ToString("MM-dd-yyyy");

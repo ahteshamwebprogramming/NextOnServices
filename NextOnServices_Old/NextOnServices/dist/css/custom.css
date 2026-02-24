@@ -1,0 +1,8 @@
+/*--------------------------------------------------
+custom style
+---------------------------------------------------*/
+
+.bg-green { background: #01c853 !important; border-radius:4px; }
+.bg-green1{background: #2bec7a !important; border-radius:4px;}
+.table-wrap thead{ background:#006767; }
+.table-wrap thead tr th{ color:#fff !important; }

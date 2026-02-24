@@ -1,0 +1,294 @@
+@{
+    ViewData["Title"] = "Reconciliation";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<style>
+    #tblRespondents thead tr th { padding: 10px 8px; vertical-align: middle; }
+    #tblRespondents tbody tr td { padding: 8px; vertical-align: middle; }
+    #divfailed label { display: block; margin-bottom: 4px; }
+</style>
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Reconciliation</h4>
+                <p class="card-description">Select project, enter IDs (one per line), choose status and change.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div id="lblmsg" class="text-danger font-weight-bold mb-2"></div>
+                <div class="form-group">
+                    <label class="control-label">Select Type Of ID</label>
+                    <select id="ddlRespondents" class="form-control">
+                        <option value="0">--Select--</option>
+                        <option value="1">Unique Id</option>
+                        <option value="2">Supplier Id</option>
+                    </select>
+                </div>
+                <div class="form-group" id="divProjects">
+                    <label class="control-label">Projects</label>
+                    <select id="ddProjects" class="form-control select2-project" style="width: 100%;">
+                        <option value="0">--Select Project--</option>
+                    </select>
+                </div>
+                <div id="lblStatus" class="text-danger font-weight-bold mb-2"></div>
+                <div class="form-group">
+                    <label class="control-label">Select Status</label>
+                    <select id="ddlStatus" class="form-control">
+                        <option value="0">--Select--</option>
+                        <option value="Complete">Complete</option>
+                        <option value="Incomplete">Incomplete</option>
+                        <option value="OVERQUOTA">OVERQUOTA</option>
+                        <option value="Terminate">Terminate</option>
+                        <option value="SEC_TERM">SEC_TERM</option>
+                        <option value="F_ERROR">F_ERROR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-success" id="btnStatus">Change Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Enter IDs</h5>
+                <div class="form-group">
+                    <textarea id="txtIds" class="form-control" rows="10" placeholder="One ID per line"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="faildive" style="display: none;">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Failed</h5>
+                <p class="mb-2"><span id="spnFailed">0</span> out of <span id="spnTotal">0</span> Failed</p>
+                <div id="divfailed"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Successful</h5>
+                <div class="table-responsive">
+                    <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th>Supplier Name</th>
+                                <th>SID</th>
+                                <th>UID</th>
+                                <th>Country</th>
+                                <th>Supplier ID</th>
+                                <th>Status</th>
+                                <th>StartDate</th>
+                                <th>EndDate</th>
+                                <th>Duration(Mins)</th>
+                                <th>ClientBrowser</th>
+                                <th>ClientIP</th>
+                                <th>Device</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        (function () {
+            var dataTable = null;
+
+            function getVal(obj, camel, pascal) {
+                if (!obj) return '';
+                var v = obj[camel];
+                if (v !== undefined && v !== null) return String(v);
+                v = obj[pascal];
+                return (v !== undefined && v !== null) ? String(v) : '';
+            }
+
+            function escapeHtml(t) {
+                if (t == null) return '';
+                var s = String(t);
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            function renderTableRows(rows) {
+                var tbody = '';
+                for (var i = 0; i < rows.length; i++) {
+                    var r = rows[i];
+                    if (r.error) continue;
+                    var uid = getVal(r, 'uID', 'UID') || getVal(r, 'uid', null);
+                    tbody += '<tr><td>' + escapeHtml(getVal(r, 'supplierName', 'SupplierName')) + '</td><td>' + escapeHtml(getVal(r, 'sID', 'SID')) + '</td><td>' + escapeHtml(uid) + '</td>';
+                    tbody += '<td>' + escapeHtml(getVal(r, 'country', 'Country')) + '</td><td>' + escapeHtml(getVal(r, 'supplierId', 'SupplierId')) + '</td><td>' + escapeHtml(getVal(r, 'status', 'Status')) + '</td>';
+                    tbody += '<td>' + escapeHtml(getVal(r, 'sdate', 'Sdate')) + '</td><td>' + escapeHtml(getVal(r, 'edate', 'Edate')) + '</td><td>' + escapeHtml(getVal(r, 'duration', 'Duration')) + '</td>';
+                    tbody += '<td>' + escapeHtml(getVal(r, 'clientBrowser', 'ClientBrowser')) + '</td><td>' + escapeHtml(getVal(r, 'clientIP', 'ClientIP')) + '</td><td>' + escapeHtml(getVal(r, 'device', 'Device')) + '</td></tr>';
+                }
+                return tbody;
+            }
+
+            function setTableAndFailed(successRows, failedItems, totalCount) {
+                if (dataTable) { dataTable.destroy(); dataTable = null; }
+                var $tbody = $('#tblRespondents tbody');
+                $tbody.empty();
+                var html = renderTableRows(successRows);
+                if (html) $tbody.append(html);
+                if (successRows.length > 0) {
+                    dataTable = $('#tblRespondents').DataTable({ ordering: false, pageLength: 25 });
+                }
+                $('#divfailed').empty();
+                for (var f = 0; f < failedItems.length; f++) {
+                    $('#divfailed').append($('<label></label>').text(failedItems[f]));
+                }
+                $('#spnTotal').text(totalCount);
+                $('#spnFailed').text(failedItems.length);
+                if (totalCount > 0) $('#faildive').show();
+            }
+
+            $('#ddlRespondents').on('change', function () {
+                var v = $(this).val();
+                if (v === '1' || v === '2') $('#divProjects').show();
+                else $('#divProjects').hide();
+            });
+
+            $('#btnStatus').on('click', function () {
+                var idsText = $('#txtIds').val();
+                if (!idsText || !idsText.trim()) {
+                    $('#lblmsg').text("Please enter IDs");
+                    return;
+                }
+                if ($('#ddlRespondents').val() === '0') {
+                    $('#lblmsg').text("Please select Type of ID");
+                    return;
+                }
+                if ($('#ddProjects').val() === '0' || $('#ddProjects').val() === '') {
+                    $('#lblmsg').text("Please select Project");
+                    return;
+                }
+                if ($('#ddlStatus option:selected').text() === '--Select--') {
+                    $('#lblStatus').text("Please select Status");
+                    return;
+                }
+                $('#lblmsg').text('');
+                $('#lblStatus').text('');
+                if (dataTable) { dataTable.destroy(); dataTable = null; }
+                $('#tblRespondents tbody').empty();
+                $('#divfailed').empty();
+                $('#faildive').hide();
+                $('#spnTotal').text('0');
+                $('#spnFailed').text('0');
+
+                var statusText = $('#ddlStatus option:selected').text();
+                var type = parseInt($('#ddlRespondents').val(), 10);
+                var pId = parseInt($('#ddProjects').val(), 10);
+                var vars = idsText.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+
+                if (statusText === 'Complete') {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/ManageStatus/ChangeAll',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ Status: statusText, PId: pId }),
+                        async: false
+                    });
+                }
+
+                if (vars.length === 0) {
+                    setTableAndFailed([], [], 0);
+                    return;
+                }
+
+                var successRows = [];
+                var failedItems = [];
+                var completed = 0;
+                var totalCount = vars.length;
+
+                for (var i = 0; i < vars.length; i++) {
+                    (function (id) {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/VT/ManageStatus/UpdateStatus',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ Id: id, Status: statusText, Type: type, PId: pId }),
+                            success: function (data) {
+                                var list = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+                                for (var j = 0; j < list.length; j++) {
+                                    var item = list[j];
+                                    if (item.error || item.Error) {
+                                        failedItems.push(item.error || item.Error);
+                                    } else {
+                                        successRows.push(item);
+                                    }
+                                }
+                                completed++;
+                                if (completed === totalCount) {
+                                    setTableAndFailed(successRows, failedItems, totalCount);
+                                }
+                            },
+                            error: function () {
+                                failedItems.push('Request failed for ID: ' + id);
+                                completed++;
+                                if (completed === totalCount) {
+                                    setTableAndFailed(successRows, failedItems, totalCount);
+                                }
+                            }
+                        });
+                    })(vars[i]);
+                }
+            });
+
+            $(document).ready(function () {
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/ManageStatus/GetProjects',
+                    contentType: 'application/json',
+                    data: '{}',
+                    success: function (data) {
+                        var list = Array.isArray(data) ? data : (data && data.data ? data.data : []);
+                        var $sel = $('#ddProjects');
+                        if ($sel.data('select2')) $sel.select2('destroy');
+                        $sel.find('option:not(:first)').remove();
+                        for (var i = 0; i < list.length; i++) {
+                            var p = list[i];
+                            var id = p.id ?? p.Id;
+                            var display = p.displayText ?? p.DisplayText;
+                            if (!display) {
+                                var pid = p.pid ?? p.Pid ?? '';
+                                var pname = p.pName ?? p.PName ?? '';
+                                display = (pid && pname) ? (pid + '_' + pname) : (pid || pname || id);
+                            }
+                            $sel.append($('<option></option>').val(id).text(display));
+                        }
+                        $sel.select2({
+                            placeholder: '--Select Project--',
+                            allowClear: true,
+                            width: '100%'
+                        });
+                    }
+                });
+            });
+        })();
+    </script>
+}

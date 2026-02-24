@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using GRP.Core.Entities;
 using System;
 using System.Collections.Generic;
@@ -37,8 +37,11 @@ public partial class GRPDbContext : DbContext
     public virtual DbSet<CountryMaster> CountryMasters { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Data Source=182.18.138.217;Initial Catalog=GRPCore;User ID=sa;Password=CzWR6nbSsE44c$;Encrypt=False;");
+    {
+        // Connection string is configured via AddDbContext in Program.cs from appsettings.
+        if (!optionsBuilder.IsConfigured)
+            throw new InvalidOperationException("DbContext must be configured via AddDbContext with connection string from appsettings.");
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

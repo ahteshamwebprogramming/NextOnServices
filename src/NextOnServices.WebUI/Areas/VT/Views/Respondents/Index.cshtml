@@ -1,0 +1,320 @@
+@{
+    ViewData["Title"] = "ID Search";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<style>
+    .card-view .form-group { margin-bottom: 1rem; }
+
+    /* Table */
+    #tblRespondents thead tr th { padding: 10px 8px; vertical-align: middle; }
+    #tblRespondents tbody tr td { padding: 8px; vertical-align: middle; }
+
+    /* Checkbox column: narrow, centered, aligned */
+    #tblRespondents th.col-checkbox,
+    #tblRespondents td.col-checkbox {
+        width: 1%;
+        white-space: nowrap;
+        text-align: center;
+        vertical-align: middle !important;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    #tblRespondents th.col-checkbox .chk-wrapper,
+    #tblRespondents td.col-checkbox .chk-wrapper {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    #tblRespondents th.col-checkbox .form-check-input,
+    #tblRespondents td.col-checkbox .form-check-input {
+        margin: 0;
+        margin-top: -8px;
+        vertical-align: middle;
+    }
+
+    /* No-data row: single cell with colspan, centered */
+    #tblRespondents tr.no-data-row td {
+        text-align: center;
+        padding: 24px 16px;
+        font-style: italic;
+        color: #6c757d;
+    }
+
+    /* Loading overlay */
+    #idSearchOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
+    #idSearchOverlay.show { display: flex; }
+    #idSearchOverlay .spinner-text { margin-top: 1rem; font-size: 1rem; color: #333; }
+    #idSearchOverlay .spinner-border { width: 3rem; height: 3rem; border-width: 0.3em; }
+</style>
+
+<div id="idSearchOverlay" class="text-center" aria-hidden="true">
+    <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+    <p class="spinner-text mb-0" id="idSearchOverlayText">Loading...</p>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="row">
+            <div class="col-12 grid-margin">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">Respondents Report</h4>
+                        <p class="card-description">Search by Unique Id or Supplier Id and optionally change status.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Filter</h5>
+                <div id="lblmsg" class="text-danger font-weight-bold mb-2"></div>
+                <div class="form-group">
+                    <label class="control-label">Select</label>
+                    <select id="ddlRespondents" class="form-control" name="ddlRespondents">
+                        <option value="0">--Select--</option>
+                        <option value="1">Unique Id</option>
+                        <option value="2">Supplier Id</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="control-label">Respondents Id</label>
+                    <input type="text" id="txtRespondents" class="form-control" name="Respondents" placeholder="Enter ID" />
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-success" id="btnSubmit" name="btnSubmit">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Status Change</h5>
+                <div id="lblStatus" class="text-danger font-weight-bold mb-2"></div>
+                <div class="form-group">
+                    <label class="control-label">Select</label>
+                    <select id="ddlStatus" class="form-control" name="ddlStatus">
+                        <option value="0">--Select--</option>
+                        <option value="Complete">Complete</option>
+                        <option value="Incomplete">Incomplete</option>
+                        <option value="OVERQUOTA">OVERQUOTA</option>
+                        <option value="Terminate">Terminate</option>
+                        <option value="SEC_TERM">SEC_TERM</option>
+                        <option value="F_ERROR">F_ERROR</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button type="button" class="btn btn-success" id="btnStatus" name="btnStatus">Change Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Respondents</h5>
+                <div class="table-responsive">
+                    <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th class="col-checkbox">
+                                    <span class="chk-wrapper">
+                                        <input type="checkbox" id="chkall" class="form-check-input" aria-label="Select all" />
+                                    </span>
+                                </th>
+                                <th>Supplier Name</th>
+                                <th>SID</th>
+                                <th>UID</th>
+                                <th>Country</th>
+                                <th>Supplier ID</th>
+                                <th>Status</th>
+                                <th>StartDate</th>
+                                <th>EndDate</th>
+                                <th>Duration(Mins)</th>
+                                <th>ClientBrowser</th>
+                                <th>ClientIP</th>
+                                <th>Device</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script>
+        (function () {
+            var dataTable = null;
+            var antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            function getRequestHeaders() {
+                var headers = { 'Content-Type': 'application/json' };
+                if (antiForgeryToken) headers['RequestVerificationToken'] = antiForgeryToken;
+                return headers;
+            }
+
+            function showSpinner(text) {
+                $('#idSearchOverlayText').text(text || 'Loading...');
+                $('#idSearchOverlay').addClass('show');
+            }
+            function hideSpinner() {
+                $('#idSearchOverlay').removeClass('show');
+            }
+
+            function getVal(obj, camelKey, pascalKey) {
+                if (!obj) return '';
+                var v = obj[camelKey];
+                if (v !== undefined && v !== null) return String(v);
+                v = obj[pascalKey];
+                return (v !== undefined && v !== null) ? String(v) : '';
+            }
+
+            function renderTable(data) {
+                var hasData = data && Array.isArray(data) && data.length > 0;
+
+                if (dataTable) {
+                    dataTable.destroy();
+                    dataTable = null;
+                }
+
+                var tbody = '';
+                if (hasData) {
+                    for (var i = 0; i < data.length; i++) {
+                        var r = data[i];
+                        var uid = getVal(r, 'uID', 'UID') || getVal(r, 'uid', null);
+                        tbody += '<tr><td class="col-checkbox"><span class="chk-wrapper"><input type="checkbox" class="form-check-input row-chk" data-uid="' + escapeHtml(uid) + '" aria-label="Select row" /></span></td>';
+                        tbody += '<td>' + escapeHtml(getVal(r, 'supplierName', 'SupplierName')) + '</td><td>' + escapeHtml(getVal(r, 'sID', 'SID')) + '</td><td>' + escapeHtml(uid) + '</td>';
+                        tbody += '<td>' + escapeHtml(getVal(r, 'country', 'Country')) + '</td><td>' + escapeHtml(getVal(r, 'supplierId', 'SupplierId')) + '</td><td>' + escapeHtml(getVal(r, 'status', 'Status')) + '</td>';
+                        tbody += '<td>' + escapeHtml(getVal(r, 'sdate', 'Sdate')) + '</td><td>' + escapeHtml(getVal(r, 'edate', 'Edate')) + '</td><td>' + escapeHtml(getVal(r, 'duration', 'Duration')) + '</td>';
+                        tbody += '<td>' + escapeHtml(getVal(r, 'clientBrowser', 'ClientBrowser')) + '</td><td>' + escapeHtml(getVal(r, 'clientIP', 'ClientIP')) + '</td><td>' + escapeHtml(getVal(r, 'device', 'Device')) + '</td></tr>';
+                    }
+                }
+
+                var $tbody = $('#tblRespondents tbody');
+                if (hasData) {
+                    $tbody.html(tbody);
+                    dataTable = $('#tblRespondents').DataTable({ ordering: false, pageLength: 25 });
+                } else {
+                    var emptyRow = '<tr class="no-data-row"><td colspan="13" class="text-center">No records. Use Filter to search.</td></tr>';
+                    $tbody.html(emptyRow);
+                }
+            }
+
+            function escapeHtml(text) {
+                if (text == null) return '';
+                var s = String(text);
+                return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            $('#chkall').on('change', function () {
+                var checked = $('#chkall').prop('checked');
+                $('#tblRespondents .row-chk').prop('checked', checked);
+            });
+
+            $('#btnSubmit').on('click', function () {
+                var type = $('#ddlRespondents').val();
+                var id = $('#txtRespondents').val();
+                $('#lblmsg').text('');
+                if (type === '0' || type === '') {
+                    $('#lblmsg').text('Please select Unique Id or Supplier Id from the dropdown.');
+                    return;
+                }
+                showSpinner('Searching...');
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/Respondents/GetRespondents',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ id: id, type: type }),
+                    headers: getRequestHeaders(),
+                    dataType: 'json',
+                    success: function (data) {
+                        var list = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : []);
+                        renderTable(list);
+                        hideSpinner();
+                    },
+                    error: function (xhr) {
+                        var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Search failed. Please try again.';
+                        $('#lblmsg').text(msg);
+                        renderTable([]);
+                        hideSpinner();
+                    }
+                });
+            });
+
+            $('#btnStatus').on('click', function () {
+                var statusText = $('#ddlStatus option:selected').text();
+                var statusVal = $('#ddlStatus').val();
+                $('#lblStatus').text('');
+                if (statusVal === '0' || statusVal === '') {
+                    $('#lblStatus').text('Please select a status.');
+                    return;
+                }
+                var uids = [];
+                $('#tblRespondents .row-chk:checked').each(function () {
+                    var uid = $(this).data('uid');
+                    if (uid) uids.push(uid);
+                });
+                if (uids.length === 0) {
+                    $('#lblStatus').text('Please select at least one respondent.');
+                    return;
+                }
+                var total = uids.length;
+                showSpinner('Updating status (' + total + ' respondent(s))...');
+                function runNext(idx) {
+                    if (idx >= total) {
+                        hideSpinner();
+                        $('#lblStatus').removeClass('text-danger').addClass('text-success').text('Updated successfully.');
+                        $('#chkall').prop('checked', false);
+                        $('#btnSubmit').click();
+                        return;
+                    }
+                    $('#idSearchOverlayText').text('Updating ' + (idx + 1) + ' of ' + total + '...');
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/Respondents/UpdateStatus',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ id: uids[idx], status: statusText }),
+                        headers: getRequestHeaders()
+                    }).always(function () {
+                        runNext(idx + 1);
+                    });
+                }
+                runNext(0);
+            });
+
+            $(document).ready(function () {
+                renderTable([]);
+            });
+        })();
+    </script>
+}
