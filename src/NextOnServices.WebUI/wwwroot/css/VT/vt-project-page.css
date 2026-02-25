@@ -472,12 +472,17 @@
   padding-top: 0 !important;
 }
 
-/* Top row: search right, no label */
+/* Less space between section header and search/table (Survey Specs, Country Details, Supplier Details, Survey Links) */
+.vt-project-page .vt-ref-table-card .card-body > .row.mt-3 {
+  margin-top: 0.375rem !important;
+}
+
+/* Top row: search right, no label – reduced padding to tighten space between section header, search bar and table */
 .vt-project-page .vt-ref-table-wrap .ref-dt-top {
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  padding: 8px 0 10px 0 !important;
+  padding: 4px 0 6px 0 !important;
   width: 100% !important;
 }
 
@@ -529,7 +534,7 @@
   outline: none !important;
 }
 
-/* Bottom row: info + pagination */
+/* Bottom row: info left, pagination right */
 .vt-project-page .vt-ref-table-wrap .ref-dt-bottom {
   display: flex !important;
   align-items: center !important;
@@ -537,6 +542,7 @@
   flex-wrap: wrap !important;
   gap: 8px !important;
   padding-top: 8px !important;
+  width: 100% !important;
 }
 
 .vt-project-page .vt-ref-table-wrap .ref-dt-bottom .dataTables_info {
@@ -544,13 +550,16 @@
   padding: 0 !important;
   font-size: 12px !important;
   color: #64748b !important;
+  order: 1;
 }
 
 .vt-project-page .vt-ref-table-wrap .ref-dt-bottom .dataTables_paginate {
   margin: 0 !important;
+  margin-left: auto !important;
   padding: 0 !important;
   float: none !important;
   text-align: right !important;
+  order: 2;
 }
 
 .vt-project-page .vt-ref-table-wrap .ref-dt-bottom .paginate_button {
@@ -646,4 +655,228 @@
   font-weight: 500 !important;
   font-family: inherit !important;
   line-height: 1.2 !important;
+}
+
+/* ===== No y-axis scroll on table areas (horizontal scroll only; page scrolls normally) ===== */
+.vt-project-page .table-responsive {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+.vt-project-page .dataTables_wrapper,
+.vt-project-page .dataTables_scroll,
+.vt-project-page .dataTables_scrollBody {
+  overflow-y: hidden !important;
+  max-height: none !important;
+}
+
+/* ===== Default DataTables layout (Show entries, Search, Showing X to Y of Z, Previous/Next) ===== */
+/* Applies when table uses default dom (no ref-dt-top/ref-dt-bottom). ID Search, ManageStatus, RecontactProjects. */
+
+/* Force "Show entries" and "Search" on a single row (Bootstrap 4 DataTables: row > col > length, col > filter) */
+.vt-project-page .dataTables_wrapper > div.row:first-child {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.vt-project-page .dataTables_wrapper > div.row:first-child > [class*="col-"] {
+  flex: 0 0 auto !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.vt-project-page .dataTables_wrapper > div.row:first-child > [class*="col-"]:last-child {
+  text-align: right !important;
+  margin-left: auto !important;
+}
+
+/* Force "Showing 1 to 50 of 126 entries" and "Previous / 1 2 3 / Next" on a single row (Bootstrap 4) */
+.vt-project-page .dataTables_wrapper > div.row:last-child {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 1rem !important;
+  margin-bottom: 0 !important;
+}
+.vt-project-page .dataTables_wrapper > div.row:last-child > [class*="col-"] {
+  flex: 0 0 auto !important;
+  max-width: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+.vt-project-page .dataTables_wrapper > div.row:last-child > [class*="col-"]:first-child {
+  text-align: left !important;
+}
+.vt-project-page .dataTables_wrapper > div.row:last-child > [class*="col-"]:last-child {
+  text-align: right !important;
+  margin-left: auto !important;
+}
+
+/* When length/filter are direct children of wrapper (no Bootstrap row/col) */
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+}
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_length,
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_filter {
+  flex: 0 0 auto !important;
+}
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_filter {
+  margin-left: auto !important;
+}
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > table,
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > div.dataTables_scroll {
+  flex-basis: 100% !important;
+}
+/* Info and paginate on one row when direct children */
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_info,
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_paginate {
+  flex: 0 0 auto !important;
+}
+.vt-project-page .dataTables_wrapper:not(.dt-bootstrap4) > .dataTables_paginate {
+  margin-left: auto !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_length,
+.vt-project-page .dataTables_wrapper div.dataTables_filter,
+.vt-project-page .dataTables_wrapper div.dataTables_info,
+.vt-project-page .dataTables_wrapper div.dataTables_paginate {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_length {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_length label {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_length select {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0.25rem 2rem 0.25rem 0.5rem !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 8px !important;
+  color: #0f172a !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_filter label {
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  color: #0f172a !important;
+  margin: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_filter input {
+  font-size: 0.875rem !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 0.75rem !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 8px !important;
+  width: 180px !important;
+  margin-left: 0.5rem !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_filter input:focus {
+  border-color: #0f7f79 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_info {
+  font-size: 0.8125rem !important;
+  color: #64748b !important;
+  padding-top: 0.75rem !important;
+  margin: 0 !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate,
+.vt-project-page .dataTables_wrapper div.dataTables_paginate.paging_simple_numbers {
+  padding-top: 0.75rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate .paginate_button {
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  padding: 0.35rem 0.65rem !important;
+  margin: 0 2px !important;
+  border-radius: 6px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #fff !important;
+  color: #0f172a !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate .paginate_button:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate .paginate_button.current {
+  background: #0f7f79 !important;
+  border-color: #0f7f79 !important;
+  color: #fff !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate .paginate_button.disabled {
+  color: #94a3b8 !important;
+  cursor: default !important;
+}
+
+.vt-project-page .dataTables_wrapper div.dataTables_paginate .paginate_button.disabled:hover {
+  background: #fff !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+}
+
+/* RecontactPageDetails: KPI block – three metrics in one row, full width */
+.vt-project-page .recontact-kpi-col {
+  width: 100%;
+  max-width: 100%;
+}
+.vt-project-page .recontact-kpi-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+}
+.vt-project-page .recontact-kpi-item {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .vt-project-page .recontact-kpi-row {
+    flex-direction: column;
+  }
+  .vt-project-page .recontact-kpi-item {
+    flex: 1 1 auto;
+  }
 }

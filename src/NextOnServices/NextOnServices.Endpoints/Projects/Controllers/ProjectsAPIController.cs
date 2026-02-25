@@ -172,14 +172,12 @@ public class ProjectsAPIController : ControllerBase
     {
         try
         {
-            var parms = new DynamicParameters();
-            parms.Add(@"@userid", 0, DbType.Int32);
-            parms.Add(@"@stattype", 0, DbType.Int32);
-            parms.Add(@"@flagtype", 0, DbType.Int32);
             try
             {
-                //var result = await _unitOfWork.Project.GetStoredProcedure("GetDashboardbyManager", parms);
+                // Update project-level status (same as NextOnServices_Old Dashboard)
                 var result = await _unitOfWork.Project.GetQueryAll<DashboardViewModel>(@"update projects set status=" + Status + " where projectid=" + ProjectId);
+                // Also update all ProjectsUrl for this project (Dashboard in old app calls UpdateUrlStatus)
+                await _unitOfWork.ProjectsUrl.ExecuteQueryAsync(@"UPDATE dbo.ProjectsUrl SET Status=@Status WHERE PID=@ProjectId", new { Status, ProjectId });
                 return StatusCode(StatusCodes.Status200OK, result);
             }
             catch (Exception ex) { return StatusCode(StatusCodes.Status500InternalServerError, ex); }
@@ -188,6 +186,25 @@ public class ProjectsAPIController : ControllerBase
         {
             _logger.LogError(ex, $"Error in retriving Attendance {nameof(GetProjects)}");
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Runs statusByPref SP for the given ProjectsUrl row id: recalculates project status from all URL statuses and updates Projects.Status. Used after changing a survey/URL status on ProjectPage (same as NextOnServices_Old).
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> StatusByPref(int projectUrlId)
+    {
+        try
+        {
+            var rows = await _unitOfWork.Project.GetTableDataSP<dynamic>("statusByPref", new { id = projectUrlId });
+            var res = rows?.FirstOrDefault()?.res ?? 0;
+            return Ok(new { status = res });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(StatusByPref)}");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { status = 0 });
         }
     }
 

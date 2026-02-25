@@ -1,4 +1,4 @@
-﻿
+
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
@@ -172,6 +172,33 @@ public class HomeController : Controller
         }
 
     }
+    /// <summary>
+    /// Returns dashboard card counts (Total, Active, Inactive, Archived) for the given manager id.
+    /// Called when Manager dropdown (or table filters) change so cards update (same as NextOnServices_Old GetDeshboardDetails).
+    /// </summary>
+    [HttpGet]
+    [Route("/VT/Home/GetDashboardCounts")]
+    public async Task<IActionResult> GetDashboardCounts([FromQuery] int managerId)
+    {
+        // managerId 0 = "All" (same as NextOnServices_Old: dropdown value 0 passed to GetDeshboardDetails/usp_GetDashboardDetails)
+        if (managerId < 0)
+            return Json(new { totalProjects = 0, activeProjects = 0, inactiveProjects = 0, archivedProjects = 0 });
+        IActionResult actionResult = await _projectsAPIController.GetProjectsCount(managerId);
+        if (actionResult != null && actionResult is ObjectResult objectResult && objectResult.Value != null)
+        {
+            var list = (IEnumerable<DashboardProjectCountSummaryViewModel>)objectResult.Value;
+            var summary = list?.FirstOrDefault();
+            return Json(new
+            {
+                totalProjects = summary?.TotalProjects ?? 0,
+                activeProjects = summary?.ActiveProjects ?? 0,
+                inactiveProjects = summary?.InactiveProjects ?? 0,
+                archivedProjects = summary?.ArchivedProjects ?? 0
+            });
+        }
+        return Json(new { totalProjects = 0, activeProjects = 0, inactiveProjects = 0, archivedProjects = 0 });
+    }
+
     public async Task<IActionResult> GetProjects([FromBody] ProjectDTO inputData)
     {
         DashboardViewModel outputData = new DashboardViewModel();
@@ -202,6 +229,17 @@ public class HomeController : Controller
     public async Task<IActionResult> ChangeProjectUrlStatus(int Status, int ProjectUrlId)
     {
         IActionResult res = await _projectUrlApiController.ChangeProjectUrlStatus(Status, ProjectUrlId);
+        return res;
+    }
+
+    /// <summary>
+    /// Runs statusByPref for the given ProjectsUrl row id so Projects.Status is recalculated from all URL statuses (same as NextOnServices_Old after changing survey status on ProjectPage).
+    /// </summary>
+    [HttpPost]
+    [Route("/VT/Home/SyncProjectStatusByUrlId")]
+    public async Task<IActionResult> SyncProjectStatusByUrlId([FromQuery] int projectUrlId)
+    {
+        IActionResult res = await _projectsAPIController.StatusByPref(projectUrlId);
         return res;
     }
 

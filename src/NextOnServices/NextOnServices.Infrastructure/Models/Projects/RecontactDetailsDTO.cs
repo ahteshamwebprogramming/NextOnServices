@@ -60,12 +60,23 @@ public class RecontactSummaryDTO
     public string Status { get; set; } = string.Empty;
 }
 
+/// <summary>Maps to RecontactParametersCalC SP single row: status, Complete, total, ActIRPercent, ActLOI (KPI block on RecontactPageDetails).</summary>
+public class RecontactKpiDTO
+{
+    public string status { get; set; } = string.Empty;
+    public int Complete { get; set; }
+    public int total { get; set; }
+    public decimal? ActIRPercent { get; set; }
+    public decimal? ActLOI { get; set; }
+}
+
 public class RecontactDetailsDTO
 {
     public List<RecontactCountryDTO> Countries { get; set; } = new();
     public List<RecontactSupplierDTO> Suppliers { get; set; } = new();
     public List<RecontactRedirectDTO> Redirects { get; set; } = new();
     public List<RecontactSummaryDTO> Summary { get; set; } = new();
+    public RecontactKpiDTO? Kpi { get; set; }
 }
 
 public class RecontactUpdateDTO

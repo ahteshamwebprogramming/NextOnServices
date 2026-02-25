@@ -2,18 +2,111 @@
     ViewData["Title"] = "ID Search";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
 <style>
-    .card-view .form-group { margin-bottom: 1rem; }
+    /* ID Search page: typography & form controls match ProjectPage / AddProject / Dashboard */
+    .id-search-page.vt-project-page {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #0f172a;
+    }
+    .id-search-page .table-section-header {
+        font-family: inherit !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+    .id-search-page .card-description {
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+    }
+    .id-search-page label,
+    .id-search-page .control-label {
+        font-size: 0.8125rem !important;
+        font-weight: 500 !important;
+        font-family: inherit;
+    }
+    .id-search-page .form-control,
+    .id-search-page select.form-control,
+    .id-search-page input.form-control {
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        height: 36px !important;
+        min-height: 36px !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        line-height: 1.5 !important;
+    }
+    .id-search-page .form-control:focus,
+    .id-search-page select.form-control:focus,
+    .id-search-page input.form-control:focus {
+        border-color: #0f7f79 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+    }
+    .id-search-page .btn {
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        height: 36px !important;
+        padding: 0 1.25rem !important;
+        border-radius: 8px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .id-search-page .card--action .btn {
+        margin-top: 1rem;
+    }
+    .id-search-page .btn-primary {
+        background: #0f7f79 !important;
+        border-color: #0f7f79 !important;
+    }
+    .id-search-page .btn-primary:hover {
+        background: #0d6b66 !important;
+        border-color: #0d6b66 !important;
+    }
+    .id-search-page .btn-success {
+        background: #0d6b66 !important;
+        border-color: #0d6b66 !important;
+    }
+    .id-search-page .btn-success:hover {
+        background: #0a5652 !important;
+        border-color: #0a5652 !important;
+    }
+    .id-search-page .small,
+    .id-search-page .text-muted.small {
+        font-size: 0.8125rem !important;
+        font-weight: 400 !important;
+    }
 
-    /* Table */
-    #tblRespondents thead tr th { padding: 10px 8px; vertical-align: middle; }
-    #tblRespondents tbody tr td { padding: 8px; vertical-align: middle; }
+    /* Space below section header, then between form groups, then above button */
+    .id-search-page .card--action .table-section-header {
+        margin-bottom: 0.75rem;
+    }
+    .id-search-page .card--action #lblmsg,
+    .id-search-page .card--action #lblStatus {
+        margin-bottom: 0.5rem;
+    }
+    .id-search-page .form-group {
+        margin-bottom: 1rem;
+    }
 
-    /* Checkbox column: narrow, centered, aligned */
-    #tblRespondents th.col-checkbox,
-    #tblRespondents td.col-checkbox {
+    .id-search-page #tblRespondents thead tr th { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; font-weight: 600 !important; }
+    .id-search-page #tblRespondents tbody tr td { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; }
+
+    .id-search-page #tblRespondents th.col-checkbox,
+    .id-search-page #tblRespondents td.col-checkbox {
         width: 1%;
         white-space: nowrap;
         text-align: center;
@@ -21,148 +114,158 @@
         padding-left: 12px;
         padding-right: 12px;
     }
-    #tblRespondents th.col-checkbox .chk-wrapper,
-    #tblRespondents td.col-checkbox .chk-wrapper {
+    .id-search-page #tblRespondents th.col-checkbox .chk-wrapper,
+    .id-search-page #tblRespondents td.col-checkbox .chk-wrapper {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
     }
-    #tblRespondents th.col-checkbox .form-check-input,
-    #tblRespondents td.col-checkbox .form-check-input {
+    .id-search-page #tblRespondents th.col-checkbox .form-check-input,
+    .id-search-page #tblRespondents td.col-checkbox .form-check-input {
         margin: 0;
-        margin-top: -8px;
         vertical-align: middle;
     }
 
-    /* No-data row: single cell with colspan, centered */
-    #tblRespondents tr.no-data-row td {
+    .id-search-page #tblRespondents tr.no-data-row td {
         text-align: center;
         padding: 24px 16px;
         font-style: italic;
         color: #6c757d;
+        font-size: 0.875rem !important;
     }
 
-    /* Loading overlay */
-    #idSearchOverlay {
+    .id-search-page .card--action {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        height: 100%;
+    }
+    .id-search-page .card--action .card-body { padding: 1rem 1.25rem; }
+
+    .id-search-page #idSearchOverlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(245, 247, 249, 0.9);
         z-index: 9999;
         display: none;
         align-items: center;
         justify-content: center;
         flex-direction: column;
     }
-    #idSearchOverlay.show { display: flex; }
-    #idSearchOverlay .spinner-text { margin-top: 1rem; font-size: 1rem; color: #333; }
-    #idSearchOverlay .spinner-border { width: 3rem; height: 3rem; border-width: 0.3em; }
+    .id-search-page #idSearchOverlay.show { display: flex; }
+    .id-search-page #idSearchOverlay .spinner-text { margin-top: 1rem; font-size: 0.9375rem; color: #475569; font-family: inherit; }
+    .id-search-page #idSearchOverlay .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3em;
+        color: #1d7874;
+    }
 </style>
 
-<div id="idSearchOverlay" class="text-center" aria-hidden="true">
-    <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
+<div class="id-search-page vt-project-page">
+    <div id="idSearchOverlay" class="text-center" aria-hidden="true">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+        <p class="spinner-text mb-0" id="idSearchOverlayText">Loading...</p>
     </div>
-    <p class="spinner-text mb-0" id="idSearchOverlayText">Loading...</p>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="row">
-            <div class="col-12 grid-margin">
-                <div class="card card--table-section">
-                    <div class="card-body">
-                        <h4 class="table-section-header">Respondents Report</h4>
-                        <p class="card-description mb-0">Search by Unique Id or Supplier Id and optionally change status.</p>
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">ID Search</p>
+                    <p class="card-description mb-0">Search by Unique Id or Supplier Id. Select rows in the table below to change status in bulk.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 grid-margin">
+            <div class="card card--action">
+                <div class="card-body">
+                    <p class="table-section-header">Search</p>
+                    <div id="lblmsg" class="text-danger font-weight-bold mb-2" role="alert"></div>
+                    <div class="form-group">
+                        <label class="control-label" for="ddlRespondents">ID type</label>
+                        <select id="ddlRespondents" class="form-control" name="ddlRespondents" aria-describedby="lblmsg">
+                            <option value="0">-- Select --</option>
+                            <option value="1">Unique Id</option>
+                            <option value="2">Supplier Id</option>
+                        </select>
                     </div>
+                    <div class="form-group">
+                        <label class="control-label" for="txtRespondents">Respondent ID</label>
+                        <input type="text" id="txtRespondents" class="form-control" name="Respondents" placeholder="Enter ID" aria-describedby="lblmsg" />
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btnSubmit" name="btnSubmit">
+                        <i class="ti-search mr-1" aria-hidden="true"></i> Search
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 grid-margin">
+            <div class="card card--action">
+                <div class="card-body">
+                    <p class="table-section-header">Change status</p>
+                    <p class="small text-muted mb-2">Select one or more rows in the Respondents table, then choose a status and click the button.</p>
+                    <div id="lblStatus" class="text-danger font-weight-bold mb-2" role="alert"></div>
+                    <div class="form-group">
+                        <label class="control-label" for="ddlStatus">New status</label>
+                        <select id="ddlStatus" class="form-control" name="ddlStatus" aria-describedby="lblStatus">
+                            <option value="0">-- Select --</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Incomplete">Incomplete</option>
+                            <option value="OVERQUOTA">OVERQUOTA</option>
+                            <option value="Terminate">Terminate</option>
+                            <option value="SEC_TERM">SEC_TERM</option>
+                            <option value="F_ERROR">F_ERROR</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-success" id="btnStatus" name="btnStatus">
+                        <i class="ti-check mr-1" aria-hidden="true"></i> Change status
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Filter</h5>
-                <div id="lblmsg" class="text-danger font-weight-bold mb-2"></div>
-                <div class="form-group">
-                    <label class="control-label">Select</label>
-                    <select id="ddlRespondents" class="form-control" name="ddlRespondents">
-                        <option value="0">--Select--</option>
-                        <option value="1">Unique Id</option>
-                        <option value="2">Supplier Id</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="control-label">Respondents Id</label>
-                    <input type="text" id="txtRespondents" class="form-control" name="Respondents" placeholder="Enter ID" />
-                </div>
-                <div class="form-group">
-                    <button type="button" class="btn btn-success" id="btnSubmit" name="btnSubmit">Search</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Status Change</h5>
-                <div id="lblStatus" class="text-danger font-weight-bold mb-2"></div>
-                <div class="form-group">
-                    <label class="control-label">Select</label>
-                    <select id="ddlStatus" class="form-control" name="ddlStatus">
-                        <option value="0">--Select--</option>
-                        <option value="Complete">Complete</option>
-                        <option value="Incomplete">Incomplete</option>
-                        <option value="OVERQUOTA">OVERQUOTA</option>
-                        <option value="Terminate">Terminate</option>
-                        <option value="SEC_TERM">SEC_TERM</option>
-                        <option value="F_ERROR">F_ERROR</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button type="button" class="btn btn-success" id="btnStatus" name="btnStatus">Change Status</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h5 class="table-section-header">Respondents</h5>
-                <div class="table-responsive">
-                    <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th class="col-checkbox">
-                                    <span class="chk-wrapper">
-                                        <input type="checkbox" id="chkall" class="form-check-input" aria-label="Select all" />
-                                    </span>
-                                </th>
-                                <th>Supplier Name</th>
-                                <th>SID</th>
-                                <th>UID</th>
-                                <th>Country</th>
-                                <th>Supplier ID</th>
-                                <th>Status</th>
-                                <th>StartDate</th>
-                                <th>EndDate</th>
-                                <th>Duration(Mins)</th>
-                                <th>ClientBrowser</th>
-                                <th>ClientIP</th>
-                                <th>Device</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Respondents</p>
+                    <div class="table-responsive">
+                        <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th class="col-checkbox">
+                                        <span class="chk-wrapper">
+                                            <input type="checkbox" id="chkall" class="form-check-input" aria-label="Select all" />
+                                        </span>
+                                    </th>
+                                    <th>Supplier Name</th>
+                                    <th>SID</th>
+                                    <th>UID</th>
+                                    <th>Country</th>
+                                    <th>Supplier ID</th>
+                                    <th>Status</th>
+                                    <th>Start date</th>
+                                    <th>End date</th>
+                                    <th>Duration (min)</th>
+                                    <th>Client browser</th>
+                                    <th>Client IP</th>
+                                    <th>Device</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -274,7 +377,7 @@
             $('#btnStatus').on('click', function () {
                 var statusText = $('#ddlStatus option:selected').text();
                 var statusVal = $('#ddlStatus').val();
-                $('#lblStatus').text('');
+                $('#lblStatus').text('').removeClass('text-success').addClass('text-danger');
                 if (statusVal === '0' || statusVal === '') {
                     $('#lblStatus').text('Please select a status.');
                     return;

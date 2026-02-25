@@ -2,37 +2,87 @@
     ViewData["Title"] = "Create Recontact";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
-
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
 <style>
-    #ProjectRpt thead tr th { padding: 11px; }
-    #ProjectRpt tbody tr td { padding: 5px 15px !important; }
+    .recontact-create-page.vt-project-page {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #0f172a;
+    }
+    .recontact-create-page .table-section-header { font-size: 1rem !important; font-weight: 600 !important; }
+    .recontact-create-page .card-description { font-size: 0.875rem !important; font-weight: 400 !important; line-height: 1.5 !important; }
+    .recontact-create-page .form-control,
+    .recontact-create-page input.form-control,
+    .recontact-create-page select.form-control,
+    .recontact-create-page textarea.form-control {
+        font-size: 0.875rem;
+        height: 36px;
+        min-height: 36px;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+    }
+    .recontact-create-page textarea.form-control { height: auto; min-height: 80px; }
+    .recontact-create-page .form-control:focus {
+        border-color: #0f7f79;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2);
+    }
+    .recontact-create-page .btn-primary {
+        background: #0f7f79 !important;
+        border-color: #0f7f79 !important;
+        color: #fff !important;
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 500;
+        min-height: 36px;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+    }
+    .recontact-create-page .btn-primary:hover {
+        background: #0d6b66 !important;
+        border-color: #0d6b66 !important;
+        color: #fff !important;
+    }
+    .recontact-create-page .btn-primary:disabled {
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
+        color: #fff !important;
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+    .recontact-create-page .btn-outline-primary { color: #0f7f79; border-color: #0f7f79; }
+    .recontact-create-page .btn-outline-primary:hover { background: rgba(15, 127, 121, 0.08); color: #0d6b66; border-color: #0d6b66; }
+    .recontact-create-page #ProjectRpt thead tr th { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; font-weight: 600 !important; }
+    .recontact-create-page #ProjectRpt tbody tr td { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; }
+    .recontact-create-page #ProjectRpt .btn-sm { font-size: 0.8125rem; padding: 0.25rem 0.5rem; }
     .cust_w_modal { max-width: 1100px; margin: 30px auto; }
 </style>
 
-<div class="row">
-    <div class="col-12 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Create Recontact</h4>
-                <p class="card-description mb-0">Create recontact from CSV (UID, ClientURL and optional variables).</p>
+<div class="recontact-create-page vt-project-page">
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header mb-1">Create Recontact</p>
+                    <p class="card-description mb-0">Create recontact from CSV (UID, ClientURL and optional variables).</p>
 
-                <div class="row">
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Recontact Name</label>
+                    <div class="row mt-3">
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtRecontactName">Recontact Name</label>
                             <input type="text" class="form-control" id="txtRecontactName" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Recontact Description</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtRecontactDescription">Recontact Description</label>
                             <input type="text" class="form-control" id="txtRecontactDescription" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Project Status</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="ddlStatus">Project Status</label>
                             <select class="form-control" id="ddlStatus">
                                 <option value="1">Closed</option>
                                 <option value="2">Live</option>
@@ -42,34 +92,24 @@
                                 <option value="6">Invoiced</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">LOI (Mins)</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtLOI">LOI (Mins)</label>
                             <input type="text" id="txtLOI" class="form-control" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Incident Rate (%)</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtIR">Incident Rate (%)</label>
                             <input type="text" id="txtIR" class="form-control" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">CPI ($)</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtCPI">CPI ($)</label>
                             <input type="text" id="txtCPI" class="form-control" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Respondent Quota</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="txtRCQ">Respondent Quota</label>
                             <input type="text" id="txtRCQ" class="form-control" />
                         </div>
-                    </div>
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Select No of Variables</label>
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="ddlVarSelection">Select No of Variables</label>
                             <select id="ddlVarSelection" class="form-control">
                                 <option value="0">select</option>
                                 <option value="1">1</option>
@@ -80,50 +120,44 @@
                             </select>
                         </div>
                     </div>
-                </div>
-                <div id="Varibales_div"></div>
-                <div class="row">
-                    <div class="col-sm-4 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Upload CSV</label>
+                    <div id="Varibales_div" class="row"></div>
+                    <div class="row">
+                        <div class="form-group col-md-4">
+                            <label class="control-label" for="csvRecontacts">Upload CSV</label>
                             <input type="file" id="csvRecontacts" class="form-control" accept=".csv" />
+                            <a href="/VT/RecontactCreate/ExampleCsv" class="btn btn-sm btn-outline-primary mt-2">Example File</a>
                         </div>
-                        <div class="form-group">
-                            <a href="/VT/RecontactCreate/ExampleCsv" class="btn btn-sm btn-outline-primary">Example File</a>
-                        </div>
-                    </div>
-                    <div class="col-sm-8 col-xs-12">
-                        <div class="form-group">
-                            <label class="control-label mb-10">Notes</label>
+                        <div class="form-group col-md-8">
+                            <label class="control-label" for="txtNotes">Notes</label>
                             <textarea id="txtNotes" class="form-control" rows="4" placeholder="Enter your notes here"></textarea>
                         </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-12">
-                        <button type="button" id="btnSubmit" class="btn btn-success">Submit</button>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" id="btnSubmit" class="btn btn-primary">Submit</button>
+                        </div>
                     </div>
-                </div>
 
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="table-responsive">
-                            <table id="ProjectRpt" class="table table-hover display pb-30">
-                                <thead>
-                                    <tr>
-                                        <th>RPID</th>
-                                        <th>Recontact Name</th>
-                                        <th>CPI</th>
-                                        <th>SID</th>
-                                        <th>Vendor Links</th>
-                                        <th>Notes</th>
-                                        <th>View</th>
-                                        <th>Delete</th>
-                                        <th>Add More</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="table-responsive">
+                                <table id="ProjectRpt" class="table table-hover display pb-30" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>RPID</th>
+                                            <th>Recontact Name</th>
+                                            <th>CPI</th>
+                                            <th>SID</th>
+                                            <th>Vendor Links</th>
+                                            <th>Notes</th>
+                                            <th>View</th>
+                                            <th>Delete</th>
+                                            <th>Add More</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -133,12 +167,12 @@
 </div>
 
 <!-- View Data modal -->
-<div class="modal fade" id="mdlRecontacts" tabindex="-1" role="dialog">
+<div class="modal fade" id="mdlRecontacts" tabindex="-1" role="dialog" aria-labelledby="mdlRecontactsTitle" aria-hidden="true">
     <div class="modal-dialog modal-xl cust_w_modal" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Recontacts</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h5 class="modal-title" id="mdlRecontactsTitle">Recontacts</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="hiddenIDTokens" />
@@ -165,18 +199,18 @@
 </div>
 
 <!-- Delete / Add More modal -->
-<div class="modal fade" id="mdlDeleteRecontact" tabindex="-1" role="dialog">
+<div class="modal fade" id="mdlDeleteRecontact" tabindex="-1" role="dialog" aria-labelledby="mymodalrecontact" aria-hidden="true">
     <div class="modal-dialog cust_w_modal" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mymodalrecontact">Recontacts</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="hfid" />
                 <input type="hidden" id="hfoperation" />
                 <div class="form-group">
-                    <label for="uploaderdeleteduid">Upload CSV</label>
+                    <label class="control-label" for="uploaderdeleteduid">Upload CSV</label>
                     <input type="file" id="uploaderdeleteduid" class="form-control" accept=".csv" />
                 </div>
             </div>
@@ -210,12 +244,11 @@
                 $('#Varibales_div').empty();
                 var v = parseInt(value, 10) || 0;
                 if (v <= 0) return;
-                var divcontent = '<div class="row">';
+                var divcontent = '';
                 for (var i = 0; i < v; i++) {
                     var j = i + 1;
-                    divcontent += '<div class="col-sm-4 col-xs-12"><div class="form-group"><label class="control-label mb-10">Variable ' + j + '</label><input type="text" class="form-control" id="txtVar' + j + '" /></div></div>';
+                    divcontent += '<div class="form-group col-md-4"><label class="control-label" for="txtVar' + j + '">Variable ' + j + '</label><input type="text" class="form-control" id="txtVar' + j + '" /></div>';
                 }
-                divcontent += '</div>';
                 $('#Varibales_div').append(divcontent);
             }
 
@@ -238,9 +271,9 @@
                             var murl = r.murl || r.MURL || '';
                             var notes = r.notes || r.Notes || '';
                             tbody += '<tr><td>' + (pid || '') + '</td><td>' + (name || '') + '</td><td>' + cpi + '</td><td>' + (sid || '') + '</td><td>' + (murl || '') + '</td><td>' + (notes || '') + '</td>' +
-                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.btnDownloadData(' + id + ')">View Data</button></td>' +
-                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.popupDeleteAndAddMore(' + id + ',0)">Delete</button></td>' +
-                                '<td><button type="button" class="btn btn-sm btn-success" onclick="window.popupDeleteAndAddMore(' + id + ',1)">Add More</button></td></tr>';
+                                '<td><button type="button" class="btn btn-sm btn-primary" onclick="window.btnDownloadData(' + id + ')">View Data</button></td>' +
+                                '<td><button type="button" class="btn btn-sm btn-primary" onclick="window.popupDeleteAndAddMore(' + id + ',0)">Delete</button></td>' +
+                                '<td><button type="button" class="btn btn-sm btn-primary" onclick="window.popupDeleteAndAddMore(' + id + ',1)">Add More</button></td></tr>';
                         }
                         $('#ProjectRpt tbody').html(tbody);
                         if (RecontactProjectTable) {

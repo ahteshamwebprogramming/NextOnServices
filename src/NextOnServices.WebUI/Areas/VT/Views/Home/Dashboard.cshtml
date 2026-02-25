@@ -298,32 +298,32 @@
         <p class="ref-subtitle">Project overview and list</p>
     </div>
 
-    <!-- Stats cards - all same teal, compact (Figma/React style) -->
+    <!-- Stats cards - all same teal, compact (Figma/React style). data-stat used by Dashboard.js to update counts when Manager changes. -->
     <div class="ref-stats-row">
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value">@(Model?.ProjectCountSummary?.TotalProjects ?? 0)</div>
+                <div class="ref-stat-value" data-stat="total">@(Model?.ProjectCountSummary?.TotalProjects ?? 0)</div>
                 <div class="ref-stat-label">Total Projects</div>
             </div>
             <div class="ref-stat-icon"><img src="~/theme/images/total projects.svg" alt="" /></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value">@(Model?.ProjectCountSummary?.ActiveProjects ?? 0)</div>
+                <div class="ref-stat-value" data-stat="active">@(Model?.ProjectCountSummary?.ActiveProjects ?? 0)</div>
                 <div class="ref-stat-label">Active Projects</div>
             </div>
             <div class="ref-stat-icon"><img src="~/theme/images/active projects.svg" alt="" /></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value">@(Model?.ProjectCountSummary?.InactiveProjects ?? 0)</div>
+                <div class="ref-stat-value" data-stat="inactive">@(Model?.ProjectCountSummary?.InactiveProjects ?? 0)</div>
                 <div class="ref-stat-label">Inactive Projects</div>
             </div>
             <div class="ref-stat-icon"><img src="~/theme/images/inactive projects.svg" alt="" /></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value">@(Model?.ProjectCountSummary?.ArchivedProjects ?? 0)</div>
+                <div class="ref-stat-value" data-stat="archived">@(Model?.ProjectCountSummary?.ArchivedProjects ?? 0)</div>
                 <div class="ref-stat-label">Archived Projects</div>
             </div>
             <div class="ref-stat-icon"><img src="~/theme/images/archivedProjects.svg" alt="" /></div>

@@ -41,13 +41,14 @@ public class RecontactPageDetailsController : Controller
         try
         {
             var details = await _surveyAPIController.GetRecontactDetails(request.Id, request.Opt);
-            // Match legacy shape: array of 4 arrays [countryWise, supplierWise, redirects, remainingDetails]
+            // Match legacy shape: [countryWise, supplierWise, redirects, remainingDetails, kpi] — KPI from RecontactParametersCalC (NextOnServices_Old)
             var payload = new object[]
             {
                 details.Countries,
                 details.Suppliers,
                 details.Redirects,
-                details.Summary
+                details.Summary,
+                details.Kpi ?? (object)new { }
             };
             return Json(payload);
         }

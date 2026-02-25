@@ -523,12 +523,26 @@ public class SurveyAPIController : ControllerBase
             var redirects = multi.Read<RecontactRedirectDTO>().ToList();
             var summary = multi.Read<RecontactSummaryDTO>().ToList();
 
+            RecontactKpiDTO? kpi = null;
+            try
+            {
+                kpi = await connection.QueryFirstOrDefaultAsync<RecontactKpiDTO>(
+                    "RecontactParametersCalC",
+                    new { id, opt },
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch
+            {
+                // SP may not exist or return different shape; KPI block will use defaults
+            }
+
             return new RecontactDetailsDTO
             {
                 Countries = countries,
                 Suppliers = suppliers,
                 Redirects = redirects,
-                Summary = summary
+                Summary = summary,
+                Kpi = kpi
             };
         }
         catch (Exception ex)

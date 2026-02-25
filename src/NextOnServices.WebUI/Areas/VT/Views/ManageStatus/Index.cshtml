@@ -2,112 +2,205 @@
     ViewData["Title"] = "Reconciliation";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
 <style>
-    #tblRespondents thead tr th { padding: 10px 8px; vertical-align: middle; }
-    #tblRespondents tbody tr td { padding: 8px; vertical-align: middle; }
-    #divfailed label { display: block; margin-bottom: 4px; }
+    .manage-status-page.vt-project-page {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #0f172a;
+    }
+    .manage-status-page .table-section-header {
+        font-family: inherit !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+    .manage-status-page .card-description {
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+    }
+    .manage-status-page label,
+    .manage-status-page .control-label {
+        font-size: 0.8125rem !important;
+        font-weight: 500 !important;
+        font-family: inherit;
+    }
+    .manage-status-page .form-control,
+    .manage-status-page select.form-control,
+    .manage-status-page input.form-control,
+    .manage-status-page textarea.form-control {
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        min-height: 36px !important;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        line-height: 1.5 !important;
+    }
+    .manage-status-page select.form-control,
+    .manage-status-page input.form-control {
+        height: 36px !important;
+    }
+    .manage-status-page textarea.form-control {
+        min-height: 120px !important;
+    }
+    .manage-status-page .form-control:focus,
+    .manage-status-page select.form-control:focus,
+    .manage-status-page input.form-control:focus,
+    .manage-status-page textarea.form-control:focus {
+        border-color: #0f7f79 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+    }
+    .manage-status-page .btn {
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        height: 36px !important;
+        padding: 0 1.25rem !important;
+        border-radius: 8px !important;
+        line-height: 1 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    .manage-status-page .card--action .btn {
+        margin-top: 1rem;
+    }
+    .manage-status-page .btn-success {
+        background: #0d6b66 !important;
+        border-color: #0d6b66 !important;
+    }
+    .manage-status-page .btn-success:hover {
+        background: #0a5652 !important;
+        border-color: #0a5652 !important;
+    }
+    .manage-status-page .card--action .table-section-header { margin-bottom: 0.75rem; }
+    .manage-status-page .card--action #lblmsg,
+    .manage-status-page .card--action #lblStatus { margin-bottom: 0.5rem; }
+    .manage-status-page .form-group { margin-bottom: 1rem; }
+    .manage-status-page .card--action {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        height: 100%;
+    }
+    .manage-status-page .card--action .card-body { padding: 1rem 1.25rem; }
+    .manage-status-page #tblRespondents thead tr th { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; font-weight: 600 !important; }
+    .manage-status-page #tblRespondents tbody tr td { padding: 10px 12px; vertical-align: middle; font-size: 0.8125rem !important; }
+    .manage-status-page #divfailed label { display: block; margin-bottom: 4px; font-size: 0.8125rem !important; }
 </style>
 
-<div class="row">
-    <div class="col-12 grid-margin">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Reconciliation</h4>
-                <p class="card-description mb-0">Select project, enter IDs (one per line), choose status and change.</p>
+<div class="manage-status-page vt-project-page">
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Reconciliation</p>
+                    <p class="card-description mb-0">Select project, enter IDs (one per line), choose status and change.</p>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <div id="lblmsg" class="text-danger font-weight-bold mb-2"></div>
-                <div class="form-group">
-                    <label class="control-label">Select Type Of ID</label>
-                    <select id="ddlRespondents" class="form-control">
-                        <option value="0">--Select--</option>
-                        <option value="1">Unique Id</option>
-                        <option value="2">Supplier Id</option>
-                    </select>
+    <div class="row">
+        <div class="col-lg-6 grid-margin">
+            <div class="card card--action">
+                <div class="card-body">
+                    <p class="table-section-header">Filters</p>
+                    <div id="lblmsg" class="text-danger font-weight-bold mb-2" role="alert"></div>
+                    <div class="form-group">
+                        <label class="control-label" for="ddlRespondents">ID type</label>
+                        <select id="ddlRespondents" class="form-control">
+                            <option value="0">-- Select --</option>
+                            <option value="1">Unique Id</option>
+                            <option value="2">Supplier Id</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="divProjects">
+                        <label class="control-label" for="ddProjects">Project</label>
+                        <select id="ddProjects" class="form-control select2-project" style="width: 100%;">
+                            <option value="0">-- Select Project --</option>
+                        </select>
+                    </div>
+                    <div id="lblStatus" class="text-danger font-weight-bold mb-2" role="alert"></div>
+                    <div class="form-group">
+                        <label class="control-label" for="ddlStatus">New status</label>
+                        <select id="ddlStatus" class="form-control">
+                            <option value="0">-- Select --</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Incomplete">Incomplete</option>
+                            <option value="OVERQUOTA">OVERQUOTA</option>
+                            <option value="Terminate">Terminate</option>
+                            <option value="SEC_TERM">SEC_TERM</option>
+                            <option value="F_ERROR">F_ERROR</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-success" id="btnStatus">
+                        <i class="ti-check mr-1" aria-hidden="true"></i> Change status
+                    </button>
                 </div>
-                <div class="form-group" id="divProjects">
-                    <label class="control-label">Projects</label>
-                    <select id="ddProjects" class="form-control select2-project" style="width: 100%;">
-                        <option value="0">--Select Project--</option>
-                    </select>
-                </div>
-                <div id="lblStatus" class="text-danger font-weight-bold mb-2"></div>
-                <div class="form-group">
-                    <label class="control-label">Select Status</label>
-                    <select id="ddlStatus" class="form-control">
-                        <option value="0">--Select--</option>
-                        <option value="Complete">Complete</option>
-                        <option value="Incomplete">Incomplete</option>
-                        <option value="OVERQUOTA">OVERQUOTA</option>
-                        <option value="Terminate">Terminate</option>
-                        <option value="SEC_TERM">SEC_TERM</option>
-                        <option value="F_ERROR">F_ERROR</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button type="button" class="btn btn-success" id="btnStatus">Change Status</button>
+            </div>
+        </div>
+        <div class="col-lg-6 grid-margin">
+            <div class="card card--action">
+                <div class="card-body">
+                    <p class="table-section-header">Enter IDs</p>
+                    <div class="form-group mb-0">
+                        <label class="control-label" for="txtIds">Paste IDs (one per line)</label>
+                        <textarea id="txtIds" class="form-control" rows="10" placeholder="One ID per line" aria-describedby="lblmsg"></textarea>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Enter IDs</h5>
-                <div class="form-group">
-                    <textarea id="txtIds" class="form-control" rows="10" placeholder="One ID per line"></textarea>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row" id="faildive" style="display: none;">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Failed</h5>
-                <p class="mb-2"><span id="spnFailed">0</span> out of <span id="spnTotal">0</span> Failed</p>
-                <div id="divfailed"></div>
+    <div class="row" id="faildive" style="display: none;">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Failed</p>
+                    <p class="mb-2 small text-muted"><span id="spnFailed">0</span> out of <span id="spnTotal">0</span> failed</p>
+                    <div id="divfailed"></div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h5 class="table-section-header">Successful</h5>
-                <div class="table-responsive">
-                    <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>Supplier Name</th>
-                                <th>SID</th>
-                                <th>UID</th>
-                                <th>Country</th>
-                                <th>Supplier ID</th>
-                                <th>Status</th>
-                                <th>StartDate</th>
-                                <th>EndDate</th>
-                                <th>Duration(Mins)</th>
-                                <th>ClientBrowser</th>
-                                <th>ClientIP</th>
-                                <th>Device</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Successful</p>
+                    <div class="table-responsive">
+                        <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Supplier Name</th>
+                                    <th>SID</th>
+                                    <th>UID</th>
+                                    <th>Country</th>
+                                    <th>Supplier ID</th>
+                                    <th>Status</th>
+                                    <th>Start date</th>
+                                    <th>End date</th>
+                                    <th>Duration (min)</th>
+                                    <th>Client browser</th>
+                                    <th>Client IP</th>
+                                    <th>Device</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,9 +375,10 @@
                             $sel.append($('<option></option>').val(id).text(display));
                         }
                         $sel.select2({
-                            placeholder: '--Select Project--',
+                            placeholder: '-- Select Project --',
                             allowClear: true,
-                            width: '100%'
+                            width: '100%',
+                            dropdownCssClass: 'vt-theme-dropdown'
                         });
                     }
                 });

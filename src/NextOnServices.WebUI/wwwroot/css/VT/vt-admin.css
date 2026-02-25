@@ -173,3 +173,24 @@ body.vt-admin {
   min-height: 36px;
   padding: 6px 38px 6px 14px;
 }
+
+/* No y-axis scroll on table areas – horizontal only; page scrolls normally */
+.vt-admin .table-responsive {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+.vt-admin .dataTables_wrapper,
+.vt-admin .dataTables_scroll,
+.vt-admin .dataTables_scrollBody {
+  overflow-y: hidden !important;
+  max-height: none !important;
+}
+
+/* Pagination: prevent cutting off at bottom of card */
+.vt-admin .dataTables_wrapper div.dataTables_paginate,
+.vt-admin .dataTables_wrapper div.dataTables_paginate.paging_simple_numbers {
+  margin-bottom: 1rem !important;
+}
+.vt-admin .dataTables_wrapper > div.row:last-child {
+  padding-bottom: 1rem !important;
+}

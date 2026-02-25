@@ -1,131 +1,163 @@
 @model NextOnServices.VT.Infrastructure.ViewModels.Supplier.SupplierViewModel
 @{
-    ViewData["Title"] = "AddSupplier";
+    ViewData["Title"] = "Add Supplier";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/vt/validation.css" rel="stylesheet" />
 <style>
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        background: transparent;
-        bottom: 0;
-        color: transparent;
-        cursor: pointer;
-        height: auto;
-        left: 0;
-        position: absolute;
-        right: 0;
-        top: 0;
-        width: auto;
+    .add-supplier-page.vt-project-page {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #0f172a;
     }
-
-    .select2-container--default .select2-selection--single {
-        padding: 0.5rem 0.81rem;
+    .add-supplier-page .table-section-header { font-size: 1rem !important; font-weight: 600 !important; }
+    .add-supplier-page .card-description { font-size: 0.875rem !important; font-weight: 400 !important; line-height: 1.5 !important; }
+    .add-supplier-page .form-control,
+    .add-supplier-page input.form-control:not([type="checkbox"]),
+    .add-supplier-page select.form-control,
+    .add-supplier-page textarea.form-control {
+        font-size: 0.875rem;
+        height: 36px;
+        min-height: 36px;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
     }
-
-    .select2-container .select2-selection--single {
-        height: 2.575rem;
+    .add-supplier-page textarea.form-control { height: auto; min-height: 80px; }
+    .add-supplier-page .form-control:focus {
+        border-color: #0f7f79;
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2);
     }
-
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 38px;
+    .add-supplier-page .btn-primary {
+        background: #0f7f79 !important;
+        border-color: #0f7f79 !important;
+        color: #fff !important;
+        font-size: 0.875rem;
+        font-weight: 500;
+        min-height: 36px;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+    }
+    .add-supplier-page .btn-primary:hover { background: #0d6b66 !important; border-color: #0d6b66 !important; color: #fff !important; }
+    .add-supplier-page .btn-light { border: 1px solid #e2e8f0; border-radius: 8px; }
+    .add-supplier-page .help-block { font-size: 0.8125rem; margin-top: 0.25rem; color: #ea580c !important; }
+    .add-supplier-page .select2-container--default .select2-selection--single {
+        height: 36px !important;
+        min-height: 36px !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        padding: 0 10px !important;
+    }
+    .add-supplier-page .select2-container--default.select2-container--focus .select2-selection--single,
+    .add-supplier-page .select2-container--default .select2-selection--single:focus {
+        border-color: #0f7f79 !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
     }
 </style>
 
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/css/vt/validation.css" rel="stylesheet" />
-<div class="row">
-    <div class="col-md-10 offset-1 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Supplier</h4>
-                <p class="card-description mb-0">Please fill in the details below</p>
-                <form class="forms-sample" id="SupplierForm">
-                    <div class="row">
-                        <div class="form-group col-md-4">
-                            <label for="Pname" class="required">Supplier Name</label>
-                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Supplier.Name">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Supplier Description</label>
-                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Supplier.Description">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Contact Number</label>
-                            <input type="number" class="form-control form-control-sm requiredInput" placeholder="00 999 9999" asp-for="Supplier.Number">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Email</label>
-                            <input type="email" class="form-control form-control-sm requiredInput" asp-for="Supplier.Email">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="PanelSize" class="required">Panel Size</label>
-                            <input type="number" class="form-control form-control-sm requiredInput" asp-for="Supplier.Psize">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="" class="required">Country</label>
-                            <select class="form-control form-control-sm requiredInput select2" asp-for="Supplier.Country">
-                                <option value="0">--Select Country--</option>
-                                @{
-                                    if (Model != null && Model.Countries != null)
-                                    {
-                                        foreach (var item in Model.Countries)
+<div class="add-supplier-page vt-project-page">
+    <div class="row">
+        <div class="col-md-10 offset-md-1 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header mb-1">Supplier</p>
+                    <p class="card-description mb-0">Please fill in the details below.</p>
+                    <form class="forms-sample" id="SupplierForm">
+                        <div class="row mt-3">
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Name" class="required">Supplier Name</label>
+                                <input type="text" class="form-control requiredInput" id="Supplier_Name" asp-for="Supplier.Name">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Description" class="required">Supplier Description</label>
+                                <input type="text" class="form-control requiredInput" id="Supplier_Description" asp-for="Supplier.Description">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Number" class="required">Contact Number</label>
+                                <input type="number" class="form-control requiredInput" id="Supplier_Number" placeholder="00 999 9999" asp-for="Supplier.Number">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Email" class="required">Email</label>
+                                <input type="email" class="form-control requiredInput" id="Supplier_Email" asp-for="Supplier.Email">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Psize" class="required">Panel Size</label>
+                                <input type="number" class="form-control requiredInput" id="Supplier_Psize" asp-for="Supplier.Psize">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Supplier_Country" class="required">Country</label>
+                                <select class="form-control requiredInput select2" id="Supplier_Country" asp-for="Supplier.Country">
+                                    <option value="0">--Select Country--</option>
+                                    @{
+                                        if (Model != null && Model.Countries != null)
                                         {
-                                            <option value="@item.Country">@item.Country</option>
+                                            foreach (var item in Model.Countries)
+                                            {
+                                                <option value="@item.Country">@item.Country</option>
+                                            }
                                         }
                                     }
-                                }
-                            </select>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Completes">Completes</label>
+                                <input type="url" class="form-control" id="Supplier_Completes" asp-for="Supplier.Completes">
+                                <p class="help-block">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]</p>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Terminate">Terminate</label>
+                                <input type="url" class="form-control" id="Supplier_Terminate" asp-for="Supplier.Terminate">
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Overquota">Overquota</label>
+                                <input type="url" class="form-control" id="Supplier_Overquota" asp-for="Supplier.Overquota">
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Security">Security Term</label>
+                                <input type="url" class="form-control" id="Supplier_Security" asp-for="Supplier.Security">
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Fraud">Fraud Error</label>
+                                <input type="url" class="form-control" id="Supplier_Fraud" asp-for="Supplier.Fraud">
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Success">Success</label>
+                                <input type="url" class="form-control" id="Supplier_Success" asp-for="Supplier.Success">
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Default">Default</label>
+                                <textarea asp-for="Supplier.Default" class="form-control" id="Supplier_Default"></textarea>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Failure">Failure</label>
+                                <textarea asp-for="Supplier.Failure" class="form-control" id="Supplier_Failure"></textarea>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_QualityTermination">Quality Termination</label>
+                                <textarea asp-for="Supplier.QualityTermination" class="form-control" id="Supplier_QualityTermination"></textarea>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_OverQuota1">Over Quota</label>
+                                <textarea asp-for="Supplier.OverQuota1" class="form-control" id="Supplier_OverQuota1"></textarea>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Supplier_Notes">Notes</label>
+                                <textarea asp-for="Supplier.Notes" class="form-control" id="Supplier_Notes" placeholder="Enter your notes here"></textarea>
+                            </div>
                         </div>
-                        <div class="form-group col-md-12">
-                            <label for="PanelSize" class="">Completes</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Completes">
-                            <p class="help-block" style="color: orange">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]</p>
+                        <input type="hidden" asp-for="Supplier.Id" />
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary mr-2" onclick="AddSupplier()">@(Model == null ? "Submit" : Model.Supplier == null ? "Submit" : Model.Supplier.Id > 0 ? "Update" : "Submit")</button>
+                            <button type="button" class="btn btn-light" onclick="window.history.back()">Cancel</button>
                         </div>
-                        <div class="form-group col-md-12">
-                            <label for="">Terminate</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Terminate">
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="">Overquota</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Overquota">
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="">Security Term</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Security">
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label for="">Fraud Error</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Fraud">
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Success</label>
-                            <input type="url" class="form-control form-control-sm" asp-for="Supplier.Success">
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Default</label>
-                            <textarea asp-for="Supplier.Default" class="form-control form-control-sm"></textarea>
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Failure</label>
-                            <textarea asp-for="Supplier.Failure" class="form-control form-control-sm"></textarea>
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Quality Termination</label>
-                            <textarea asp-for="Supplier.QualityTermination" class="form-control form-control-sm"></textarea>
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Over Quota</label>
-                            <textarea asp-for="Supplier.OverQuota1" class="form-control form-control-sm"></textarea>
-                        </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Notes</label>
-                            <textarea asp-for="Supplier.Notes" class="form-control form-control-sm" placeholder="Enter Your Notes Here"></textarea>
-                        </div>
-                    </div>
-                    <input type="hidden" asp-for="Supplier.Id" />
-                    <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddSupplier()">@(Model == null ? "Submit" : Model.Supplier == null ? "Submit" : Model.Supplier.Id > 0 ? "Update" : "Submit")  </button>
-                    <button type="button" class="btn btn-light btn-sm" onclick="window.history.back()">Cancel</button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

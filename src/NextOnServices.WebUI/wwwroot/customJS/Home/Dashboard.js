@@ -120,6 +120,32 @@ function initVtDashboardProjectTable() {
     });
 }
 
+/**
+ * Fetches dashboard card counts for the given manager id and updates the four stat cards.
+ * Matches old app: counts are driven by Manager selection only (GetDeshboardDetails).
+ * managerId 0 = "All" (same as old app: value 0 passed to GetDeshboardDetails).
+ */
+function refreshDashboardCounts(managerId) {
+    var id = parseInt(managerId, 10);
+    if (isNaN(id) || id < 0) {
+        $('.ref-stat-value[data-stat="total"]').text('0');
+        $('.ref-stat-value[data-stat="active"]').text('0');
+        $('.ref-stat-value[data-stat="inactive"]').text('0');
+        $('.ref-stat-value[data-stat="archived"]').text('0');
+        return;
+    }
+    $.get('/VT/Home/GetDashboardCounts', { managerId: id })
+        .done(function (data) {
+            $('.ref-stat-value[data-stat="total"]').text(data.totalProjects != null ? data.totalProjects : 0);
+            $('.ref-stat-value[data-stat="active"]').text(data.activeProjects != null ? data.activeProjects : 0);
+            $('.ref-stat-value[data-stat="inactive"]').text(data.inactiveProjects != null ? data.inactiveProjects : 0);
+            $('.ref-stat-value[data-stat="archived"]').text(data.archivedProjects != null ? data.archivedProjects : 0);
+        })
+        .fail(function () {
+            // leave existing values on error
+        });
+}
+
 function getProjectTablePartialView() {
     var Pmanager = $("#TableFilters").find("[name='Managers']").val();
     var Status = $("#TableFilters").find("[name='Status']").val();
@@ -139,6 +165,8 @@ function getProjectTablePartialView() {
             success: function (data) {
                 $('#div_ProjectTable').html(data);
                 initVtDashboardProjectTable();
+                // Update card counts for selected manager (same as old app: counts when Manager/filters change)
+                refreshDashboardCounts(Pmanager);
                 resolve();
             },
             error: function (error) {
@@ -149,15 +177,20 @@ function getProjectTablePartialView() {
 }
 
 function openChangeStatusBox(status, projectId) {
-    // Bootstrap 5 native way
-    const modalElement = document.getElementById('mdlChangeStatus');
-    const modal = new bootstrap.Modal(modalElement);
-    modal.show();
+    var $modal = $("#mdlChangeStatus");
+    $modal.find("[name='Status']").val(status == "Closed" ? 1 : status == "Live" ? 2 : status == "On Hold" ? 3 : status == "Cancelled" ? 4 : status == "Awarded" ? 5 : status == "Invoiced" ? 6 : 0);
+    $modal.find("[name='ProjectId']").val(projectId);
 
-    let statusId = status == "Closed" ? 1 : status == "Live" ? 2 : status == "On Hold" ? 3 : status == "Cancelled" ? 4 : status == "Awarded" ? 5 : status == "Invoiced" ? 6 : 0;
-
-    $("#mdlChangeStatus").find("[name='Status']").val(statusId);
-    $("#mdlChangeStatus").find("[name='ProjectId']").val(projectId);
+    // Bootstrap 4: jQuery .modal(); Bootstrap 5: bootstrap.Modal (getInstance may not exist in BS4)
+    if ($modal.length && typeof $modal.modal === 'function') {
+        $modal.modal('show');
+    } else {
+        var modalEl = document.getElementById('mdlChangeStatus');
+        if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal && typeof bootstrap.Modal.getInstance === 'function') {
+            var modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+    }
 }
 
 function UpdateStatus() {
@@ -172,21 +205,30 @@ function UpdateStatus() {
         cache: false,
         dataType: "json",
         success: function (data) {
-            // Close modal manually
+            // Close modal (Bootstrap 4: jQuery; Bootstrap 5: getInstance only if available)
+            var $m = $('#mdlChangeStatus');
+            if ($m.length && typeof $m.modal === 'function') {
+                $m.modal('hide');
+            }
             $('#mdlChangeStatus').hide();
             $('.modal-backdrop').remove();
             $('body').removeClass('modal-open');
+            var modalEl = document.getElementById('mdlChangeStatus');
+            if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal && typeof bootstrap.Modal.getInstance === 'function') {
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
 
-            // Refresh table
-            setTimeout(function () {
-                getProjectTablePartialView()
-                    .then(() => {
-                        console.log("Table refreshed successfully");
-                    })
-                    .catch((error) => {
-                        console.error("Table refresh failed:", error);
-                    });
-            }, 300);
+            // On Dashboard: refresh project table. On ProjectPage: reload so status card updates.
+            if ($('#div_ProjectTable').length && typeof getProjectTablePartialView === 'function') {
+                setTimeout(function () {
+                    getProjectTablePartialView()
+                        .then(function () { console.log("Table refreshed successfully"); })
+                        .catch(function (err) { console.error("Table refresh failed:", err); });
+                }, 300);
+            } else {
+                window.location.reload();
+            }
         },
         error: function (xhr) {
             alert("Error! " + xhr.responseText);

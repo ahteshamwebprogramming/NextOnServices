@@ -2,33 +2,101 @@
     ViewData["Title"] = "Recontact Projects";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<style>
+    .recontact-projects-page.vt-project-page {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #0f172a;
+    }
+    .recontact-projects-page .table-section-header {
+        font-family: inherit !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+    .recontact-projects-page .card-description {
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        line-height: 1.5 !important;
+    }
+    .recontact-projects-page #tblRecontact thead tr th {
+        padding: 10px 12px;
+        vertical-align: middle;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+    }
+    .recontact-projects-page #tblRecontact tbody tr td {
+        padding: 10px 12px;
+        vertical-align: middle;
+        font-size: 0.8125rem !important;
+    }
+    .recontact-projects-page #tblRecontact .recontact-status,
+    .recontact-projects-page #tblRecontact select.form-control-sm {
+        font-family: inherit !important;
+        font-size: 0.8125rem !important;
+        font-weight: 400 !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        padding: 0.25rem 0.5rem !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 6px !important;
+    }
+    .recontact-projects-page #tblRecontact .recontact-status:focus,
+    .recontact-projects-page #tblRecontact select.form-control-sm:focus {
+        border-color: #0f7f79 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+    }
+    .recontact-projects-page #tblRecontact .mw-150 { min-width: 150px; }
+    .recontact-projects-page #tblRecontact tr td.text-center {
+        font-style: italic;
+        color: #6c757d;
+        padding: 24px 16px;
+    }
+    .recontact-projects-page #tblRecontact a.hover_blue {
+        color: #0f7f79;
+        font-weight: 500;
+    }
+    .recontact-projects-page #tblRecontact a.hover_blue:hover {
+        color: #0d6b66;
+        text-decoration: underline;
+    }
+</style>
 
-<div class="row">
-    <div class="col-12 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Recontact Projects</h4>
-                <p class="card-description mb-0">Manage Recontact projects and update their status.</p>
-                <div class="table-responsive">
-                    <table id="tblRecontact" class="table table-hover table-striped" style="width:100%">
-                        <thead>
-                            <tr>
-                                <th>P Number</th>
-                                <th>PName</th>
-                                <th>CPI</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                                <th>CO</th>
-                                <th>TR</th>
-                                <th>OQ</th>
-                                <th>ST</th>
-                                <th>FE</th>
-                                <th>IC</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+<div class="recontact-projects-page vt-project-page">
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Recontact Projects</p>
+                    <p class="card-description mb-0">Manage recontact projects and update their status from the table below.</p>
+                    <div class="table-responsive">
+                        <table id="tblRecontact" class="table table-hover table-striped" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>P number</th>
+                                    <th>P name</th>
+                                    <th>CPI</th>
+                                    <th>Status</th>
+                                    <th>Total</th>
+                                    <th>CO</th>
+                                    <th>TR</th>
+                                    <th>OQ</th>
+                                    <th>ST</th>
+                                    <th>FE</th>
+                                    <th>IC</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
