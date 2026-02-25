@@ -2,7 +2,7 @@
     ViewData["Title"] = "ID Search";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
 <style>
     .card-view .form-group { margin-bottom: 1rem; }
@@ -73,10 +73,10 @@
     <div class="col-12">
         <div class="row">
             <div class="col-12 grid-margin">
-                <div class="card">
+                <div class="card card--table-section">
                     <div class="card-body">
-                        <h4 class="card-title">Respondents Report</h4>
-                        <p class="card-description">Search by Unique Id or Supplier Id and optionally change status.</p>
+                        <h4 class="table-section-header">Respondents Report</h4>
+                        <p class="card-description mb-0">Search by Unique Id or Supplier Id and optionally change status.</p>
                     </div>
                 </div>
             </div>
@@ -135,9 +135,9 @@
 
 <div class="row">
     <div class="col-12">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <h5 class="card-title">Respondents</h5>
+                <h5 class="table-section-header">Respondents</h5>
                 <div class="table-responsive">
                     <table id="tblRespondents" class="table table-hover table-striped" style="width:100%">
                         <thead>

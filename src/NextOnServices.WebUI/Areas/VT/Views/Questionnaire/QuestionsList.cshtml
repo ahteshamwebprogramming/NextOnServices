@@ -2,13 +2,14 @@
     ViewData["Title"] = "Questions List";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <p class="card-title mb-0">Questions List</p>
+                    <p class="table-section-header mb-0">Questions List</p>
                     <a href="/VT/Questionnaire/AddQuestion" class="btn btn-primary btn-sm">Add New Question</a>
                 </div>
                 <div class="table-responsive">

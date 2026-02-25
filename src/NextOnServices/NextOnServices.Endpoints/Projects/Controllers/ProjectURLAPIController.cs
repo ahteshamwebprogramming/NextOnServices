@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Dapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -165,6 +165,11 @@ public class ProjectURLAPIController : ControllerBase
                 bool updated = await _unitOfWork.ProjectsUrl.UpdateAsync(projectsUrl);
                 if (updated)
                 {
+                    // Sync the new URL to all ProjectMapping rows for this project+country so Edit URL is reflected in project mapping list
+                    string updateOlinkQuery = "UPDATE ProjectMapping SET OLink = @Olink WHERE ProjectID = @ProjectId AND CountryID = @CountryId";
+                    var updateOlinkParams = new { Olink = projectsUrl.Url, ProjectId = projectsUrl.Pid, CountryId = projectsUrl.Cid };
+                    await _unitOfWork.ProjectMapping.ExecuteQueryAsync(updateOlinkQuery, updateOlinkParams);
+
                     if (inputData.TokenBool == true && !String.IsNullOrEmpty(inputData.TokenRaw))
                     {
                         int Id = inputData.Id;

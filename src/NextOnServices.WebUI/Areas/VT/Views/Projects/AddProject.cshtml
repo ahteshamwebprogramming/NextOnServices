@@ -1,4 +1,4 @@
-﻿@using NextOnServices.Infrastructure.Helper;
+@using NextOnServices.Infrastructure.Helper;
 @model NextOnServices.Infrastructure.ViewModels.Project.AddProject
 
 @{
@@ -7,6 +7,7 @@
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
     var returnUrl = Context.Request.Headers["Referer"].ToString();
 }
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 <style>
     input[type="date"]::-webkit-calendar-picker-indicator {
         background: transparent;
@@ -35,11 +36,11 @@
 </style>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <h4 class="card-title">Project</h4>
-                <p class="card-description">
-                    Please fill the in the details below
+                <h4 class="table-section-header">Project</h4>
+                <p class="card-description mb-0">
+                    Please fill in the details below
                 </p>
                 <form class="forms-sample" id="Userform">
                     <div class="row">

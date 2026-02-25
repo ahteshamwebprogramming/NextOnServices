@@ -1,4 +1,4 @@
-﻿@using NextOnServices.Infrastructure.Helper;
+@using NextOnServices.Infrastructure.Helper;
 @using System.Web;
 @model NextOnServices.Infrastructure.ViewModels.ProjectDetails.ProjectDetailPageViewModel
 
@@ -137,7 +137,7 @@
                             <div class="icons2">
                                 
                                 <i class="menu-icon mb-3"><img src="~/theme/images/status.svg" /></i>
-                            <p class="mb-4">Projects Status</p>
+                            <p class="mb-4">Status</p>
                             </div>
                             <div>
                                 <p class="fs-30 mb-2"> @(Model == null ? "" : Model.ProjectDetailList == null ? "" : Model.ProjectDetailList.Count() == 0 ? "" : Model?.ProjectDetailList?.FirstOrDefault().StatusName) </p>
@@ -157,7 +157,7 @@
                                 
                             <p class="mb-4">Achievement</p>
                             </div>
-                            <p class="fs-30 mb-2">@(Model == null ? "0% Achieved" : Model.Table5List == null ? "0% Achieved" : Model.Table5List.Count == 0 ? "0% Achieved" : Model.Table5List.FirstOrDefault() == null ? "0% Achieved" : Model.Table5List.FirstOrDefault().CompletePercent + "% Achieved")</p>
+                            <p class="fs-30 mb-2">@(Model == null ? "0%" : Model.Table5List == null ? "0%" : Model.Table5List.Count == 0 ? "0%" : Model.Table5List.FirstOrDefault() == null ? "0%" : Model.Table5List.FirstOrDefault().CompletePercent + "%")</p>
                             </div>
                        
                         
@@ -173,7 +173,7 @@
                                 <i class="menu-icon mb-3"><img src="~/theme/images/respondent.svg" /></i>
                            <p class="mb-4">Respondents</p>
                             </div>
-                            <p class="fs-30 mb-2">@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Complete) out of @(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Total)</p>
+                            <p class="fs-30 mb-2">@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Complete)/@(Model == null ? "0" : Model.FractionComplete0 == null ? "0" : Model.FractionComplete0.Total)</p>
                             </div>
                         
                         
@@ -195,48 +195,56 @@
                             @{
                                 if (Model != null && Model.FractionComplete1 != null && Model.FractionComplete3 != null)
                                 {
-                                    float flagIR = 0;
-                                    float flagLOI = 0;
-                                    float EXPIR = (float)Model.FractionComplete1.ExpectedIR;
-                                    float ACTIR = (float)Model.FractionComplete1.ActualIR;
-                                    float EXPLOI = Model.FractionComplete3.Expected_LOI;
-                                    float ACTLOI = Model.FractionComplete3.Actual_LOI;
-                                    if (EXPIR > ACTIR)
+                                    var total = Model.FractionComplete3.Total;
+
+                                    // Mirror old Calculate_Flag behavior: only show flag when total >= 50
+                                    if (total >= 50)
                                     {
-                                        float drop = EXPIR - ACTIR;
-                                        float dropPercent = drop * 100 / EXPIR;
-                                        if (dropPercent > 50)
+                                        float flagIR = 0;
+                                        float flagLOI = 0;
+                                        float EXPIR = (float)Model.FractionComplete1.ExpectedIR;
+                                        float ACTIR = (float)Model.FractionComplete1.IRPercent; // use IRPercent (actual IR %) like old JS
+                                        float EXPLOI = Model.FractionComplete3.Expected_LOI;
+                                        float ACTLOI = Model.FractionComplete3.Actual_LOI;
+
+                                        if (EXPIR > ACTIR)
                                         {
-                                            flagIR = 1;
+                                            float drop = EXPIR - ACTIR;
+                                            float dropPercent = drop * 100 / EXPIR;
+                                            if (dropPercent > 50)
+                                            {
+                                                flagIR = 1;
+                                            }
+                                        }
+
+                                        if (ACTLOI > EXPLOI)
+                                        {
+                                            float drop = ACTLOI - EXPLOI;
+                                            float dropPercent = drop * 100 / EXPLOI;
+                                            if (dropPercent > 35)
+                                            {
+                                                flagLOI = 1;
+                                            }
+                                        }
+
+                                        if (flagIR > 0 && flagLOI > 0)
+                                        {
+                                            <span id="spnflag" class="fa fa-flag color_red tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%.LOI raised by 35%</span></span>
+                                        }
+                                        else if (flagIR > 0)
+                                        {
+                                            <span id="spnflag" class="fa fa-flag color_blue tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%</span></span>
+                                        }
+                                        else if (flagLOI > 0)
+                                        {
+                                            <span id="spnflag" class="fa fa-flag color_yellow tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">LOI raised by 35%</span></span>
+                                        }
+                                        else
+                                        {
+                                            <span id="spnflag" class="fa fa-flag color_white1 tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR and LOI under control</span></span>
                                         }
                                     }
-                                    if (ACTLOI > EXPLOI)
-                                    {
-                                        float drop = ACTLOI - EXPLOI;
-                                        float dropPercent = drop * 100 / EXPLOI;
-                                        if (dropPercent > 35)
-                                        {
-                                            flagLOI = 1;
-                                        }
-                                    }
-
-                                    if (flagIR > 0 && flagLOI > 0)
-                                    {
-                                        <span id="spnflag" class="fa fa-flag color_red tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%.LOI raised by 35%</span></span>
-                                    }
-                                    else if (flagIR > 0)
-                                    {
-                                        <span id="spnflag" class="fa fa-flag color_blue tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR drop by 50%</span></span>
-                                    }
-                                    else if (flagLOI > 0)
-                                    {
-                                        <span id="spnflag" class="fa fa-flag color_yellow tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">LOI raised by 35%</span></span>
-                                    }
-                                    else
-                                    {
-                                        <span id="spnflag" class="fa fa-flag color_white1 tooltip1"><span style="font-size:12px;" id="spntooltipir" class="tooltiptext1 toolti_cust color_amber_b">IR and LOI under control</span></span>
-                                    }
-
+                                    // If total < 50, do not render any flag (matches old behavior where flag was hidden)
                                 }
 
                             }
@@ -268,9 +276,9 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0">Survey Details</p>
+                <p class="table-section-header">Survey Details</p>
 
                 <div class="row mt-6">
                     <div class="col-md-6">
@@ -569,9 +577,9 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0">Survey Specs</p>
+                <p class="table-section-header">Survey Specs</p>
                 <div class="row mt-3">
                     <div class="col-md-12">
                         <div class="table-responsive">
@@ -761,9 +769,9 @@
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0">Country Details</p>
+                <p class="table-section-header">Country Details</p>
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <div class="table-responsive">
@@ -820,11 +828,9 @@
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0">
-                    Supplier Details
-                </p>
+                <p class="table-section-header">Supplier Details</p>
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <div class="table-responsive">
@@ -993,11 +999,9 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0">
-                    Survey Links
-                </p>
+                <p class="table-section-header">Survey Links</p>
                 <div class="row mt-5">
                     <div class="col-md-12">
                         <div class="table-responsive">

@@ -5,6 +5,7 @@
     ViewData["Title"] = "Add Question";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 
 <style>
     .select2-container--default .select2-selection--single {
@@ -37,12 +38,10 @@
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <h4 class="card-title">Question</h4>
-                <p class="card-description">
-                    Please fill in the details below
-                </p>
+                <h4 class="table-section-header">Question</h4>
+                <p class="card-description mb-0">Please fill in the details below</p>
                 <form class="forms-sample" id="QuestionForm">
                     <input type="hidden" id="Id" name="Id" value="@(Model?.Question?.Id ?? 0)">
                     

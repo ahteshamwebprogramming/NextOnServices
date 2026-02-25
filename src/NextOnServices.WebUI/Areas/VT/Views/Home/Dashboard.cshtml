@@ -1,4 +1,4 @@
-﻿@model NextOnServices.Infrastructure.ViewModels.Dashboard.DashboardViewModel
+@model NextOnServices.Infrastructure.ViewModels.Dashboard.DashboardViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -178,15 +178,27 @@
         color: #ffffff;
     }
 
+    /* Equal-height dashboard stat cards */
+    .dashboard-stat-cards .card {
+        height: 100%;
+        min-height: 120px;
+    }
+    .dashboard-stat-cards .card .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 120px;
+    }
+
 
 </style>
 
 
 <div class="row">
     <div class="col-md-12 grid-margin transparent">
-        <div class="row">
-            <div class="col-md-3 mb-4 transparent">
-                <div class="card card-tale">
+        <div class="row dashboard-stat-cards">
+            <div class="col-md-3 mb-4 transparent d-flex">
+                <div class="card card-tale w-100">
                     <div class="card-body">
                         <div class="justify-content-center d-flex justify-content-between">
                             <div class="icons2">
@@ -203,8 +215,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4 transparent">
-                <div class="card card-dark-blue">
+            <div class="col-md-3 mb-4 transparent d-flex">
+                <div class="card card-dark-blue w-100">
                     <div class="card-body">
                         <div class="justify-content-center d-flex justify-content-between">
                             <div class="icons2">
@@ -220,8 +232,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4  transparent">
-                <div class="card card-light-blue">
+            <div class="col-md-3 mb-4 transparent d-flex">
+                <div class="card card-light-blue w-100">
                     <div class="card-body">
                         <div class="justify-content-center d-flex justify-content-between">
                             <div class="icons2">
@@ -242,8 +254,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-4 transparent">
-                <div class="card card-light-danger">
+            <div class="col-md-3 mb-4 transparent d-flex">
+                <div class="card card-light-danger w-100">
                     <div class="card-body">
                         <div class="justify-content-center d-flex justify-content-between">
                             <div class="icons2">
@@ -271,9 +283,9 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card">
+        <div class="card card--table-section">
             <div class="card-body">
-                <p class="card-title mb-0 p-3">Project List</p>
+                <p class="table-section-header p-3">Project List</p>
 
                 <div class="row mb-5" id="TableFilters">
                     <div class="offset-3 col-md-6">
