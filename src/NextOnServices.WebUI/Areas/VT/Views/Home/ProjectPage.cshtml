@@ -7,6 +7,9 @@
     //Layout = "~/Views/Shared/_Layout.cshtml";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/tooltip.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/VT/css/chatPanel.css" rel="stylesheet" asp-append-version="true" />
@@ -126,7 +129,9 @@
 
 
 </style>
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 
+<div class="vt-project-page">
 <div class="row">
     <div class="col-md-12 grid-margin transparent">
         <div class="row">
@@ -577,13 +582,13 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
+        <div class="card card--table-section vt-ref-table-card vt-survey-specs-card">
             <div class="card-body">
                 <p class="table-section-header">Survey Specs</p>
                 <div class="row mt-3">
-                    <div class="col-md-12">
+                    <div class="col-md-12 vt-ref-table-wrap" id="surveySpecsTableWrap">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable table-bordered" id="tblSurveySpecs">
+                            <table class="table table-striped display expandable-table dataTable vt-ref-table" id="tblSurveySpecs">
                                 <thead>
                                     <tr>
                                         <th>Country</th>
@@ -769,13 +774,13 @@
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
+        <div class="card card--table-section vt-ref-table-card vt-country-details-card">
             <div class="card-body">
                 <p class="table-section-header">Country Details</p>
-                <div class="row mt-5">
-                    <div class="col-md-12">
+                <div class="row mt-3">
+                    <div class="col-md-12 vt-ref-table-wrap" id="countryDetailsTableWrap">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                            <table class="table table-striped display expandable-table dataTable no-footer vt-ref-table" id="tblCountryDetails">
                                 <thead>
                                     <tr>
                                         <th>Country</th>
@@ -828,13 +833,13 @@
 
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
+        <div class="card card--table-section vt-ref-table-card">
             <div class="card-body">
                 <p class="table-section-header">Supplier Details</p>
-                <div class="row mt-5">
-                    <div class="col-md-12">
+                <div class="row mt-3">
+                    <div class="col-md-12 vt-ref-table-wrap" id="supplierDetailsTableWrap">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                            <table class="table table-striped display expandable-table dataTable no-footer vt-ref-table" id="tblSupplierDetails">
                                 <thead>
                                     <tr>
                                         <th>COUNTRY</th>
@@ -999,13 +1004,13 @@
 </div>
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
+        <div class="card card--table-section vt-ref-table-card">
             <div class="card-body">
                 <p class="table-section-header">Survey Links</p>
-                <div class="row mt-5">
-                    <div class="col-md-12">
+                <div class="row mt-3">
+                    <div class="col-md-12 vt-ref-table-wrap" id="surveyLinksTableWrap">
                         <div class="table-responsive">
-                            <table class="table table-striped display expandable-table dataTable no-footer table-bordered">
+                            <table class="table table-striped display expandable-table dataTable no-footer vt-ref-table" id="tblSurveyLinks">
                                 <thead>
                                     <tr>
                                         <th>COUNTRY</th>
@@ -1223,6 +1228,7 @@
 <input type="hidden" name="gProjectId" value="@Model?.Project?.ProjectId" />
 
 <!-- #endregion -->
+</div>
 @section scripts {
 
 
@@ -2103,8 +2109,8 @@
                     "autoWidth": false,
                     "pageLength": 10,
                     "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-                    // Search bar above table (right), pagination in bottom with info (original position)
-                    "dom": '<"row mb-2"<"col-sm-12 d-flex justify-content-end"f>>rt<"bottom"ip><"clear">',
+                    "pagingType": "simple_numbers",
+                    "dom": '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
                     "language": {
                         search: "",
                         searchPlaceholder: "",
@@ -2122,16 +2128,101 @@
                 });
             }
 
-            // Style the search input: single bottom line, no placeholder
-            var filterInput = $('#tblSurveySpecs_filter').find('input');
-            filterInput.attr('placeholder', '');
-            filterInput.css({
-                'border': 'none',
-                'border-bottom': '1px solid #ced4da',
-                'border-radius': '0',
-                'box-shadow': 'none',
-                'outline': 'none'
-            });
+            // Initialize Country Details DataTable with search and pagination (same layout as Survey Specs)
+            if ($.fn.DataTable && $('#tblCountryDetails').length) {
+                if ($.fn.DataTable.isDataTable('#tblCountryDetails')) {
+                    $('#tblCountryDetails').DataTable().destroy();
+                }
+                $('#tblCountryDetails').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    pagingType: "simple_numbers",
+                    dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+            }
+
+            // Supplier Details DataTable (ref-table layout)
+            if ($.fn.DataTable && $('#tblSupplierDetails').length) {
+                if ($.fn.DataTable.isDataTable('#tblSupplierDetails')) {
+                    $('#tblSupplierDetails').DataTable().destroy();
+                }
+                $('#tblSupplierDetails').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    pagingType: "simple_numbers",
+                    dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+            }
+
+            // Survey Links DataTable (ref-table layout)
+            if ($.fn.DataTable && $('#tblSurveyLinks').length) {
+                if ($.fn.DataTable.isDataTable('#tblSurveyLinks')) {
+                    $('#tblSurveyLinks').DataTable().destroy();
+                }
+                $('#tblSurveyLinks').DataTable({
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                    pagingType: "simple_numbers",
+                    dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "",
+                        lengthMenu: "Show _MENU_ entries",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        infoFiltered: "(filtered from _MAX_ total entries)",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+            }
         });
 
                 

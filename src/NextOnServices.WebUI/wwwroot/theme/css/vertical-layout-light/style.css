@@ -28768,9 +28768,11 @@ div.tagsinput span.tag a {
   content: '';
   width: 5px;
   height: 5px;
-  position: absolute;
-  margin-top: 16px;
   border-radius: 50%;
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
   background: #b2b2b2;
 }
 

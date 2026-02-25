@@ -7,9 +7,13 @@
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
     var returnUrl = Context.Request.Headers["Referer"].ToString();
 }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <style>
-    input[type="date"]::-webkit-calendar-picker-indicator {
+    .vt-project-page input[type="date"]::-webkit-calendar-picker-indicator {
         background: transparent;
         bottom: 0;
         color: transparent;
@@ -22,18 +26,20 @@
         width: auto;
     }
 
-    .select2-container--default .select2-selection--single {
+    .vt-project-page .select2-container--default .select2-selection--single {
         padding: 0.5rem 0.81rem;
+        font-family: inherit;
     }
 
-    .select2-container .select2-selection--single {
+    .vt-project-page .select2-container .select2-selection--single {
         height: 2.575rem;
     }
 
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
+    .vt-project-page .select2-container--default .select2-selection--single .select2-selection__arrow {
         height: 38px;
     }
 </style>
+<div class="vt-project-page">
 <div class="row">
     <div class="col-md-12 grid-margin stretch-card">
         <div class="card card--table-section">
@@ -42,17 +48,17 @@
                 <p class="card-description mb-0">
                     Please fill in the details below
                 </p>
-                <form class="forms-sample" id="Userform">
+                <form class="forms-sample vt-add-project-form" id="Userform">
                     <div class="row">
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Pname">Project Name</label>
                             <input type="text" class="form-control form-control-sm" id="Pname" name="Pname" value="@(Model==null?"" : Model.Project==null ? "" : Model.Project.Pname)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Descriptions">Project Description</label>
                             <input type="text" class="form-control form-control-sm" id="Descriptions" name="Descriptions" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Descriptions)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="ClientId">Client Name</label>
                             <select class="form-control form-control-sm" id="ClientId" name="ClientId">
                                 <option value="0">--Select Client--</option>
@@ -80,7 +86,7 @@
                                 }
                             </select>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Pmanager">Project Manager</label>
                             <select class="form-control form-control-sm" id="Pmanager" name="Pmanager">
                                 <option value="0">--Select Project Manager--</option>
@@ -109,23 +115,23 @@
                                 }
                             </select>
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Loi">LOI</label>
                             <input type="number" class="form-control form-control-sm" id="Loi" name="Loi" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Loi)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Irate">Incidence Rate</label>
                             <input type="number" class="form-control form-control-sm" id="Irate" name="Irate" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Irate)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Cpi">CPI ($)</label>
                             <input type="number" class="form-control form-control-sm" id="Cpi" name="Cpi" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Cpi)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="SampleSize">Sample Size</label>
                             <input type="number" class="form-control form-control-sm" id="SampleSize" name="SampleSize" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.SampleSize)">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="RespondentQuota">Respondent Quota</label>
                             <input type="number" class="form-control form-control-sm" id="Quota" name="Quota" value="@(Model==null?"": Model.Project==null ? "" : Model.Project.Quota)">
                         </div>
@@ -133,15 +139,15 @@
                             DateTime? sdatee = CommonHelper.ConvertToDateTime(Model.Project.Sdate, "MM-dd-yyyy");
                             DateTime? edate = CommonHelper.ConvertToDateTime(Model.Project.Edate, "MM-dd-yyyy");
                         }
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Sdate">Project Start Date</label>
                             <input type="date" class="form-control form-control-sm" id="Sdate" name="Sdate" value="@(sdatee==null ? "" :  ((DateTime)sdatee).ToString("yyyy-MM-dd"))">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="Edate">Project End Date</label>
                             <input type="date" class="form-control form-control-sm" id="Edate" name="Edate" value="@(edate==null ? "" : ((DateTime)edate).ToString("yyyy-MM-dd"))">
                         </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="CountryId">Country</label>
                             <select class="form-control form-control-sm" id="CountryId" name="CountryId">
                                 <option value="0">--Select Country--</option>
@@ -170,28 +176,7 @@
                                 }
                             </select>
                         </div>
-                        <div class="form-group col-md-4">
-                            <label class="">Project Type Link</label>
-                            <div class="row">
-                                <div class="col-sm-6">
-                                    <div class="form-check">
-                                        <label class="form-check-label">
-                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype1" value="1" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 1 ? "checked" : "")>
-                                            Single Countries
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6">
-                                    <div class="form-check">
-                                        <label class="form-check-label">
-                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype2" value="2" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 2 ? "checked" : "")>
-                                            Multiple Countries
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-3">
                             <label for="ProjectStatus">Project Status</label>
                             <select class="form-control form-control-sm" id="Status" name="Status">
                                 <option value="0">--Select Status--</option>
@@ -220,6 +205,27 @@
                                 }
                             </select>
                         </div>
+                        <div class="form-group col-md-3 vt-project-type-link">
+                            <label class="">Project Type Link</label>
+                            <div class="row vt-project-type-link-options">
+                                <div class="col-auto">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype1" value="1" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 1 ? "checked" : "")>
+                                            Single Countries
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="form-check">
+                                        <label class="form-check-label">
+                                            <input type="radio" class="form-check-input" name="Ltype" id="Ltype2" value="2" @(Model == null ? "" : Model.Project == null ? "" : Model.Project.Ltype == null ? "" : Model.Project.Ltype == 2 ? "checked" : "")>
+                                            Multiple Countries
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="form-group col-md-12">
                             <label for="Notes">Notes</label>
                             <textarea class="form-control form-control-sm" id="Notes" name="Notes">@(Model == null ? "" : Model.Project == null ? "" : Model.Project.Notes)</textarea>
@@ -236,13 +242,14 @@
         </div>
     </div>
 </div>
+</div>
 
 
 @section scripts {
     <script type="text/javascript">
         $(document).ready(function () {
 
-            $("select").select2();
+            $("select").select2({ dropdownCssClass: 'vt-theme-dropdown' });
 
             var returnUrlField = $("#ReturnUrl");
             if ($.trim(returnUrlField.val()) === "") {

@@ -1,0 +1,175 @@
+/**
+ * VT Admin area: shell layout + reduce UI size at 100% zoom.
+ * Scoped to .vt-admin so only VT pages (Dashboard, ProjectPage, etc.) are affected.
+ * Reusable across VT: navbar, sidebar, content-wrapper, footer.
+ */
+
+/* Baseline: 16px root, 14px body */
+html.vt-admin {
+  font-size: 16px;
+}
+
+body.vt-admin {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* ----- Sidebar: teal active/hover only (no width/position overrides) ----- */
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link.active,
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item.active > .nav-link {
+  background: linear-gradient(90deg, #1d7874 0%, #165c59 100%) !important;
+  color: #fff !important;
+}
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link:hover {
+  background: #1d7874 !important;
+  color: #fff !important;
+}
+.vt-admin .sidebar .nav .nav-item.active > .nav-link i.menu-icon,
+.vt-admin .sidebar .nav .nav-item.active > .nav-link i.menu-arrow,
+.vt-admin .sidebar .nav .nav-item.active > .nav-link .menu-arrow {
+  color: #fff !important;
+}
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link[aria-expanded="true"] i.menu-icon,
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item > .nav-link[aria-expanded="true"] i.menu-arrow,
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item:hover > .nav-link i.menu-icon,
+.vt-admin .sidebar .nav:not(.sub-menu) > .nav-item:hover > .nav-link i.menu-arrow {
+  color: #fff !important;
+}
+.vt-admin .sidebar .nav .nav-item.active > .nav-link i.menu-arrow::before {
+  content: "\e649" !important;
+}
+.vt-admin .sidebar .nav .nav-item.active > .nav-link[aria-expanded="true"] i.menu-arrow::before {
+  transform: rotate(90deg);
+}
+.vt-admin .sidebar .nav.sub-menu .nav-item {
+  position: relative;
+}
+
+/* ----- Content and grid spacing (no main-panel flex/height overrides) ----- */
+.vt-admin .content-wrapper {
+  padding: 1.25rem 1.5rem;
+  background-color: #f5f7f9;
+}
+
+@media (max-width: 767px) {
+  .vt-admin .content-wrapper {
+    padding: 1rem;
+  }
+}
+
+.vt-admin .grid-margin {
+  margin-bottom: 1.5rem;
+}
+
+.vt-admin .grid-margin.transparent {
+  margin-bottom: 1rem;
+}
+
+/* Cards */
+.vt-admin .card .card-body {
+  padding: 0.875rem 1rem;
+}
+
+.vt-admin .card--table-section .card-body {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.vt-admin .dashboard-stat-cards .card {
+  min-height: 100px;
+}
+
+.vt-admin .dashboard-stat-cards .card .card-body {
+  min-height: 100px;
+  padding: 0.75rem 1rem;
+}
+
+/* Headings */
+.vt-admin h1, .vt-admin .h1 { font-size: 1.5rem; }
+.vt-admin h2, .vt-admin .h2 { font-size: 1.25rem; }
+.vt-admin h3, .vt-admin .h3 { font-size: 1.125rem; }
+.vt-admin h4, .vt-admin .h4 { font-size: 1rem; }
+.vt-admin h5, .vt-admin .h5 { font-size: 0.9375rem; }
+.vt-admin h6, .vt-admin .h6 { font-size: 0.875rem; }
+
+.vt-admin .table-section-header {
+  font-size: 1rem !important;
+  padding: 0.5rem 0 0.6rem 1rem !important;
+}
+
+/* Tables */
+.vt-admin thead tr th {
+  font-size: 13px !important;
+  padding: 10px 12px !important;
+}
+
+.vt-admin tbody tr td {
+  font-size: 13px !important;
+  padding: 10px 12px !important;
+}
+
+/* Forms and buttons */
+.vt-admin .form-control,
+.vt-admin .form-control-sm {
+  font-size: 0.875rem;
+  padding: 0.375rem 0.6rem;
+}
+
+.vt-admin .btn {
+  font-size: 0.875rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.vt-admin .btn-sm {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Navbar / sidebar (slightly tighter) */
+.vt-admin .navbar .navbar-menu-wrapper {
+  padding-left: 1rem;
+  padding-right: 1.5rem;
+}
+
+.vt-admin .sidebar .nav .nav-item .nav-link {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.vt-admin .sidebar .nav.sub-menu .nav-item .nav-link {
+  padding: 0.35rem 1rem;
+  font-size: 0.8125rem;
+}
+
+/* ----- Footer: single global footer, non-fixed (no overlap) ----- */
+.vt-admin .footer {
+  flex-shrink: 0;
+  position: static;
+  width: 100%;
+  padding: 16px 1.5rem;
+  font-size: 0.8125rem;
+  background-color: #fff;
+  color: #64748b;
+  text-align: center;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: none;
+}
+.vt-admin .footer .text-muted {
+  color: #64748b !important;
+}
+
+/* Dashboard-specific stat number (keep readable but not huge) */
+.vt-admin .fs-30text,
+.vt-admin .vt-dashboard .fs-30text {
+  font-size: 28px !important;
+}
+
+/* Select2 in VT (dropdown trigger height) */
+.vt-admin .select2-container--default .select2-selection--single {
+  min-height: 36px;
+  padding: 4px 32px 4px 12px;
+}
+
+.vt-admin select.dashboard-filter + span.select2 .select2-selection--single {
+  min-height: 36px;
+  padding: 6px 38px 6px 14px;
+}

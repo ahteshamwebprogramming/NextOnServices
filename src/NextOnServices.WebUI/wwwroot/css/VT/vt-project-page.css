@@ -1,0 +1,649 @@
+/**
+ * VT Project Page - typography and base styles (matches Dashboard reference).
+ * Uses Inter font, consistent sizes and weights across the page.
+ * Scope: .vt-project-page (wrapper on ProjectPage content).
+ */
+
+/* ----- Font family (match Dashboard) ----- */
+.vt-project-page {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f172a;
+}
+
+/* Section header and description (same as ProjectPage / Dashboard) */
+.vt-project-page .table-section-header {
+  font-family: inherit !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+.vt-project-page .card-description {
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* AddProject form: 4 per row, fixed control size */
+.vt-project-page .vt-add-project-form .form-group {
+  margin-bottom: 1rem;
+}
+
+/* Project Type Link: keep radio labels on one line */
+.vt-project-page .vt-add-project-form .vt-project-type-link .vt-project-type-link-options {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vt-project-page .vt-add-project-form .vt-project-type-link .form-check-label {
+  white-space: nowrap;
+  font-size: 0.8125rem !important;
+}
+
+.vt-project-page .vt-add-project-form .form-control,
+.vt-project-page .vt-add-project-form input:not([type="radio"]):not([type="checkbox"]),
+.vt-project-page .vt-add-project-form select,
+.vt-project-page .vt-add-project-form textarea.form-control {
+  height: 36px !important;
+  min-height: 36px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.vt-project-page .vt-add-project-form textarea.form-control {
+  height: auto !important;
+  min-height: 72px;
+}
+
+.vt-project-page .vt-add-project-form .select2-container .select2-selection--single {
+  height: 36px !important;
+  min-height: 36px !important;
+}
+
+.vt-project-page .vt-add-project-form .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 34px !important;
+}
+
+/* ----- Select2 closed box (theme) – font family, size, weight ----- */
+.vt-project-page .select2-container--default .select2-selection--single {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  padding: 0 10px !important;
+}
+
+.vt-project-page .select2-container--default.select2-container--focus .select2-selection--single,
+.vt-project-page .select2-container--default .select2-selection--single:focus {
+  border-color: #0f7f79 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+}
+
+.vt-project-page .select2-container--default .select2-selection--single .select2-selection__rendered,
+.vt-project-page .select2-container--default .select2-selection--single .select2-selection__placeholder {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 34px !important;
+  padding-left: 0 !important;
+}
+
+/* ----- Select2 open dropdown (appended to body) – font family, size, weight ----- */
+.select2-dropdown.vt-theme-dropdown {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  padding: 8px 0 !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-search--dropdown {
+  padding: 0 8px 8px 8px !important;
+  box-sizing: border-box !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-search--dropdown .select2-search__field {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 6px !important;
+  padding: 6px 10px !important;
+  margin: 0 0 8px 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-search--dropdown .select2-search__field:focus {
+  border-color: #0f7f79 !important;
+  outline: none !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-results__option,
+.select2-dropdown.vt-theme-dropdown .select2-results__message {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+  padding: 8px 14px !important;
+  color: #0f172a !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-results__option--highlighted.select2-results__option--selectable {
+  background: #0f7f79 !important;
+  color: #fff !important;
+  font-weight: 400 !important;
+}
+
+.select2-dropdown.vt-theme-dropdown .select2-results__option--selected {
+  background: rgba(15, 127, 121, 0.1) !important;
+  color: #0d6b66 !important;
+  font-weight: 500 !important;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+}
+
+/* ----- Headings ----- */
+.vt-project-page h1,
+.vt-project-page .h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.vt-project-page h2,
+.vt-project-page .h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.vt-project-page h3,
+.vt-project-page .h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.vt-project-page h4,
+.vt-project-page .h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.vt-project-page h5,
+.vt-project-page .h5 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.vt-project-page h6,
+.vt-project-page .h6 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* ----- Body text and paragraphs ----- */
+.vt-project-page p,
+.vt-project-page .card-body,
+.vt-project-page .card .card-body {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.vt-project-page .card-body .mb-4 {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+/* ----- Labels and small text ----- */
+.vt-project-page label,
+.vt-project-page .form-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.vt-project-page small,
+.vt-project-page .small {
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+/* ----- Stats / numbers (e.g. fs-30) ----- */
+.vt-project-page .fs-30 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
+}
+
+/* ----- Table text ----- */
+.vt-project-page table,
+.vt-project-page .table {
+  font-size: 0.8125rem;
+}
+
+.vt-project-page thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.vt-project-page tbody td {
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+/* Projects List / Dashboard table: top-align cells so LOI and dates don’t shift when Project Name wraps */
+/* ===== ProjectsList DataTable alignment + smart wrapping fix ===== */
+/* Keep header/body width calculation consistent in scroll mode */
+.vt-project-page #div_ProjectTable .dataTables_scrollHead table,
+.vt-project-page #div_ProjectTable .dataTables_scrollBody table {
+  width: 100% !important;
+}
+
+/* Normalize cell sizing so header/body widths stay in sync */
+.vt-project-page #div_ProjectTable .dataTables_scrollHead th,
+.vt-project-page #div_ProjectTable .dataTables_scrollBody td {
+  box-sizing: border-box !important;
+  padding: 10px 14px !important;
+  vertical-align: middle !important;
+}
+
+/* Project Name column: WRAP (no ellipsis) */
+.vt-project-page #div_ProjectTable td.col-proj-name,
+.vt-project-page #div_ProjectTable .ref-project-table tbody td:nth-child(2) {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 1.35 !important;
+  min-width: 260px;
+}
+
+/* Keep LOI / dates / action columns on one line */
+.vt-project-page #div_ProjectTable th.col-loi,
+.vt-project-page #div_ProjectTable td.col-loi,
+.vt-project-page #div_ProjectTable th.col-start-date,
+.vt-project-page #div_ProjectTable td.col-start-date,
+.vt-project-page #div_ProjectTable th.col-end-date,
+.vt-project-page #div_ProjectTable td.col-end-date,
+.vt-project-page #div_ProjectTable th.col-url-map,
+.vt-project-page #div_ProjectTable td.col-url-map,
+.vt-project-page #div_ProjectTable th.col-edit,
+.vt-project-page #div_ProjectTable td.col-edit,
+.vt-project-page #div_ProjectTable th.col-active,
+.vt-project-page #div_ProjectTable td.col-active {
+  white-space: nowrap !important;
+}
+
+/* Responsive-friendly min-widths for narrow/stable columns */
+.vt-project-page #div_ProjectTable th.col-loi,
+.vt-project-page #div_ProjectTable td.col-loi {
+  min-width: 60px;
+  text-align: center !important;
+}
+
+.vt-project-page #div_ProjectTable th.col-start-date,
+.vt-project-page #div_ProjectTable td.col-start-date,
+.vt-project-page #div_ProjectTable th.col-end-date,
+.vt-project-page #div_ProjectTable td.col-end-date {
+  min-width: 120px;
+}
+
+.vt-project-page #div_ProjectTable th.col-url-map,
+.vt-project-page #div_ProjectTable td.col-url-map {
+  min-width: 130px;
+  text-align: center !important;
+}
+
+.vt-project-page #div_ProjectTable th.col-edit,
+.vt-project-page #div_ProjectTable td.col-edit {
+  min-width: 80px;
+  text-align: center !important;
+}
+
+.vt-project-page #div_ProjectTable th.col-active,
+.vt-project-page #div_ProjectTable td.col-active {
+  min-width: 120px;
+  text-align: center !important;
+}
+
+/* Remove any ellipsis behavior specifically from Project Name if inherited */
+.vt-project-page #div_ProjectTable td.col-proj-name * {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+/* ----- Buttons and badges ----- */
+.vt-project-page .btn {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.vt-project-page .btn-primary {
+  background: #0f7f79 !important;
+  border-color: #0f7f79 !important;
+}
+
+.vt-project-page .btn-primary:hover {
+  background: #0d6b66 !important;
+  border-color: #0d6b66 !important;
+}
+
+/* Form action buttons (Submit / Cancel) – match control height, 8px radius */
+.vt-project-page .vt-add-project-form .btn {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  height: 36px !important;
+  padding: 0 1.25rem !important;
+  border-radius: 8px !important;
+  line-height: 1 !important;
+  min-width: 5rem;
+}
+
+.vt-project-page .vt-add-project-form .btn-light {
+  background: #fff !important;
+  border: 1px solid #dbe3ea !important;
+  color: #0f172a !important;
+}
+
+.vt-project-page .vt-add-project-form .btn-light:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.vt-project-page .badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ----- Header class used in page ----- */
+.vt-project-page .header {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+/* ----- Modal and form controls ----- */
+.vt-project-page .modal-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.vt-project-page .form-control,
+.vt-project-page input,
+.vt-project-page select,
+.vt-project-page textarea {
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-family: inherit;
+}
+
+/* Select2 (dropdowns) – explicit font family, size, weight */
+.vt-project-page .select2-container .select2-selection--single .select2-selection__rendered,
+.vt-project-page .select2-container--default .select2-selection--single .select2-selection__rendered {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+  font-weight: 400 !important;
+}
+
+/* ----- Menu / card labels (e.g. Status, Achievement) ----- */
+.vt-project-page .menu-icon + p,
+.vt-project-page .icons2 p,
+.vt-project-page .card-body p.mb-4 {
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+}
+
+/* ----- Tooltip and inline small ----- */
+.vt-project-page .tooltip1,
+.vt-project-page [class^="color_"] {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+/* ----- Ensure all text inherits ----- */
+.vt-project-page * {
+  box-sizing: border-box;
+}
+
+.vt-project-page input,
+.vt-project-page button,
+.vt-project-page select,
+.vt-project-page textarea {
+  font-family: inherit;
+}
+
+/* ===== VT ref tables (global) – one block for all ref-style DataTables ===== */
+/* Use .vt-ref-table-card on the card and .vt-ref-table-wrap on the table wrapper. */
+/* Table must have class .vt-ref-table. Init DataTable with dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>'. */
+
+/* Card: height auto, no scroll */
+.vt-project-page .vt-ref-table-card {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+.vt-project-page .vt-ref-table-card .card-body {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+/* Wrapper: no y-scroll, height auto */
+.vt-project-page .vt-ref-table-wrap {
+  overflow-y: hidden !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .table-responsive,
+.vt-project-page .vt-ref-table-wrap .dataTables_wrapper,
+.vt-project-page .vt-ref-table-wrap .dataTables_scrollBody,
+.vt-project-page .vt-ref-table-wrap .dataTables_scroll {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-height: none !important;
+  height: auto !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .dataTables_wrapper {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Top row: search right, no label */
+.vt-project-page .vt-ref-table-wrap .ref-dt-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  padding: 8px 0 10px 0 !important;
+  width: 100% !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top:has(.dt-buttons) {
+  justify-content: space-between !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dt-buttons .dt-button {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-size: 0.875rem !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dataTables_filter {
+  margin: 0 !important;
+  margin-left: auto !important;
+  float: none !important;
+  text-align: right !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dataTables_filter label {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dataTables_filter label * {
+  font-size: 0.875rem !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dataTables_filter input {
+  width: 180px !important;
+  height: 34px !important;
+  margin: 0 !important;
+  font-size: 0.875rem !important;
+  padding: 0 10px !important;
+  background: #fff !important;
+  border: 1px solid #dbe3ea !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-top .dataTables_filter input:focus {
+  border-color: #0f7f79 !important;
+  outline: none !important;
+}
+
+/* Bottom row: info + pagination */
+.vt-project-page .vt-ref-table-wrap .ref-dt-bottom {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding-top: 8px !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-bottom .dataTables_info {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+  color: #64748b !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-bottom .dataTables_paginate {
+  margin: 0 !important;
+  padding: 0 !important;
+  float: none !important;
+  text-align: right !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-bottom .paginate_button {
+  margin: 0 2px !important;
+  padding: 4px 10px !important;
+  border-radius: 0 !important;
+  font-size: 0.8125rem !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .ref-dt-bottom .paginate_button.current {
+  background: #0f7f79 !important;
+  color: #fff !important;
+  border-color: #0f7f79 !important;
+}
+
+/* Table: teal header, compact body, minimal borders */
+.vt-project-page .vt-ref-table-wrap .vt-ref-table,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table {
+  border-radius: 0 !important;
+  border-collapse: collapse !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table thead tr,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table thead tr {
+  background: #0f7f79 !important;
+  color: #fff !important;
+  height: 40px !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table thead th,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table thead th {
+  background: #0f7f79 !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  padding: 8px 14px !important;
+  line-height: 1.1 !important;
+  vertical-align: middle !important;
+  white-space: nowrap !important;
+  border: none !important;
+  border-bottom: none !important;
+  border-radius: 0 !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table thead th::before,
+.vt-project-page .vt-ref-table-wrap .vt-ref-table thead th::after,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table thead th::before,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table thead th::after {
+  display: none !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table tbody td,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table tbody td {
+  font-size: 11px !important;
+  padding: 9px 14px !important;
+  line-height: 1.2 !important;
+  vertical-align: middle !important;
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  border-radius: 0 !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table tbody tr:last-child td,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table tbody tr:last-child td {
+  border-bottom: none !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table.table-striped tbody tr:nth-of-type(odd),
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #fafafa !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table.table-striped tbody tr:nth-of-type(even),
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table.table-striped tbody tr:nth-of-type(even) {
+  background-color: #fff !important;
+}
+
+/* Shared: badges and buttons inside any ref table */
+.vt-project-page .vt-ref-table-wrap .vt-ref-table .badge,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table .badge {
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+}
+
+.vt-project-page .vt-ref-table-wrap .vt-ref-table tbody td .btn,
+.vt-project-page .vt-ref-table-wrap .vt-ref-table tbody td input[type="button"].btn,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table tbody td .btn,
+.vt-project-page .vt-ref-table-wrap table.vt-ref-table tbody td input[type="button"].btn {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+  line-height: 1.2 !important;
+}
