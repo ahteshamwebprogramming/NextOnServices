@@ -47,12 +47,13 @@
                                 <td class="font-weight-bold">@(item.IRate)%</td>
                                 <td class="font-weight-medium">
                                     @{
-                                        if (item.STATUS == 1) { <span onclick="openChangeStatusBox('Closed',@item.ProjectId)" class="ref-status-pill status-closed tblstatus">Closed</span> }
-                                        if (item.STATUS == 2) { <span onclick="openChangeStatusBox('Live',@item.ProjectId)" class="ref-status-pill status-live tblstatus">Live</span> }
-                                        if (item.STATUS == 3) { <span onclick="openChangeStatusBox('On Hold',@item.ProjectId)" class="ref-status-pill status-hold tblstatus">On Hold</span> }
-                                        if (item.STATUS == 4) { <span onclick="openChangeStatusBox('Cancelled',@item.ProjectId)" class="ref-status-pill status-cancelled tblstatus">Cancelled</span> }
-                                        if (item.STATUS == 5) { <span onclick="openChangeStatusBox('Awarded',@item.ProjectId)" class="ref-status-pill status-awarded tblstatus">Awarded</span> }
-                                        if (item.STATUS == 6) { <span onclick="openChangeStatusBox('Invoiced',@item.ProjectId)" class="ref-status-pill status-invoiced tblstatus">Invoiced</span> }
+                                        var statusId = item.STATUS;
+                                        if (item.STATUS == 1) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-closed tblstatus">Closed</span> }
+                                        if (item.STATUS == 2) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-live tblstatus">Live</span> }
+                                        if (item.STATUS == 3) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-hold tblstatus">On Hold</span> }
+                                        if (item.STATUS == 4) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-cancelled tblstatus">Cancelled</span> }
+                                        if (item.STATUS == 5) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-awarded tblstatus">Awarded</span> }
+                                        if (item.STATUS == 6) { <span onclick="openChangeStatusBox(@statusId, @item.ProjectId)" class="ref-status-pill status-invoiced tblstatus">Invoiced</span> }
                                     }
                                 </td>
                                 <td class="font-weight-bold">@(item.TOTAL)</td>

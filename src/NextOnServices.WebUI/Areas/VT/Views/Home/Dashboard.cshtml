@@ -406,7 +406,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-12">
-                            <select class="form-control form-control-sm" name="Status">
+                            <select id="mdlChangeStatusSelect" class="form-control form-control-sm" name="Status">
                                 <option value="1">Closed</option>
                                 <option value="2">Live</option>
                                 <option value="3">On Hold</option>
@@ -418,7 +418,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <input type="hidden" value="0" name="ProjectId" />
+                    <input type="hidden" id="mdlChangeStatusProjectId" value="0" name="ProjectId" />
                     <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary btn-sm" onclick="UpdateStatus()">Update Status</button>
                 </div>

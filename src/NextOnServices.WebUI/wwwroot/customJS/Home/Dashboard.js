@@ -176,13 +176,28 @@ function getProjectTablePartialView() {
     });
 }
 
-function openChangeStatusBox(status, projectId) {
-    var $modal = $("#mdlChangeStatus");
-    $modal.find("[name='Status']").val(status == "Closed" ? 1 : status == "Live" ? 2 : status == "On Hold" ? 3 : status == "Cancelled" ? 4 : status == "Awarded" ? 5 : status == "Invoiced" ? 6 : 0);
-    $modal.find("[name='ProjectId']").val(projectId);
+// statusOrId: number (1-6) or string ("Closed", "Live", "On Hold", "Cancelled", "Awarded", "Invoiced"); projectId: project id
+function openChangeStatusBox(statusOrId, projectId) {
+    var statusId;
+    var num = parseInt(statusOrId, 10);
+    if (!isNaN(num) && num >= 1 && num <= 6) {
+        statusId = num;
+    } else {
+        var s = (statusOrId == null ? '' : String(statusOrId)).trim();
+        statusId = s === 'Closed' ? 1 : s === 'Live' ? 2 : s === 'On Hold' ? 3 : s === 'Cancelled' ? 4 : s === 'Awarded' ? 5 : s === 'Invoiced' ? 6 : 1;
+    }
+    var statusVal = String(statusId);
 
-    // Bootstrap 4: jQuery .modal(); Bootstrap 5: bootstrap.Modal (getInstance may not exist in BS4)
+    $("#mdlChangeStatusProjectId").val(projectId);
+    var $select = $("#mdlChangeStatusSelect");
+    $select.val(statusVal);
+
+    var $modal = $("#mdlChangeStatus");
     if ($modal.length && typeof $modal.modal === 'function') {
+        $modal.one('shown.bs.modal', function () {
+            $select.val(statusId);
+            $select.change();
+        });
         $modal.modal('show');
     } else {
         var modalEl = document.getElementById('mdlChangeStatus');
@@ -194,9 +209,8 @@ function openChangeStatusBox(status, projectId) {
 }
 
 function UpdateStatus() {
-    //BlockUI();
-    let status = $("#mdlChangeStatus").find("[name='Status']").val();
-    let projectId = $("#mdlChangeStatus").find("[name='ProjectId']").val();
+    var status = $("#mdlChangeStatusSelect").val();
+    var projectId = $("#mdlChangeStatusProjectId").val();
 
     jQuery.ajax({
         type: "POST",
@@ -205,7 +219,6 @@ function UpdateStatus() {
         cache: false,
         dataType: "json",
         success: function (data) {
-            // Close modal (Bootstrap 4: jQuery; Bootstrap 5: getInstance only if available)
             var $m = $('#mdlChangeStatus');
             if ($m.length && typeof $m.modal === 'function') {
                 $m.modal('hide');
@@ -219,19 +232,33 @@ function UpdateStatus() {
                 if (modal) modal.hide();
             }
 
-            // On Dashboard: refresh project table. On ProjectPage: reload so status card updates.
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Success', text: 'Status updated successfully.', confirmButtonColor: '#3085d6' });
+            } else {
+                alert('Status updated successfully.');
+            }
+
             if ($('#div_ProjectTable').length && typeof getProjectTablePartialView === 'function') {
                 setTimeout(function () {
                     getProjectTablePartialView()
-                        .then(function () { console.log("Table refreshed successfully"); })
-                        .catch(function (err) { console.error("Table refresh failed:", err); });
+                        .then(function () { })
+                        .catch(function (err) {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({ icon: 'warning', title: 'Refresh', text: 'Status was updated but the table could not be refreshed. Please refresh the page.', confirmButtonColor: '#3085d6' });
+                            }
+                        });
                 }, 300);
             } else {
                 window.location.reload();
             }
         },
         error: function (xhr) {
-            alert("Error! " + xhr.responseText);
+            var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : (xhr.responseText || 'Unable to update status.');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Error', text: msg, confirmButtonColor: '#d33' });
+            } else {
+                alert('Error: ' + msg);
+            }
         }
     });
 }
