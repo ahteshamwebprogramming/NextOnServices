@@ -1,0 +1,149 @@
+@{
+    ViewData["Title"] = "Add User";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-add-user-page .table-section-header { border-left-color: var(--vt-theme, #1d7874); }
+    .vt-add-user-page .card--table-section { border-color: rgba(29, 120, 116, 0.25); box-shadow: 0 4px 16px rgba(29, 120, 116, 0.08); }
+    .vt-add-user-page .btn-primary { background: linear-gradient(135deg, var(--vt-theme, #1d7874) 0%, #165c59 100%); border-color: #165c59; }
+    .vt-add-user-page .btn-primary:hover { background: linear-gradient(135deg, #165c59 0%, #124a47 100%); border-color: #124a47; }
+</style>
+<div class="vt-project-page vt-add-user-page">
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Add User</h4>
+                    <p class="card-description mb-0">
+                        Create a new user. Fill in the details below.
+                    </p>
+                    <form class="forms-sample vt-add-project-form" id="AddUserForm">
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label for="UserName">Name</label>
+                                <input type="text" class="form-control form-control-sm" id="UserName" name="UserName" placeholder="Enter name" maxlength="500" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="UserCode">User Name</label>
+                                <input type="text" class="form-control form-control-sm" id="UserCode" name="UserCode" placeholder="Enter user name (login)" maxlength="500" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="EmailId">Email ID</label>
+                                <input type="email" class="form-control form-control-sm" id="EmailId" name="EmailId" placeholder="Enter email" maxlength="500" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Password">Password</label>
+                                <input type="password" class="form-control form-control-sm" id="Password" name="Password" placeholder="Password" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="ContactNumber">Contact Number</label>
+                                <input type="text" class="form-control form-control-sm" id="ContactNumber" name="ContactNumber" placeholder="Contact number" maxlength="12" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="UserType">Role</label>
+                                <select class="form-control form-control-sm" id="UserType" name="UserType">
+                                    <option value="">--Select--</option>
+                                    <option value="A">Admin</option>
+                                    <option value="U">User</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Address">Address</label>
+                                <textarea class="form-control form-control-sm" id="Address" name="Address" rows="4" placeholder="Enter address"></textarea>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary mr-2 btn-sm" id="btnSubmit">Submit</button>
+                        <button type="button" class="btn btn-light btn-sm" id="btnCancel">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#UserType').select2({ dropdownCssClass: 'vt-theme-dropdown' });
+
+            $('#btnCancel').on('click', function () {
+                window.location.href = document.referrer || '/VT/Home/Dashboard';
+            });
+
+            $('#ContactNumber').on('keypress', function (evt) {
+                var charCode = (evt.which) ? evt.which : evt.keyCode;
+                if (charCode !== 46 && charCode !== 45 && charCode > 31 && (charCode < 48 || charCode > 57)) return false;
+                return true;
+            });
+            $('#UserCode').on('keypress', function (evt) {
+                if (evt.which === 32) return false;
+                return true;
+            });
+
+            $('#btnSubmit').on('click', function () {
+                if (!validateForm()) return;
+
+                var payload = {
+                    UserCode: $.trim($('#UserCode').val()) || '',
+                    UserName: $.trim($('#UserName').val()) || '',
+                    EmailId: $.trim($('#EmailId').val()) || '',
+                    Password: $('#Password').val() || '',
+                    ContactNumber: $.trim($('#ContactNumber').val()) || '',
+                    Address: $.trim($('#Address').val()) || '',
+                    UserType: $('#UserType').val() || 'U'
+                };
+
+                BlockUI();
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/Account/CreateUser',
+                    contentType: 'application/json',
+                    data: JSON.stringify(payload),
+                    success: function (data) {
+                        UnblockUI();
+                        Swal.fire({ title: 'Success', text: typeof data === 'string' ? data : 'User created successfully.', icon: 'success', confirmButtonText: 'OK' }).then(function () {
+                            document.getElementById('AddUserForm').reset();
+                            $('#UserType').val('').trigger('change');
+                        });
+                    },
+                    error: function (xhr) {
+                        UnblockUI();
+                        var msg = (xhr.responseJSON || xhr.responseText || 'User creation failed.');
+                        if (typeof msg === 'string') { }
+                        else if (msg && msg.message) msg = msg.message;
+                        else if (typeof msg === 'object') msg = JSON.stringify(msg);
+                        Swal.fire({ title: 'Error', text: msg, icon: 'error', confirmButtonText: 'OK' });
+                    }
+                });
+            });
+        });
+
+        function validateForm() {
+            var userCode = $.trim($('#UserCode').val());
+            var userName = $.trim($('#UserName').val());
+            var emailId = $.trim($('#EmailId').val());
+            var password = $('#Password').val();
+            var contact = $.trim($('#ContactNumber').val());
+            var address = $.trim($('#Address').val());
+            var role = $('#UserType').val();
+
+            if (!userName) { Swal.fire('', 'Name cannot be left blank', 'error'); $('#UserName').focus(); return false; }
+            if (!userCode) { Swal.fire('', 'User name cannot be left blank', 'error'); $('#UserCode').focus(); return false; }
+            if (!emailId) { Swal.fire('', 'Email cannot be left blank', 'error'); $('#EmailId').focus(); return false; }
+            var emailRegex = /^([\w-]+(?:\.[\w-]+)*)@@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+            if (!emailRegex.test(emailId)) {
+                Swal.fire('', 'Invalid email address', 'error'); $('#EmailId').focus(); return false;
+            }
+            if (!password) { Swal.fire('', 'Password cannot be left blank', 'error'); $('#Password').focus(); return false; }
+            if (!contact) { Swal.fire('', 'Contact number cannot be left blank', 'error'); $('#ContactNumber').focus(); return false; }
+            if (!address) { Swal.fire('', 'Address cannot be left blank', 'error'); $('#Address').focus(); return false; }
+            if (!role) { Swal.fire('', 'Please select role of the user', 'error'); $('#UserType').focus(); return false; }
+            return true;
+        }
+    </script>
+}

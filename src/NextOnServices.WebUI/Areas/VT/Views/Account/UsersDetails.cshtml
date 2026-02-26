@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "Users Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-user-link { color: #1d7874; font-weight: 600; }
+    .vt-user-link:hover { color: #165c59; text-decoration: underline; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref">
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section vt-ref-table-card">
+                <div class="card-body">
+                    <p class="table-section-header">Users Details</p>
+                    <div class="vt-ref-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-striped ref-project-table" id="UsersTable">
+                                <thead>
+                                    <tr>
+                                        <th>User Name</th>
+                                        <th>Email ID</th>
+                                        <th>Contact Number</th>
+                                        <th>Edit</th>
+                                        <th>Active (Yes/No)</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var dt = $('#UsersTable').DataTable({
+                ajax: {
+                    url: "/VT/Account/GetUserDetails",
+                    type: "POST",
+                    dataSrc: ""
+                },
+                processing: true,
+                filter: true,
+                scrollX: true,
+                autoWidth: false,
+                dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
+                paging: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+                pagingType: 'simple_numbers',
+                info: true,
+                ordering: true,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search...",
+                    lengthMenu: "Show _MENU_ entries",
+                    info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                    infoEmpty: "Showing 0 to 0 of 0 entries",
+                    infoFiltered: "(filtered from _MAX_ total entries)",
+                    paginate: { first: "First", last: "Last", next: "Next", previous: "Previous" }
+                },
+                columns: [
+                    {
+                        data: "userName",
+                        render: function (data, type, row) {
+                            if (type !== "display") return data;
+                            var safe = $('<div/>').text(data || '').html();
+                            return '<a href="' + (row.profileUrl || '#') + '" class="vt-user-link">' + safe + '</a>';
+                        }
+                    },
+                    { data: "emailId" },
+                    { data: "contactNumber" },
+                    {
+                        data: "userId",
+                        orderable: false,
+                        searchable: false,
+                        render: function (userId, type, row) {
+                            if (type !== "display") return userId;
+                            return '<button type="button" class="btn btn-info btn-sm ref-table-btn" onclick="window.location.href=\'' + (row.editUrl || '#') + '\'">Edit</button>';
+                        }
+                    },
+                    {
+                        data: "isActive",
+                        orderable: false,
+                        searchable: false,
+                        render: function (isActive, type, row) {
+                            if (type !== "display") return isActive;
+                            var active = parseInt(isActive, 10) === 1;
+                            var btnText = active ? "Yes" : "No";
+                            var nextActive = active ? 0 : 1;
+                            var btnClass = active ? "btn-success" : "btn-danger";
+                            return '<button type="button" class="btn ' + btnClass + ' btn-sm ref-table-btn" data-user-id="' + row.userId + '" data-active="' + nextActive + '">' + btnText + '</button>';
+                        }
+                    }
+                ],
+                columnDefs: [
+                    { targets: 3, className: 'col-edit' },
+                    { targets: 4, className: 'col-active' }
+                ],
+                order: [[0, "asc"]]
+            });
+
+            $('#UsersTable').on('click', 'button[data-user-id]', function () {
+                var btn = $(this);
+                var userId = parseInt(btn.attr('data-user-id'), 10);
+                var newActive = parseInt(btn.attr('data-active'), 10);
+                var message = newActive === 1 ? 'Are you sure you want to activate this user?' : 'Are you sure you want to deactivate this user?';
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#1d7874',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, proceed!'
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        BlockUI();
+                        $.ajax({
+                            type: 'POST',
+                            url: '/VT/Account/SetUserStatus',
+                            contentType: 'application/json',
+                            data: JSON.stringify({ UserId: userId, IsActive: newActive }),
+                            success: function () {
+                                UnblockUI();
+                                dt.ajax.reload(null, false);
+                                Swal.fire({ title: newActive === 1 ? 'Activated' : 'Deactivated', text: 'User status updated.', icon: 'success', confirmButtonText: 'OK' });
+                            },
+                            error: function () {
+                                UnblockUI();
+                                Swal.fire({ title: 'Error', text: 'Failed to update status.', icon: 'error', confirmButtonText: 'OK' });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

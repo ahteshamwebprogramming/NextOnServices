@@ -1,0 +1,140 @@
+@{
+    ViewData["Title"] = "Redirects";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-redirects .table-section-header { border-left-color: var(--vt-theme, #1d7874); }
+    .vt-redirects .card--table-section { border-color: rgba(29, 120, 116, 0.25); box-shadow: 0 4px 16px rgba(29, 120, 116, 0.08); }
+    .vt-redirects .redirect-lbl { background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.5rem 0.75rem; line-height: 1.6; font-size: 0.875rem; }
+    .vt-redirects .redirect-link-item { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .vt-redirects .redirect-link-item .redirect-lbl { flex: 1; min-width: 200px; }
+    .vt-redirects .redirect-link-item.strikethrough .redirect-lbl { text-decoration: line-through; color: #64748b; }
+    .vt-redirects .redirect-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+    .vt-redirects .redirect-actions a { font-size: 0.8125rem; cursor: pointer; }
+    .vt-redirects .pixel-box { background-color: rgba(29, 120, 116, 0.08); border-radius: 8px; padding: 0.75rem; font-size: 0.8125rem; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref vt-redirects">
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Redirects</p>
+                    <p class="card-description mb-3">Complete redirect links and standard status URLs. Replace [respondentID] with the unique system id in the link to update status in the database.</p>
+
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Completes</label>
+                        <p class="small text-muted mb-2">To generate and manage complete redirect links, use <a href="/VT/Redirects/GenerateCompleteRedirects">Generate Complete Redirects</a>.</p>
+                        <div id="divCompleteRedirectLinks">
+                            <ul class="list-unstyled mb-0" id="completeRedirectList"></ul>
+                        </div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="control-label mb-2 font-weight-semibold">Terminate</label>
+                        <div class="redirect-lbl" id="urlTerminate"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Overquota</label>
+                        <div class="redirect-lbl" id="urlOverquota"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Security Term</label>
+                        <div class="redirect-lbl pixel-box" id="urlSecTerm"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Fraud Error</label>
+                        <div class="redirect-lbl" id="urlFraud"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Variable 1</label>
+                        <div class="redirect-lbl" id="urlVar1"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2 font-weight-semibold">Variable 2</label>
+                        <div class="redirect-lbl" id="urlVar2"></div>
+                    </div>
+
+                    <h6 class="mt-4 mb-2 font-weight-semibold">For pixel tracking</h6>
+                    <div class="form-group">
+                        <label class="control-label mb-2">Completes</label>
+                        <div class="redirect-lbl" id="pixelComplete"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2">Terminate</label>
+                        <div class="redirect-lbl" id="pixelTerminate"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2">Overquota</label>
+                        <div class="redirect-lbl" id="pixelOverquota"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label mb-2">Security Term</label>
+                        <div class="redirect-lbl" id="pixelSecTerm"></div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <label class="control-label mb-2 font-weight-semibold">Notes</label>
+                        <div class="redirect-lbl" style="height: auto; color: #843534; font-weight: 600;">Replace [respondentID] with unique system id in the link to update the status in our database.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var baseUrl = (window.location.origin || '') + '/VT/ProjectStatus.aspx?ID=[respondentID]&Status=';
+            $('#urlTerminate').text(baseUrl + 'TERMINATE&RC=0');
+            $('#urlOverquota').text(baseUrl + 'OVERQUOTA&RC=0');
+            $('#urlSecTerm').text(baseUrl + 'SEC_TERM&RC=0');
+            $('#urlFraud').text(baseUrl + 'F_ERROR&RC=0');
+            $('#urlVar1').text(baseUrl + 'Variable1&RC=0');
+            $('#urlVar2').text(baseUrl + 'Variable2&RC=0');
+            $('#pixelComplete').text('<iframe src="' + baseUrl + 'COMPLETE&RC=0&PX=1" scrolling="no" frameborder="0" width="1" height="1"></iframe>');
+            $('#pixelTerminate').text('<iframe src="' + baseUrl + 'TERMINATE&RC=0&PX=1" scrolling="no" frameborder="0" width="1" height="1"></iframe>');
+            $('#pixelOverquota').text('<iframe src="' + baseUrl + 'OVERQUOTA&RC=0&PX=1" scrolling="no" frameborder="0" width="1" height="1"></iframe>');
+            $('#pixelSecTerm').text('<iframe src="' + baseUrl + 'SEC_TERM&RC=0&PX=1" scrolling="no" frameborder="0" width="1" height="1"></iframe>');
+            FetchCompleteRedirects();
+        });
+
+        function getBaseUrl() {
+            return (window.location.origin || '') + '/VT/ProjectStatus.aspx?ID=[respondentID]&Status=';
+        }
+
+        function FetchCompleteRedirects() {
+            $.ajax({
+                type: 'POST',
+                url: '/VT/Redirects/FetchCompleteLink',
+                contentType: 'application/json',
+                data: JSON.stringify({ opt: 1 }),
+                success: function (data) {
+                    var baseUrl = getBaseUrl();
+                    var html = '';
+                    if (data && data.length > 0) {
+                        for (var i = 0; i < data.length; i++) {
+                            var item = data[i];
+                            var code = item.code || item.Code || '';
+                            var enable = item.enable !== undefined ? item.enable : item.Enable;
+                            var url = baseUrl + code + '&RC=0';
+                            var strike = (enable === 0 || enable === '0') ? ' redirect-link-item strikethrough' : ' redirect-link-item';
+                            html += '<li class="' + strike + '"><label class="redirect-lbl">' + $('<div/>').text(url).html() + '</label></li>';
+                        }
+                    }
+                    $('#completeRedirectList').html(html || '<li class="text-muted small">No complete redirect links. Use <a href="/VT/Redirects/GenerateCompleteRedirects">Generate Complete Redirects</a> to add one.</li>');
+                },
+                error: function () {
+                    $('#completeRedirectList').html('<li class="text-danger small">Failed to load redirects.</li>');
+                }
+            });
+        }
+    </script>
+}

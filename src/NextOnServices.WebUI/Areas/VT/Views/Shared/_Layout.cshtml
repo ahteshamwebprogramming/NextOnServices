@@ -343,6 +343,8 @@
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Projects/ProjectsList">List</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Respondents/IDSearch">ID Search</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/ManageStatus">Reconciliation</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Redirects">Redirects</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Redirects/GenerateCompleteRedirects">Generate Complete Redirects</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/RecontactProjects">Recontact Projects</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/RecontactCreate">Create Recontact</a></li>
                                     </ul>
@@ -408,6 +410,19 @@
                     @{
                         if (User.IsInRole("A"))
                         {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#user" aria-expanded="false" aria-controls="user">
+                                    <i class="icon-head menu-icon"></i>
+                                    <span class="menu-title">User</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="user">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Account/AddUser">Add</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Account/UsersDetails">List</a></li>
+                                    </ul>
+                                </div>
+                            </li>
                         }
                     }
 

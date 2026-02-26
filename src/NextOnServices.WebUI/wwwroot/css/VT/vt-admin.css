@@ -138,6 +138,10 @@ body.vt-admin {
 .vt-admin .sidebar .nav.sub-menu .nav-item .nav-link {
   padding: 0.35rem 1rem;
   font-size: 0.8125rem;
+  white-space: normal;
+  word-wrap: break-word;
+  line-height: 1.35;
+  min-width: 0;
 }
 
 /* ----- Footer: single global footer, non-fixed (no overlap) ----- */

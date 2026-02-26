@@ -1,0 +1,45 @@
+@model NextOnServices.Infrastructure.Models.Account.UserDTO
+@using NextOnServices.Infrastructure.Helper
+@{
+    ViewData["Title"] = "User Profile";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-user-profile .table-section-header { border-left-color: var(--vt-theme, #1d7874); }
+    .vt-user-profile .card--table-section { border-color: rgba(29, 120, 116, 0.25); box-shadow: 0 4px 16px rgba(29, 120, 116, 0.08); }
+    .vt-user-profile .profile-table td:first-child { font-weight: 600; color: #334155; width: 180px; }
+    .vt-user-profile .profile-table td { padding: 0.5rem 0.75rem; vertical-align: top; }
+    .vt-user-profile .btn-primary { background: linear-gradient(135deg, var(--vt-theme, #1d7874) 0%, #165c59 100%); border-color: #165c59; }
+</style>
+<div class="vt-project-page vt-user-profile">
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">User Profile</h4>
+                    <p class="card-description mb-3">@(Model?.UserName ?? Model?.UserCode ?? "User")</p>
+                    <table class="table profile-table mb-0">
+                        <tbody>
+                            <tr><td>User Name (login)</td><td>@(Model?.UserCode ?? "-")</td></tr>
+                            <tr><td>Name</td><td>@(Model?.UserName ?? "-")</td></tr>
+                            <tr><td>Email</td><td>@(Model?.EmailId ?? "-")</td></tr>
+                            <tr><td>Contact Number</td><td>@(Model?.ContactNumber ?? "-")</td></tr>
+                            <tr><td>Address</td><td>@(Model?.Address ?? "-")</td></tr>
+                            <tr><td>Role</td><td>@(Model?.UserType == "A" ? "Admin" : Model?.UserType == "U" ? "User" : Model?.UserType ?? "-")</td></tr>
+                            <tr><td>Active</td><td>@((Model?.IsActive ?? 0) == 1 ? "Yes" : "No")</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="mt-3">
+                        <a href="/VT/Account/UsersDetails" class="btn btn-light btn-sm">Back to List</a>
+                        <a href="/VT/Account/EditUser/@(CommonHelper.EncryptURLHTML(Model?.UserId.ToString() ?? ""))" class="btn btn-primary btn-sm ml-2">Edit User</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

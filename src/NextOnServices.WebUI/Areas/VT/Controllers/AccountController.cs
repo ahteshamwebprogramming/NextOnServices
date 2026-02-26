@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -101,5 +101,140 @@ public class AccountController : Controller
     {
         input.DecryptOutput = CommonHelper.Decrypt(input.DecryptInput);
         return View("AdminEncryptionPage", input);
+    }
+
+    /// <summary>GET Add User page (VT theme).</summary>
+    [Route("/VT/Account/AddUser")]
+    [HttpGet]
+    public IActionResult AddUser()
+    {
+        return View();
+    }
+
+    /// <summary>POST Create user from VT Add User form.</summary>
+    [Route("/VT/Account/CreateUser")]
+    [HttpPost]
+    public async Task<IActionResult> CreateUser([FromBody] RegisterUserRequest request)
+    {
+        if (request == null)
+            return BadRequest("Invalid request.");
+        IActionResult result = await _accountsApiController.RegisterUser(request);
+        if (result is ObjectResult objRes)
+        {
+            if (objRes.StatusCode == 200)
+                return Ok(objRes.Value);
+            return StatusCode(objRes.StatusCode ?? 400, objRes.Value);
+        }
+        return BadRequest("User creation failed.");
+    }
+
+    /// <summary>GET Users Details list page (VT theme).</summary>
+    [Route("/VT/Account/UsersDetails")]
+    [HttpGet]
+    public IActionResult UsersDetails()
+    {
+        return View();
+    }
+
+    /// <summary>POST Get user list for VT Users Details DataTable.</summary>
+    [Route("/VT/Account/GetUserDetails")]
+    [HttpPost]
+    public async Task<IActionResult> GetUserDetails()
+    {
+        var result = await _accountsApiController.GetUsers();
+        if (result is not ObjectResult objRes || objRes.Value == null)
+            return Ok(new List<object>());
+        var users = (List<UserDTO>)objRes.Value;
+        var list = users.Select(u => new
+        {
+            userId = u.UserId,
+            userName = u.UserName ?? u.UserCode ?? "",
+            emailId = u.EmailId ?? "",
+            contactNumber = u.ContactNumber ?? "",
+            isActive = u.IsActive ?? 0,
+            profileUrl = "/VT/Account/UserProfile/" + CommonHelper.EncryptURLHTML(u.UserId.ToString()),
+            editUrl = "/VT/Account/EditUser/" + CommonHelper.EncryptURLHTML(u.UserId.ToString())
+        }).ToList();
+        return Ok(list);
+    }
+
+    /// <summary>POST Set user active/inactive from VT Users Details.</summary>
+    [Route("/VT/Account/SetUserStatus")]
+    [HttpPost]
+    public IActionResult SetUserStatus([FromBody] SetUserStatusRequest request)
+    {
+        if (request == null)
+            return BadRequest("Invalid request.");
+        var result = _accountsApiController.SetUserStatus(request);
+        if (result is ObjectResult objRes)
+            return StatusCode(objRes.StatusCode ?? 200, objRes.Value);
+        return BadRequest();
+    }
+
+    /// <summary>GET User Profile page (read-only view).</summary>
+    [Route("/VT/Account/UserProfile/{eUserId}")]
+    [HttpGet]
+    public async Task<IActionResult> UserProfile(string eUserId)
+    {
+        if (string.IsNullOrEmpty(eUserId))
+            return RedirectToAction("UsersDetails");
+        int userId;
+        try
+        {
+            var userIdStr = CommonHelper.DecryptURLHTML(eUserId);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out userId))
+                return RedirectToAction("UsersDetails");
+        }
+        catch
+        {
+            return RedirectToAction("UsersDetails");
+        }
+        var result = await _accountsApiController.GetUsers();
+        if (result is not ObjectResult objRes || objRes.Value == null)
+            return RedirectToAction("UsersDetails");
+        var users = (List<UserDTO>)objRes.Value;
+        var user = users.FirstOrDefault(u => u.UserId == userId);
+        if (user == null)
+            return RedirectToAction("UsersDetails");
+        return View(user);
+    }
+
+    /// <summary>GET Edit User page; loads user and returns edit form.</summary>
+    [Route("/VT/Account/EditUser/{eUserId}")]
+    [HttpGet]
+    public async Task<IActionResult> EditUser(string eUserId)
+    {
+        if (string.IsNullOrEmpty(eUserId))
+            return RedirectToAction("UsersDetails");
+        int userId;
+        try
+        {
+            var userIdStr = CommonHelper.DecryptURLHTML(eUserId);
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out userId))
+                return RedirectToAction("UsersDetails");
+        }
+        catch
+        {
+            return RedirectToAction("UsersDetails");
+        }
+        var result = await _accountsApiController.GetUserById(new GetUserByIdRequest { UserId = userId });
+        if (result is not ObjectResult objRes || objRes.Value == null)
+            return RedirectToAction("UsersDetails");
+        var user = (UserDTO)objRes.Value;
+        ViewData["EncryptedUserId"] = eUserId;
+        return View(user);
+    }
+
+    /// <summary>POST Update user from VT Edit User form.</summary>
+    [Route("/VT/Account/UpdateUser")]
+    [HttpPost]
+    public IActionResult UpdateUser([FromBody] UpdateUserRequest request)
+    {
+        if (request == null)
+            return BadRequest("Invalid request.");
+        var result = _accountsApiController.UpdateUser(request);
+        if (result is ObjectResult objRes)
+            return StatusCode(objRes.StatusCode ?? 200, objRes.Value);
+        return BadRequest();
     }
 }
