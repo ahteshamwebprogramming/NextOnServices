@@ -298,35 +298,35 @@
         <p class="ref-subtitle">Project overview and list</p>
     </div>
 
-    <!-- Stats cards - all same teal, compact (Figma/React style). data-stat used by Dashboard.js to update counts when Manager changes. -->
+    <!-- Stats cards - label above number, no trend. data-stat used by Dashboard.js to update counts when Manager changes. -->
     <div class="ref-stats-row">
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value" data-stat="total">@(Model?.ProjectCountSummary?.TotalProjects ?? 0)</div>
                 <div class="ref-stat-label">Total Projects</div>
+                <div class="ref-stat-value" data-stat="total">@(Model?.ProjectCountSummary?.TotalProjects ?? 0)</div>
             </div>
-            <div class="ref-stat-icon"><img src="~/theme/images/total projects.svg" alt="" /></div>
+            <div class="ref-stat-icon"><i class="mdi mdi-briefcase-outline" aria-hidden="true"></i></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value" data-stat="active">@(Model?.ProjectCountSummary?.ActiveProjects ?? 0)</div>
                 <div class="ref-stat-label">Active Projects</div>
+                <div class="ref-stat-value" data-stat="active">@(Model?.ProjectCountSummary?.ActiveProjects ?? 0)</div>
             </div>
-            <div class="ref-stat-icon"><img src="~/theme/images/active projects.svg" alt="" /></div>
+            <div class="ref-stat-icon"><i class="mdi mdi-play-circle-outline" aria-hidden="true"></i></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value" data-stat="inactive">@(Model?.ProjectCountSummary?.InactiveProjects ?? 0)</div>
                 <div class="ref-stat-label">Inactive Projects</div>
+                <div class="ref-stat-value" data-stat="inactive">@(Model?.ProjectCountSummary?.InactiveProjects ?? 0)</div>
             </div>
-            <div class="ref-stat-icon"><img src="~/theme/images/inactive projects.svg" alt="" /></div>
+            <div class="ref-stat-icon"><i class="mdi mdi-pause-circle-outline" aria-hidden="true"></i></div>
         </div>
         <div class="ref-stat-card">
             <div>
-                <div class="ref-stat-value" data-stat="archived">@(Model?.ProjectCountSummary?.ArchivedProjects ?? 0)</div>
                 <div class="ref-stat-label">Archived Projects</div>
+                <div class="ref-stat-value" data-stat="archived">@(Model?.ProjectCountSummary?.ArchivedProjects ?? 0)</div>
             </div>
-            <div class="ref-stat-icon"><img src="~/theme/images/archivedProjects.svg" alt="" /></div>
+            <div class="ref-stat-icon"><i class="mdi mdi-archive" aria-hidden="true"></i></div>
         </div>
     </div>
 
