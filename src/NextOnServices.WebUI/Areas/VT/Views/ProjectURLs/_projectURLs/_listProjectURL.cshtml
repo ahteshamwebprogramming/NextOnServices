@@ -1,27 +1,27 @@
 @model NextOnServices.Infrastructure.ViewModels.ProjectsURL.ProjectsURLViewModel
 <div class="col-md-12 grid-margin stretch-card">
-    <div class="card card--table-section">
+    <div class="card card--table-section vt-ref-table-card">
         <div class="card-body">
-            <p class="table-section-header">URL Mapping</p>
-            <div class="table-responsive">
-                <table class="table table-striped table-borderless" id="Projects">
-                    <thead>
-                        <tr>
-                            <th>Project Number</th>
-                            <th>Project Name</th>
-                            <th>Country</th>
-                            <th>URL</th>
-                            <th>Respondent Quota</th>
-                            <th>CPI</th>
-                            <th>Notes</th>
-                            <th>Edit</th>
-                            <th>Upload Tokens</th>
-                            <th>View Tokens</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            if (Model != null && Model.ProjectURLWithChildList != null)
+            <p class="table-section-header">URL List</p>
+            <div class="vt-ref-table-wrap">
+                <div class="table-responsive">
+                    <table class="table table-striped vt-ref-table ref-project-table" id="ProjectURLTable">
+                        <thead>
+                            <tr>
+                                <th>Project Number</th>
+                                <th>Project Name</th>
+                                <th>Country</th>
+                                <th>URL</th>
+                                <th>Quota</th>
+                                <th>CPI</th>
+                                <th>Notes</th>
+                                <th>Edit</th>
+                                <th>Upload Tokens</th>
+                                <th>View Tokens</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model?.ProjectURLWithChildList != null && Model.ProjectURLWithChildList.Any())
                             {
                                 foreach (var item in Model.ProjectURLWithChildList)
                                 {
@@ -29,41 +29,53 @@
                                         <td>@item.ProjectCode</td>
                                         <td>@item.ProjectName</td>
                                         <td>@item.Country</td>
-                                        <td>@item.Url</td>
+                                        <td><span class="vt-url-cell">@item.Url</span></td>
                                         <td>@item.Quota</td>
                                         <td>@item.Cpi</td>
                                         <td>@item.Notes</td>
-                                        <td><input type="button" class="btn btn-primary btn-sm" value="Edit" onclick="EditProjectURL(@item.Id)" /></td>
                                         <td>
-                                            @{
-                                                if (item.Token == 1)
-                                                {
-                                                    <input type="button" class="btn btn-primary btn-sm" value="Upload Tokens" onclick="LaunchModalUploadTokens(@item.Id)" />
-                                                }
-                                            }
-
+                                            <button type="button" class="btn btn-info btn-sm ref-table-btn" onclick="EditProjectURL(@item.Id)">Edit</button>
                                         </td>
                                         <td>
-                                            @{
-                                                if (item.Token == 1)
-                                                {
-                                                    <input type="button" class="btn btn-primary btn-sm" value="View Tokens" onclick="ViewTokens(@item.Id)" />
-                                                }
+                                            @if (item.Token == 1)
+                                            {
+                                                <button type="button" class="btn btn-primary btn-sm ref-table-btn" onclick="LaunchModalUploadTokens(@item.Id)">Upload</button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.Token == 1)
+                                            {
+                                                <button type="button" class="btn btn-primary btn-sm ref-table-btn" onclick="ViewTokens(@item.Id)">View</button>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
                                             }
                                         </td>
                                     </tr>
                                 }
                             }
-                        }
-                    </tbody>
-                </table>
+                            else
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">No URL mappings found. Add one from the form above.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<input type="button" style="display:none" id="btnUploadTokens" data-target="#modalTokenUpload" data-toggle="modal" />
+
+<button type="button" class="d-none" id="btnUploadTokens" data-target="#modalTokenUpload" data-toggle="modal" aria-label="Open upload tokens modal">Open</button>
 <div class="modal fade" id="modalTokenUpload" tabindex="-1" role="dialog" aria-labelledby="modalTokenUploadLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalTokenUploadLabel">Upload Tokens</h5>
@@ -72,47 +84,41 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <label>Paste Tokens Here</label>
-                        <textarea class="form-control" rows="12" name="UploadModalTokensRaw"></textarea>
-                    </div>
+                <div class="form-group">
+                    <label for="UploadModalTokensRaw">Paste tokens here (one per line)</label>
+                    <textarea class="form-control form-control-sm" rows="10" name="UploadModalTokensRaw" id="UploadModalTokensRaw"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
                 <input type="hidden" name="Id" />
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="UploadTokens()">Upload</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="UploadTokens()">Upload</button>
             </div>
         </div>
     </div>
 </div>
-<input type="button" style="display:none" id="btnTokenView" data-target="#modalTokenView" data-toggle="modal" />
+
+<button type="button" class="d-none" id="btnTokenView" data-target="#modalTokenView" data-toggle="modal" aria-label="Open token list modal">Open</button>
 <div class="modal fade" id="modalTokenView" tabindex="-1" role="dialog" aria-labelledby="modalTokenViewLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalTokenViewLabel">View Tokens</h5>
+                <h5 class="modal-title" id="modalTokenViewLabel">Token List</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-borderless" name="TokensList">
-                                <thead>
-                                    <tr>
-                                        <th>SR</th>
-                                        <th>Tokens</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-striped table-sm vt-ref-table" name="TokensList">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Token</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>

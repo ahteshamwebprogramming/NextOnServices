@@ -20,23 +20,23 @@ function initVtDashboardFilterSelects() {
 }
 
 /**
- * Initialize Select2 on dashboard filter dropdowns only (PM + Status in #TableFilters).
- * Uses teal styling classes; no search box; dropdown attached to body to avoid clipping.
+ * Initialize Select2 for the status dropdown inside the Change Status modal.
  */
-function initVtDashboardFilterSelects() {
+function initDashboardStatusSelect() {
     if (!$.fn.select2) return;
-    var $filters = $('#TableFilters select.dashboard-filter');
-    $filters.each(function () {
-        var $el = $(this);
-        if ($el.hasClass('select2-hidden-accessible')) {
-            $el.select2('destroy');
-        }
-        $el.select2({
-            width: '100%',
-            dropdownCssClass: 'vt-ref-select2-dropdown',
-            selectionCssClass: 'vt-ref-select2-selection',
-            dropdownParent: $('body')
-        });
+    var $select = $('#mdlChangeStatusSelect');
+    var $modal = $('#mdlChangeStatus');
+    if (!$select.length || !$modal.length) return;
+
+    if ($select.hasClass('select2-hidden-accessible')) {
+        $select.select2('destroy');
+    }
+
+    $select.select2({
+        width: '100%',
+        minimumResultsForSearch: Infinity,
+        dropdownParent: $modal,
+        dropdownCssClass: 'vt-theme-dropdown'
     });
 }
 
@@ -190,13 +190,24 @@ function openChangeStatusBox(statusOrId, projectId) {
 
     $("#mdlChangeStatusProjectId").val(projectId);
     var $select = $("#mdlChangeStatusSelect");
+    initDashboardStatusSelect();
     $select.val(statusVal);
+    if ($select.hasClass('select2-hidden-accessible')) {
+        $select.trigger('change.select2');
+    } else {
+        $select.change();
+    }
 
     var $modal = $("#mdlChangeStatus");
     if ($modal.length && typeof $modal.modal === 'function') {
         $modal.one('shown.bs.modal', function () {
-            $select.val(statusId);
-            $select.change();
+            initDashboardStatusSelect();
+            $select.val(statusVal);
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.trigger('change.select2');
+            } else {
+                $select.change();
+            }
         });
         $modal.modal('show');
     } else {

@@ -1,27 +1,27 @@
 @model NextOnServices.Infrastructure.ViewModels.ProjectMapping.ProjectMappingViewModel
 <div class="col-md-12 grid-margin stretch-card">
-    <div class="card card--table-section">
+    <div class="card card--table-section vt-ref-table-card">
         <div class="card-body">
-            <p class="table-section-header">URL Mapping</p>
-            <div class="table-responsive">
-                <table class="table table-striped table-borderless" id="Projects">
-                    <thead>
-                        <tr>
-                            <th>Project Number</th>
-                            <th>Project Name</th>
-                            <th>Country</th>
-                            <th>Supplier</th>
-                            <th>Quota</th>
-                            <th>Client Link</th>
-                            <th>Supplier Link</th>
-                            <th>Notes</th>
-                            <th>Check</th>
-                            <th>Edit</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @{
-                            if (Model != null && Model.ProjectMappingWithChildList != null)
+            <p class="table-section-header">Mapping List</p>
+            <div class="vt-ref-table-wrap">
+                <div class="table-responsive">
+                    <table class="table table-striped vt-ref-table ref-project-table" id="ProjectMappingTable">
+                        <thead>
+                            <tr>
+                                <th>Project Number</th>
+                                <th>Project Name</th>
+                                <th>Country</th>
+                                <th>Supplier</th>
+                                <th>Quota</th>
+                                <th>Client Link</th>
+                                <th>Supplier Link</th>
+                                <th>Notes</th>
+                                <th>Check</th>
+                                <th>Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model?.ProjectMappingWithChildList != null && Model.ProjectMappingWithChildList.Any())
                             {
                                 foreach (var item in Model.ProjectMappingWithChildList)
                                 {
@@ -31,17 +31,27 @@
                                         <td>@item.Country</td>
                                         <td>@item.Supplier</td>
                                         <td>@item.Respondants</td>
-                                        <td>@item.Olink</td>
-                                        <td>@item.Mlink</td>
+                                        <td><span class="vt-map-link-cell">@item.Olink</span></td>
+                                        <td><span class="vt-map-link-cell">@item.Mlink</span></td>
                                         <td>@item.Notes</td>
-                                        <td><input type="checkbox" @(item.IsChecked == 1 ? "checked" : "") onchange="CheckMapping(@item.Id,this)" /></td>
-                                        <td><input type="button" class="btn btn-primary btn-sm" value="Edit" onclick="EditProjectMapping(@item.Id)" /></td>
+                                        <td class="vt-map-check">
+                                            <input type="checkbox" @(item.IsChecked == 1 ? "checked" : "") onchange="CheckMapping(@item.Id,this)" />
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-info btn-sm ref-table-btn" onclick="EditProjectMapping(@item.Id)">Edit</button>
+                                        </td>
                                     </tr>
                                 }
                             }
-                        }
-                    </tbody>
-                </table>
+                            else
+                            {
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted py-4">No project mappings found. Add one from the form above.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

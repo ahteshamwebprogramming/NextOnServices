@@ -1,4 +1,4 @@
-﻿@model NextOnServices.Infrastructure.ViewModels.Supplier.SupplierDashboardViewModel
+@model NextOnServices.Infrastructure.ViewModels.Supplier.SupplierDashboardViewModel
 @{
     Layout = null;
 }
@@ -14,8 +14,8 @@
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
-    <link href="~/css/vt/blockuisupplier.css" rel="stylesheet" />
-    <link href="~/VT/css/chatPanel.css" rel="stylesheet" />
+    <link href="~/css/vt/blockuisupplier.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/VT/css/chatPanel.css" rel="stylesheet" asp-append-version="true" />
     <!-- DataTables CSS -->
     @* <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"> *@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
@@ -659,9 +659,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="~/customJS/Common.js"></script>
-    <script src="~/VT/js/chatPanel.js"></script>
-    <script src="~/VT/js/notificationBadge.js"></script>
+    <script src="~/customJS/Common.js" asp-append-version="true"></script>
+    <script src="~/VT/js/chatPanel.js" asp-append-version="true"></script>
+    <script src="~/VT/js/notificationBadge.js" asp-append-version="true"></script>
     <script>
         var table;
 

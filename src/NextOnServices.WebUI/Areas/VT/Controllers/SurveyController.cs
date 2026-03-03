@@ -1,4 +1,4 @@
-﻿using NextOnServices.Infrastructure.Helper;
+using NextOnServices.Infrastructure.Helper;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using GRP.Endpoints.Masters;
@@ -415,6 +415,9 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
         }
         public async Task<string> CheckDeviceEligibllity(string code, HttpRequest request)
         {
+            if (string.IsNullOrEmpty(code) || code.Length < 5)
+                return "No";
+
             char[] array = code.ToCharArray();
             // string device = hfdevice.Value;
             string device = CommonHelper.Device(request);
@@ -666,56 +669,35 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
         public async Task<string> ReformStatus(string Status)
         {
-            //DataSet ds = clsDAL.ManageCompleteRedirects("", 2, 0);
+            var normalizedStatus = Status?.Trim().ToUpperInvariant() ?? string.Empty;
             var ds = await _surveyAPIController.GenericDataFetcher("ManageCompleteRedirects", new { @Code = "", @opt = 2, @Id = 0 });
-            string[] Codes = new string[ds.Count];
-
-            if (ds != null && ds.Any())
+            if (ds == null || !ds.Any())
             {
-                for (int i = 0; i < ds.Count; i++)
-                {
-                    var row = (IDictionary<string, object>)ds[i];
-                    Codes[i] = row.ContainsKey("Code") ? row["Code"]?.ToString() ?? "" : "";
-                }
+                if (normalizedStatus == "TERMINATE") return "TERMINATE";
+                if (normalizedStatus == "QUOTAFULL") return "QUOTAFULL";
+                if (normalizedStatus == "SCREENED") return "SCREENED";
+                return normalizedStatus;
             }
 
+            string[] Codes = new string[ds.Count];
+            for (int i = 0; i < ds.Count; i++)
+            {
+                var row = (IDictionary<string, object>)ds[i];
+                Codes[i] = row.ContainsKey("Code") ? row["Code"]?.ToString() ?? "" : "";
+            }
 
             if (Array.IndexOf(Codes, Status) >= 0)
             {
                 return "COMPLETE";
             }
-            else if (Status.ToUpper() == "TERMINATE")
-            {
-                return "TERMINATE";
-            }
-            else if (Status.ToUpper() == "QUOTAFULL")
-            {
-                return "QUOTAFULL";
-            }
-            else if (Status.ToUpper() == "SCREENED")
-            {
-                return "SCREENED";
-            }
-            else if (Status.ToUpper() == "OVERQUOTA")
-            {
-                return "OVERQUOTA";
-            }
-            else if (Status.ToUpper() == "SEC_TERM")
-            {
-                return "SEC_TERM";
-            }
-            else if (Status.ToUpper() == "F_ERROR")
-            {
-                return "F_ERROR";
-            }
-            else if (Status.ToUpper() == "INCOMPLETE")
-            {
-                return "INCOMPLETE";
-            }
-            else
-            {
-                return "SEC_TERM";
-            }
+            if (normalizedStatus == "TERMINATE") return "TERMINATE";
+            if (normalizedStatus == "QUOTAFULL") return "QUOTAFULL";
+            if (normalizedStatus == "SCREENED") return "SCREENED";
+            if (normalizedStatus == "OVERQUOTA") return "OVERQUOTA";
+            if (normalizedStatus == "SEC_TERM") return "SEC_TERM";
+            if (normalizedStatus == "F_ERROR") return "F_ERROR";
+            if (normalizedStatus == "INCOMPLETE") return "INCOMPLETE";
+            return "SEC_TERM";
         }
 
         async Task<IActionResult> RequestUrlPS(string ID, int RC, int PID, int PX)

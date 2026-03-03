@@ -1,0 +1,473 @@
+@{
+    ViewData["Title"] = "Project Wise Report";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
+<style>
+    .vt-project-wise-page .vt-filter-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.85rem;
+        align-items: end;
+    }
+
+    .vt-project-wise-page .form-control {
+        border-radius: 10px;
+        border-color: #dbe3ea;
+        font-size: 0.87rem;
+        min-height: 38px;
+    }
+
+    .vt-project-wise-page .btn {
+        min-width: 110px;
+        min-height: 38px;
+        border-radius: 999px;
+    }
+
+    .vt-project-wise-page .vt-summary-card {
+        border: 1px solid rgba(29, 120, 116, 0.16);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        height: 100%;
+    }
+
+    .vt-project-wise-page .vt-summary-card .card-body {
+        padding: 1rem 1.1rem;
+    }
+
+    .vt-project-wise-page .vt-summary-card h6 {
+        margin: 0 0 0.6rem 0;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #1e293b;
+    }
+
+    .vt-project-wise-page .vt-summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.84rem;
+        margin: 0;
+    }
+
+    .vt-project-wise-page .vt-summary-table td {
+        border: 1px solid #e2e8f0;
+        padding: 0.42rem 0.5rem;
+        vertical-align: middle;
+    }
+
+    .vt-project-wise-page .vt-summary-table td:first-child {
+        font-weight: 700;
+        color: #0f172a;
+        width: 44%;
+        background: #f8fafc;
+    }
+
+    .vt-project-wise-page #lblMsg {
+        min-height: 18px;
+        color: #b91c1c;
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+    }
+
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .dt-button {
+        border: 0 !important;
+        border-radius: 9999px !important;
+        padding: 0.42rem 0.75rem !important;
+        margin-right: 0.35rem !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        color: #fff !important;
+        box-shadow: none !important;
+        background-image: none !important;
+    }
+
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-excel {
+        background: #16a34a !important;
+    }
+
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-csv {
+        background: #475569 !important;
+    }
+
+    @@media (max-width: 767.98px) {
+        .vt-project-wise-page .vt-filter-row {
+            grid-template-columns: 1fr;
+        }
+
+        .vt-project-wise-page .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-project-wise-page">
+    <div class="ref-page-title">
+        <h1>Project Wise Report</h1>
+        <p class="ref-subtitle">Overview, country-wise value and supplier-wise value by project</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header mb-3">Filter</p>
+                    <div class="vt-filter-row">
+                        <div class="form-group mb-0">
+                            <label for="ddProjects">Projects</label>
+                            <select id="ddProjects" class="form-control">
+                                <option value="0">--Search Project--</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-primary" id="btnApply">
+                                <i class="ti-search"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+                    <div id="lblMsg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 grid-margin stretch-card" id="overviewCard" style="display:none;">
+            <div class="vt-summary-card">
+                <div class="card-body">
+                    <h6>Overview</h6>
+                    <table class="vt-summary-table">
+                        <tbody>
+                            <tr><td>Project Number</td><td id="ovProjectNumber">-</td></tr>
+                            <tr><td>Status</td><td id="ovStatus">-</td></tr>
+                            <tr><td>Client</td><td id="ovClient">-</td></tr>
+                            <tr><td>Manager</td><td id="ovManager">-</td></tr>
+                            <tr><td>Country</td><td id="ovCountry">-</td></tr>
+                            <tr><td>Completes</td><td id="ovComplete">-</td></tr>
+                            <tr><td>CPC</td><td id="ovCpc">-</td></tr>
+                            <tr><td>Revenue From Completes</td><td id="ovRevenue">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 grid-margin stretch-card" id="totalCard" style="display:none;">
+            <div class="vt-summary-card">
+                <div class="card-body">
+                    <h6>Overall</h6>
+                    <table class="vt-summary-table">
+                        <tbody>
+                            <tr><td>Total Revenue</td><td id="totRevenue">-</td></tr>
+                            <tr><td>Total Cost</td><td id="totCost">-</td></tr>
+                            <tr><td>Gross Profit</td><td id="totProfit">-</td></tr>
+                            <tr><td>Margin</td><td id="totMargin">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Country Wise Value</p>
+                    <div class="table-responsive">
+                        <table id="tblCountryWise" class="table table-striped vt-ref-table ref-project-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th>Completes</th>
+                                    <th>CPC</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header">Supplier Wise Value</p>
+                    <div class="table-responsive">
+                        <table id="tblSupplierWise" class="table table-striped vt-ref-table ref-project-table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Country</th>
+                                    <th>Partner</th>
+                                    <th>Completes</th>
+                                    <th>CPC</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            let countryTable = null;
+            let supplierTable = null;
+
+            function val(obj, camel, pascal) {
+                if (!obj) return null;
+                if (obj[camel] !== undefined && obj[camel] !== null) return obj[camel];
+                if (obj[pascal] !== undefined && obj[pascal] !== null) return obj[pascal];
+                return null;
+            }
+
+            function list(obj, camel, pascal) {
+                const arr = val(obj, camel, pascal);
+                return Array.isArray(arr) ? arr : [];
+            }
+
+            function escapeHtml(value) {
+                if (value == null) return "";
+                return String(value)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            function formatNumber(value) {
+                const num = Number(value || 0);
+                if (!Number.isFinite(num)) return "0";
+                return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+            }
+
+            function startBusy() {
+                if (typeof BlockUI === "function") {
+                    BlockUI();
+                    return;
+                }
+                if ($.blockUI) {
+                    $.blockUI({ message: "<h5>Please wait...</h5>" });
+                }
+            }
+
+            function stopBusy() {
+                if (typeof UnblockUI === "function") {
+                    UnblockUI();
+                    return;
+                }
+                if ($.unblockUI) {
+                    $.unblockUI();
+                }
+            }
+
+            function destroyTable(instance) {
+                if (instance) {
+                    instance.destroy();
+                }
+            }
+
+            function initCountryTable() {
+                destroyTable(countryTable);
+                countryTable = $("#tblCountryWise").DataTable({
+                    destroy: true,
+                    pageLength: 25,
+                    autoWidth: false,
+                    dom: '<"ref-dt-top"Bf>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Search..."
+                    },
+                    buttons: [
+                        { extend: "excelHtml5", filename: "ProjectWise_CountryValue" },
+                        { extend: "csvHtml5", filename: "ProjectWise_CountryValue" }
+                    ]
+                });
+            }
+
+            function initSupplierTable() {
+                destroyTable(supplierTable);
+                supplierTable = $("#tblSupplierWise").DataTable({
+                    destroy: true,
+                    pageLength: 25,
+                    autoWidth: false,
+                    dom: '<"ref-dt-top"Bf>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Search..."
+                    },
+                    buttons: [
+                        { extend: "excelHtml5", filename: "ProjectWise_SupplierValue" },
+                        { extend: "csvHtml5", filename: "ProjectWise_SupplierValue" }
+                    ]
+                });
+            }
+
+            function renderOverview(data) {
+                const overview = val(data, "overview", "Overview") || {};
+                const totals = val(data, "totals", "Totals") || {};
+
+                const hasOverview = !!(val(overview, "pNumber", "PNumber") || val(overview, "company", "Company") || val(overview, "manager", "Manager"));
+                const hasTotals = !!(val(totals, "totalRevenue", "TotalRevenue") || val(totals, "totalCost", "TotalCost") || val(totals, "grossProfit", "GrossProfit"));
+
+                if (hasOverview) {
+                    $("#overviewCard").show();
+                    $("#ovProjectNumber").text(val(overview, "pNumber", "PNumber") || "-");
+                    $("#ovStatus").text(val(overview, "pStatus", "PStatus") || "-");
+                    $("#ovClient").text(val(overview, "company", "Company") || "-");
+                    $("#ovManager").text(val(overview, "manager", "Manager") || "-");
+                    $("#ovCountry").text(val(overview, "country", "Country") || "-");
+                    $("#ovComplete").text(formatNumber(val(overview, "complete", "Complete")));
+                    $("#ovCpc").text(formatNumber(val(overview, "cpc", "Cpc")));
+                    $("#ovRevenue").text(formatNumber(val(overview, "revenueFromCompletes", "RevenueFromCompletes")));
+                } else {
+                    $("#overviewCard").hide();
+                }
+
+                if (hasTotals) {
+                    $("#totalCard").show();
+                    $("#totRevenue").text(formatNumber(val(totals, "totalRevenue", "TotalRevenue")));
+                    $("#totCost").text(formatNumber(val(totals, "totalCost", "TotalCost")));
+                    $("#totProfit").text(formatNumber(val(totals, "grossProfit", "GrossProfit")));
+                    $("#totMargin").text(formatNumber(val(totals, "margin", "Margin")));
+                } else {
+                    $("#totalCard").hide();
+                }
+            }
+
+            function renderCountryRows(rows) {
+                const $body = $("#tblCountryWise tbody");
+                if (!rows || !rows.length) {
+                    $body.html('<tr><td colspan="4" class="text-center text-muted">No data</td></tr>');
+                    return;
+                }
+
+                let html = "";
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i];
+                    html += "<tr>";
+                    html += `<td>${escapeHtml(val(r, "country", "Country") || "")}</td>`;
+                    html += `<td>${formatNumber(val(r, "complete", "Complete"))}</td>`;
+                    html += `<td>${formatNumber(val(r, "cpc", "Cpc"))}</td>`;
+                    html += `<td>${formatNumber(val(r, "totalRevenue", "TotalRevenue"))}</td>`;
+                    html += "</tr>";
+                }
+                $body.html(html);
+            }
+
+            function renderSupplierRows(rows) {
+                const $body = $("#tblSupplierWise tbody");
+                if (!rows || !rows.length) {
+                    $body.html('<tr><td colspan="5" class="text-center text-muted">No data</td></tr>');
+                    return;
+                }
+
+                let html = "";
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i];
+                    html += "<tr>";
+                    html += `<td>${escapeHtml(val(r, "country", "Country") || "")}</td>`;
+                    html += `<td>${escapeHtml(val(r, "supplier", "Supplier") || "")}</td>`;
+                    html += `<td>${formatNumber(val(r, "complete", "Complete"))}</td>`;
+                    html += `<td>${formatNumber(val(r, "cpc", "Cpc"))}</td>`;
+                    html += `<td>${formatNumber(val(r, "cost", "Cost"))}</td>`;
+                    html += "</tr>";
+                }
+                $body.html(html);
+            }
+
+            function renderDetails(data) {
+                renderOverview(data);
+
+                const countryValues = list(data, "countryValues", "CountryValues");
+                const supplierValues = list(data, "supplierValues", "SupplierValues");
+
+                renderCountryRows(countryValues);
+                renderSupplierRows(supplierValues);
+                initCountryTable();
+                initSupplierTable();
+            }
+
+            async function loadProjects() {
+                const response = await $.ajax({
+                    type: "POST",
+                    url: "/VT/ProjectWiseReport.aspx/GetProjects",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                });
+
+                const projects = Array.isArray(response) ? response : [];
+                const $ddl = $("#ddProjects");
+                $ddl.empty();
+                $ddl.append('<option value="0">--Search Project--</option>');
+
+                for (let i = 0; i < projects.length; i++) {
+                    const p = projects[i];
+                    const id = val(p, "id", "Id") || 0;
+                    const name = val(p, "pName", "PName") || "";
+                    $ddl.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                }
+            }
+
+            async function loadProjectDetails() {
+                $("#lblMsg").text("");
+                const selectedId = parseInt($("#ddProjects").val() || "0", 10);
+                if (!selectedId) {
+                    $("#lblMsg").text("Please select a project.");
+                    return;
+                }
+
+                startBusy();
+                try {
+                    const response = await $.ajax({
+                        type: "POST",
+                        url: "/VT/ProjectWiseReport.aspx/GetProjectDetails",
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        data: JSON.stringify({ id: selectedId })
+                    });
+                    renderDetails(response || {});
+                } catch (xhr) {
+                    const message = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Unable to load project details.";
+                    $("#lblMsg").text(message);
+                } finally {
+                    stopBusy();
+                }
+            }
+
+            $("#btnApply").on("click", function () {
+                loadProjectDetails();
+            });
+
+            $(document).ready(async function () {
+                startBusy();
+                try {
+                    await loadProjects();
+                    renderCountryRows([]);
+                    renderSupplierRows([]);
+                    initCountryTable();
+                    initSupplierTable();
+                } finally {
+                    stopBusy();
+                }
+            });
+        })();
+    </script>
+}

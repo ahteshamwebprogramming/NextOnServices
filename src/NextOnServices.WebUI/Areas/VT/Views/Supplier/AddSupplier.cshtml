@@ -8,68 +8,161 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="~/css/CustmAhte.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/css/vt/validation.css" rel="stylesheet" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/validation.css" rel="stylesheet" asp-append-version="true" />
 <style>
-    .add-supplier-page.vt-project-page {
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-        font-size: 14px;
-        line-height: 1.5;
-        color: #0f172a;
+    .vt-add-supplier-page {
+        --vt-supplier-theme: #1d7874;
+        --vt-supplier-theme-dark: #165c59;
+        --vt-supplier-border: rgba(29, 120, 116, 0.22);
+        --vt-supplier-soft: rgba(29, 120, 116, 0.08);
     }
-    .add-supplier-page .table-section-header { font-size: 1rem !important; font-weight: 600 !important; }
-    .add-supplier-page .card-description { font-size: 0.875rem !important; font-weight: 400 !important; line-height: 1.5 !important; }
-    .add-supplier-page .form-control,
-    .add-supplier-page input.form-control:not([type="checkbox"]),
-    .add-supplier-page select.form-control,
-    .add-supplier-page textarea.form-control {
+
+    .vt-add-supplier-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-add-supplier-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-add-supplier-page .card--table-section {
+        border: 1px solid var(--vt-supplier-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-add-supplier-page .table-section-header {
+        border-left-color: var(--vt-supplier-theme);
+    }
+
+    .vt-add-supplier-page .vt-form-section {
+        margin-bottom: 0.9rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--vt-supplier-border);
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-supplier-soft) 100%);
+        color: #0f3d3b;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .vt-add-supplier-page .form-group {
+        margin-bottom: 0.95rem;
+    }
+
+    .vt-add-supplier-page .form-control,
+    .vt-add-supplier-page input.form-control:not([type="checkbox"]),
+    .vt-add-supplier-page select.form-control,
+    .vt-add-supplier-page textarea.form-control {
         font-size: 0.875rem;
-        height: 36px;
-        min-height: 36px;
+        height: 38px;
+        min-height: 38px;
         border: 1px solid #dbe3ea;
         border-radius: 8px;
     }
-    .add-supplier-page textarea.form-control { height: auto; min-height: 80px; }
-    .add-supplier-page .form-control:focus {
-        border-color: #0f7f79;
+
+    .vt-add-supplier-page textarea.form-control {
+        height: auto;
+        min-height: 96px;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .vt-add-supplier-page .form-control:focus {
+        border-color: var(--vt-supplier-theme);
         outline: none;
-        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2);
+        box-shadow: 0 0 0 2px rgba(29, 120, 116, 0.2);
     }
-    .add-supplier-page .btn-primary {
-        background: #0f7f79 !important;
-        border-color: #0f7f79 !important;
-        color: #fff !important;
-        font-size: 0.875rem;
-        font-weight: 500;
-        min-height: 36px;
-        padding: 0.5rem 1.25rem;
-        border-radius: 8px;
+
+    .vt-add-supplier-page .help-block {
+        font-size: 0.78rem;
+        margin-top: 0.3rem;
+        color: #64748b !important;
     }
-    .add-supplier-page .btn-primary:hover { background: #0d6b66 !important; border-color: #0d6b66 !important; color: #fff !important; }
-    .add-supplier-page .btn-light { border: 1px solid #e2e8f0; border-radius: 8px; }
-    .add-supplier-page .help-block { font-size: 0.8125rem; margin-top: 0.25rem; color: #ea580c !important; }
-    .add-supplier-page .select2-container--default .select2-selection--single {
-        height: 36px !important;
-        min-height: 36px !important;
+
+    .vt-add-supplier-page .select2-container {
+        width: 100% !important;
+    }
+
+    .vt-add-supplier-page .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        min-height: 38px !important;
         border: 1px solid #dbe3ea !important;
         border-radius: 8px !important;
-        padding: 0 10px !important;
+        padding: 0 2.1rem 0 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
     }
-    .add-supplier-page .select2-container--default.select2-container--focus .select2-selection--single,
-    .add-supplier-page .select2-container--default .select2-selection--single:focus {
-        border-color: #0f7f79 !important;
-        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+
+    .vt-add-supplier-page .select2-container--default .select2-selection--single .select2-selection__rendered {
+        height: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1.2 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        color: #1f2937 !important;
+    }
+
+    .vt-add-supplier-page .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+        width: 1.75rem !important;
+        right: 0.45rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .vt-add-supplier-page .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        margin-top: 0 !important;
+    }
+
+    .vt-add-supplier-page .btn-primary {
+        background: linear-gradient(135deg, var(--vt-supplier-theme) 0%, var(--vt-supplier-theme-dark) 100%) !important;
+        border-color: var(--vt-supplier-theme-dark) !important;
+        color: #fff !important;
+    }
+
+    .vt-add-supplier-page .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-supplier-theme-dark) 0%, #124a47 100%) !important;
+        border-color: #124a47 !important;
+    }
+
+    .vt-add-supplier-page .btn-light {
+        border: 1px solid #dbe3ea !important;
+        color: #1f2937;
+        background: #fff;
+    }
+
+    .vt-add-supplier-page .btn-light:hover {
+        background: #f8fafc;
+    }
+
+    .vt-add-supplier-page .required::after {
+        content: " *";
+        color: #dc2626;
+        font-weight: 700;
     }
 </style>
 
-<div class="add-supplier-page vt-project-page">
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-add-supplier-page">
+    <div class="ref-page-title">
+        <h1>Add Supplier</h1>
+        <p class="ref-subtitle">Create or update supplier details and endpoint mappings</p>
+    </div>
+
     <div class="row">
-        <div class="col-md-10 offset-md-1 grid-margin stretch-card">
+        <div class="col-md-12 grid-margin stretch-card">
             <div class="card card--table-section">
                 <div class="card-body">
-                    <p class="table-section-header mb-1">Supplier</p>
-                    <p class="card-description mb-0">Please fill in the details below.</p>
-                    <form class="forms-sample" id="SupplierForm">
-                        <div class="row mt-3">
+                    <h4 class="table-section-header">Supplier</h4>
+                    <p class="card-description mb-3">Please fill in the details below.</p>
+
+                    <form class="forms-sample vt-add-project-form" id="SupplierForm">
+                        <div class="vt-form-section">Basic Details</div>
+                        <div class="row">
                             <div class="form-group col-md-4">
                                 <label for="Supplier_Name" class="required">Supplier Name</label>
                                 <input type="text" class="form-control requiredInput" id="Supplier_Name" asp-for="Supplier.Name">
@@ -94,55 +187,61 @@
                                 <label for="Supplier_Country" class="required">Country</label>
                                 <select class="form-control requiredInput select2" id="Supplier_Country" asp-for="Supplier.Country">
                                     <option value="0">--Select Country--</option>
-                                    @{
-                                        if (Model != null && Model.Countries != null)
+                                    @if (Model?.Countries != null)
+                                    {
+                                        foreach (var item in Model.Countries)
                                         {
-                                            foreach (var item in Model.Countries)
-                                            {
-                                                <option value="@item.Country">@item.Country</option>
-                                            }
+                                            <option value="@item.Country">@item.Country</option>
                                         }
                                     }
                                 </select>
                             </div>
-                            <div class="form-group col-md-12">
+                        </div>
+
+                        <div class="vt-form-section mt-2">Endpoints</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Completes">Completes</label>
                                 <input type="url" class="form-control" id="Supplier_Completes" asp-for="Supplier.Completes">
-                                <p class="help-block">https://www.abcdefgh.aspx?RIS=20&RID=[respondentID]</p>
+                                <p class="help-block">https://www.abcdefgh.aspx?RIS=20&amp;RID=[respondentID]</p>
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Terminate">Terminate</label>
                                 <input type="url" class="form-control" id="Supplier_Terminate" asp-for="Supplier.Terminate">
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Overquota">Overquota</label>
                                 <input type="url" class="form-control" id="Supplier_Overquota" asp-for="Supplier.Overquota">
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Security">Security Term</label>
                                 <input type="url" class="form-control" id="Supplier_Security" asp-for="Supplier.Security">
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Fraud">Fraud Error</label>
                                 <input type="url" class="form-control" id="Supplier_Fraud" asp-for="Supplier.Fraud">
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Success">Success</label>
                                 <input type="url" class="form-control" id="Supplier_Success" asp-for="Supplier.Success">
                             </div>
-                            <div class="form-group col-md-12">
+                        </div>
+
+                        <div class="vt-form-section mt-2">Response Templates and Notes</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Default">Default</label>
                                 <textarea asp-for="Supplier.Default" class="form-control" id="Supplier_Default"></textarea>
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_Failure">Failure</label>
                                 <textarea asp-for="Supplier.Failure" class="form-control" id="Supplier_Failure"></textarea>
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_QualityTermination">Quality Termination</label>
                                 <textarea asp-for="Supplier.QualityTermination" class="form-control" id="Supplier_QualityTermination"></textarea>
                             </div>
-                            <div class="form-group col-md-12">
+                            <div class="form-group col-md-6">
                                 <label for="Supplier_OverQuota1">Over Quota</label>
                                 <textarea asp-for="Supplier.OverQuota1" class="form-control" id="Supplier_OverQuota1"></textarea>
                             </div>
@@ -151,10 +250,11 @@
                                 <textarea asp-for="Supplier.Notes" class="form-control" id="Supplier_Notes" placeholder="Enter your notes here"></textarea>
                             </div>
                         </div>
+
                         <input type="hidden" asp-for="Supplier.Id" />
                         <div class="mt-3">
-                            <button type="button" class="btn btn-primary mr-2" onclick="AddSupplier()">@(Model == null ? "Submit" : Model.Supplier == null ? "Submit" : Model.Supplier.Id > 0 ? "Update" : "Submit")</button>
-                            <button type="button" class="btn btn-light" onclick="window.history.back()">Cancel</button>
+                            <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddSupplier()">@((Model?.Supplier?.Id ?? 0) > 0 ? "Update Supplier" : "Save Supplier")</button>
+                            <button type="button" class="btn btn-light btn-sm" onclick="window.location.href = document.referrer || '/VT/Supplier/SupplierList'">Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -163,27 +263,24 @@
     </div>
 </div>
 
-
 @section scripts {
-    <script src="~/customJS/Validation.js"></script>
+    <script src="~/customJS/Validation.js" asp-append-version="true"></script>
     <script type="text/javascript">
         $(document).ready(function () {
-            $(".select2").select2();
+            $(".select2").select2({
+                dropdownCssClass: 'vt-theme-dropdown',
+                width: '100%'
+            });
         });
 
-
-
         function AddSupplier() {
-
             if (!isValidateForm("SupplierForm")) {
                 return false;
             }
 
-           
-
-            let supplierData = $("#SupplierForm");
+            var supplierData = $("#SupplierForm");
             var inputDTO = {};
-            inputDTO.Id = isNaN($(supplierData).find("[name='Supplier.Id']").val()) ? 0 : $.trim($(supplierData).find("[name='Supplier.Id']").val()) == "" ? 0 : $(supplierData).find("[name='Supplier.Id']").val();
+            inputDTO.Id = isNaN($(supplierData).find("[name='Supplier.Id']").val()) ? 0 : $.trim($(supplierData).find("[name='Supplier.Id']").val()) === "" ? 0 : $(supplierData).find("[name='Supplier.Id']").val();
             inputDTO.Name = $(supplierData).find("[name='Supplier.Name']").val();
             inputDTO.Description = $(supplierData).find("[name='Supplier.Description']").val();
             inputDTO.Number = $(supplierData).find("[name='Supplier.Number']").val();
@@ -211,8 +308,8 @@
                 data: JSON.stringify(inputDTO),
                 success: function (data) {
                     UnblockUI();
-                    //Confirmation OK
-                    Swal.fire({ title: 'Success!', text: "Supplier Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                    var successMessage = inputDTO.Id > 0 ? "Supplier updated successfully." : "Supplier added successfully.";
+                    Swal.fire({ title: 'Success', text: successMessage, icon: 'success', confirmButtonText: 'OK' }).then(function (result) {
                         if (result.isConfirmed) {
                             if (inputDTO.Id > 0) {
                                 window.location.href = "/VT/Supplier/SupplierList";
@@ -220,17 +317,14 @@
                             else {
                                 window.location.href = "/VT/Supplier/SupplierCountryPanelSize/" + data.encId;
                             }
-
                         }
                     });
                 },
                 error: function (error) {
-                    $erroralert("Error!", error.responseText);
                     UnblockUI();
+                    $erroralert("Error!", error.responseText);
                 }
             });
         }
     </script>
 }
-
-

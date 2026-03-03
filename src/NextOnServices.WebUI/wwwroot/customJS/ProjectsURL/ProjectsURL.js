@@ -1,21 +1,38 @@
-﻿function Tokens(id) {
-    if ($('#' + id).is(':checked')) {
-        $('.WT').show();
-        $('.WOT').hide();
-        //  $('#btnSubmit').val('Submit and Upload Tokens');
-        //  $('#btnSubmit').text('Submit and Upload Tokens');
+function Tokens(id) {
+    var isChecked = $('#' + id).is(':checked');
+    $('.WT').toggle(isChecked);
+    $('.WOT').toggle(!isChecked);
+}
 
+function getAjaxErrorMessage(xhr, fallbackMessage) {
+    if (xhr && xhr.responseText && $.trim(xhr.responseText) !== '') {
+        return xhr.responseText;
     }
-    else {
-        $('.WT').hide();
-        $('.WOT').show();
-        //   $('#btnSubmit').val('Submit');
+    return fallbackMessage;
+}
+
+function initializeProjectUrlSelects() {
+    var $selects = $("#PartialView_AddProjectURL .select2");
+    if ($selects.length === 0) {
+        return;
     }
+
+    $selects.each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2('destroy');
+        }
+    });
+
+    $selects.select2({
+        dropdownCssClass: 'vt-theme-dropdown',
+        width: '100%'
+    });
 }
 
 function AddProjectURLPartialView() {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -24,21 +41,23 @@ function AddProjectURLPartialView() {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_AddProjectURL").html(data);
-            $(".select2").select2();
-            Tokens($('#chkTokens').attr('id'));
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
+            initializeProjectUrlSelects();
+            Tokens('chkTokens');
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to load URL form."));
         }
     });
 }
+
 function ListProjectURLPartialView() {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -47,28 +66,28 @@ function ListProjectURLPartialView() {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_ListProjectURL").html(data);
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to load URL list."));
         }
     });
 }
 
 function AddURL() {
-    let userData = $("#ProjectURLForm");
+    var form = $("#ProjectURLForm");
     var inputDTO = {};
-    inputDTO.Id = $(userData).find("[name='ProjectsURL.Id']").val() == "" ? 0 : $(userData).find("[name='ProjectsURL.Id']").val();
-    inputDTO.Cid = $(userData).find("[name='ProjectsURL.Cid']").val();
-    inputDTO.TokenBool = $(userData).find("[name='ProjectsURL.TokenBool']").prop('checked');
-    inputDTO.Url = $(userData).find("[name='ProjectsURL.Url']").val();
-    inputDTO.Quota = $(userData).find("[name='ProjectsURL.Quota']").val();
-    inputDTO.Cpi = $(userData).find("[name='ProjectsURL.Cpi']").val();
-    inputDTO.Notes = $(userData).find("[name='ProjectsURL.Notes']").val();
-    inputDTO.TokenRaw = $(userData).find("[name='ProjectsURL.TokenRaw']").val();
+    inputDTO.Id = $(form).find("[name='ProjectsURL.Id']").val() === "" ? 0 : $(form).find("[name='ProjectsURL.Id']").val();
+    inputDTO.Cid = $(form).find("[name='ProjectsURL.Cid']").val();
+    inputDTO.TokenBool = $(form).find("[name='ProjectsURL.TokenBool']").prop('checked');
+    inputDTO.Url = $.trim($(form).find("[name='ProjectsURL.Url']").val());
+    inputDTO.Quota = $(form).find("[name='ProjectsURL.Quota']").val();
+    inputDTO.Cpi = $(form).find("[name='ProjectsURL.Cpi']").val();
+    inputDTO.Notes = $(form).find("[name='ProjectsURL.Notes']").val();
+    inputDTO.TokenRaw = $(form).find("[name='ProjectsURL.TokenRaw']").val();
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
 
     BlockUI();
@@ -78,23 +97,25 @@ function AddURL() {
         contentType: 'application/json',
         data: JSON.stringify(inputDTO),
         success: function (data) {
+            var successMessage = (typeof data === "string" && $.trim(data) !== "") ? data : "Project URL saved successfully.";
             UnblockUI();
-            Swal.fire({ title: 'Success!', text: "Project Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+            Swal.fire({ title: 'Success', text: successMessage, icon: 'success', confirmButtonText: 'OK' }).then(function () {
                 AddProjectURLPartialView();
                 ListProjectURLPartialView();
             });
         },
-        error: function (error) {
-            $erroralert("Error!", error.responseText);
+        error: function (xhr) {
             UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to save URL mapping."));
         }
     });
 }
 
 function EditProjectURL(Id) {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.Id = Id;
     inputDTO.encProjectId = $("[name='ProjectsURL.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -103,15 +124,15 @@ function EditProjectURL(Id) {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_AddProjectURL").html(data);
-            $(".select2").select2();
-            Tokens($('#chkTokens').attr('id'));
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
+            initializeProjectUrlSelects();
+            Tokens('chkTokens');
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to load mapping for edit."));
         }
     });
 }
@@ -121,36 +142,37 @@ function LaunchModalUploadTokens(Id) {
     $("#modalTokenUpload").find("[name='Id']").val(Id);
     $("#modalTokenUpload").find("[name='UploadModalTokensRaw']").val("");
 }
+
 function UploadTokens() {
-    let formData = $("#modalTokenUpload");
+    var formData = $("#modalTokenUpload");
     var inputDTO = {};
     inputDTO.Id = $("#modalTokenUpload").find("[name='Id']").val();
     inputDTO.TokenRaw = $(formData).find("[name='UploadModalTokensRaw']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
         url: "/VT/ProjectURLs/UploadTokensFromModal",
         contentType: 'application/json',
         data: JSON.stringify(inputDTO),
-        success: function (data) {
+        success: function () {
             UnblockUI();
             $("#modalTokenUpload").find(".close").click();
-            Swal.fire({ title: 'Success!', text: "Tokens Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
-                if (result.isConfirmed) {
-
-                }
+            Swal.fire({ title: 'Success', text: "Tokens uploaded successfully.", icon: 'success', confirmButtonText: 'OK' }).then(function () {
+                ListProjectURLPartialView();
             });
         },
-        error: function (error) {
-            $erroralert("Error!", error.responseText);
+        error: function (xhr) {
             UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to upload tokens."));
         }
     });
 }
+
 function ViewTokens(Id) {
-    let formData = $("#modalTokenUpload");
     var inputDTO = {};
     inputDTO.Id = Id;
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -158,14 +180,14 @@ function ViewTokens(Id) {
         contentType: 'application/json',
         data: JSON.stringify(inputDTO),
         success: function (data) {
-            UnblockUI();
-            let $table = $("#modalTokenView").find("[name='TokensList']");
+            var $table = $("#modalTokenView").find("[name='TokensList']");
             $("#btnTokenView").click();
             $table.find('tbody').empty();
-            let tbody = "";
+
+            var tbody = "";
             if (data != null) {
                 for (var i = 0; i < data.length; i++) {
-                    tbody = tbody + '<tr><td>' + (i + 1) + '</td><td>' + data[i].token + '</td></tr >';
+                    tbody = tbody + '<tr><td>' + (i + 1) + '</td><td>' + data[i].token + '</td></tr>';
                 }
                 $table.find('tbody').html(tbody);
             }
@@ -173,11 +195,22 @@ function ViewTokens(Id) {
             if ($.fn.DataTable.isDataTable($table)) {
                 $table.DataTable().destroy();
             }
-            $table.DataTable();
-        },
-        error: function (error) {
-            $erroralert("Error!", error.responseText);
+
+            $table.DataTable({
+                paging: true,
+                pageLength: 10,
+                lengthChange: false,
+                searching: true,
+                ordering: false,
+                info: false,
+                dom: '<"ref-dt-top"f>t<"ref-dt-bottom"p>'
+            });
+
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getAjaxErrorMessage(xhr, "Unable to load tokens."));
         }
     });
 }

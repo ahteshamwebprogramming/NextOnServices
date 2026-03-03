@@ -2,30 +2,225 @@
     ViewData["Title"] = "Questions List";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-question-list-page {
+        --vt-question-theme: #1d7874;
+        --vt-question-theme-dark: #165c59;
+        --vt-question-border: rgba(29, 120, 116, 0.22);
+    }
 
-<div class="row">
-    <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <p class="table-section-header mb-0">Questions List</p>
-                    <a href="/VT/Questionnaire/AddQuestion" class="btn btn-primary btn-sm">Add New Question</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-striped table-borderless" id="QuestionsTable">
-                        <thead>
-                            <tr>
-                                <th name="Id">ID</th>
-                                <th name="QuestionId">Question ID</th>
-                                <th name="QuestionLabel">Question Label</th>
-                                <th name="QuestionType">Type</th>
-                                <th>Options Count</th>
-                                <th name="CreationDate">Created Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                    </table>
+    .vt-question-list-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-question-list-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-question-list-page .card--table-section {
+        border: 1px solid var(--vt-question-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-question-list-page .table-section-header {
+        border-left-color: var(--vt-question-theme);
+    }
+
+    .vt-question-list-page .vt-create-question-btn {
+        min-height: 36px;
+        padding: 0.4rem 0.9rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+        white-space: nowrap;
+    }
+
+    .vt-question-list-page .vt-create-question-btn i {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        line-height: 1;
+    }
+
+    .vt-question-list-page .btn-primary {
+        background: linear-gradient(135deg, var(--vt-question-theme) 0%, var(--vt-question-theme-dark) 100%) !important;
+        border-color: var(--vt-question-theme-dark) !important;
+    }
+
+    .vt-question-list-page .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-question-theme-dark) 0%, #124a47 100%) !important;
+        border-color: #124a47 !important;
+    }
+
+    .vt-question-list-page #QuestionsTable th:nth-child(1),
+    .vt-question-list-page #QuestionsTable td:nth-child(1) {
+        min-width: 68px;
+    }
+
+    .vt-question-list-page #QuestionsTable th:nth-child(2),
+    .vt-question-list-page #QuestionsTable td:nth-child(2) {
+        min-width: 132px;
+    }
+
+    .vt-question-list-page #QuestionsTable th:nth-child(3),
+    .vt-question-list-page #QuestionsTable td:nth-child(3) {
+        min-width: 280px;
+    }
+
+    .vt-question-list-page #QuestionsTable th:nth-child(6),
+    .vt-question-list-page #QuestionsTable td:nth-child(6) {
+        min-width: 126px;
+    }
+
+    .vt-question-list-page #QuestionsTable th:nth-child(7),
+    .vt-question-list-page #QuestionsTable td:nth-child(7) {
+        min-width: 108px;
+        white-space: nowrap;
+    }
+
+    .vt-question-list-page .vt-action-btn {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        margin-right: 0.35rem;
+        vertical-align: middle;
+    }
+
+    .vt-question-list-page .vt-action-btn:last-child {
+        margin-right: 0;
+    }
+
+    .vt-question-list-page .vt-actions-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .vt-question-list-page .vt-actions-cell .vt-action-btn {
+        margin-right: 0;
+    }
+
+    .vt-question-list-page .vt-action-btn .vt-action-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 12px;
+        height: 12px;
+        line-height: 0;
+    }
+
+    .vt-question-list-page .vt-action-btn i {
+        display: block;
+        font-size: 0.82rem;
+        line-height: 1;
+    }
+
+    .vt-question-list-page .vt-type-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 92px;
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .vt-question-list-page .vt-type-pill.type-single {
+        background: rgba(29, 120, 116, 0.12);
+        color: #0f3d3b;
+    }
+
+    .vt-question-list-page .vt-type-pill.type-multiple {
+        background: rgba(59, 130, 246, 0.14);
+        color: #1d4ed8;
+    }
+
+    .vt-question-list-page .vt-type-pill.type-text {
+        background: rgba(99, 102, 241, 0.14);
+        color: #4338ca;
+    }
+
+    .vt-question-list-page .vt-type-pill.type-default {
+        background: #e2e8f0;
+        color: #475569;
+    }
+
+    .vt-question-list-page .vt-count-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 24px;
+        padding: 0 0.5rem;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #1f2937;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    @@media (max-width: 767.98px) {
+        .vt-question-list-page .ref-page-title .ref-subtitle {
+            max-width: none;
+        }
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-question-list-page">
+    <div class="ref-page-title">
+        <h1>Questions List</h1>
+        <p class="ref-subtitle">View, edit, and manage questionnaire items and answer options</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section vt-ref-table-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <p class="table-section-header mb-0">Questions List</p>
+                        <a href="/VT/Questionnaire/AddQuestion" class="btn btn-primary btn-sm vt-create-question-btn">
+                            <i class="ti-plus" aria-hidden="true"></i>
+                            <span>Add New Question</span>
+                        </a>
+                    </div>
+
+                    <div class="vt-ref-table-wrap">
+                        <div class="table-responsive">
+                            <table class="table table-striped vt-ref-table ref-project-table" id="QuestionsTable">
+                                <thead>
+                                    <tr>
+                                        <th name="Id">ID</th>
+                                        <th name="QuestionId">Question ID</th>
+                                        <th name="QuestionLabel">Question Label</th>
+                                        <th name="QuestionType">Type</th>
+                                        <th name="OptionsCount">Options</th>
+                                        <th name="CreationDate">Created Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -34,8 +229,12 @@
 
 @section Scripts {
     <script>
+        function escapeHtml(value) {
+            return $('<div/>').text(value || '').html();
+        }
+
         $(document).ready(function () {
-            $('#QuestionsTable').DataTable({
+            var questionsTable = $('#QuestionsTable').DataTable({
                 ajax: {
                     url: "/VT/Questionnaire/GetQuestionsList",
                     type: "POST"
@@ -43,105 +242,166 @@
                 processing: true,
                 serverSide: true,
                 filter: true,
+                autoWidth: false,
+                scrollX: false,
+                dom: '<"ref-dt-top"f>t<"ref-dt-bottom"ip>',
+                order: [[0, 'desc']],
+                pageLength: 10,
+                columnDefs: [
+                    {
+                        targets: 0,
+                        visible: false,
+                        searchable: false
+                    }
+                ],
+                language: {
+                    processing: "Loading questions...",
+                    search: "",
+                    searchPlaceholder: "Search..."
+                },
                 columns: [
                     { data: "id", name: "Id" },
                     { data: "questionId", name: "QuestionId" },
-                    { 
-                        data: "questionLabel", 
+                    {
+                        data: "questionLabel",
                         name: "QuestionLabel",
-                        render: function (data, type, row) {
-                            if (data && data.length > 50) {
-                                return data.substring(0, 50) + '...';
+                        render: function (data) {
+                            if (!data) {
+                                return '';
                             }
-                            return data || '';
+
+                            var safeLabel = escapeHtml(data);
+                            if (data.length > 70) {
+                                return '<span title="' + safeLabel + '">' + escapeHtml(data.substring(0, 70)) + '...</span>';
+                            }
+                            return '<span title="' + safeLabel + '">' + safeLabel + '</span>';
                         }
                     },
-                    { 
-                        data: "questionTypeName", 
+                    {
+                        data: "questionTypeName",
                         name: "QuestionType",
-                        render: function (data, type, row) {
-                            return data || 'N/A';
+                        render: function (data) {
+                            var label = data || 'N/A';
+                            var normalized = (label || '').toLowerCase();
+                            var typeClass = 'type-default';
+
+                            if (normalized.indexOf('single') >= 0) {
+                                typeClass = 'type-single';
+                            } else if (normalized.indexOf('multiple') >= 0) {
+                                typeClass = 'type-multiple';
+                            } else if (normalized.indexOf('text') >= 0) {
+                                typeClass = 'type-text';
+                            }
+
+                            return '<span class="vt-type-pill ' + typeClass + '">' + escapeHtml(label) + '</span>';
                         }
                     },
-                    { 
-                        data: "optionsCount", 
+                    {
+                        data: "optionsCount",
                         name: "OptionsCount",
                         render: function (data) {
-                            return data || 0;
+                            var count = parseInt(data, 10);
+                            if (isNaN(count)) {
+                                count = 0;
+                            }
+                            return '<span class="vt-count-pill">' + count + '</span>';
                         }
                     },
-                    { 
-                        data: "creationDate", 
+                    {
+                        data: "creationDate",
                         name: "CreationDate",
                         render: function (data) {
-                            if (data) {
-                                return new Date(data).toLocaleDateString();
+                            if (!data) {
+                                return '';
                             }
-                            return '';
+
+                            var parsedDate = new Date(data);
+                            if (isNaN(parsedDate.getTime())) {
+                                return '';
+                            }
+
+                            return parsedDate.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: '2-digit',
+                                year: 'numeric'
+                            });
                         }
                     },
                     {
                         data: null,
                         orderable: false,
+                        searchable: false,
+                        className: 'text-nowrap text-center',
                         render: function (data, type, row) {
-                            const editUrl = `/VT/Questionnaire/AddQuestion/${row.idEnc}`;
-                            return `
-                                <a href="${editUrl}" class="btn btn-sm btn-primary mr-1" title="Edit">
-                                    <i class="ti-pencil"></i>
-                                </a>
-                                <button class="btn btn-sm btn-danger delete-question" data-id="${row.id}" data-id-enc="${row.idEnc}" title="Delete">
-                                    <i class="ti-trash"></i>
-                                </button>
-                            `;
+                            var editUrl = '/VT/Questionnaire/AddQuestion/' + row.idEnc;
+                            return '' +
+                                '<div class="vt-actions-cell">' +
+                                '<a href="' + editUrl + '" class="btn btn-sm btn-info vt-action-btn" title="Edit">' +
+                                '<span class="vt-action-icon"><i class="ti-pencil"></i></span>' +
+                                '</a>' +
+                                '<button type="button" class="btn btn-sm btn-danger vt-action-btn delete-question" data-id="' + row.id + '" title="Delete">' +
+                                '<span class="vt-action-icon"><i class="ti-trash"></i></span>' +
+                                '</button>' +
+                                '</div>';
                         }
                     }
-                ],
-                order: [[0, 'desc']],
-                pageLength: 10,
-                language: {
-                    processing: "Loading questions..."
-                }
+                ]
             });
 
-            // Delete question
             $(document).on('click', '.delete-question', function () {
-                const questionId = $(this).data('id');
-                const questionIdEnc = $(this).data('id-enc');
+                var questionId = $(this).data('id');
 
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
+                    text: 'You want to delete this question.',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        $.ajax({
-                            url: '/VT/Questionnaire/DeleteQuestion',
-                            type: 'POST',
-                            contentType: 'application/json',
-                            data: JSON.stringify({ Id: questionId }),
-                            success: function (response) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: response,
-                                    showConfirmButton: true
-                                }).then(function () {
-                                    $('#QuestionsTable').DataTable().ajax.reload();
-                                });
-                            },
-                            error: function (xhr) {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Error',
-                                    text: xhr.responseText || 'An error occurred while deleting'
-                                });
-                            }
-                        });
+                    confirmButtonText: 'Yes, delete it!',
+                    customClass: {
+                        confirmButton: 'btn btn-primary me-3',
+                        cancelButton: 'btn btn-label-secondary'
+                    },
+                    buttonsStyling: false
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
                     }
+
+                    BlockUI();
+                    $.ajax({
+                        url: '/VT/Questionnaire/DeleteQuestion',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ Id: questionId }),
+                        success: function (response) {
+                            UnblockUI();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted',
+                                text: response,
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                },
+                                buttonsStyling: false
+                            }).then(function () {
+                                questionsTable.ajax.reload(null, false);
+                            });
+                        },
+                        error: function (xhr) {
+                            UnblockUI();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: xhr.responseText || 'An error occurred while deleting',
+                                confirmButtonText: 'OK',
+                                customClass: {
+                                    confirmButton: 'btn btn-primary'
+                                },
+                                buttonsStyling: false
+                            });
+                        }
+                    });
                 });
             });
         });

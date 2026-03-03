@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -64,6 +64,20 @@ public class UnitOfWork : IUnitOfWork
     {
         try { _context.Dispose(); }
         catch { }
+
+        // Dispose Dapper-based repositories so their connections are returned to the pool
+        foreach (var repo in new IDisposable[]
+        {
+            Project as IDisposable, Client as IDisposable, ProjectsUrl as IDisposable,
+            ProjectMapping as IDisposable, Suppliers as IDisposable, SupplierPanelSize as IDisposable,
+            SupplierLogin as IDisposable, GenOperations as IDisposable, SupplierProjects as IDisposable,
+            SupplierProjectMessages as IDisposable, SupplierProjectMessageAttachments as IDisposable,
+            QuestionsMaster as IDisposable, QuestionOption as IDisposable
+        })
+        {
+            try { repo?.Dispose(); }
+            catch { }
+        }
     }
 
     public int Save()

@@ -1,0 +1,528 @@
+@{
+    ViewData["Title"] = "ID Mapping";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
+<style>
+    .vt-id-mapping-page {
+        --vt-id-theme: #1d7874;
+        --vt-id-theme-dark: #165c59;
+        --vt-id-border: rgba(29, 120, 116, 0.22);
+    }
+
+    .vt-id-mapping-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-id-mapping-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-id-mapping-page .card--table-section {
+        border: 1px solid var(--vt-id-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-id-mapping-page .table-section-header {
+        border-left-color: var(--vt-id-theme);
+    }
+
+    .vt-id-mapping-page .vt-filter-card {
+        border: 1px solid #dbe3ea;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .vt-id-mapping-page .vt-filter-card .card-body {
+        padding: 1rem 1.1rem;
+    }
+
+    .vt-id-mapping-page .form-group {
+        margin-bottom: 0.9rem;
+    }
+
+    .vt-id-mapping-page .form-control,
+    .vt-id-mapping-page select.form-control,
+    .vt-id-mapping-page textarea.form-control {
+        font-size: 0.875rem;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+    }
+
+    .vt-id-mapping-page select.form-control {
+        height: 38px;
+        min-height: 38px;
+    }
+
+    .vt-id-mapping-page textarea.form-control {
+        min-height: 146px;
+        resize: vertical;
+        padding-top: 0.55rem;
+        padding-bottom: 0.55rem;
+    }
+
+    .vt-id-mapping-page .form-control:focus {
+        border-color: var(--vt-id-theme);
+        box-shadow: 0 0 0 2px rgba(29, 120, 116, 0.2);
+    }
+
+    .vt-id-mapping-page .vt-filter-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+    }
+
+    .vt-id-mapping-page .btn-primary {
+        background: linear-gradient(135deg, var(--vt-id-theme) 0%, var(--vt-id-theme-dark) 100%) !important;
+        border-color: var(--vt-id-theme-dark) !important;
+        color: #fff !important;
+    }
+
+    .vt-id-mapping-page .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-id-theme-dark) 0%, #124a47 100%) !important;
+        border-color: #124a47 !important;
+    }
+
+    .vt-id-mapping-page #btnSubmit {
+        height: 38px;
+        min-width: 112px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.35rem;
+    }
+
+    .vt-id-mapping-page #btnSubmit i {
+        font-size: 0.86rem;
+        line-height: 1;
+    }
+
+    .vt-id-mapping-page #lblmsg {
+        min-height: 18px;
+        margin-bottom: 0.3rem;
+        color: #dc2626;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .vt-id-mapping-page .vt-failed-box {
+        margin-top: 0.65rem;
+        border: 1px dashed #f59e0b;
+        border-radius: 10px;
+        background: #fffbeb;
+        padding: 0.65rem 0.75rem;
+        display: none;
+    }
+
+    .vt-id-mapping-page .vt-failed-box p {
+        margin: 0 0 0.35rem 0;
+        color: #92400e;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .vt-id-mapping-page .vt-failed-box ul {
+        margin: 0;
+        padding-left: 1rem;
+        max-height: 140px;
+        overflow-y: auto;
+        color: #78350f;
+        font-size: 0.75rem;
+    }
+
+    .vt-id-mapping-page .vt-ref-table-wrap .ref-dt-top .dt-buttons .dt-button {
+        border: 0 !important;
+        border-radius: 9999px !important;
+        padding: 0.42rem 0.75rem !important;
+        margin: 0 !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        color: #fff !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.35rem;
+        background-image: none !important;
+        box-shadow: none !important;
+    }
+
+    .vt-id-mapping-page .vt-ref-table-wrap .ref-dt-top .dt-buttons .dt-button.btn-excel {
+        background: #16a34a !important;
+    }
+
+    .vt-id-mapping-page .vt-ref-table-wrap .ref-dt-top .dt-buttons .dt-button.btn-csv {
+        background: #475569 !important;
+    }
+
+    .vt-id-mapping-page .vt-ref-table-wrap .ref-dt-top .dt-buttons .dt-button:hover {
+        filter: brightness(0.95);
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(1),
+    .vt-id-mapping-page #tblRespondents td:nth-child(1) {
+        min-width: 180px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(2),
+    .vt-id-mapping-page #tblRespondents td:nth-child(2) {
+        min-width: 110px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(3),
+    .vt-id-mapping-page #tblRespondents td:nth-child(3) {
+        min-width: 130px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(9),
+    .vt-id-mapping-page #tblRespondents td:nth-child(9) {
+        min-width: 120px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(10),
+    .vt-id-mapping-page #tblRespondents td:nth-child(10) {
+        min-width: 120px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(11),
+    .vt-id-mapping-page #tblRespondents td:nth-child(11) {
+        min-width: 112px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(12),
+    .vt-id-mapping-page #tblRespondents td:nth-child(12) {
+        min-width: 130px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(13),
+    .vt-id-mapping-page #tblRespondents td:nth-child(13) {
+        min-width: 128px;
+    }
+
+    .vt-id-mapping-page #tblRespondents th:nth-child(14),
+    .vt-id-mapping-page #tblRespondents td:nth-child(14) {
+        min-width: 90px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .vt-id-mapping-page .vt-filter-actions {
+            width: 100%;
+        }
+
+        .vt-id-mapping-page #btnSubmit {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-id-mapping-page">
+    <div class="ref-page-title">
+        <h1>ID Mapping</h1>
+        <p class="ref-subtitle">Search respondent mappings by Unique Id or Supplier Id</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header mb-3">Filter</p>
+                    <div class="row">
+                        <div class="col-lg-5 mb-3 mb-lg-0">
+                            <div class="vt-filter-card h-100">
+                                <div class="card-body">
+                                    <div id="lblmsg"></div>
+                                    <div class="form-group">
+                                        <label class="control-label" for="ddlRespondents">Select</label>
+                                        <select id="ddlRespondents" class="form-control" name="ddlRespondents">
+                                            <option value="0">--Select--</option>
+                                            <option value="1">Unique Id</option>
+                                            <option value="2">Supplier Id</option>
+                                        </select>
+                                    </div>
+                                    <div class="vt-filter-actions">
+                                        <button type="button" class="btn btn-primary btn-sm" id="btnSubmit" name="btnSubmit">
+                                            <i class="ti-search" aria-hidden="true"></i>
+                                            <span>Search</span>
+                                        </button>
+                                    </div>
+                                    <div class="vt-failed-box" id="failedBox">
+                                        <p id="failedSummary"></p>
+                                        <ul id="failedList"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-7">
+                            <div class="vt-filter-card h-100">
+                                <div class="card-body">
+                                    <div class="form-group mb-0">
+                                        <label class="control-label" for="txtIds">Respondents Id</label>
+                                        <textarea id="txtIds" class="form-control" rows="9" placeholder="One ID per line"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section vt-ref-table-card">
+                <div class="card-body">
+                    <p class="table-section-header">Respondents</p>
+                    <div class="vt-ref-table-wrap">
+                        <div class="table-responsive">
+                            <table id="tblRespondents" class="table table-striped vt-ref-table ref-project-table" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Project Name</th>
+                                        <th>Project Number</th>
+                                        <th>Supplier Name</th>
+                                        <th>SID</th>
+                                        <th>UID</th>
+                                        <th>Country</th>
+                                        <th>Supplier ID</th>
+                                        <th>Status</th>
+                                        <th>StartDate</th>
+                                        <th>EndDate</th>
+                                        <th>Duration(Mins)</th>
+                                        <th>ClientBrowser</th>
+                                        <th>ClientIP</th>
+                                        <th>Device</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var table = null;
+
+            function getVal(obj, camelKey, pascalKey) {
+                if (!obj) return '';
+                var camel = obj[camelKey];
+                if (camel !== undefined && camel !== null) return String(camel);
+                var pascal = obj[pascalKey];
+                return pascal !== undefined && pascal !== null ? String(pascal) : '';
+            }
+
+            function escapeHtml(value) {
+                if (value == null) return '';
+                var s = String(value);
+                return s
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function normalizeRows(response) {
+                if (Array.isArray(response)) return response;
+                if (response && Array.isArray(response.d)) return response.d;
+                if (response && Array.isArray(response.data)) return response.data;
+                return [];
+            }
+
+            function destroyDataTableIfExists() {
+                if (table) {
+                    table.destroy();
+                    table = null;
+                }
+            }
+
+            function renderRows(rows) {
+                destroyDataTableIfExists();
+                var tbodyHtml = '';
+
+                if (rows.length === 0) {
+                    tbodyHtml = '<tr><td colspan="14" class="text-center text-muted py-4">No records found.</td></tr>';
+                    $('#tblRespondents tbody').html(tbodyHtml);
+                    return;
+                }
+
+                for (var i = 0; i < rows.length; i++) {
+                    var r = rows[i];
+                    tbodyHtml += '<tr>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'pName', 'PName')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'pid', 'PID')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'supplierName', 'SupplierName')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'sid', 'SID')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'uid', 'UID')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'country', 'Country')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'supplierId', 'SupplierId')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'status', 'Status')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'sdate', 'Sdate')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'edate', 'Edate')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'duration', 'Duration')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'clientBrowser', 'ClientBrowser')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'clientIP', 'ClientIP')) + '</td>';
+                    tbodyHtml += '<td>' + escapeHtml(getVal(r, 'device', 'Device')) + '</td>';
+                    tbodyHtml += '</tr>';
+                }
+
+                $('#tblRespondents tbody').html(tbodyHtml);
+                table = $('#tblRespondents').DataTable({
+                    order: [[0, 'asc']],
+                    autoWidth: false,
+                    scrollX: false,
+                    pageLength: 50,
+                    dom: '<"ref-dt-top"Bf>t<"ref-dt-bottom"ip>',
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Search..."
+                    },
+                    buttons: [
+                        {
+                            extend: 'excelHtml5',
+                            className: 'btn-excel',
+                            titleAttr: 'Export to Excel',
+                            filename: 'ID_Mapping'
+                        },
+                        {
+                            extend: 'csvHtml5',
+                            className: 'btn-csv',
+                            titleAttr: 'Export to CSV',
+                            filename: 'ID_Mapping'
+                        }
+                    ]
+                });
+            }
+
+            function showFailed(ids) {
+                if (!ids || ids.length === 0) {
+                    $('#failedSummary').text('');
+                    $('#failedList').empty();
+                    $('#failedBox').hide();
+                    return;
+                }
+
+                $('#failedSummary').text(ids.length + ' ID(s) could not be mapped.');
+                $('#failedList').empty();
+                for (var i = 0; i < ids.length; i++) {
+                    $('#failedList').append('<li>' + escapeHtml(ids[i]) + '</li>');
+                }
+                $('#failedBox').show();
+            }
+
+            function startBusy() {
+                if (typeof BlockUI === 'function') {
+                    BlockUI();
+                }
+            }
+
+            function stopBusy() {
+                if (typeof UnblockUI === 'function') {
+                    UnblockUI();
+                }
+            }
+
+            async function fetchMappingRows(ids, opt) {
+                var mappedRows = [];
+                var failedIds = [];
+
+                for (var i = 0; i < ids.length; i++) {
+                    var currentId = ids[i];
+                    try {
+                        var response = await $.ajax({
+                            type: 'POST',
+                            url: '/VT/ProjectInfoSearc.aspx/Getstatus',
+                            contentType: 'application/json; charset=utf-8',
+                            dataType: 'json',
+                            data: JSON.stringify({ opt: opt, id: currentId })
+                        });
+
+                        var rows = normalizeRows(response);
+                        if (!rows.length) {
+                            failedIds.push(currentId);
+                            continue;
+                        }
+
+                        var hasSuccessRow = false;
+                        for (var j = 0; j < rows.length; j++) {
+                            var errorText = getVal(rows[j], 'error', 'Error');
+                            if (errorText) {
+                                failedIds.push(currentId + ' - ' + errorText);
+                                continue;
+                            }
+                            mappedRows.push(rows[j]);
+                            hasSuccessRow = true;
+                        }
+
+                        if (!hasSuccessRow && rows.length > 0) {
+                            failedIds.push(currentId);
+                        }
+                    } catch (e) {
+                        failedIds.push(currentId);
+                    }
+                }
+
+                return { mappedRows: mappedRows, failedIds: failedIds };
+            }
+
+            $('#btnSubmit').on('click', async function () {
+                $('#lblmsg').text('');
+                showFailed([]);
+                renderRows([]);
+
+                var selectedType = $('#ddlRespondents').val();
+                var idsText = $('#txtIds').val() || '';
+
+                if (!idsText.trim()) {
+                    $('#lblmsg').text("Please enter ID's");
+                    return;
+                }
+                if (selectedType === '0' || selectedType === '') {
+                    $('#lblmsg').text('Please select Id Type');
+                    return;
+                }
+
+                var ids = idsText
+                    .split(/\r?\n/)
+                    .map(function (s) { return s.trim(); })
+                    .filter(function (s) { return s.length > 0; });
+
+                if (ids.length === 0) {
+                    $('#lblmsg').text("Please enter ID's");
+                    return;
+                }
+
+                // Legacy mapping from old ProjectInfoSearc.aspx:
+                // dropdown 2 (Supplier Id) => opt 1, dropdown 1 (Unique Id) => opt 2.
+                var opt = selectedType === '2' ? 1 : 2;
+
+                startBusy();
+                try {
+                    var result = await fetchMappingRows(ids, opt);
+                    renderRows(result.mappedRows);
+                    showFailed(result.failedIds);
+                } finally {
+                    stopBusy();
+                }
+            });
+
+            $(document).ready(function () {
+                renderRows([]);
+            });
+        })();
+    </script>
+}

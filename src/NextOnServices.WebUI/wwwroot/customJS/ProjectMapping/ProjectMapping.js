@@ -1,15 +1,37 @@
-﻿function ApplyVariable(id) {
-    if ($('#' + id).is(':checked')) {
-        $('.ParameterContent').show();
+function ApplyVariable(id) {
+    var isChecked = $('#' + id).is(':checked');
+    $('.ParameterContent').toggle(isChecked);
+}
+
+function getProjectMappingAjaxErrorMessage(xhr, fallbackMessage) {
+    if (xhr && xhr.responseText && $.trim(xhr.responseText) !== '') {
+        return xhr.responseText;
     }
-    else {
-        $('.ParameterContent').hide();
+    return fallbackMessage;
+}
+
+function initializeProjectMappingSelects() {
+    var $selects = $("#PartialView_AddProjectMapping .select2");
+    if ($selects.length === 0) {
+        return;
     }
+
+    $selects.each(function () {
+        if ($(this).hasClass('select2-hidden-accessible')) {
+            $(this).select2('destroy');
+        }
+    });
+
+    $selects.select2({
+        dropdownCssClass: 'vt-theme-dropdown',
+        width: '100%'
+    });
 }
 
 function AddProjectMappingPartialView() {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.encProjectId = $("[name='ProjectMappingWithChild.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -18,21 +40,23 @@ function AddProjectMappingPartialView() {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_AddProjectMapping").html(data);
-            $(".select2").select2();
+            initializeProjectMappingSelects();
             ApplyVariable('chkAddHashing');
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getProjectMappingAjaxErrorMessage(xhr, "Unable to load mapping form."));
         }
     });
 }
+
 function ListProjectMappingPartialView() {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.encProjectId = $("[name='ProjectMappingWithChild.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -41,34 +65,30 @@ function ListProjectMappingPartialView() {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_ListProjectMapping").html(data);
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getProjectMappingAjaxErrorMessage(xhr, "Unable to load mapping list."));
         }
     });
 }
 
 function AddProjectMapping() {
-    let userData = $("#ProjectMappingForm");
+    var form = $("#ProjectMappingForm");
     var inputDTO = {};
-    inputDTO.Id = $(userData).find("[name='ProjectMappingWithChild.Id']").val() == "" ? 0 : $(userData).find("[name='ProjectMappingWithChild.Id']").val();
-    inputDTO.CountryId = $(userData).find("[name='ProjectMappingWithChild.CountryId']").val();
-    inputDTO.SupplierId = $(userData).find("[name='ProjectMappingWithChild.SupplierId']").val();
-    inputDTO.Cpi = $(userData).find("[name='ProjectMappingWithChild.Cpi']").val();
-    inputDTO.Respondants = $(userData).find("[name='ProjectMappingWithChild.Respondants']").val();
+    inputDTO.Id = $(form).find("[name='ProjectMappingWithChild.Id']").val() === "" ? 0 : $(form).find("[name='ProjectMappingWithChild.Id']").val();
+    inputDTO.CountryId = $(form).find("[name='ProjectMappingWithChild.CountryId']").val();
+    inputDTO.SupplierId = $(form).find("[name='ProjectMappingWithChild.SupplierId']").val();
+    inputDTO.Cpi = $(form).find("[name='ProjectMappingWithChild.Cpi']").val();
+    inputDTO.Respondants = $(form).find("[name='ProjectMappingWithChild.Respondants']").val();
     inputDTO.encProjectId = $("[name='ProjectMappingWithChild.encProjectId']").val();
-    inputDTO.AddHashingBool = $(userData).find("[name='ProjectMappingWithChild.AddHashingBool']").prop('checked');
-
-    inputDTO.Notes = $(userData).find("[name='ProjectMappingWithChild.Notes']").val();
-
-    inputDTO.ParameterName = $(userData).find("[name='ProjectMappingWithChild.ParameterName']").val();
-    inputDTO.HashingType = $(userData).find("[name='ProjectMappingWithChild.HashingType']").val();
-
-
+    inputDTO.AddHashingBool = $(form).find("[name='ProjectMappingWithChild.AddHashingBool']").prop('checked');
+    inputDTO.Notes = $(form).find("[name='ProjectMappingWithChild.Notes']").val();
+    inputDTO.ParameterName = $(form).find("[name='ProjectMappingWithChild.ParameterName']").val();
+    inputDTO.HashingType = $(form).find("[name='ProjectMappingWithChild.HashingType']").val();
 
     BlockUI();
     $.ajax({
@@ -77,25 +97,25 @@ function AddProjectMapping() {
         contentType: 'application/json',
         data: JSON.stringify(inputDTO),
         success: function (data) {
+            var successMessage = (typeof data === "string" && $.trim(data) !== "") ? data : "Project mapping saved successfully.";
             UnblockUI();
-            Swal.fire({ title: 'Success!', text: "Project Mapped", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
-                if (result.isConfirmed) {
-                    ListProjectMappingPartialView();
-                    AddProjectMappingPartialView();
-                }
+            Swal.fire({ title: 'Success', text: successMessage, icon: 'success', confirmButtonText: 'OK' }).then(function () {
+                ListProjectMappingPartialView();
+                AddProjectMappingPartialView();
             });
         },
-        error: function (error) {
-            $erroralert("Error!", error.responseText);
+        error: function (xhr) {
             UnblockUI();
+            $erroralert("Error!", getProjectMappingAjaxErrorMessage(xhr, "Unable to save project mapping."));
         }
     });
 }
 
 function EditProjectMapping(Id) {
-    let inputDTO = {};
+    var inputDTO = {};
     inputDTO.Id = Id;
     inputDTO.encProjectId = $("[name='ProjectMappingWithChild.encProjectId']").val();
+
     BlockUI();
     $.ajax({
         type: "POST",
@@ -104,41 +124,35 @@ function EditProjectMapping(Id) {
         data: JSON.stringify(inputDTO),
         cache: false,
         dataType: "html",
-        success: function (data, textStatus, jqXHR) {
-
-            UnblockUI();
+        success: function (data) {
             $("#PartialView_AddProjectMapping").html(data);
-            $(".select2").select2();
+            initializeProjectMappingSelects();
             ApplyVariable('chkAddHashing');
-
-            //UnblockUI();
-            //$("#PartialView_AddProjectURL").html(data);
-            //$(".select2").select2();
-            //Tokens($('#chkTokens').attr('id'));
-        },
-        error: function (result) {
-            $erroralert("Error!", error.responseText);
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getProjectMappingAjaxErrorMessage(xhr, "Unable to load mapping for edit."));
         }
     });
 }
 
-function CheckMapping(Id, curObj) {
-    let inputDTO = {};
+function CheckMapping(Id) {
+    var inputDTO = {};
     inputDTO.Id = Id;
+
     BlockUI();
     $.ajax({
         type: "POST",
         url: "/VT/ProjectMapping/CheckProjectMapping",
         contentType: 'application/json',
         data: JSON.stringify(inputDTO),
-        success: function (data) {
-            UnblockUI();            
-        },
-        error: function (error) {
-            $erroralert("Error!", error.responseText);
+        success: function () {
             UnblockUI();
+        },
+        error: function (xhr) {
+            UnblockUI();
+            $erroralert("Error!", getProjectMappingAjaxErrorMessage(xhr, "Unable to update mapping check status."));
         }
     });
-    
 }

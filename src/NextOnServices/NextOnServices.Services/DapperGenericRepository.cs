@@ -25,7 +25,7 @@ using System.Transactions;
 
 namespace NextOnServices.Services;
 
-public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, new()
+public class DapperGenericRepository<T> : IDapperRepository<T>, IDisposable where T : class, new()
 {
     protected IDbConnection DbConnection { get; private set; }
     private readonly DapperDBSetting _dbSettings;
@@ -83,62 +83,70 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
 
     public async Task<int> EexecuteAddAsync(T entity, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
-            DbConnection.Open();
+        bool shouldClose = (dbConnection.State == ConnectionState.Closed);
+        if (shouldClose)
+            dbConnection.Open();
 
         try
         {
-            var inserted = (await DbConnection
-            .InsertAsync<T>(entity, transaction, timeOut));
-
+            var inserted = (await dbConnection.InsertAsync<T>(entity, transaction, timeOut));
             return inserted;
         }
         catch (Exception ex)
         {
             return 0;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (shouldClose && dbConnection.State == ConnectionState.Open)
+                dbConnection.Close();
+        }
     }
 
     public async Task<bool> EexecuteUpdateAsync(T entity, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
-            DbConnection.Open();
+        bool shouldClose = (dbConnection.State == ConnectionState.Closed);
+        if (shouldClose)
+            dbConnection.Open();
 
         try
         {
-            return await DbConnection.UpdateAsync<T>(entity, transaction, timeOut);
-
+            return await dbConnection.UpdateAsync<T>(entity, transaction, timeOut);
         }
         catch (Exception ex)
         {
             return false;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (shouldClose && dbConnection.State == ConnectionState.Open)
+                dbConnection.Close();
+        }
     }
 
     public async Task<bool> EexecuteDeleteAsync(int id, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
-            DbConnection.Open();
+        bool shouldClose = (dbConnection.State == ConnectionState.Closed);
+        if (shouldClose)
+            dbConnection.Open();
 
         try
         {
-            var entity = await DbConnection
-               .GetAsync<T>(id);
-
+            var entity = await dbConnection.GetAsync<T>(id);
             if (entity == null)
                 return false;
 
-            return await DbConnection
-                .DeleteAsync<T>(entity, transaction, timeOut);
-
+            return await dbConnection.DeleteAsync<T>(entity, transaction, timeOut);
         }
         catch (Exception ex)
         {
             return false;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (shouldClose && dbConnection.State == ConnectionState.Open)
+                dbConnection.Close();
+        }
     }
 
 
@@ -312,10 +320,8 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
 
     public async Task<List<T>> GetQueryAll<T>(string query, IDbConnection IDBConn, IDbTransaction trans)
     {
-        //if (connection.State != ConnectionState.Open)
-        //    connection.Open();
-        //else
-        if (IDBConn.State != ConnectionState.Open)
+        bool weOpened = (IDBConn.State != ConnectionState.Open);
+        if (weOpened)
             IDBConn.Open();
         try
         {
@@ -326,7 +332,11 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             return null;
         }
-        //finally { IDBConn.Close(); }
+        finally
+        {
+            if (weOpened && IDBConn.State == ConnectionState.Open)
+                IDBConn.Close();
+        }
     }
 
     public async Task<List<T>> GetTableData<T>(string sQuery, object parameters = null)
@@ -343,7 +353,12 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var data = await DbConnection.QueryAsync<T>(query, parameters);
             return data.ToList();
         }
-        catch (Exception ex) { throw ex; }
+        catch { throw; }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
     public async Task<T> GetEntityData<T>(string sQuery, object parameters = null)
     {
@@ -358,10 +373,7 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var data = await DbConnection.QueryFirstOrDefaultAsync<T>(sQuery, parameters);
             return data;
         }
-        catch (Exception ex)
-        {
-            throw ex;
-        }
+        catch { throw; }
         finally
         {
             if (DbConnection.State == ConnectionState.Open)
@@ -381,10 +393,7 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var data = await DbConnection.QueryFirstOrDefaultAsync<T>(sQuery, parameters, commandType: CommandType.StoredProcedure);
             return data;
         }
-        catch (Exception ex)
-        {
-            throw ex;
-        }
+        catch { throw; }
         finally
         {
             if (DbConnection.State == ConnectionState.Open)
@@ -405,7 +414,12 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var data = await DbConnection.QueryAsync<T>(query, parameters, commandType: CommandType.StoredProcedure);
             return data.ToList();
         }
-        catch (Exception ex) { throw ex; }
+        catch { throw; }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
     public async Task<int> GetEntityCount(string sQuery, object parameters = null)
     {
@@ -417,10 +431,7 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var count = await DbConnection.ExecuteScalarAsync<int>(sQuery, parameters);
             return count;
         }
-        catch (Exception ex)
-        {
-            throw ex;
-        }
+        catch { throw; }
         finally
         {
             if (DbConnection.State == ConnectionState.Open)
@@ -437,7 +448,8 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         string sQryWhere = (sWhere != "" ? " Where " + sWhere : "");
         string sQryOrderBy = (sOrderBy != "" ? " ORDER BY " + sOrderBy : "");
         var query = $"SELECT * FROM {tableName} {sQryWhere} {sQryOrderBy}";
-        if (connection.State != ConnectionState.Open)
+        bool weOpened = (connection.State != ConnectionState.Open);
+        if (weOpened)
             connection.Open();
 
         try
@@ -445,39 +457,54 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             var data = await connection.QueryAsync<T>(query, null, trans);
             return data.ToList();
         }
-        catch (Exception ex) { throw ex; }
+        catch { throw; }
+        finally
+        {
+            if (weOpened && connection.State == ConnectionState.Open)
+                connection.Close();
+        }
     }
 
     public async Task<List<T>> GetTableData<T>(string sQuery, IDbConnection connection, IDbTransaction trans = null)
     {
-        //var DbConnection = trans?.Connection ?? connection;
         var tableName = typeof(T).Name;
         var query = sQuery;
-        if (DbConnection.State != ConnectionState.Open)
-            DbConnection.Open();
+        bool shouldClose = (connection.State == ConnectionState.Closed);
+        if (shouldClose)
+            connection.Open();
         try
         {
-            var data = await DbConnection.QueryAsync<T>(query, null, trans);
+            var data = await connection.QueryAsync<T>(query, null, trans);
             return data.ToList();
         }
-        catch (Exception ex) { throw ex; }
+        catch { throw; }
+        finally
+        {
+            if (shouldClose && connection.State == ConnectionState.Open)
+                connection.Close();
+        }
     }
 
     public async Task<bool> DeleteTableData<T>(IDbConnection connection, IDbTransaction trans = null, string sWhere = "")
     {
-        //var DbConnection = trans?.Connection ?? connection;
         var tableName = typeof(T).Name;
         string sQryWhere = (sWhere != "" ? " Where " + sWhere : "");
         var query = $"DELETE FROM {tableName} {sQryWhere}";
-        if (DbConnection.State != ConnectionState.Open)
-            DbConnection.Open();
+        bool shouldClose = (connection.State == ConnectionState.Closed);
+        if (shouldClose)
+            connection.Open();
 
         try
         {
-            await DbConnection.QueryAsync<T>(query, null, trans);
+            await connection.QueryAsync<T>(query, null, trans);
             return true;
         }
         catch (Exception ex) { return false; }
+        finally
+        {
+            if (shouldClose && connection.State == ConnectionState.Open)
+                connection.Close();
+        }
     }
     public async Task<bool> ExecuteQueryAsync(string sQuery, object parameters = null)
     {
@@ -523,14 +550,16 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         try
         {
             ProjectDetailPageViewModel projectDetailPageViewModel = new ProjectDetailPageViewModel();
-            var results = await DbConnection.QueryMultipleAsync(query);
-            projectDetailPageViewModel.ProjectDetailList = results.Read<ProjectDetail>().ToList();
-            projectDetailPageViewModel.SurveySpecsList = results.Read<SurveySpecs>().ToList();
-            projectDetailPageViewModel.Table3List = results.Read<Table3>().ToList();
-            projectDetailPageViewModel.SurveyLinksList = results.Read<SurveyLinks>().ToList();
-            projectDetailPageViewModel.Table5List = results.Read<Table5>().ToList();
-            projectDetailPageViewModel.SupplierDetailsList = results.Read<SupplierDetails>().ToList();
-            projectDetailPageViewModel.CountryDetailsList = results.Read<CountryDetails>().ToList();
+            using (var results = await DbConnection.QueryMultipleAsync(query))
+            {
+                projectDetailPageViewModel.ProjectDetailList = results.Read<ProjectDetail>().ToList();
+                projectDetailPageViewModel.SurveySpecsList = results.Read<SurveySpecs>().ToList();
+                projectDetailPageViewModel.Table3List = results.Read<Table3>().ToList();
+                projectDetailPageViewModel.SurveyLinksList = results.Read<SurveyLinks>().ToList();
+                projectDetailPageViewModel.Table5List = results.Read<Table5>().ToList();
+                projectDetailPageViewModel.SupplierDetailsList = results.Read<SupplierDetails>().ToList();
+                projectDetailPageViewModel.CountryDetailsList = results.Read<CountryDetails>().ToList();
+            }
 
             await PopulateSupplierChatSummaries(projectDetailPageViewModel.SupplierDetailsList);
 
@@ -613,7 +642,22 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         }
     }
 
-
+    public void Dispose()
+    {
+        if (DbConnection == null)
+            return;
+        try
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
+        catch { }
+        try
+        {
+            DbConnection.Dispose();
+        }
+        catch { }
+    }
 
 }
 

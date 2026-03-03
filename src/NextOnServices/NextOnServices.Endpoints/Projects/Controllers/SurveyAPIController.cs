@@ -12,6 +12,7 @@ using NextOnServices.Infrastructure.ViewModels.SurveyRedirects;
 using NextOnServices.Services.DBContext;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -341,6 +342,65 @@ public class SurveyAPIController : ControllerBase
     }
 
     /// <summary>
+    /// ID Mapping: get respondent/project rows for a single UID or Supplier ID.
+    /// Legacy source: GetMultpleStatusProc (@opt: 1=Supplier Id, 2=Unique Id).
+    /// </summary>
+    public async Task<List<RespondentSearchResultDTO>> GetMultipleStatus(int opt, string id)
+    {
+        try
+        {
+            var rows = await _unitOfWork.GenOperations.GetTableDataSP<dynamic>(
+                "GetMultpleStatusProc",
+                new { @id = id, @opt = opt });
+
+            if (rows == null || !rows.Any())
+                return new List<RespondentSearchResultDTO>();
+
+            var result = new List<RespondentSearchResultDTO>();
+            foreach (var row in rows)
+            {
+                var d = row as IDictionary<string, object>;
+                if (d == null) continue;
+
+                if (d.ContainsKey("Error") && d["Error"] != null && d["Error"] != DBNull.Value)
+                {
+                    result.Add(new RespondentSearchResultDTO
+                    {
+                        Error = GetString(d, "Error")
+                    });
+                    continue;
+                }
+
+                result.Add(new RespondentSearchResultDTO
+                {
+                    PName = GetString(d, "PName"),
+                    PID = GetString(d, "PID"),
+                    SupplierName = GetString(d, "Supplier Name"),
+                    SID = GetString(d, "SID"),
+                    UID = GetString(d, "UID"),
+                    Country = GetString(d, "Country"),
+                    SupplierId = GetString(d, "Supplier ID"),
+                    Status = GetString(d, "Status"),
+                    Sdate = GetString(d, "StartDate"),
+                    Edate = GetString(d, "EndDate"),
+                    Duration = GetString(d, "Duration"),
+                    ClientBrowser = GetString(d, "ClientBrowser"),
+                    ClientIP = GetString(d, "ClientIP"),
+                    Device = GetString(d, "Device"),
+                    Error = ""
+                });
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(GetMultipleStatus));
+            throw;
+        }
+    }
+
+    /// <summary>
     /// ID Search: update respondent status in SupplierProjects by UID.
     /// </summary>
     public async Task<int> UpdateRespondentStatus(string id, string status)
@@ -359,23 +419,190 @@ public class SurveyAPIController : ControllerBase
         }
     }
 
+    private static bool TryGetValue(IDictionary<string, object> d, string key, out object? value)
+    {
+        value = null;
+        if (d == null || string.IsNullOrWhiteSpace(key))
+            return false;
+
+        if (d.TryGetValue(key, out var direct))
+        {
+            value = direct;
+            return true;
+        }
+
+        foreach (var kv in d)
+        {
+            if (string.Equals(kv.Key, key, StringComparison.OrdinalIgnoreCase))
+            {
+                value = kv.Value;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static object? GetValueAny(IDictionary<string, object> d, params string[] keys)
+    {
+        if (d == null || keys == null || keys.Length == 0)
+            return null;
+
+        foreach (var key in keys)
+        {
+            if (TryGetValue(d, key, out var v))
+                return v;
+        }
+        return null;
+    }
+
     private static string GetString(IDictionary<string, object> d, string key)
     {
-        if (d == null || !d.ContainsKey(key)) return "";
-        var v = d[key];
+        var v = GetValueAny(d, key);
+        return v == null || v == DBNull.Value ? "" : Convert.ToString(v) ?? "";
+    }
+
+    private static string GetStringAny(IDictionary<string, object> d, params string[] keys)
+    {
+        var v = GetValueAny(d, keys);
         return v == null || v == DBNull.Value ? "" : Convert.ToString(v) ?? "";
     }
 
     private static int GetInt(IDictionary<string, object> d, string key)
     {
-        if (d == null || !d.ContainsKey(key) || d[key] == null || d[key] == DBNull.Value) return 0;
-        return int.TryParse(Convert.ToString(d[key]), out var value) ? value : 0;
+        var v = GetValueAny(d, key);
+        return v == null || v == DBNull.Value ? 0 : (int.TryParse(Convert.ToString(v), out var value) ? value : 0);
+    }
+
+    private static int GetIntAny(IDictionary<string, object> d, params string[] keys)
+    {
+        var v = GetValueAny(d, keys);
+        return v == null || v == DBNull.Value ? 0 : (int.TryParse(Convert.ToString(v), out var value) ? value : 0);
     }
 
     private static decimal GetDecimal(IDictionary<string, object> d, string key)
     {
-        if (d == null || !d.ContainsKey(key) || d[key] == null || d[key] == DBNull.Value) return 0m;
-        return decimal.TryParse(Convert.ToString(d[key]), out var value) ? value : 0m;
+        var v = GetValueAny(d, key);
+        if (v == null || v == DBNull.Value) return 0m;
+        var s = Convert.ToString(v) ?? "";
+        if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var value)) return value;
+        return decimal.TryParse(s, out value) ? value : 0m;
+    }
+
+    private static decimal GetDecimalAny(IDictionary<string, object> d, params string[] keys)
+    {
+        var v = GetValueAny(d, keys);
+        if (v == null || v == DBNull.Value) return 0m;
+        var s = Convert.ToString(v) ?? "";
+        if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var value)) return value;
+        return decimal.TryParse(s, out value) ? value : 0m;
+    }
+
+    private static List<IDictionary<string, object>> ToDictionaryRows(IEnumerable<dynamic>? rows)
+    {
+        var list = new List<IDictionary<string, object>>();
+        if (rows == null) return list;
+
+        foreach (var row in rows)
+        {
+            if (row is IDictionary<string, object> d)
+            {
+                list.Add(d);
+                continue;
+            }
+
+            var fallback = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (row != null)
+            {
+                var props = row.GetType().GetProperties();
+                foreach (var p in props)
+                {
+                    fallback[p.Name] = p.GetValue(row) ?? DBNull.Value;
+                }
+            }
+            list.Add(fallback);
+        }
+        return list;
+    }
+
+    private async Task<SqlMapper.GridReader?> TryQueryMultipleStoredProcedures(
+        SqlConnection connection,
+        object? parameters,
+        string context,
+        params string[] procedureNames)
+    {
+        Exception? lastException = null;
+        var tried = new List<string>();
+
+        foreach (var name in procedureNames.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            tried.Add(name);
+            try
+            {
+                return await connection.QueryMultipleAsync(
+                    name,
+                    parameters,
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                _logger.LogWarning(ex, "{Context}: failed SP {Procedure}", context, name);
+            }
+        }
+
+        if (lastException != null)
+            _logger.LogError(lastException, "{Context}: all SP attempts failed. Tried: {Tried}", context, string.Join(", ", tried));
+
+        return null;
+    }
+
+    private async Task<IEnumerable<dynamic>> TryQueryStoredProcedures(
+        SqlConnection connection,
+        object? parameters,
+        string context,
+        params string[] procedureNames)
+    {
+        Exception? lastException = null;
+        var tried = new List<string>();
+
+        foreach (var name in procedureNames.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            tried.Add(name);
+            try
+            {
+                return await connection.QueryAsync<dynamic>(
+                    name,
+                    parameters,
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                _logger.LogWarning(ex, "{Context}: failed SP {Procedure}", context, name);
+            }
+        }
+
+        if (lastException != null)
+            _logger.LogError(lastException, "{Context}: all SP attempts failed. Tried: {Tried}", context, string.Join(", ", tried));
+
+        return Enumerable.Empty<dynamic>();
+    }
+
+    private async Task<List<IDictionary<string, object>>> TryReadRows(
+        SqlMapper.GridReader multi,
+        string context,
+        int resultIndex)
+    {
+        try
+        {
+            var rows = await multi.ReadAsync();
+            return ToDictionaryRows(rows);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "{Context}: failed reading result set #{ResultIndex}", context, resultIndex);
+            return new List<IDictionary<string, object>>();
+        }
     }
 
     /// <summary>
@@ -785,6 +1012,457 @@ public class SurveyAPIController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in {Method}", nameof(GetRecontactExcelDataForCreate));
+            throw;
+        }
+    }
+
+    // ---------- Overall / Project-Wise Reports (OverallReport.aspx, ProjectWiseReport.aspx) ----------
+
+    public async Task<OverallReportSnapshotDTO> GetOverallReportSnapshot(OverallReportFilterDTO? filter)
+    {
+        filter ??= new OverallReportFilterDTO();
+
+        var snapshot = new OverallReportSnapshotDTO();
+        try
+        {
+            using var connection = new SqlConnection(_dapperDBSetting.ConnectionString);
+            await connection.OpenAsync();
+
+            var commonParams = new
+            {
+                supplierid = filter.SupplierId,
+                clientid = filter.ClientId,
+                countryid = filter.CountryId,
+                startdate = filter.SDate,
+                enddate = filter.EDate
+            };
+
+            // Completion blocks (Supplier, Client, Country, Project Totals)
+            using (var multi = await TryQueryMultipleStoredProcedures(
+                connection,
+                new
+                {
+                    supplierid = commonParams.supplierid,
+                    clientid = commonParams.clientid,
+                    countryid = commonParams.countryid,
+                    id = 0,
+                    report = 3,
+                    opt = 0,
+                    startdate = commonParams.startdate,
+                    enddate = commonParams.enddate
+                },
+                "OverallReport-Completion",
+                "usp_ReportManagement_bk",
+                "usp_ReportManagement"))
+            {
+                if (multi != null)
+                {
+                    var supplierRows = await TryReadRows(multi, "OverallReport-Completion", 1);
+                    var clientRows = await TryReadRows(multi, "OverallReport-Completion", 2);
+                    var countryRows = await TryReadRows(multi, "OverallReport-Completion", 3);
+                    var projectTotalsRows = await TryReadRows(multi, "OverallReport-Completion", 4);
+
+                    snapshot.SupplierCompletions = supplierRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Id = GetIntAny(d, "ID", "Id", "id"),
+                            Name = GetStringAny(d, "suppname", "SupplierName", "Name"),
+                            Value = GetDecimalAny(d, "completes", "complete", "total"),
+                            Percentage = GetDecimalAny(d, "percentage", "percentt")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+
+                    snapshot.ClientCompletions = clientRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Id = GetIntAny(d, "id", "ID", "Id"),
+                            Name = GetStringAny(d, "clieentname", "ClientName", "Company", "Name"),
+                            Value = GetDecimalAny(d, "complete", "completes", "total"),
+                            Percentage = GetDecimalAny(d, "percentage", "percentt")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+
+                    snapshot.CountryCompletions = countryRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Id = GetIntAny(d, "id", "ID", "Id"),
+                            Name = GetStringAny(d, "countryname", "Country", "CountryName", "parameter"),
+                            Value = GetDecimalAny(d, "total", "complete", "completes"),
+                            Percentage = GetDecimalAny(d, "percentage", "percentt")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+
+                    var totals = projectTotalsRows.FirstOrDefault();
+                    if (totals != null)
+                    {
+                        snapshot.ProjectTotals = new OverallProjectTotalsDTO
+                        {
+                            Total = GetIntAny(totals, "Total"),
+                            Closed = GetIntAny(totals, "Closed"),
+                            Inprogress = GetIntAny(totals, "InProgress", "Inprogress"),
+                            Onhold = GetIntAny(totals, "Onhold", "OnHold"),
+                            Cancelled = GetIntAny(totals, "Cancelled")
+                        };
+                    }
+                }
+            }
+
+            // Rate cards + sum value
+            using (var multi = await TryQueryMultipleStoredProcedures(
+                connection,
+                commonParams,
+                "OverallReport-Rates",
+                "remainingtabled",
+                "RemainingTable",
+                "remainingtable"))
+            {
+                if (multi != null)
+                {
+                    var irRows = await TryReadRows(multi, "OverallReport-Rates", 1);
+                    var loiRows = await TryReadRows(multi, "OverallReport-Rates", 2);
+                    var cpiRows = await TryReadRows(multi, "OverallReport-Rates", 3);
+                    var actualLoiRows = await TryReadRows(multi, "OverallReport-Rates", 4);
+                    var sumRows = await TryReadRows(multi, "OverallReport-Rates", 5);
+
+                    var ir = irRows.FirstOrDefault();
+                    var loi = loiRows.FirstOrDefault();
+                    var cpi = cpiRows.FirstOrDefault();
+                    var actLoi = actualLoiRows.FirstOrDefault();
+                    var sum = sumRows.FirstOrDefault();
+
+                    if (ir != null)
+                    {
+                        snapshot.Rates.IRate = new OverallRangeMetricDTO
+                        {
+                            Min = GetDecimalAny(ir, "Min Irate"),
+                            Max = GetDecimalAny(ir, "Max Irate"),
+                            Average = GetDecimalAny(ir, "Average Irate")
+                        };
+                    }
+
+                    if (loi != null)
+                    {
+                        snapshot.Rates.ExpectedLoi = new OverallRangeMetricDTO
+                        {
+                            Min = GetDecimalAny(loi, "Min LOI"),
+                            Max = GetDecimalAny(loi, "Max LOI"),
+                            Average = GetDecimalAny(loi, "Average LOI")
+                        };
+                    }
+
+                    if (cpi != null)
+                    {
+                        snapshot.Rates.Cpi = new OverallRangeMetricDTO
+                        {
+                            Min = GetDecimalAny(cpi, "Min CPI"),
+                            Max = GetDecimalAny(cpi, "Max CPI"),
+                            Average = GetDecimalAny(cpi, "Average CPI")
+                        };
+                    }
+
+                    if (actLoi != null)
+                    {
+                        snapshot.Rates.ActualLoi = new OverallRangeMetricDTO
+                        {
+                            Min = GetDecimalAny(actLoi, "Min Actual LOI"),
+                            Max = GetDecimalAny(actLoi, "Max Actual LOI"),
+                            Average = GetDecimalAny(actLoi, "Average Actual LOI")
+                        };
+                    }
+
+                    snapshot.SumValue = sum == null ? 0m : GetDecimalAny(sum, "summ", "Summ");
+                }
+            }
+
+            // Success rate + respondent totals
+            using (var multi = await TryQueryMultipleStoredProcedures(
+                connection,
+                commonParams,
+                "OverallReport-Respondents",
+                "respondants",
+                "respondents"))
+            {
+                if (multi != null)
+                {
+                    var successRows = await TryReadRows(multi, "OverallReport-Respondents", 1);
+                    var respondentRows = await TryReadRows(multi, "OverallReport-Respondents", 2);
+
+                    var success = successRows.FirstOrDefault();
+                    var respondents = respondentRows.FirstOrDefault();
+
+                    if (success != null)
+                    {
+                        snapshot.SuccessRate = new OverallSuccessRateDTO
+                        {
+                            ProjectSuccessRate = GetIntAny(success, "Project Success Rate"),
+                            IrSuccessRate = GetIntAny(success, "IR Success Rate")
+                        };
+                    }
+
+                    if (respondents != null)
+                    {
+                        snapshot.Respondents = new OverallRespondentTotalsDTO
+                        {
+                            Total = GetIntAny(respondents, "Total"),
+                            Complete = GetIntAny(respondents, "Complete"),
+                            Incomplete = GetIntAny(respondents, "Incomplete"),
+                            Screened = GetIntAny(respondents, "Screened"),
+                            Quotafull = GetIntAny(respondents, "Quotafull"),
+                            Terminate = GetIntAny(respondents, "Terminate")
+                        };
+                    }
+                }
+            }
+
+            // Revenue blocks (Supplier, Client, Country)
+            using (var multi = await TryQueryMultipleStoredProcedures(
+                connection,
+                commonParams,
+                "OverallReport-Revenue",
+                "usp_CalculateRevenue_BK",
+                "usp_CalculateRevenue"))
+            {
+                if (multi != null)
+                {
+                    var supplierRevRows = await TryReadRows(multi, "OverallReport-Revenue", 1);
+                    var clientRevRows = await TryReadRows(multi, "OverallReport-Revenue", 2);
+                    var countryRevRows = await TryReadRows(multi, "OverallReport-Revenue", 3);
+
+                    snapshot.SupplierRevenue = supplierRevRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Name = GetStringAny(d, "parameter", "SupplierName", "Name"),
+                            Value = GetDecimalAny(d, "revenue", "suppcost", "value"),
+                            Percentage = GetDecimalAny(d, "percentt", "SuppPercent", "percentage")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+
+                    snapshot.ClientRevenue = clientRevRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Name = GetStringAny(d, "parameter", "ClientName", "Name"),
+                            Value = GetDecimalAny(d, "revenue", "ClientValue", "value"),
+                            Percentage = GetDecimalAny(d, "percentt", "ClientPercent", "percentage")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+
+                    snapshot.CountryRevenue = countryRevRows
+                        .Select(d => new OverallNamedValuePercentDTO
+                        {
+                            Name = GetStringAny(d, "parameter", "CountryName", "Name"),
+                            Value = GetDecimalAny(d, "revenue", "ContValue", "value"),
+                            Percentage = GetDecimalAny(d, "percentt", "ContPercent", "percentage")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                        .ToList();
+                }
+            }
+
+            // Manager-wise block (safe fallback)
+            try
+            {
+                var managerRows = await TryQueryStoredProcedures(
+                    connection,
+                    new
+                    {
+                        supplierid = commonParams.supplierid,
+                        clientid = commonParams.clientid,
+                        countryid = commonParams.countryid,
+                        id = 0,
+                        report = 0,
+                        opt = 0,
+                        startdate = commonParams.startdate,
+                        enddate = commonParams.enddate
+                    },
+                    "OverallReport-Manager",
+                    "ManagerWiseReport_BK",
+                    "ManagerWiseReport");
+
+                snapshot.ManagerSummary = ToDictionaryRows(managerRows)
+                    .Select(d => new OverallManagerSummaryDTO
+                    {
+                        Name = GetStringAny(d, "username", "Name"),
+                        Total = GetDecimalAny(d, "total", "Total"),
+                        Totalpercentage = GetDecimalAny(d, "percentagetotal", "Totalpercentage"),
+                        Complete = GetDecimalAny(d, "complete", "Complete"),
+                        Completepercentage = GetDecimalAny(d, "percentcomple", "Completepercentage"),
+                        Revenue = GetDecimalAny(d, "revenue", "Revenue"),
+                        Revenuepercentage = GetDecimalAny(d, "percentrev", "Revenuepercentage")
+                    })
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ManagerWiseReport_BK failed for Overall report filter.");
+            }
+
+            // Charts block (safe fallback)
+            try
+            {
+                using var multi = await TryQueryMultipleStoredProcedures(
+                    connection,
+                    null,
+                    "OverallReport-Charts",
+                    "chartsremain");
+
+                if (multi != null)
+                {
+                    var completeRows = await TryReadRows(multi, "OverallReport-Charts", 1);
+                    var pieRows = await TryReadRows(multi, "OverallReport-Charts", 2);
+
+                    snapshot.CompleteTrend = completeRows
+                        .Select(d => new OverallMonthlyCompleteDTO
+                        {
+                            Months = GetStringAny(d, "Months", "Month"),
+                            Completes = GetDecimalAny(d, "Completes", "Complete")
+                        })
+                        .Where(x => !string.IsNullOrWhiteSpace(x.Months))
+                        .ToList();
+
+                    var pie = pieRows.FirstOrDefault();
+                    if (pie != null)
+                    {
+                        snapshot.CpiChart = new OverallPieChartDTO
+                        {
+                            Min = GetDecimalAny(pie, "Minn", "Min"),
+                            Max = GetDecimalAny(pie, "Maxx", "Max"),
+                            Mean = GetDecimalAny(pie, "Mean")
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "chartsremain failed for Overall report.");
+            }
+
+            return snapshot;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(GetOverallReportSnapshot));
+            return snapshot;
+        }
+    }
+
+    public async Task<List<ProjectWiseReportProjectOptionDTO>> GetProjectsForProjectWiseReport()
+    {
+        try
+        {
+            var rows = await _unitOfWork.GenOperations.GetTableDataSP<dynamic>(
+                "UspGetAllUsers",
+                new { @ID = 0, @Type = "P" });
+
+            if (rows == null || !rows.Any())
+                return new List<ProjectWiseReportProjectOptionDTO>();
+
+            return ToDictionaryRows(rows)
+                .Select(d => new ProjectWiseReportProjectOptionDTO
+                {
+                    Id = GetIntAny(d, "ID", "Id", "projectid"),
+                    PName = GetStringAny(d, "PCode", "PName", "PID")
+                })
+                .Where(x => x.Id > 0 && !string.IsNullOrWhiteSpace(x.PName))
+                .OrderBy(x => x.PName)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(GetProjectsForProjectWiseReport));
+            throw;
+        }
+    }
+
+    public async Task<ProjectWiseReportDataDTO> GetProjectWiseReportDetails(int projectId)
+    {
+        var dto = new ProjectWiseReportDataDTO();
+        if (projectId <= 0) return dto;
+
+        try
+        {
+            using var connection = new SqlConnection(_dapperDBSetting.ConnectionString);
+            await connection.OpenAsync();
+
+            using var multi = await TryQueryMultipleStoredProcedures(
+                connection,
+                new { @projectid = projectId },
+                "ProjectWise-Details",
+                "ProjectReports_BK",
+                "ProjectReports");
+
+            if (multi == null)
+                return dto;
+
+            var overviewRows = await TryReadRows(multi, "ProjectWise-Details", 1);
+            var countryRows = await TryReadRows(multi, "ProjectWise-Details", 2);
+            var supplierRows = await TryReadRows(multi, "ProjectWise-Details", 3);
+            var totalsRows = await TryReadRows(multi, "ProjectWise-Details", 4);
+
+            var overview = overviewRows.FirstOrDefault();
+            if (overview != null)
+            {
+                dto.Overview = new ProjectWiseOverviewDTO
+                {
+                    PNumber = GetStringAny(overview, "PNumber"),
+                    PStatus = GetStringAny(overview, "PStatus"),
+                    Company = GetStringAny(overview, "Company"),
+                    Manager = GetStringAny(overview, "Manager"),
+                    Country = GetStringAny(overview, "Country"),
+                    Complete = GetDecimalAny(overview, "Complete"),
+                    Cpc = GetDecimalAny(overview, "CPC", "Cpc"),
+                    RevenueFromCompletes = GetDecimalAny(overview, "RevenueFromCompletes")
+                };
+            }
+
+            dto.CountryValues = countryRows
+                .Select(d => new ProjectWiseCountryValueDTO
+                {
+                    CountryId = GetIntAny(d, "CID", "CountryID"),
+                    Country = GetStringAny(d, "Country"),
+                    Complete = GetDecimalAny(d, "Complete"),
+                    Cpc = GetDecimalAny(d, "CPC", "Cpc"),
+                    TotalRevenue = GetDecimalAny(d, "TotalRevenue")
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.Country))
+                .ToList();
+
+            dto.SupplierValues = supplierRows
+                .Select(d => new ProjectWiseSupplierValueDTO
+                {
+                    CountryId = GetIntAny(d, "CountryID", "CID"),
+                    SupplierId = GetIntAny(d, "SupplierID", "SID"),
+                    Country = GetStringAny(d, "Country"),
+                    Supplier = GetStringAny(d, "Supplier"),
+                    Complete = GetDecimalAny(d, "Complete"),
+                    Cpc = GetDecimalAny(d, "CPC", "Cpc"),
+                    Cost = GetDecimalAny(d, "Cost")
+                })
+                .Where(x => !string.IsNullOrWhiteSpace(x.Country) || !string.IsNullOrWhiteSpace(x.Supplier))
+                .ToList();
+
+            var totals = totalsRows.FirstOrDefault();
+            if (totals != null)
+            {
+                dto.Totals = new ProjectWiseTotalsDTO
+                {
+                    TotalRevenue = GetDecimalAny(totals, "TotalRevenue"),
+                    TotalCost = GetDecimalAny(totals, "TotalCost"),
+                    GrossProfit = GetDecimalAny(totals, "GrossProfit"),
+                    Margin = GetDecimalAny(totals, "Margin")
+                };
+            }
+
+            return dto;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Method}", nameof(GetProjectWiseReportDetails));
             throw;
         }
     }

@@ -48,7 +48,7 @@ using System.Collections;
 
 namespace GRP.Services;
 
-public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, new()
+public class DapperGenericRepository<T> : IDapperRepository<T>, IDisposable where T : class, new()
 {
     protected IDbConnection DbConnection { get; private set; }
     private readonly DapperDBSetting _dbSettings;
@@ -110,7 +110,7 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
 
     public async Task<int> EexecuteAddAsync(T entity, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
+        if (DbConnection.State == ConnectionState.Closed)
             DbConnection.Open();
 
         try
@@ -124,12 +124,16 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             return 0;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
 
     public async Task<bool> EexecuteUpdateAsync(T entity, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
+        if (DbConnection.State == ConnectionState.Closed)
             DbConnection.Open();
 
         try
@@ -142,12 +146,16 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             return false;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
 
     public async Task<bool> EexecuteDeleteAsync(int id, IDbConnection dbConnection, IDbTransaction transaction = null, int? timeOut = null)
     {
-        if (dbConnection.State == ConnectionState.Closed)
+        if (DbConnection.State == ConnectionState.Closed)
             DbConnection.Open();
 
         try
@@ -166,7 +174,11 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             return false;
         }
-        //finally { DbConnection.Close(); }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
 
     public async Task<DapperPlusActionSet<T>> AddRangeAsync(T entity)
@@ -383,10 +395,8 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
 
     public async Task<List<T>> GetQueryAll<T>(string query, IDbConnection IDBConn, IDbTransaction trans)
     {
-        //if (connection.State != ConnectionState.Open)
-        //    connection.Open();
-        //else
-        if (IDBConn.State != ConnectionState.Open)
+        bool weOpened = (IDBConn.State != ConnectionState.Open);
+        if (weOpened)
             IDBConn.Open();
         try
         {
@@ -397,7 +407,11 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             return null;
         }
-        //finally { IDBConn.Close(); }
+        finally
+        {
+            if (weOpened && IDBConn.State == ConnectionState.Open)
+                IDBConn.Close();
+        }
     }
 
     public async Task<List<T>> GetTableData<T>(string sQuery)
@@ -425,7 +439,8 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         string sQryWhere = (sWhere != "" ? " Where " + sWhere : "");
         string sQryOrderBy = (sOrderBy != "" ? " ORDER BY " + sOrderBy : "");
         var query = $"SELECT * FROM {tableName} {sQryWhere} {sQryOrderBy}";
-        if (connection.State != ConnectionState.Open)
+        bool weOpened = (connection.State != ConnectionState.Open);
+        if (weOpened)
             connection.Open();
 
         try
@@ -434,7 +449,11 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             return data.ToList();
         }
         catch (Exception ex) { throw ex; }
-        finally { DbConnection.Close(); }
+        finally
+        {
+            if (weOpened && connection.State == ConnectionState.Open)
+                connection.Close();
+        }
     }
     public async Task<List<T>> GetTableData<T>(string sQuery, object parameters = null)
     {
@@ -489,6 +508,11 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             return data.ToList();
         }
         catch (Exception ex) { throw ex; }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
     public async Task<List<T>> GetTableDataExec<T>(string sQuery)
     {
@@ -535,12 +559,15 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
             return true;
         }
         catch (Exception ex) { return false; }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
 
     public async Task<bool> RunSQLCommand(string sQuery)
     {
-        //var DbConnection = trans?.Connection ?? connection;
-
         if (DbConnection.State != ConnectionState.Open)
             DbConnection.Open();
 
@@ -548,9 +575,13 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         {
             await DbConnection.QueryAsync(sQuery);
             return true;
-            //return true;
         }
         catch (Exception ex) { return false; }
+        finally
+        {
+            if (DbConnection.State == ConnectionState.Open)
+                DbConnection.Close();
+        }
     }
 
     public async Task<List<T>> GetAllPagedAsync(int limit, int offset, string sWhere = "", string sOrderBy = "")
@@ -675,6 +706,36 @@ public class DapperGenericRepository<T> : IDapperRepository<T> where T : class, 
         finally { IDBConn.Close(); }
     }
 
-
+    public void Dispose()
+    {
+        if (DbConnection != null)
+        {
+            try
+            {
+                if (DbConnection.State == ConnectionState.Open)
+                    DbConnection.Close();
+            }
+            catch { }
+            try
+            {
+                DbConnection.Dispose();
+            }
+            catch { }
+        }
+        if (_connection != null)
+        {
+            try
+            {
+                if (_connection.State == ConnectionState.Open)
+                    _connection.Close();
+            }
+            catch { }
+            try
+            {
+                _connection.Dispose();
+            }
+            catch { }
+        }
+    }
 
 }

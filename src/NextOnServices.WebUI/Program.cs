@@ -15,9 +15,41 @@ using System.Configuration;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using NextOnServices.Infrastructure.BL;
 using Microsoft.Extensions.Options;
+using Serilog;
+using System.IO;
+using Microsoft.AspNetCore.DataProtection;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+var logsRootPath = Path.Combine(builder.Environment.ContentRootPath, "Logs");
+Directory.CreateDirectory(Path.Combine(logsRootPath, "Stdout"));
+Directory.CreateDirectory(Path.Combine(logsRootPath, "App"));
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .WriteTo.File(
+            Path.Combine("Logs", "App", "log-.txt"),
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            shared: true,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}");
+});
+
+var dataProtectionKeysPath = Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys");
+Directory.CreateDirectory(dataProtectionKeysPath);
+
+builder.Services
+    .AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath))
+    .SetApplicationName("NextOnServices");
+
+Log.Information("DataProtection keys directory: {KeyPath}", dataProtectionKeysPath);
+
 builder.Services.AddRazorPages();
 builder.Services.AddControllers().AddControllersAsServices();
 
@@ -143,7 +175,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/VT/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
@@ -187,7 +219,32 @@ app.UseEndpoints(endpoints =>
         context.Response.Redirect("/VT/Account/Login");
         return Task.CompletedTask;
     });
+
+    // Redirect /VT and /VT/ to login
+    endpoints.MapGet("/VT", context =>
+    {
+        context.Response.Redirect("/VT/Account/Login");
+        return Task.CompletedTask;
+    });
+    endpoints.MapGet("/VT/", context =>
+    {
+        context.Response.Redirect("/VT/Account/Login");
+        return Task.CompletedTask;
+    });
 });
-app.Run();
+
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application terminated unexpectedly");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 

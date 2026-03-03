@@ -198,3 +198,81 @@ body.vt-admin {
 .vt-admin .dataTables_wrapper > div.row:last-child {
   padding-bottom: 1rem !important;
 }
+
+/* ----- SweetAlert2 (global VT popup theme) ----- */
+body.vt-admin .swal2-container {
+  z-index: 2100 !important;
+}
+
+body.vt-admin .swal2-popup {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+  border: 1px solid rgba(29, 120, 116, 0.22);
+  border-radius: 14px !important;
+  padding: 1.25rem 1.25rem 1rem !important;
+  box-shadow: 0 18px 48px rgba(15, 61, 59, 0.24) !important;
+}
+
+body.vt-admin .swal2-title {
+  color: #0f172a !important;
+  font-size: 2rem !important;
+  font-weight: 700 !important;
+}
+
+body.vt-admin .swal2-html-container {
+  color: #334155 !important;
+  font-size: 1.125rem !important;
+  margin-top: 0.5rem !important;
+}
+
+body.vt-admin .swal2-actions {
+  gap: 0.6rem;
+  margin-top: 1.15rem !important;
+}
+
+body.vt-admin .swal2-styled,
+body.vt-admin .swal2-actions .btn {
+  min-width: 132px;
+  height: 40px;
+  padding: 0.45rem 1rem !important;
+  border-radius: 9999px !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.1 !important;
+  box-shadow: none !important;
+}
+
+body.vt-admin .swal2-actions .swal2-confirm,
+body.vt-admin .swal2-actions .btn.btn-primary,
+body.vt-admin .swal2-actions .btn.btn-success {
+  background: linear-gradient(135deg, #1d7874 0%, #165c59 100%) !important;
+  border: 1px solid #165c59 !important;
+  color: #fff !important;
+}
+
+body.vt-admin .swal2-actions .swal2-confirm:hover,
+body.vt-admin .swal2-actions .btn.btn-primary:hover,
+body.vt-admin .swal2-actions .btn.btn-success:hover {
+  background: linear-gradient(135deg, #165c59 0%, #124a47 100%) !important;
+  border-color: #124a47 !important;
+  color: #fff !important;
+}
+
+body.vt-admin .swal2-actions .swal2-cancel,
+body.vt-admin .swal2-actions .btn.btn-secondary,
+body.vt-admin .swal2-actions .btn.btn-label-secondary {
+  background: #f3f4f6 !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+body.vt-admin .swal2-actions .swal2-cancel:hover,
+body.vt-admin .swal2-actions .btn.btn-secondary:hover,
+body.vt-admin .swal2-actions .btn.btn-label-secondary:hover {
+  background: #e5e7eb !important;
+  border-color: #94a3b8 !important;
+}
+
+body.vt-admin .swal2-styled:focus,
+body.vt-admin .swal2-actions .btn:focus {
+  box-shadow: 0 0 0 3px rgba(29, 120, 116, 0.2) !important;
+}

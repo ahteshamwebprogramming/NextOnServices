@@ -1,61 +1,229 @@
-﻿@model NextOnServices.Infrastructure.ViewModels.ProjectsURL.ProjectsURLViewModel
+@model NextOnServices.Infrastructure.ViewModels.ProjectsURL.ProjectsURLViewModel
 @{
-    ViewData["Title"] = "ProjectUrls";
+    ViewData["Title"] = "Project URLs";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" />
-<link href="~/css/tooltip.css" rel="stylesheet" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/tooltip.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
 <style>
-
-    .container1_ppd {
-        display: block;
-        position: relative;
-        padding-left: 0px;
-        margin-bottom: 0px;
-        cursor: pointer;
-        font-size: 19px;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
+    .vt-project-urls-page {
+        --vt-url-theme: #1d7874;
+        --vt-url-theme-dark: #165c59;
+        --vt-url-border: rgba(29, 120, 116, 0.22);
+        --vt-url-soft: rgba(29, 120, 116, 0.08);
     }
 
-    .checkmark_ppd {
-        position: absolute;
-        top: 0px;
-        left: 0;
-        height: 20px;
-        width: 20px;
-        background-color: #eee;
+    .vt-project-urls-page .ref-page-title {
+        margin-bottom: 1rem;
     }
 
-    .container1_ppd input {
-        position: relative;
-        opacity: 0;
+    .vt-project-urls-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-project-urls-page .vt-url-block {
+        margin-bottom: 0.25rem;
+    }
+
+    .vt-project-urls-page .table-section-header {
+        border-left-color: var(--vt-url-theme);
+    }
+
+    .vt-project-urls-page .card--table-section {
+        border: 1px solid var(--vt-url-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-project-urls-page .vt-token-toggle-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.65rem 0.85rem;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-url-soft) 100%);
+        border: 1px solid var(--vt-url-border);
+        border-radius: 10px;
+    }
+
+    .vt-project-urls-page .vt-token-toggle-wrap .form-check {
+        margin: 0;
+        padding-left: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+    }
+
+    .vt-project-urls-page .vt-token-toggle-wrap .form-check-input {
+        position: static;
+        margin: 0;
+        width: 1rem;
+        height: 1rem;
+        flex: 0 0 auto;
+    }
+
+    .vt-project-urls-page .vt-token-toggle-wrap .form-check-label {
+        margin: 0;
+        font-weight: 600;
+        line-height: 1.2;
+        color: #0f172a;
+    }
+
+    .vt-project-urls-page .vt-token-help {
+        margin: 0;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        text-align: right;
+        line-height: 1.35;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .vt-project-urls-page .help-block.WOT,
+    .vt-project-urls-page .help-block.WT {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.35rem;
+    }
+
+    .vt-project-urls-page .vt-url-field-note {
+        color: #334155;
+    }
+
+    .vt-project-urls-page .vt-url-cell {
+        max-width: 320px;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .vt-project-urls-page .ref-table-btn {
+        min-width: 92px;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .form-control.form-control-sm {
+        height: 38px !important;
+        min-height: 38px !important;
+        padding-top: 0.35rem !important;
+        padding-bottom: 0.35rem !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm #CountryId.form-control.form-control-sm {
+        line-height: 1.3 !important;
+        background-position: right 0.75rem center;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .select2-container {
+        width: 100% !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        min-height: 38px !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        padding: 0 2.15rem 0 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .select2-container--default .select2-selection--single .select2-selection__rendered {
+        height: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1.2 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        color: #1f2937 !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+        width: 1.75rem !important;
+        right: 0.45rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        margin-top: 0 !important;
+    }
+
+    .vt-project-urls-page #ProjectURLForm textarea.form-control.form-control-sm {
+        height: auto !important;
+        min-height: 72px !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }
+
+    .vt-project-urls-page .modal .modal-header {
+        border-bottom-color: var(--vt-url-border);
+        background: linear-gradient(180deg, var(--vt-url-soft) 0%, #fff 100%);
+    }
+
+    .vt-project-urls-page .modal .modal-title {
+        color: var(--vt-url-theme-dark);
+        font-weight: 600;
+    }
+
+    .vt-project-urls-page .modal .btn-primary {
+        background: linear-gradient(135deg, var(--vt-url-theme) 0%, var(--vt-url-theme-dark) 100%);
+        border-color: var(--vt-url-theme-dark);
+    }
+
+    .vt-project-urls-page .modal .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-url-theme-dark) 0%, #124a47 100%);
+        border-color: #124a47;
+    }
+
+    @@media (max-width: 767.98px) {
+        .vt-project-urls-page .vt-token-toggle-wrap {
+            align-items: flex-start;
+        }
+
+        .vt-project-urls-page .vt-token-help {
+            margin-left: 0;
+            text-align: left;
+        }
+
+        .vt-project-urls-page .vt-url-cell {
+            max-width: 240px;
+        }
     }
 </style>
 
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-project-urls-page">
+    <div class="ref-page-title">
+        <h1>Project URLs</h1>
+        <p class="ref-subtitle">Add and manage URL mappings for this project</p>
+    </div>
 
-<div id="PartialView_AddProjectURL">
-    @Html.Partial("_projectURLs/_addProjectURL")
-</div>
-<div id="PartialView_ListProjectURL">
-    @Html.Partial("_projectURLs/_listProjectURL")
+    <div class="row vt-url-block">
+        <div id="PartialView_AddProjectURL" class="w-100">
+            @Html.Partial("_projectURLs/_addProjectURL")
+        </div>
+    </div>
+    <div class="row vt-url-block">
+        <div id="PartialView_ListProjectURL" class="w-100">
+            @Html.Partial("_projectURLs/_listProjectURL")
+        </div>
+    </div>
+
+    <input type="hidden" asp-for="ProjectsURL.encProjectId" />
 </div>
 
-<input type="hidden" asp-for="ProjectsURL.encProjectId" />
 @section scripts {
-    <script src="~/customJS/ProjectsURL/ProjectsURL.js"></script>
+    <script src="~/customJS/ProjectsURL/ProjectsURL.js" asp-append-version="true"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             AddProjectURLPartialView();
             ListProjectURLPartialView();
         });
-
-        
-
-
     </script>
 }
-
-

@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
@@ -115,6 +115,7 @@ public class ProjectsController : Controller
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Error occurred while loading AddProject.");
             projectDTO.ProjectId = 0;
         }
 

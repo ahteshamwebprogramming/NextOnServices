@@ -5,96 +5,315 @@
     ViewData["Title"] = "Add Question";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
-
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
 <style>
-    .select2-container--default .select2-selection--single {
-        padding: 0.5rem 0.81rem;
+    .vt-add-question-page {
+        --vt-question-theme: #1d7874;
+        --vt-question-theme-dark: #165c59;
+        --vt-question-border: rgba(29, 120, 116, 0.22);
+        --vt-question-soft: rgba(29, 120, 116, 0.08);
     }
 
-    .select2-container .select2-selection--single {
-        height: 2.575rem;
+    .vt-add-question-page .ref-page-title {
+        margin-bottom: 1rem;
     }
 
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
+    .vt-add-question-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-add-question-page .card--table-section {
+        border: 1px solid var(--vt-question-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-add-question-page .table-section-header {
+        border-left-color: var(--vt-question-theme);
+    }
+
+    .vt-add-question-page .vt-form-section {
+        margin-bottom: 0.9rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--vt-question-border);
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-question-soft) 100%);
+        color: #0f3d3b;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .vt-add-question-page .form-group {
+        margin-bottom: 0.95rem;
+    }
+
+    .vt-add-question-page .form-control,
+    .vt-add-question-page input.form-control:not([type="checkbox"]),
+    .vt-add-question-page select.form-control,
+    .vt-add-question-page textarea.form-control {
+        font-size: 0.875rem;
         height: 38px;
+        min-height: 38px;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
     }
 
-    .option-item {
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 4px;
-        background-color: #f9f9f9;
+    .vt-add-question-page textarea.form-control {
+        height: auto;
+        min-height: 98px;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
     }
 
-    .option-item-header {
+    .vt-add-question-page .form-control:focus {
+        border-color: var(--vt-question-theme);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(29, 120, 116, 0.2);
+    }
+
+    .vt-add-question-page .vt-select-wrap {
+        position: relative;
+    }
+
+    .vt-add-question-page .vt-select-wrap::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 0.8rem;
+        width: 10px;
+        height: 6px;
+        margin-top: -3px;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748b' d='M1.2.8 5 4.6 8.8.8 10 2 5 6 0 2z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-size: 10px 6px;
+    }
+
+    .vt-add-question-page .vt-question-type-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding-right: 2.35rem !important;
+        background-image: none;
+        cursor: pointer;
+    }
+
+    .vt-add-question-page .vt-question-type-select::-ms-expand {
+        display: none;
+    }
+
+    .vt-add-question-page .required-mark {
+        color: #dc2626;
+        font-weight: 700;
+    }
+
+    .vt-add-question-page .vt-field-hint {
+        display: block;
+        margin-top: 0.35rem;
+        color: #64748b;
+        font-size: 0.74rem;
+        line-height: 1.25;
+    }
+
+    .vt-add-question-page #optionsSection {
+        margin-top: 0.25rem;
+    }
+
+    .vt-add-question-page .vt-options-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .vt-add-question-page .vt-options-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f3d3b;
+    }
+
+    .vt-add-question-page .vt-add-option-btn {
+        height: 38px;
+        padding: 0 0.95rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .vt-add-question-page .vt-add-option-btn i {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
+    .vt-add-question-page .vt-add-option-btn span {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+    }
+
+    .vt-add-question-page .option-item {
+        border: 1px solid var(--vt-question-border);
+        border-radius: 10px;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-question-soft) 100%);
+    }
+
+    .vt-add-question-page .option-item-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 0.65rem;
+    }
+
+    .vt-add-question-page .option-item-header strong {
+        color: #0f3d3b;
+        font-size: 0.82rem;
+    }
+
+    .vt-add-question-page .vt-option-remove-btn {
+        border-color: #fecaca !important;
+        background: #fff5f5 !important;
+        color: #b91c1c !important;
+    }
+
+    .vt-add-question-page .vt-option-remove-btn:hover {
+        background: #fee2e2 !important;
+        color: #991b1b !important;
+    }
+
+    .vt-add-question-page .btn-primary {
+        background: linear-gradient(135deg, var(--vt-question-theme) 0%, var(--vt-question-theme-dark) 100%) !important;
+        border-color: var(--vt-question-theme-dark) !important;
+        color: #fff !important;
+    }
+
+    .vt-add-question-page .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-question-theme-dark) 0%, #124a47 100%) !important;
+        border-color: #124a47 !important;
+    }
+
+    .vt-add-question-page .btn-light {
+        border: 1px solid #dbe3ea !important;
+        color: #1f2937;
+        background: #fff;
+    }
+
+    .vt-add-question-page .btn-light:hover {
+        background: #f8fafc;
+    }
+
+    .vt-add-question-page .vt-form-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .vt-add-question-page .vt-form-actions .btn {
+        min-width: 112px;
+        height: 38px;
+        padding: 0 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+
+    @@media (max-width: 767.98px) {
+        .vt-add-question-page .vt-options-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
     }
 </style>
 
-<div class="row">
-    <div class="col-md-12 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Question</h4>
-                <p class="card-description mb-0">Please fill in the details below</p>
-                <form class="forms-sample" id="QuestionForm">
-                    <input type="hidden" id="Id" name="Id" value="@(Model?.Question?.Id ?? 0)">
-                    
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="QuestionId">Question ID <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control form-control-sm" id="QuestionId" name="QuestionId" 
-                                   value="@(Model?.Question?.QuestionId ?? "")" required>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="QuestionType">Question Type <span class="text-danger">*</span></label>
-                            <select class="form-control form-control-sm" id="QuestionType" name="QuestionType" required>
-                                <option value="">--Select Type--</option>
-                                @if (Model?.Question?.QuestionType == 1)
-                                {
-                                    <option value="1" selected>Single Choice</option>
-                                }
-                                else
-                                {
-                                    <option value="1">Single Choice</option>
-                                }
-                                @if (Model?.Question?.QuestionType == 2)
-                                {
-                                    <option value="2" selected>Multiple Choice</option>
-                                }
-                                else
-                                {
-                                    <option value="2">Multiple Choice</option>
-                                }
-                                @if (Model?.Question?.QuestionType == 3)
-                                {
-                                    <option value="3" selected>Text Input</option>
-                                }
-                                else
-                                {
-                                    <option value="3">Text Input</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-add-question-page">
+    <div class="ref-page-title">
+        <h1>Add Question</h1>
+        <p class="ref-subtitle">Create or update questionnaire questions and options</p>
+    </div>
 
-                    <div class="row">
-                        <div class="form-group col-md-12">
-                            <label for="QuestionLabel">Question Label <span class="text-danger">*</span></label>
-                            <textarea class="form-control form-control-sm" id="QuestionLabel" name="QuestionLabel" rows="3" required>@(Model?.Question?.QuestionLabel ?? "")</textarea>
-                        </div>
-                    </div>
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Question</h4>
+                    <p class="card-description mb-3">Please fill in the details below.</p>
 
-                    <div class="row" id="optionsSection" style="display: @(Model?.Question?.QuestionType == 3 ? "none" : "block");">
-                        <div class="col-md-12">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5>Options</h5>
-                                <button type="button" class="btn btn-sm btn-primary" id="addOptionBtn">Add Option</button>
+                    <form class="forms-sample vt-add-project-form" id="QuestionForm">
+                        <input type="hidden" id="Id" name="Id" value="@(Model?.Question?.Id ?? 0)">
+
+                        <div class="vt-form-section">Question Details</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label for="QuestionId">Question ID <span class="required-mark">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="QuestionId" name="QuestionId" value="@(Model?.Question?.QuestionId ?? "")" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="QuestionType">Question Type <span class="required-mark">*</span></label>
+                                <div class="vt-select-wrap">
+                                    <select class="form-control form-control-sm vt-question-type-select" id="QuestionType" name="QuestionType" required>
+                                        <option value="">--Select Type--</option>
+                                        @if (Model?.Question?.QuestionType == 1)
+                                        {
+                                            <option value="1" selected>Single Choice</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="1">Single Choice</option>
+                                        }
+
+                                        @if (Model?.Question?.QuestionType == 2)
+                                        {
+                                            <option value="2" selected>Multiple Choice</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="2">Multiple Choice</option>
+                                        }
+
+                                        @if (Model?.Question?.QuestionType == 3)
+                                        {
+                                            <option value="3" selected>Text Input</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="3">Text Input</option>
+                                        }
+                                    </select>
+                                </div>
+                                <small class="vt-field-hint">Choice-based types require answer options, while Text Input does not.</small>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="QuestionLabel">Question Label <span class="required-mark">*</span></label>
+                                <textarea class="form-control form-control-sm" id="QuestionLabel" name="QuestionLabel" rows="3" required>@(Model?.Question?.QuestionLabel ?? "")</textarea>
+                            </div>
+                        </div>
+
+                        <div id="optionsSection" class="@(Model?.Question?.QuestionType == 3 ? "d-none" : string.Empty)">
+                            <div class="vt-form-section">Answer Options</div>
+                            <div class="vt-options-toolbar">
+                                <p class="vt-options-title">Manage options for this question</p>
+                                <button type="button" class="btn btn-sm btn-primary vt-add-option-btn" id="addOptionBtn">
+                                    <i class="ti-plus" aria-hidden="true"></i>
+                                    <span>Add Option</span>
+                                </button>
                             </div>
                             <div id="optionsContainer">
                                 @if (Model?.Question?.Options != null && Model.Question.Options.Any())
@@ -104,23 +323,20 @@
                                         <div class="option-item" data-option-id="@option.Id">
                                             <div class="option-item-header">
                                                 <strong>Option @(Model.Question.Options.IndexOf(option) + 1)</strong>
-                                                <button type="button" class="btn btn-sm btn-danger remove-option">Remove</button>
+                                                <button type="button" class="btn btn-sm btn-light vt-option-remove-btn remove-option">Remove</button>
                                             </div>
                                             <div class="row">
                                                 <div class="form-group col-md-4">
                                                     <label>Option Label</label>
-                                                    <input type="text" class="form-control form-control-sm option-label" 
-                                                           value="@option.OptionLabel" required>
+                                                    <input type="text" class="form-control form-control-sm option-label" value="@option.OptionLabel" required>
                                                 </div>
                                                 <div class="form-group col-md-4">
                                                     <label>Option Code</label>
-                                                    <input type="text" class="form-control form-control-sm option-code" 
-                                                           value="@option.OptionCode">
+                                                    <input type="text" class="form-control form-control-sm option-code" value="@option.OptionCode">
                                                 </div>
                                                 <div class="form-group col-md-4">
                                                     <label>Option Number</label>
-                                                    <input type="number" class="form-control form-control-sm option-number" 
-                                                           value="@(option.OptionNumber ?? 0)">
+                                                    <input type="number" class="form-control form-control-sm option-number" value="@(option.OptionNumber ?? 0)">
                                                 </div>
                                             </div>
                                         </div>
@@ -128,15 +344,13 @@
                                 }
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <button type="submit" class="btn btn-primary mr-2">Save</button>
-                            <a href="/VT/Questionnaire/QuestionsList" class="btn btn-light">Cancel</a>
+                        <div class="vt-form-actions">
+                            <button type="submit" class="btn btn-primary btn-sm">Save Question</button>
+                            <a href="/VT/Questionnaire/QuestionsList" class="btn btn-light btn-sm">Cancel</a>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -145,25 +359,34 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            let optionCounter = @(Model?.Question?.Options?.Count ?? 0);
+            var optionCounter = @(Model?.Question?.Options?.Count ?? 0);
 
-            // Show/hide options based on question type
-            $('#QuestionType').change(function () {
-                if ($(this).val() == '3') {
-                    $('#optionsSection').hide();
+            function toggleOptionsByType() {
+                if ($('#QuestionType').val() === '3') {
+                    $('#optionsSection').addClass('d-none');
                 } else {
-                    $('#optionsSection').show();
+                    $('#optionsSection').removeClass('d-none');
                 }
+            }
+
+            function refreshOptionTitles() {
+                $('#optionsContainer .option-item').each(function (index) {
+                    $(this).find('.option-item-header strong').text('Option ' + (index + 1));
+                });
+                optionCounter = $('#optionsContainer .option-item').length;
+            }
+
+            $('#QuestionType').change(function () {
+                toggleOptionsByType();
             });
 
-            // Add option
             $('#addOptionBtn').click(function () {
                 optionCounter++;
-                const optionHtml = `
+                var optionHtml = `
                     <div class="option-item" data-option-id="0">
                         <div class="option-item-header">
                             <strong>Option ${optionCounter}</strong>
-                            <button type="button" class="btn btn-sm btn-danger remove-option">Remove</button>
+                            <button type="button" class="btn btn-sm btn-light vt-option-remove-btn remove-option">Remove</button>
                         </div>
                         <div class="row">
                             <div class="form-group col-md-4">
@@ -184,12 +407,11 @@
                 $('#optionsContainer').append(optionHtml);
             });
 
-            // Remove option
             $(document).on('click', '.remove-option', function () {
                 $(this).closest('.option-item').remove();
+                refreshOptionTitles();
             });
 
-            // Form submit
             $('#QuestionForm').submit(function (e) {
                 e.preventDefault();
 
@@ -198,7 +420,21 @@
                     return;
                 }
 
-                const questionData = {
+                if ($('#QuestionType').val() !== '3' && $('#optionsContainer .option-item').length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Options',
+                        text: 'Please add at least one option for choice-based questions.',
+                        confirmButtonText: 'OK',
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        },
+                        buttonsStyling: false
+                    });
+                    return;
+                }
+
+                var questionData = {
                     Id: parseInt($('#Id').val()) || 0,
                     QuestionId: $('#QuestionId').val(),
                     QuestionLabel: $('#QuestionLabel').val(),
@@ -206,10 +442,9 @@
                     Options: []
                 };
 
-                // Collect options
-                if ($('#QuestionType').val() != '3') {
+                if ($('#QuestionType').val() !== '3') {
                     $('#optionsContainer .option-item').each(function (index) {
-                        const option = {
+                        var option = {
                             Id: parseInt($(this).data('option-id')) || 0,
                             OptionLabel: $(this).find('.option-label').val(),
                             OptionCode: $(this).find('.option-code').val(),
@@ -221,31 +456,46 @@
                     });
                 }
 
+                BlockUI();
                 $.ajax({
                     url: '/VT/Questionnaire/ManageQuestion',
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(questionData),
                     success: function (response) {
+                        UnblockUI();
                         Swal.fire({
                             icon: 'success',
                             title: 'Success',
                             text: response,
-                            showConfirmButton: true
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            },
+                            buttonsStyling: false
                         }).then(function () {
                             window.location.href = '/VT/Questionnaire/QuestionsList';
                         });
                     },
                     error: function (xhr) {
+                        UnblockUI();
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: xhr.responseText || 'An error occurred'
+                            text: xhr.responseText || 'An error occurred',
+                            confirmButtonText: 'OK',
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            },
+                            buttonsStyling: false
                         });
                     }
                 });
             });
+
+            toggleOptionsByType();
+            refreshOptionTitles();
         });
     </script>
 }
-

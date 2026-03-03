@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="~/css/custmahte.css" rel="stylesheet" />
-<link href="~/css/tooltip.css" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/tooltip.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
 <!-- vt-dashboard-ref.css above loads last among stylesheets so Figma styles win -->
 <style>
@@ -262,13 +262,53 @@
     }
 
     /* Modal – theme (by id so it works when modal is moved to body) */
+    #mdlChangeStatus .modal-dialog {
+        max-width: 620px;
+    }
+    #mdlChangeStatus .modal-content {
+        border: 1px solid var(--vt-theme-border);
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(15, 61, 59, 0.24);
+    }
     #mdlChangeStatus .modal-header {
         border-bottom-color: var(--vt-theme-border);
         background: linear-gradient(180deg, var(--vt-theme-bg) 0%, #fff 100%);
+        padding: 1rem 1.5rem;
     }
     #mdlChangeStatus .modal-title {
         color: var(--vt-theme-dark);
+        font-size: 1.15rem;
         font-weight: 600;
+        letter-spacing: 0.2px;
+    }
+    #mdlChangeStatus .modal-header .close {
+        opacity: 0.6;
+        margin: -0.25rem -0.25rem -0.25rem auto;
+        padding: 0.5rem;
+    }
+    #mdlChangeStatus .modal-header .close:hover {
+        opacity: 1;
+    }
+    #mdlChangeStatus .modal-body {
+        padding: 1.45rem 1.5rem;
+    }
+    #mdlChangeStatus .modal-footer {
+        border-top-color: var(--vt-theme-border);
+        background: linear-gradient(180deg, #fff 0%, var(--vt-theme-bg) 100%);
+        padding: 0.9rem 1.5rem 1.1rem;
+        gap: 0.6rem;
+    }
+    #mdlChangeStatus .modal-footer .btn {
+        min-width: 112px;
+        height: 36px;
+        border-radius: 9999px;
+        font-weight: 600;
+    }
+    #mdlChangeStatus .modal-footer .btn-secondary {
+        border: 1px solid #9ca3af;
+        background: #f3f4f6;
+        color: #374151;
     }
     #mdlChangeStatus .modal-footer .btn-primary {
         background: linear-gradient(135deg, var(--vt-theme) 0%, var(--vt-theme-dark) 100%);
@@ -277,6 +317,56 @@
     #mdlChangeStatus .modal-footer .btn-primary:hover {
         background: linear-gradient(135deg, var(--vt-theme-dark) 0%, var(--vt-theme-darker) 100%);
         border-color: var(--vt-theme-darker);
+    }
+    #mdlChangeStatus .vt-status-select-wrap {
+        width: 100%;
+    }
+    #mdlChangeStatus #mdlChangeStatusSelect {
+        width: 100%;
+    }
+    #mdlChangeStatus .select2-container {
+        width: 100% !important;
+    }
+    #mdlChangeStatus .select2-container--default .select2-selection--single {
+        min-height: 52px !important;
+        height: 52px !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--vt-theme-border) !important;
+        background: #fff !important;
+        padding: 0 2.75rem 0 0.95rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    #mdlChangeStatus .select2-container--default .select2-selection--single .select2-selection__rendered {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1.2 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        font-size: 1.05rem !important;
+        color: #1f2937 !important;
+    }
+    #mdlChangeStatus .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+        width: 2.2rem !important;
+        right: 0.55rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    #mdlChangeStatus .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        margin-top: 0 !important;
+    }
+    @@media (max-width: 575.98px) {
+        #mdlChangeStatus .modal-header,
+        #mdlChangeStatus .modal-body,
+        #mdlChangeStatus .modal-footer {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        #mdlChangeStatus .modal-footer .btn {
+            min-width: 96px;
+        }
     }
 
     /* Table link to project – theme color */
@@ -394,27 +484,25 @@
 </div>
 
 <div class="modals">
-    <div class="modal fade" id="mdlChangeStatus" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal fade" id="mdlChangeStatus" tabindex="-1" role="dialog" aria-labelledby="mdlChangeStatusTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Change Projects Status</h5>
+                    <h5 class="modal-title" id="mdlChangeStatusTitle">Change Projects Status</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <select id="mdlChangeStatusSelect" class="form-control form-control-sm" name="Status">
-                                <option value="1">Closed</option>
-                                <option value="2">Live</option>
-                                <option value="3">On Hold</option>
-                                <option value="4">Cancelled</option>
-                                <option value="5">Awarded</option>
-                                <option value="6">Invoiced</option>
-                            </select>
-                        </div>
+                    <div class="vt-status-select-wrap">
+                        <select id="mdlChangeStatusSelect" class="form-control form-control-sm" name="Status">
+                            <option value="1">Closed</option>
+                            <option value="2">Live</option>
+                            <option value="3">On Hold</option>
+                            <option value="4">Cancelled</option>
+                            <option value="5">Awarded</option>
+                            <option value="6">Invoiced</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -428,13 +516,14 @@
 </div>
 
 @section scripts {
-    <script src="~/customJS/Home/Dashboard.js"></script>
+    <script src="~/customJS/Home/Dashboard.js" asp-append-version="true"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             initVtDashboardFilterSelects();
-            $('select').not('#TableFilters select.dashboard-filter').select2({
+            $('select').not('#TableFilters select.dashboard-filter, #mdlChangeStatusSelect').select2({
                 dropdownCssClass: 'vt-theme-dropdown'
             });
+            initDashboardStatusSelect();
             getProjectTable();
         });
 

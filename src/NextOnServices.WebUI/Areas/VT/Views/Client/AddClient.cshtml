@@ -1,118 +1,233 @@
 @model NextOnServices.VT.Infrastructure.ViewModels.Client.ClientViewModel
 @{
-    ViewData["Title"] = "AddClient";
+    ViewData["Title"] = "Add Client";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/validation.css" rel="stylesheet" asp-append-version="true" />
 <style>
-    input[type="date"]::-webkit-calendar-picker-indicator {
-        background: transparent;
-        bottom: 0;
-        color: transparent;
-        cursor: pointer;
-        height: auto;
-        left: 0;
-        position: absolute;
-        right: 0;
-        top: 0;
-        width: auto;
+    .vt-add-client-page {
+        --vt-client-theme: #1d7874;
+        --vt-client-theme-dark: #165c59;
+        --vt-client-border: rgba(29, 120, 116, 0.22);
+        --vt-client-soft: rgba(29, 120, 116, 0.08);
     }
 
-    .select2-container--default .select2-selection--single {
-        padding: 0.5rem 0.81rem;
+    .vt-add-client-page .ref-page-title {
+        margin-bottom: 1rem;
     }
 
-    .select2-container .select2-selection--single {
-        height: 2.575rem;
+    .vt-add-client-page .ref-page-title h1 {
+        margin-bottom: 0.2rem;
     }
 
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
+    .vt-add-client-page .card--table-section {
+        border: 1px solid var(--vt-client-border);
+        box-shadow: 0 6px 16px rgba(29, 120, 116, 0.08);
+    }
+
+    .vt-add-client-page .table-section-header {
+        border-left-color: var(--vt-client-theme);
+    }
+
+    .vt-add-client-page .vt-form-section {
+        margin-bottom: 0.9rem;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--vt-client-border);
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-client-soft) 100%);
+        color: #0f3d3b;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+    }
+
+    .vt-add-client-page .form-group {
+        margin-bottom: 0.95rem;
+    }
+
+    .vt-add-client-page .form-control,
+    .vt-add-client-page input.form-control:not([type="checkbox"]),
+    .vt-add-client-page select.form-control,
+    .vt-add-client-page textarea.form-control {
+        font-size: 0.875rem;
         height: 38px;
+        min-height: 38px;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+    }
+
+    .vt-add-client-page textarea.form-control {
+        height: auto;
+        min-height: 96px;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .vt-add-client-page .form-control:focus {
+        border-color: var(--vt-client-theme);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(29, 120, 116, 0.2);
+    }
+
+    .vt-add-client-page .select2-container {
+        width: 100% !important;
+    }
+
+    .vt-add-client-page .select2-container--default .select2-selection--single {
+        height: 38px !important;
+        min-height: 38px !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        padding: 0 2.1rem 0 0.75rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .vt-add-client-page .select2-container--default .select2-selection--single .select2-selection__rendered {
+        height: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 1.2 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        color: #1f2937 !important;
+    }
+
+    .vt-add-client-page .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 100% !important;
+        width: 1.75rem !important;
+        right: 0.45rem !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .vt-add-client-page .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        margin-top: 0 !important;
+    }
+
+    .vt-add-client-page .btn-primary {
+        background: linear-gradient(135deg, var(--vt-client-theme) 0%, var(--vt-client-theme-dark) 100%) !important;
+        border-color: var(--vt-client-theme-dark) !important;
+        color: #fff !important;
+    }
+
+    .vt-add-client-page .btn-primary:hover {
+        background: linear-gradient(135deg, var(--vt-client-theme-dark) 0%, #124a47 100%) !important;
+        border-color: #124a47 !important;
+    }
+
+    .vt-add-client-page .btn-light {
+        border: 1px solid #dbe3ea !important;
+        color: #1f2937;
+        background: #fff;
+    }
+
+    .vt-add-client-page .btn-light:hover {
+        background: #f8fafc;
+    }
+
+    .vt-add-client-page .required::after {
+        content: " *";
+        color: #dc2626;
+        font-weight: 700;
     }
 </style>
 
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/css/vt/validation.css" rel="stylesheet" />
-<div class="row">
-    <div class="col-md-10 offset-1 grid-margin stretch-card">
-        <div class="card card--table-section">
-            <div class="card-body">
-                <h4 class="table-section-header">Client</h4>
-                <p class="card-description mb-0">Please fill in the details below</p>
-                <form class="forms-sample" id="ClientForm">
-                    <div class="row">
-                        <div class="form-group col-md-4">
-                            <label for="Pname" class="required">Client / Company Name</label>
-                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Client.Company">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Contact Person</label>
-                            <input type="text" class="form-control form-control-sm requiredInput" asp-for="Client.Cperson">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Contact Number</label>
-                            <input type="number" class="form-control form-control-sm requiredInput" placeholder="00 999 9999" asp-for="Client.Cnumber">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="Descriptions" class="required">Contact Email</label>
-                            <input type="email" class="form-control form-control-sm requiredInput" asp-for="Client.Cemail">
-                        </div>
-                        <div class="form-group col-md-4">
-                            <label for="" class="required">Country</label>
-                            <select class="form-control form-control-sm requiredInput select2" asp-for="Client.Country">
-                                <option value="0">--Select Country--</option>
-                                @{
-                                    if (Model != null && Model.Countries != null)
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-add-client-page">
+    <div class="ref-page-title">
+        <h1>Add Client</h1>
+        <p class="ref-subtitle">Create or update client company and contact details</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Client</h4>
+                    <p class="card-description mb-3">Please fill in the details below.</p>
+
+                    <form class="forms-sample vt-add-project-form" id="ClientForm">
+                        <div class="vt-form-section">Client Details</div>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label for="Client_Company" class="required">Client / Company Name</label>
+                                <input type="text" class="form-control form-control-sm requiredInput" id="Client_Company" asp-for="Client.Company">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Client_Cperson" class="required">Contact Person</label>
+                                <input type="text" class="form-control form-control-sm requiredInput" id="Client_Cperson" asp-for="Client.Cperson">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Client_Cnumber" class="required">Contact Number</label>
+                                <input type="number" class="form-control form-control-sm requiredInput" id="Client_Cnumber" placeholder="00 999 9999" asp-for="Client.Cnumber">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Client_Cemail" class="required">Contact Email</label>
+                                <input type="email" class="form-control form-control-sm requiredInput" id="Client_Cemail" asp-for="Client.Cemail">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="Client_Country" class="required">Country</label>
+                                <select class="form-control form-control-sm requiredInput select2" id="Client_Country" asp-for="Client.Country">
+                                    <option value="0">--Select Country--</option>
+                                    @if (Model?.Countries != null)
                                     {
                                         foreach (var item in Model.Countries)
                                         {
                                             <option value="@item.Country">@item.Country</option>
                                         }
                                     }
-                                }
-                            </select>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label for="Client_Notes">Notes</label>
+                                <textarea asp-for="Client.Notes" class="form-control form-control-sm" id="Client_Notes" placeholder="Enter your notes here"></textarea>
+                            </div>
                         </div>
-                        <div class="form-group col-md-10">
-                            <label for="">Notes</label>
-                            <textarea asp-for="Client.Notes" class="form-control form-control-sm" placeholder="Enter Your Notes Here"></textarea>
+
+                        <input type="hidden" asp-for="Client.ClientId" />
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddClient()">@((Model?.Client?.ClientId ?? 0) > 0 ? "Update Client" : "Save Client")</button>
+                            <button type="button" class="btn btn-light btn-sm" onclick="window.location.href = document.referrer || '/VT/Client/ClientList'">Cancel</button>
                         </div>
-                    </div>
-                    <input type="hidden" asp-for="Client.ClientId" />
-                    <button type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddClient()">@(Model == null ? "Submit" : Model.Client == null ? "Submit" : Model.Client.ClientId > 0 ? "Update" : "Submit")  </button>
-                    <button type="button" class="btn btn-light btn-sm" onclick="window.history.back()">Cancel</button>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-
 @section scripts {
-    <script src="~/customJS/Validation.js"></script>
+    <script src="~/customJS/Validation.js" asp-append-version="true"></script>
     <script type="text/javascript">
         $(document).ready(function () {
-            $(".select2").select2();
+            $(".select2").select2({
+                dropdownCssClass: 'vt-theme-dropdown',
+                width: '100%'
+            });
         });
 
-
-
         function AddClient() {
-
             if (!isValidateForm("ClientForm")) {
                 return false;
             }
 
-
-            let Data = $("#ClientForm");
+            var formData = $("#ClientForm");
             var inputDTO = {};
-            inputDTO.ClientId = isNaN($(Data).find("[name='Client.ClientId']").val()) ? 0 : $.trim($(Data).find("[name='Client.ClientId']").val()) == "" ? 0 : $(Data).find("[name='Client.ClientId']").val();
-            inputDTO.Company = $(Data).find("[name='Client.Company']").val();
-            inputDTO.Cperson = $(Data).find("[name='Client.Cperson']").val();
-            inputDTO.Cnumber = $(Data).find("[name='Client.Cnumber']").val();
-            inputDTO.Cemail = $(Data).find("[name='Client.Cemail']").val();
-            inputDTO.Country = $(Data).find("[name='Client.Country']").val();
-            inputDTO.Notes = $(Data).find("[name='Client.Notes']").val();
-
+            inputDTO.ClientId = isNaN($(formData).find("[name='Client.ClientId']").val()) ? 0 : $.trim($(formData).find("[name='Client.ClientId']").val()) === "" ? 0 : $(formData).find("[name='Client.ClientId']").val();
+            inputDTO.Company = $(formData).find("[name='Client.Company']").val();
+            inputDTO.Cperson = $(formData).find("[name='Client.Cperson']").val();
+            inputDTO.Cnumber = $(formData).find("[name='Client.Cnumber']").val();
+            inputDTO.Cemail = $(formData).find("[name='Client.Cemail']").val();
+            inputDTO.Country = $(formData).find("[name='Client.Country']").val();
+            inputDTO.Notes = $(formData).find("[name='Client.Notes']").val();
 
             BlockUI();
 
@@ -121,26 +236,20 @@
                 url: "/VT/Client/ManageClient",
                 contentType: 'application/json',
                 data: JSON.stringify(inputDTO),
-                success: function (data) {
+                success: function () {
                     UnblockUI();
-                    //Confirmation OK
-                    Swal.fire({ title: 'Success!', text: "Client Added", icon: 'success', confirmButtonText: 'OK' }).then((result) => {
+                    var successMessage = inputDTO.ClientId > 0 ? "Client updated successfully." : "Client added successfully.";
+                    Swal.fire({ title: 'Success', text: successMessage, icon: 'success', confirmButtonText: 'OK' }).then(function (result) {
                         if (result.isConfirmed) {
-                            //if (inputDTO.Id > 0) {
                             window.location.href = "/VT/Client/ClientList";
-                            //}
-                            // else {
-                            //     window.location.href = "/VT/Supplier/SupplierCountryPanelSize/" + data.encId;
-                            // }
                         }
                     });
                 },
                 error: function (error) {
-                    $erroralert("Error!", error.responseText);
                     UnblockUI();
+                    $erroralert("Error!", error.responseText);
                 }
             });
         }
     </script>
 }
-

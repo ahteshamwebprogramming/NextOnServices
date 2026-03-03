@@ -5,6 +5,8 @@ namespace NextOnServices.Infrastructure.Models.Projects;
 /// </summary>
 public class RespondentSearchResultDTO
 {
+    public string PName { get; set; } = "";
+    public string PID { get; set; } = "";
     public string SupplierName { get; set; } = "";
     public string SID { get; set; } = "";
     public string UID { get; set; } = "";

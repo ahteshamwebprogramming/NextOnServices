@@ -1,0 +1,728 @@
+@{
+    ViewData["Title"] = "Overall Report";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<style>
+    .vt-overall-report-page .vt-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.85rem;
+        align-items: end;
+    }
+
+    .vt-overall-report-page .form-group {
+        margin-bottom: 0;
+    }
+
+    .vt-overall-report-page .form-control {
+        border-radius: 10px;
+        border-color: #dbe3ea;
+        font-size: 0.86rem;
+        min-height: 38px;
+    }
+
+    .vt-overall-report-page .vt-filter-actions {
+        display: flex;
+        align-items: end;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .vt-overall-report-page .vt-filter-actions .btn {
+        min-width: 110px;
+        min-height: 38px;
+        border-radius: 999px;
+    }
+
+    .vt-overall-report-page .vt-kpi-card {
+        border: 1px solid rgba(29, 120, 116, 0.16);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+        height: 100%;
+    }
+
+    .vt-overall-report-page .vt-kpi-card .card-body {
+        padding: 1rem 1.1rem;
+    }
+
+    .vt-overall-report-page .vt-kpi-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 0.55rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .vt-overall-report-page .vt-metric-switch {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        font-size: 0.8rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .vt-overall-report-page .vt-metric-value {
+        font-size: 2.15rem;
+        line-height: 1;
+        font-weight: 800;
+        color: #115e59;
+        text-align: center;
+        margin-bottom: 0.4rem;
+        word-break: break-word;
+    }
+
+    .vt-overall-report-page .vt-metric-label {
+        font-size: 0.78rem;
+        color: #334155;
+        text-align: center;
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .vt-overall-report-page .vt-mini-table {
+        margin-bottom: 0.7rem;
+    }
+
+    .vt-overall-report-page .vt-mini-table:last-child {
+        margin-bottom: 0;
+    }
+
+    .vt-overall-report-page .vt-mini-table h6 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.45rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .vt-overall-report-page .vt-mini-table table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+    }
+
+    .vt-overall-report-page .vt-mini-table th,
+    .vt-overall-report-page .vt-mini-table td {
+        border: 1px solid #e2e8f0;
+        padding: 0.36rem 0.45rem;
+        vertical-align: middle;
+    }
+
+    .vt-overall-report-page .vt-mini-table th {
+        background: #f8fafc;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .vt-overall-report-page .vt-chart-wrap {
+        height: 220px;
+    }
+
+    .vt-overall-report-page .vt-rate-table td:first-child {
+        font-weight: 700;
+        color: #0f172a;
+        width: 36%;
+    }
+
+    .vt-overall-report-page #lblMsg {
+        min-height: 18px;
+        color: #b91c1c;
+        font-weight: 600;
+        font-size: 0.8rem;
+        margin-top: 0.4rem;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-overall-report-page">
+    <div class="ref-page-title">
+        <h1>Overall Report</h1>
+        <p class="ref-subtitle">Supplier, client, country and manager performance overview</p>
+    </div>
+
+    <div class="row">
+        <div class="col-12 grid-margin">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <p class="table-section-header mb-3">Filters</p>
+                    <div class="vt-filter-grid">
+                        <div class="form-group">
+                            <label for="txtSDate">Start Date</label>
+                            <input type="date" id="txtSDate" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="txtEDate">End Date</label>
+                            <input type="date" id="txtEDate" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="ddlCountry">Country</label>
+                            <select id="ddlCountry" class="form-control">
+                                <option value="0">--Search Country--</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ddlClients">Client</label>
+                            <select id="ddlClients" class="form-control">
+                                <option value="0">--Search Client--</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ddlSuppliers">Supplier</label>
+                            <select id="ddlSuppliers" class="form-control">
+                                <option value="0">--Search Supplier--</option>
+                            </select>
+                        </div>
+                        <div class="vt-filter-actions">
+                            <button type="button" class="btn btn-primary" id="btnApply">
+                                <i class="ti-search"></i> Apply
+                            </button>
+                        </div>
+                    </div>
+                    <div id="lblMsg"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-kpi-title">CPI Distribution</div>
+                    <div class="vt-chart-wrap">
+                        <canvas id="cpiChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-kpi-title">Completes Trend</div>
+                    <div class="vt-chart-wrap">
+                        <canvas id="completeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-kpi-title">Primary Metric</div>
+                    <div class="vt-metric-switch">
+                        <input type="checkbox" id="metricToggle" checked />
+                        <label for="metricToggle" class="mb-0">Revenue Mode</label>
+                    </div>
+                    <div class="vt-metric-value" id="metricValue">0</div>
+                    <p class="vt-metric-label" id="metricLabel">Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table">
+                        <h6>Supplier - Completes</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Supplier</th><th>Complete</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblSupplierComBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="vt-mini-table">
+                        <h6>Supplier - Revenue</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Supplier</th><th>Value</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblSupplierRevBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table">
+                        <h6>Client - Completes</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Client</th><th>Complete</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblClientComBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="vt-mini-table">
+                        <h6>Client - Revenue</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Client</th><th>Value</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblClientRevBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table">
+                        <h6>Country - Completes</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Country</th><th>Total</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblCountryComBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="vt-mini-table">
+                        <h6>Country - Revenue</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Country</th><th>Value</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblCountryRevBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table">
+                        <h6>Manager - Completes</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Manager</th><th>Total</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblManagerComBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="vt-mini-table">
+                        <h6>Manager - Revenue</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Manager</th><th>Revenue</th><th>%</th></tr>
+                            </thead>
+                            <tbody id="tblManagerRevBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table mb-0">
+                        <h6>Projects</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Total</th><th>Closed</th><th>In Progress</th><th>On Hold</th><th>Cancelled</th></tr>
+                            </thead>
+                            <tbody id="tblProjectsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table">
+                        <h6>Success Rate</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Project Success Rate</th><th>IR Success Rate</th></tr>
+                            </thead>
+                            <tbody id="tblSuccessBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="vt-mini-table mb-0">
+                        <h6>Respondents</h6>
+                        <table>
+                            <thead>
+                                <tr><th>Total</th><th>Complete</th><th>Incomplete</th><th>Screened</th><th>Quotafull</th><th>Terminate</th></tr>
+                            </thead>
+                            <tbody id="tblRespondentBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 grid-margin stretch-card">
+            <div class="vt-kpi-card">
+                <div class="card-body">
+                    <div class="vt-mini-table mb-0">
+                        <h6>Rate Metrics</h6>
+                        <table class="vt-rate-table">
+                            <thead>
+                                <tr><th>Parameter</th><th>Min</th><th>Max</th><th>Average</th></tr>
+                            </thead>
+                            <tbody id="tblRateBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            let cpiChart = null;
+            let completeChart = null;
+            let currentSnapshot = null;
+
+            function val(obj, camel, pascal) {
+                if (!obj) return null;
+                if (obj[camel] !== undefined && obj[camel] !== null) return obj[camel];
+                if (obj[pascal] !== undefined && obj[pascal] !== null) return obj[pascal];
+                return null;
+            }
+
+            function list(obj, camel, pascal) {
+                const arr = val(obj, camel, pascal);
+                return Array.isArray(arr) ? arr : [];
+            }
+
+            function escapeHtml(value) {
+                if (value == null) return "";
+                return String(value)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#39;");
+            }
+
+            function formatNumber(value) {
+                const num = Number(value || 0);
+                if (!Number.isFinite(num)) return "0";
+                return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+            }
+
+            function formatPercent(value) {
+                const num = Number(value || 0);
+                if (!Number.isFinite(num)) return "0%";
+                return num.toLocaleString(undefined, { maximumFractionDigits: 2 }) + "%";
+            }
+
+            function startBusy() {
+                if (typeof BlockUI === "function") {
+                    BlockUI();
+                    return;
+                }
+                if ($.blockUI) {
+                    $.blockUI({ message: "<h5>Please wait...</h5>" });
+                }
+            }
+
+            function stopBusy() {
+                if (typeof UnblockUI === "function") {
+                    UnblockUI();
+                    return;
+                }
+                if ($.unblockUI) {
+                    $.unblockUI();
+                }
+            }
+
+            function setDefaultDates() {
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const toIsoDate = (d) => d.toISOString().slice(0, 10);
+                $("#txtSDate").val(toIsoDate(monthStart));
+                $("#txtEDate").val(toIsoDate(now));
+            }
+
+            function fillSelect($el, items, placeholder) {
+                $el.empty();
+                $el.append(`<option value="0">${placeholder}</option>`);
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    const id = val(item, "id", "Id") || 0;
+                    const name = val(item, "name", "Name") || "";
+                    $el.append(`<option value="${id}">${escapeHtml(name)}</option>`);
+                }
+            }
+
+            function renderNamedValueTable(targetBodyId, rows) {
+                const $body = $(targetBodyId);
+                if (!rows || !rows.length) {
+                    $body.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
+                    return;
+                }
+
+                let html = "";
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const name = val(row, "name", "Name") || "";
+                    const amount = val(row, "value", "Value") || 0;
+                    const percentage = val(row, "percentage", "Percentage") || 0;
+                    html += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(amount)}</td><td>${formatPercent(percentage)}</td></tr>`;
+                }
+                $body.html(html);
+            }
+
+            function renderManagerTables(rows) {
+                const $comBody = $("#tblManagerComBody");
+                const $revBody = $("#tblManagerRevBody");
+
+                if (!rows || !rows.length) {
+                    $comBody.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
+                    $revBody.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
+                    return;
+                }
+
+                let comHtml = "";
+                let revHtml = "";
+
+                for (let i = 0; i < rows.length; i++) {
+                    const r = rows[i];
+                    const name = val(r, "name", "Name") || "";
+                    const total = val(r, "complete", "Complete") || 0;
+                    const totalPct = val(r, "completepercentage", "Completepercentage") || 0;
+                    const revenue = val(r, "revenue", "Revenue") || 0;
+                    const revPct = val(r, "revenuepercentage", "Revenuepercentage") || 0;
+
+                    comHtml += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(total)}</td><td>${formatPercent(totalPct)}</td></tr>`;
+                    revHtml += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(revenue)}</td><td>${formatPercent(revPct)}</td></tr>`;
+                }
+
+                $comBody.html(comHtml);
+                $revBody.html(revHtml);
+            }
+
+            function renderProjectTotals(data) {
+                const totals = val(data, "projectTotals", "ProjectTotals") || {};
+                const total = val(totals, "total", "Total") || 0;
+                const closed = val(totals, "closed", "Closed") || 0;
+                const inprogress = val(totals, "inprogress", "Inprogress") || 0;
+                const onhold = val(totals, "onhold", "Onhold") || 0;
+                const cancelled = val(totals, "cancelled", "Cancelled") || 0;
+                $("#tblProjectsBody").html(
+                    `<tr><td>${formatNumber(total)}</td><td>${formatNumber(closed)}</td><td>${formatNumber(inprogress)}</td><td>${formatNumber(onhold)}</td><td>${formatNumber(cancelled)}</td></tr>`
+                );
+            }
+
+            function renderSuccessAndRespondents(data) {
+                const success = val(data, "successRate", "SuccessRate") || {};
+                const respondents = val(data, "respondents", "Respondents") || {};
+
+                const projectRate = val(success, "projectSuccessRate", "ProjectSuccessRate") || 0;
+                const irRate = val(success, "irSuccessRate", "IrSuccessRate") || 0;
+                $("#tblSuccessBody").html(`<tr><td>${formatPercent(projectRate)}</td><td>${formatPercent(irRate)}</td></tr>`);
+
+                const total = val(respondents, "total", "Total") || 0;
+                const complete = val(respondents, "complete", "Complete") || 0;
+                const incomplete = val(respondents, "incomplete", "Incomplete") || 0;
+                const screened = val(respondents, "screened", "Screened") || 0;
+                const quotafull = val(respondents, "quotafull", "Quotafull") || 0;
+                const terminate = val(respondents, "terminate", "Terminate") || 0;
+
+                $("#tblRespondentBody").html(
+                    `<tr><td>${formatNumber(total)}</td><td>${formatNumber(complete)}</td><td>${formatNumber(incomplete)}</td><td>${formatNumber(screened)}</td><td>${formatNumber(quotafull)}</td><td>${formatNumber(terminate)}</td></tr>`
+                );
+            }
+
+            function renderRateTable(data) {
+                const rates = val(data, "rates", "Rates") || {};
+                const ir = val(rates, "iRate", "IRate") || {};
+                const loi = val(rates, "expectedLoi", "ExpectedLoi") || {};
+                const cpi = val(rates, "cpi", "Cpi") || {};
+                const aloi = val(rates, "actualLoi", "ActualLoi") || {};
+
+                const row = (name, obj) => {
+                    const min = val(obj, "min", "Min") || 0;
+                    const max = val(obj, "max", "Max") || 0;
+                    const avg = val(obj, "average", "Average") || 0;
+                    return `<tr><td>${name}</td><td>${formatNumber(min)}</td><td>${formatNumber(max)}</td><td>${formatNumber(avg)}</td></tr>`;
+                };
+
+                $("#tblRateBody").html(
+                    row("Incident Rate", ir) +
+                    row("Expected LOI", loi) +
+                    row("Actual LOI", aloi) +
+                    row("CPI", cpi)
+                );
+            }
+
+            function renderPrimaryMetric(data) {
+                const isRevenue = $("#metricToggle").is(":checked");
+                const sumValue = val(data, "sumValue", "SumValue") || 0;
+                const respondents = val(data, "respondents", "Respondents") || {};
+                const completes = val(respondents, "complete", "Complete") || 0;
+
+                $("#metricValue").text(formatNumber(isRevenue ? sumValue : completes));
+                $("#metricLabel").text(isRevenue ? "Revenue" : "Completes");
+            }
+
+            function renderCharts(data) {
+                const pie = val(data, "cpiChart", "CpiChart") || {};
+                const pieMin = Number(val(pie, "min", "Min") || 0);
+                const pieMax = Number(val(pie, "max", "Max") || 0);
+                const pieMean = Number(val(pie, "mean", "Mean") || 0);
+
+                if (cpiChart) cpiChart.destroy();
+                const cpiCtx = document.getElementById("cpiChart");
+                cpiChart = new Chart(cpiCtx, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Min", "Max", "Mean"],
+                        datasets: [{
+                            data: [pieMin, pieMax, pieMean],
+                            backgroundColor: ["#2563eb", "#f97316", "#64748b"],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: "bottom" }
+                        }
+                    }
+                });
+
+                const trend = list(data, "completeTrend", "CompleteTrend");
+                const labels = trend.map(x => val(x, "months", "Months") || "");
+                const values = trend.map(x => Number(val(x, "completes", "Completes") || 0));
+
+                if (completeChart) completeChart.destroy();
+                const trendCtx = document.getElementById("completeChart");
+                completeChart = new Chart(trendCtx, {
+                    type: "bar",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "Completes",
+                            data: values,
+                            borderWidth: 0,
+                            backgroundColor: "#1d7874"
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+            }
+
+            function renderAll(data) {
+                const supplierCom = list(data, "supplierCompletions", "SupplierCompletions");
+                const clientCom = list(data, "clientCompletions", "ClientCompletions");
+                const countryCom = list(data, "countryCompletions", "CountryCompletions");
+
+                const supplierRev = list(data, "supplierRevenue", "SupplierRevenue");
+                const clientRev = list(data, "clientRevenue", "ClientRevenue");
+                const countryRev = list(data, "countryRevenue", "CountryRevenue");
+                const manager = list(data, "managerSummary", "ManagerSummary");
+
+                renderNamedValueTable("#tblSupplierComBody", supplierCom);
+                renderNamedValueTable("#tblSupplierRevBody", supplierRev);
+                renderNamedValueTable("#tblClientComBody", clientCom);
+                renderNamedValueTable("#tblClientRevBody", clientRev);
+                renderNamedValueTable("#tblCountryComBody", countryCom);
+                renderNamedValueTable("#tblCountryRevBody", countryRev);
+                renderManagerTables(manager);
+                renderProjectTotals(data);
+                renderSuccessAndRespondents(data);
+                renderRateTable(data);
+                renderPrimaryMetric(data);
+                renderCharts(data);
+            }
+
+            async function loadFilterOptions() {
+                const response = await $.ajax({
+                    type: "POST",
+                    url: "/VT/OverallReport.aspx/GetFilterOptions",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json"
+                });
+
+                fillSelect($("#ddlCountry"), list(response, "countries", "Countries"), "--Search Country--");
+                fillSelect($("#ddlClients"), list(response, "clients", "Clients"), "--Search Client--");
+                fillSelect($("#ddlSuppliers"), list(response, "suppliers", "Suppliers"), "--Search Supplier--");
+            }
+
+            async function loadDashboardData() {
+                $("#lblMsg").text("");
+
+                const sDate = $("#txtSDate").val();
+                const eDate = $("#txtEDate").val();
+
+                if ((sDate && !eDate) || (!sDate && eDate)) {
+                    $("#lblMsg").text("Please select both start date and end date.");
+                    return;
+                }
+
+                const payload = {
+                    countryId: parseInt($("#ddlCountry").val() || "0", 10),
+                    clientId: parseInt($("#ddlClients").val() || "0", 10),
+                    supplierId: parseInt($("#ddlSuppliers").val() || "0", 10),
+                    sDate: sDate || null,
+                    eDate: eDate || null
+                };
+
+                startBusy();
+                try {
+                    const response = await $.ajax({
+                        type: "POST",
+                        url: "/VT/OverallReport.aspx/GetDashboardData",
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        data: JSON.stringify(payload)
+                    });
+
+                    currentSnapshot = response || {};
+                    renderAll(currentSnapshot);
+                } catch (xhr) {
+                    const message = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Unable to load report data.";
+                    $("#lblMsg").text(message);
+                } finally {
+                    stopBusy();
+                }
+            }
+
+            $("#btnApply").on("click", function () {
+                loadDashboardData();
+            });
+
+            $("#metricToggle").on("change", function () {
+                renderPrimaryMetric(currentSnapshot || {});
+            });
+
+            $(document).ready(async function () {
+                setDefaultDates();
+                startBusy();
+                try {
+                    await loadFilterOptions();
+                    await loadDashboardData();
+                } finally {
+                    stopBusy();
+                }
+            });
+        })();
+    </script>
+}

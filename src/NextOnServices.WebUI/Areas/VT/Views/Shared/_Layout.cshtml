@@ -341,11 +341,12 @@
                                     <ul class="nav flex-column sub-menu">
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Projects/AddProject">Add</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Projects/ProjectsList">List</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/RecontactProjects">Recontact Projects</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Respondents/IDSearch">ID Search</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/ManageStatus">Reconciliation</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Redirects">Redirects</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Redirects/GenerateCompleteRedirects">Generate Complete Redirects</a></li>
-                                        <li class="nav-item"> <a class="nav-link" href="/VT/RecontactProjects">Recontact Projects</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ProjectInfoSearc.aspx">ID Mapping</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/RecontactCreate">Create Recontact</a></li>
                                     </ul>
                                 </div>
@@ -365,6 +366,25 @@
                                     <ul class="nav flex-column sub-menu">
                                         <li class="nav-item"> <a class="nav-link" href="/VT/ApiProjects/SurveysLucid">Surveys(Lucid)</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/ApiProjects/SurveysSpectrum">Surveys(Spectrum)</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ProjectsListSago.aspx">List</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
+                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#reports" aria-expanded="false" aria-controls="reports">
+                                    <i class="icon-bar-graph menu-icon"></i>
+                                    <span class="menu-title">Report</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="reports">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/OverallReport.aspx">Overall</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/ProjectWiseReport.aspx">Project</a></li>
                                     </ul>
                                 </div>
                             </li>

@@ -1,58 +1,50 @@
-﻿@model NextOnServices.Infrastructure.ViewModels.ProjectMapping.ProjectMappingViewModel
+@model NextOnServices.Infrastructure.ViewModels.ProjectMapping.ProjectMappingViewModel
 <div class="col-md-12 grid-margin stretch-card">
-    <div class="card">
+    <div class="card card--table-section">
         <div class="card-body">
-            <h4 class="card-title">Project Sampling</h4>
+            <h4 class="table-section-header">Project Sampling</h4>
+            <p class="card-description mb-3">Map project sampling to country and supplier with quota and links.</p>
 
-            <form class="forms-sample" id="ProjectMappingForm">
+            <form class="forms-sample vt-add-project-form" id="ProjectMappingForm">
                 <div class="row">
-                    <div class="col-md-4 offset-md-8 mb-2">
-                        <label class="container1_ppd">
-                            <input type="checkbox" id="chkAddHashing" asp-for="ProjectMappingWithChild.AddHashingBool" onchange="ApplyVariable(this.id)" />&nbsp; Add Hashing<span class="checkmark_ppd"></span>
-                        </label>
+                    <div class="form-group col-md-12 mb-2">
+                        <div class="vt-mapping-toggle-wrap">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkAddHashing" asp-for="ProjectMappingWithChild.AddHashingBool" onchange="ApplyVariable(this.id)" />
+                                <label class="form-check-label" for="chkAddHashing">Add hashing</label>
+                            </div>
+                            <p class="vt-map-help">Enable to append hashed parameters to mapped supplier links.</p>
+                        </div>
                     </div>
+
                     <div class="form-group col-md-4">
                         <label for="ProjectName">Project Name</label>
-                        <input type="text" class="form-control-sm form-control-plaintext" asp-for="Project.Pname">
+                        <input type="text" class="form-control form-control-sm vt-project-name-readonly" id="ProjectName" asp-for="Project.Pname" readonly>
                     </div>
+
                     <div class="form-group col-md-4">
                         <label for="CountryId">Country</label>
-                        <select class="form-control form-control-sm select2" asp-for="ProjectMappingWithChild.CountryId">
+                        <select class="form-control form-control-sm select2" id="CountryId" asp-for="ProjectMappingWithChild.CountryId">
                             <option value="0">--Select Country--</option>
-                            @{
-                                if (Model != null)
+                            @if (Model?.Countries != null && Model.Countries.Count > 0)
+                            {
+                                foreach (var item in Model.Countries)
                                 {
-                                    if (Model.Countries != null)
-                                    {
-                                        if (Model.Countries.Count > 0)
-                                        {
-                                            foreach (var item in Model.Countries)
-                                            {
-                                                <option value="@item.CountryId">@item.Country</option>
-                                            }
-                                        }
-                                    }
+                                    <option value="@item.CountryId">@item.Country</option>
                                 }
                             }
                         </select>
                     </div>
+
                     <div class="form-group col-md-4">
-                        <label for="CountryId">Supplier</label>
-                        <select class="form-control form-control-sm select2" asp-for="ProjectMappingWithChild.SupplierId">
+                        <label for="SupplierId">Supplier</label>
+                        <select class="form-control form-control-sm select2" id="SupplierId" asp-for="ProjectMappingWithChild.SupplierId">
                             <option value="0">--Select Supplier--</option>
-                            @{
-                                if (Model != null)
+                            @if (Model?.Suppliers != null && Model.Suppliers.Count > 0)
+                            {
+                                foreach (var item in Model.Suppliers)
                                 {
-                                    if (Model.Suppliers != null)
-                                    {
-                                        if (Model.Suppliers.Count > 0)
-                                        {
-                                            foreach (var item in Model.Suppliers)
-                                            {
-                                                <option value="@item.Id">@item.Name</option>
-                                            }
-                                        }
-                                    }
+                                    <option value="@item.Id">@item.Name</option>
                                 }
                             }
                         </select>
@@ -60,23 +52,27 @@
 
                     <div class="form-group col-md-4">
                         <label for="RespondentQuota">Respondent Quota</label>
-                        <input type="number" class="form-control form-control-sm" asp-for="ProjectMappingWithChild.Respondants">
+                        <input type="number" class="form-control form-control-sm" id="RespondentQuota" asp-for="ProjectMappingWithChild.Respondants">
                     </div>
+
                     <div class="form-group col-md-4">
                         <label for="Cpi">CPI ($)</label>
-                        <input type="number" class="form-control form-control-sm" asp-for="ProjectMappingWithChild.Cpi">
+                        <input type="number" class="form-control form-control-sm" id="Cpi" asp-for="ProjectMappingWithChild.Cpi">
                     </div>
+
                     <div class="form-group col-md-4">
                         <label for="Notes">Notes</label>
-                        <textarea class="form-control form-control-sm" asp-for="ProjectMappingWithChild.Notes"></textarea>
+                        <textarea class="form-control form-control-sm" id="Notes" asp-for="ProjectMappingWithChild.Notes"></textarea>
                     </div>
+
                     <div class="form-group col-md-4 ParameterContent">
-                        <label for="Cpi">Parameter Name</label>
-                        <input type="text" class="form-control form-control-sm" value="enc" readonly asp-for="ProjectMappingWithChild.ParameterName">
+                        <label for="ParameterName">Parameter Name</label>
+                        <input type="text" class="form-control form-control-sm" id="ParameterName" value="enc" readonly asp-for="ProjectMappingWithChild.ParameterName">
                     </div>
+
                     <div class="form-group col-md-4 ParameterContent">
-                        <label for="Cpi">Hashing Type</label>
-                        <select class="form-control form-control-sm" asp-for="ProjectMappingWithChild.HashingType">
+                        <label for="HashingType">Hashing Type</label>
+                        <select class="form-control form-control-sm" id="HashingType" asp-for="ProjectMappingWithChild.HashingType">
                             <option value="SHA3" selected>SHA3</option>
                             <option value="SHA1">SHA1</option>
                         </select>
@@ -84,8 +80,11 @@
                 </div>
 
                 <input type="hidden" asp-for="ProjectMappingWithChild.Id" />
-                <input type="button" class="btn btn-primary mr-2 btn-sm" onclick="AddProjectMapping()" value="@(Model?.ProjectMappingWithChild?.Id>0 ? "Update" : "Submit")" />
-                <button class="btn btn-light btn-sm" type="reset" onclick="javascipt:window.history.back()">Cancel</button>
+
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="AddProjectMapping()">@((Model?.ProjectMappingWithChild?.Id ?? 0) > 0 ? "Update Mapping" : "Save Mapping")</button>
+                    <button type="button" class="btn btn-light btn-sm" onclick="window.location.href = document.referrer || '/VT/Projects/ProjectsList'">Cancel</button>
+                </div>
             </form>
         </div>
     </div>

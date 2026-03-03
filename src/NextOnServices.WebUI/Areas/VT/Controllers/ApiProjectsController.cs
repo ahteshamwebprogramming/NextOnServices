@@ -97,6 +97,7 @@ public class ApiProjectsController : Controller
     }
 
     [Route("/VT/ApiProjects/SurveysLucid")]
+    [Route("/VT/ProjectsListSago.aspx")]
     public IActionResult SurveysLucid()
     {
         ViewData["Title"] = "Surveys (Lucid)";
