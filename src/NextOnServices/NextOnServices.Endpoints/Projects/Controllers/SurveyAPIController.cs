@@ -1037,30 +1037,38 @@ public class SurveyAPIController : ControllerBase
                 enddate = filter.EDate
             };
 
-            // Completion blocks (Supplier, Client, Country, Project Totals)
-            using (var multi = await TryQueryMultipleStoredProcedures(
-                connection,
-                new
-                {
-                    supplierid = commonParams.supplierid,
-                    clientid = commonParams.clientid,
-                    countryid = commonParams.countryid,
-                    id = 0,
-                    report = 3,
-                    opt = 0,
-                    startdate = commonParams.startdate,
-                    enddate = commonParams.enddate
-                },
-                "OverallReport-Completion",
-                "usp_ReportManagement_bk",
-                "usp_ReportManagement"))
+            // Completion blocks (Supplier, Client, Country, Project Totals) - exact SP from old project: usp_ReportManagement_bk
+            SqlMapper.GridReader? multiCompletion = null;
+            try
             {
-                if (multi != null)
+                multiCompletion = await connection.QueryMultipleAsync(
+                    "usp_ReportManagement_bk",
+                    new
+                    {
+                        supplierid = commonParams.supplierid,
+                        clientid = commonParams.clientid,
+                        countryid = commonParams.countryid,
+                        id = 0,
+                        report = 3,
+                        opt = 0,
+                        startdate = commonParams.startdate,
+                        enddate = commonParams.enddate
+                    },
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OverallReport-Completion: usp_ReportManagement_bk failed.");
+            }
+
+            if (multiCompletion != null)
+            {
+                using (multiCompletion)
                 {
-                    var supplierRows = await TryReadRows(multi, "OverallReport-Completion", 1);
-                    var clientRows = await TryReadRows(multi, "OverallReport-Completion", 2);
-                    var countryRows = await TryReadRows(multi, "OverallReport-Completion", 3);
-                    var projectTotalsRows = await TryReadRows(multi, "OverallReport-Completion", 4);
+                    var supplierRows = await TryReadRows(multiCompletion, "OverallReport-Completion", 1);
+                    var clientRows = await TryReadRows(multiCompletion, "OverallReport-Completion", 2);
+                    var countryRows = await TryReadRows(multiCompletion, "OverallReport-Completion", 3);
+                    var projectTotalsRows = await TryReadRows(multiCompletion, "OverallReport-Completion", 4);
 
                     snapshot.SupplierCompletions = supplierRows
                         .Select(d => new OverallNamedValuePercentDTO
@@ -1110,22 +1118,29 @@ public class SurveyAPIController : ControllerBase
                 }
             }
 
-            // Rate cards + sum value
-            using (var multi = await TryQueryMultipleStoredProcedures(
-                connection,
-                commonParams,
-                "OverallReport-Rates",
-                "remainingtabled",
-                "RemainingTable",
-                "remainingtable"))
+            // Rate cards + sum value - exact SP from old project: remainingtabled
+            SqlMapper.GridReader? multiRates = null;
+            try
             {
-                if (multi != null)
+                multiRates = await connection.QueryMultipleAsync(
+                    "remainingtabled",
+                    commonParams,
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OverallReport-Rates: remainingtabled failed.");
+            }
+
+            if (multiRates != null)
+            {
+                using (multiRates)
                 {
-                    var irRows = await TryReadRows(multi, "OverallReport-Rates", 1);
-                    var loiRows = await TryReadRows(multi, "OverallReport-Rates", 2);
-                    var cpiRows = await TryReadRows(multi, "OverallReport-Rates", 3);
-                    var actualLoiRows = await TryReadRows(multi, "OverallReport-Rates", 4);
-                    var sumRows = await TryReadRows(multi, "OverallReport-Rates", 5);
+                    var irRows = await TryReadRows(multiRates, "OverallReport-Rates", 1);
+                    var loiRows = await TryReadRows(multiRates, "OverallReport-Rates", 2);
+                    var cpiRows = await TryReadRows(multiRates, "OverallReport-Rates", 3);
+                    var actualLoiRows = await TryReadRows(multiRates, "OverallReport-Rates", 4);
+                    var sumRows = await TryReadRows(multiRates, "OverallReport-Rates", 5);
 
                     var ir = irRows.FirstOrDefault();
                     var loi = loiRows.FirstOrDefault();
@@ -1177,18 +1192,26 @@ public class SurveyAPIController : ControllerBase
                 }
             }
 
-            // Success rate + respondent totals
-            using (var multi = await TryQueryMultipleStoredProcedures(
-                connection,
-                commonParams,
-                "OverallReport-Respondents",
-                "respondants",
-                "respondents"))
+            // Success rate + respondent totals - exact SP from old project: respondants
+            SqlMapper.GridReader? multiRespondents = null;
+            try
             {
-                if (multi != null)
+                multiRespondents = await connection.QueryMultipleAsync(
+                    "respondants",
+                    commonParams,
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OverallReport-Respondents: respondants failed.");
+            }
+
+            if (multiRespondents != null)
+            {
+                using (multiRespondents)
                 {
-                    var successRows = await TryReadRows(multi, "OverallReport-Respondents", 1);
-                    var respondentRows = await TryReadRows(multi, "OverallReport-Respondents", 2);
+                    var successRows = await TryReadRows(multiRespondents, "OverallReport-Respondents", 1);
+                    var respondentRows = await TryReadRows(multiRespondents, "OverallReport-Respondents", 2);
 
                     var success = successRows.FirstOrDefault();
                     var respondents = respondentRows.FirstOrDefault();
@@ -1217,19 +1240,27 @@ public class SurveyAPIController : ControllerBase
                 }
             }
 
-            // Revenue blocks (Supplier, Client, Country)
-            using (var multi = await TryQueryMultipleStoredProcedures(
-                connection,
-                commonParams,
-                "OverallReport-Revenue",
-                "usp_CalculateRevenue_BK",
-                "usp_CalculateRevenue"))
+            // Revenue blocks (Supplier, Client, Country) - exact SP from old project: usp_CalculateRevenue_BK
+            SqlMapper.GridReader? multiRevenue = null;
+            try
             {
-                if (multi != null)
+                multiRevenue = await connection.QueryMultipleAsync(
+                    "usp_CalculateRevenue_BK",
+                    commonParams,
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OverallReport-Revenue: usp_CalculateRevenue_BK failed.");
+            }
+
+            if (multiRevenue != null)
+            {
+                using (multiRevenue)
                 {
-                    var supplierRevRows = await TryReadRows(multi, "OverallReport-Revenue", 1);
-                    var clientRevRows = await TryReadRows(multi, "OverallReport-Revenue", 2);
-                    var countryRevRows = await TryReadRows(multi, "OverallReport-Revenue", 3);
+                    var supplierRevRows = await TryReadRows(multiRevenue, "OverallReport-Revenue", 1);
+                    var clientRevRows = await TryReadRows(multiRevenue, "OverallReport-Revenue", 2);
+                    var countryRevRows = await TryReadRows(multiRevenue, "OverallReport-Revenue", 3);
 
                     snapshot.SupplierRevenue = supplierRevRows
                         .Select(d => new OverallNamedValuePercentDTO
@@ -1263,11 +1294,11 @@ public class SurveyAPIController : ControllerBase
                 }
             }
 
-            // Manager-wise block (safe fallback)
+            // Manager-wise block - exact SP from old project: ManagerWiseReport_BK
             try
             {
-                var managerRows = await TryQueryStoredProcedures(
-                    connection,
+                var managerRows = await connection.QueryAsync<dynamic>(
+                    "ManagerWiseReport_BK",
                     new
                     {
                         supplierid = commonParams.supplierid,
@@ -1279,9 +1310,7 @@ public class SurveyAPIController : ControllerBase
                         startdate = commonParams.startdate,
                         enddate = commonParams.enddate
                     },
-                    "OverallReport-Manager",
-                    "ManagerWiseReport_BK",
-                    "ManagerWiseReport");
+                    commandType: CommandType.StoredProcedure);
 
                 snapshot.ManagerSummary = ToDictionaryRows(managerRows)
                     .Select(d => new OverallManagerSummaryDTO
@@ -1302,19 +1331,16 @@ public class SurveyAPIController : ControllerBase
                 _logger.LogWarning(ex, "ManagerWiseReport_BK failed for Overall report filter.");
             }
 
-            // Charts block (safe fallback)
+            // Charts block - exact SP from old project: chartsremain
             try
             {
-                using var multi = await TryQueryMultipleStoredProcedures(
-                    connection,
+                using var multiCharts = await connection.QueryMultipleAsync(
+                    "chartsremain",
                     null,
-                    "OverallReport-Charts",
-                    "chartsremain");
+                    commandType: CommandType.StoredProcedure);
 
-                if (multi != null)
-                {
-                    var completeRows = await TryReadRows(multi, "OverallReport-Charts", 1);
-                    var pieRows = await TryReadRows(multi, "OverallReport-Charts", 2);
+                var completeRows = await TryReadRows(multiCharts, "OverallReport-Charts", 1);
+                var pieRows = await TryReadRows(multiCharts, "OverallReport-Charts", 2);
 
                     snapshot.CompleteTrend = completeRows
                         .Select(d => new OverallMonthlyCompleteDTO
@@ -1335,7 +1361,6 @@ public class SurveyAPIController : ControllerBase
                             Mean = GetDecimalAny(pie, "Mean")
                         };
                     }
-                }
             }
             catch (Exception ex)
             {
@@ -1389,16 +1414,26 @@ public class SurveyAPIController : ControllerBase
             using var connection = new SqlConnection(_dapperDBSetting.ConnectionString);
             await connection.OpenAsync();
 
-            using var multi = await TryQueryMultipleStoredProcedures(
-                connection,
-                new { @projectid = projectId },
-                "ProjectWise-Details",
-                "ProjectReports_BK",
-                "ProjectReports");
+            // Exact SP from old project: ProjectReports_BK
+            SqlMapper.GridReader? multi = null;
+            try
+            {
+                multi = await connection.QueryMultipleAsync(
+                    "ProjectReports_BK",
+                    new { @projectid = projectId },
+                    commandType: CommandType.StoredProcedure);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "ProjectWise-Details: ProjectReports_BK failed for projectId {ProjectId}.", projectId);
+                return dto;
+            }
 
             if (multi == null)
                 return dto;
 
+            using (multi)
+            {
             var overviewRows = await TryReadRows(multi, "ProjectWise-Details", 1);
             var countryRows = await TryReadRows(multi, "ProjectWise-Details", 2);
             var supplierRows = await TryReadRows(multi, "ProjectWise-Details", 3);
@@ -1457,6 +1492,8 @@ public class SurveyAPIController : ControllerBase
                     Margin = GetDecimalAny(totals, "Margin")
                 };
             }
+
+            } // using (multi)
 
             return dto;
         }

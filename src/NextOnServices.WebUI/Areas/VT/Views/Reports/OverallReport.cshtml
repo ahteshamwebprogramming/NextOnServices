@@ -6,380 +6,124 @@
 <link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
 <style>
-    .vt-overall-report-page .vt-filter-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 0.85rem;
-        align-items: end;
-    }
-
-    .vt-overall-report-page .form-group {
-        margin-bottom: 0;
-    }
-
-    .vt-overall-report-page .form-control {
-        border-radius: 10px;
-        border-color: #dbe3ea;
-        font-size: 0.86rem;
-        min-height: 38px;
-    }
-
-    .vt-overall-report-page .vt-filter-actions {
-        display: flex;
-        align-items: end;
-        justify-content: flex-end;
-        gap: 0.5rem;
-    }
-
-    .vt-overall-report-page .vt-filter-actions .btn {
-        min-width: 110px;
-        min-height: 38px;
-        border-radius: 999px;
-    }
-
-    .vt-overall-report-page .vt-kpi-card {
-        border: 1px solid rgba(29, 120, 116, 0.16);
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-        height: 100%;
-    }
-
-    .vt-overall-report-page .vt-kpi-card .card-body {
-        padding: 1rem 1.1rem;
-    }
-
-    .vt-overall-report-page .vt-kpi-title {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 0.55rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
-
-    .vt-overall-report-page .vt-metric-switch {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.45rem;
-        font-size: 0.8rem;
-        margin-bottom: 0.65rem;
-    }
-
-    .vt-overall-report-page .vt-metric-value {
-        font-size: 2.15rem;
-        line-height: 1;
-        font-weight: 800;
-        color: #115e59;
-        text-align: center;
-        margin-bottom: 0.4rem;
-        word-break: break-word;
-    }
-
-    .vt-overall-report-page .vt-metric-label {
-        font-size: 0.78rem;
-        color: #334155;
-        text-align: center;
-        margin: 0;
-        font-weight: 600;
-    }
-
-    .vt-overall-report-page .vt-mini-table {
-        margin-bottom: 0.7rem;
-    }
-
-    .vt-overall-report-page .vt-mini-table:last-child {
-        margin-bottom: 0;
-    }
-
-    .vt-overall-report-page .vt-mini-table h6 {
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0 0 0.45rem 0;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-    }
-
-    .vt-overall-report-page .vt-mini-table table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.8rem;
-    }
-
-    .vt-overall-report-page .vt-mini-table th,
-    .vt-overall-report-page .vt-mini-table td {
-        border: 1px solid #e2e8f0;
-        padding: 0.36rem 0.45rem;
-        vertical-align: middle;
-    }
-
-    .vt-overall-report-page .vt-mini-table th {
-        background: #f8fafc;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .vt-overall-report-page .vt-chart-wrap {
-        height: 220px;
-    }
-
-    .vt-overall-report-page .vt-rate-table td:first-child {
-        font-weight: 700;
-        color: #0f172a;
-        width: 36%;
-    }
-
-    .vt-overall-report-page #lblMsg {
-        min-height: 18px;
-        color: #b91c1c;
-        font-weight: 600;
-        font-size: 0.8rem;
-        margin-top: 0.4rem;
-    }
+    .vt-overall-report-page { --ink:#0d2733; --muted:#4c6978; --border:#d6e3eb; --complete:#2e7d32; --complete-dark:#1b5e20; --complete-light:#66bb6a; --revenue:#1565c0; --revenue-dark:#0d47a1; --revenue-light:#42a5f5; position:relative; }
+    .vt-overall-report-page::before { content:""; position:absolute; inset:-26px 0 auto 0; height:260px; background:radial-gradient(circle at 10% 10%,rgba(15,155,142,.17),transparent 36%),radial-gradient(circle at 82% 0%,rgba(15,127,143,.16),transparent 40%),linear-gradient(180deg,#f4fbfa,transparent 85%); pointer-events:none; z-index:-1; }
+    .vt-overall-report-page .vt-lift { background:#fff; border:1px solid var(--border); border-radius:14px; box-shadow:0 8px 24px rgba(8,36,44,.07); }
+    .vt-overall-report-page .vt-filter-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:.75rem; align-items:end; }
+    .vt-overall-report-page .vt-filter-grid .form-group { margin:0; }
+    .vt-overall-report-page .vt-filter-grid label { font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:#335060; margin-bottom:.35rem; }
+    .vt-overall-report-page .form-control { border-radius:10px; border-color:#d5e2e9; min-height:38px; font-size:.86rem; }
+    .vt-overall-report-page .vt-filter-actions { display:flex; gap:.45rem; justify-content:flex-end; flex-wrap:wrap; min-width:0; }
+    .vt-overall-report-page .vt-filter-actions .btn { min-width:105px; min-height:38px; border-radius:999px; font-size:.8rem; font-weight:700; flex:0 0 auto; }
+    .vt-overall-report-page #lblMsg { min-height:18px; margin-top:.45rem; color:#b91c1c; font-size:.8rem; font-weight:600; }
+    .vt-overall-report-page .vt-stat-card { border-radius:14px; color:#fff; min-height:112px; padding:.85rem .95rem; position:relative; overflow:hidden; }
+    .vt-overall-report-page .vt-stat-card::after { content:""; position:absolute; right:-42px; top:-38px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.16); }
+    .vt-overall-report-page .vt-stat-card--revenue { background:linear-gradient(145deg,var(--revenue-light),var(--revenue-dark)); }
+    .vt-overall-report-page .vt-stat-card--complete { background:linear-gradient(145deg,var(--complete-light),var(--complete-dark)); }
+    .vt-overall-report-page .vt-stat-card--rpc { background:linear-gradient(145deg,#1a5d95,#113f68); }
+    .vt-overall-report-page .vt-stat-card--success { background:linear-gradient(145deg,#8a5b22,#674213); }
+    .vt-overall-report-page .vt-stat-label { font-size:.73rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; margin-bottom:.32rem; opacity:.92; }
+    .vt-overall-report-page .vt-stat-value { font-size:1.8rem; line-height:1; font-weight:800; margin-bottom:.2rem; }
+    .vt-overall-report-page .vt-stat-sub { font-size:.73rem; font-weight:600; opacity:.92; }
+    .vt-overall-report-page .vt-kpi-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:.55rem; }
+    .vt-overall-report-page .vt-kpi-title h6 { margin:0; font-size:.8rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#183341; }
+    .vt-overall-report-page .vt-kpi-title span { font-size:.72rem; color:#587181; font-weight:600; }
+    .vt-overall-report-page .vt-chart-wrap { height:232px; }
+    .vt-overall-report-page .vt-focus-card { display:flex; flex-direction:column; gap:.62rem; min-height:232px; }
+    .vt-overall-report-page .vt-mode-switch { display:inline-flex; background:#e8f2f4; border-radius:999px; padding:.2rem; }
+    .vt-overall-report-page .vt-mode-btn { border:0; background:transparent; color:#34505f; border-radius:999px; font-size:.74rem; font-weight:700; padding:.3rem .7rem; line-height:1; }
+    .vt-overall-report-page .vt-mode-btn.is-active { color:#fff; background:linear-gradient(145deg,var(--revenue-light),var(--revenue-dark)); }
+    .vt-overall-report-page .vt-focus-value { font-size:2.05rem; font-weight:800; line-height:1; color:#0f5566; }
+    .vt-overall-report-page .vt-focus-label { margin:0; font-size:.82rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#1f3a47; }
+    .vt-overall-report-page .vt-focus-note { margin:0; font-size:.78rem; color:#4a6677; font-weight:600; min-height:36px; }
+    .vt-overall-report-page .vt-board-header { display:flex; justify-content:space-between; gap:.5rem; margin-bottom:.5rem; }
+    .vt-overall-report-page .vt-board-header h6 { margin:0; font-size:.8rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#183341; }
+    .vt-overall-report-page .vt-board-topline { margin:.18rem 0 0; font-size:.73rem; color:#496576; font-weight:600; }
+    .vt-overall-report-page .vt-board-legend { display:inline-flex; gap:.45rem; font-size:.68rem; color:#4d6a7a; align-self:flex-start; }
+    .vt-overall-report-page .vt-dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+    .vt-overall-report-page .vt-dot--complete { background:var(--complete); }
+    .vt-overall-report-page .vt-dot--revenue { background:var(--revenue); }
+    .vt-overall-report-page .vt-board { display:flex; flex-direction:column; gap:.45rem; max-height:350px; overflow:auto; }
+    .vt-overall-report-page .vt-board-row { border:1px solid #e3edf2; border-radius:10px; background:#fbfdff; padding:.42rem .5rem; }
+    .vt-overall-report-page .vt-board-row-top { display:flex; justify-content:space-between; gap:.35rem; margin-bottom:.3rem; }
+    .vt-overall-report-page .vt-board-name { font-size:.78rem; font-weight:700; color:#17313f; line-height:1.2; }
+    .vt-overall-report-page .vt-board-metrics { display:flex; gap:.28rem; flex-wrap:wrap; justify-content:flex-end; }
+    .vt-overall-report-page .vt-chip { border-radius:999px; padding:.16rem .46rem; font-size:.66rem; font-weight:700; white-space:nowrap; }
+    .vt-overall-report-page .vt-chip--complete { background:rgba(46,125,50,.17); color:#1b5e20; }
+    .vt-overall-report-page .vt-chip--revenue { background:rgba(21,101,192,.18); color:#0d47a1; }
+    .vt-overall-report-page .vt-track { background:#e8eff2; border-radius:999px; height:7px; overflow:hidden; }
+    .vt-overall-report-page .vt-track + .vt-track { margin-top:.22rem; }
+    .vt-overall-report-page .vt-track > span { display:block; height:100%; border-radius:inherit; }
+    .vt-overall-report-page .vt-track--complete > span { background:linear-gradient(90deg,var(--complete-dark),var(--complete-light)); }
+    .vt-overall-report-page .vt-track--revenue > span { background:linear-gradient(90deg,var(--revenue-dark),var(--revenue-light)); }
+    .vt-overall-report-page .vt-board-empty { border:1px dashed #cadbe4; border-radius:10px; text-align:center; padding:.8rem .6rem; color:#637c8a; font-size:.8rem; font-weight:600; background:#f7fbfd; }
+    .vt-overall-report-page .vt-mini-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(92px,1fr)); gap:.42rem; }
+    .vt-overall-report-page .vt-mini-box { border:1px solid #e1ebf0; border-radius:10px; background:#f9fcfe; padding:.46rem .42rem; text-align:center; }
+    .vt-overall-report-page .vt-mini-label { display:block; font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; font-weight:700; color:#4f6a79; margin-bottom:.18rem; }
+    .vt-overall-report-page .vt-mini-value { display:block; font-size:1rem; font-weight:800; color:#17313f; line-height:1.1; }
+    .vt-overall-report-page .vt-success-strip { display:flex; flex-wrap:wrap; gap:.42rem; margin-bottom:.52rem; }
+    .vt-overall-report-page .vt-success-pill { border-radius:999px; padding:.26rem .6rem; font-size:.71rem; font-weight:700; color:#fff; }
+    .vt-overall-report-page .vt-success-pill--project { background:linear-gradient(145deg,var(--revenue-light),var(--revenue-dark)); }
+    .vt-overall-report-page .vt-success-pill--ir { background:linear-gradient(145deg,var(--complete-light),var(--complete-dark)); }
+    .vt-overall-report-page .vt-rate-table { width:100%; border-collapse:separate; border-spacing:0; font-size:.79rem; border:1px solid #dce8ef; border-radius:10px; overflow:hidden; }
+    .vt-overall-report-page .vt-rate-table thead th { background:var(--revenue-dark); color:#fff; padding:.4rem .48rem; font-size:.71rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+    .vt-overall-report-page .vt-rate-table tbody td { padding:.36rem .48rem; border-top:1px solid #e4edf3; color:#203844; }
+    .vt-overall-report-page .vt-rate-table tbody tr:nth-child(even) td { background:#f8fbfd; }
+    .vt-overall-report-page .vt-rate-table tbody td:first-child { font-weight:700; }
+    @@media (max-width:1199.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;justify-content:flex-end;} }
+    @@media (max-width:767.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;}.vt-overall-report-page .vt-filter-actions .btn{width:100%;}.vt-overall-report-page .vt-stat-value{font-size:1.58rem;}.vt-overall-report-page .vt-focus-value{font-size:1.8rem;}.vt-overall-report-page .vt-mode-switch{width:100%;}.vt-overall-report-page .vt-mode-btn{flex:1 1 50%;text-align:center;} }
 </style>
 
 <div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-overall-report-page">
     <div class="ref-page-title">
         <h1>Overall Report</h1>
-        <p class="ref-subtitle">Supplier, client, country and manager performance overview</p>
+        <p class="ref-subtitle">Creative control center for Revenue vs Completes across Supplier, Client, Country and Manager</p>
+    </div>
+
+    <div class="row"><div class="col-12 grid-margin"><div class="card vt-lift"><div class="card-body">
+        <p class="table-section-header mb-3">Filters</p>
+        <div class="vt-filter-grid">
+            <div class="form-group"><label for="txtSDate">Start Date</label><input type="date" id="txtSDate" class="form-control" /></div>
+            <div class="form-group"><label for="txtEDate">End Date</label><input type="date" id="txtEDate" class="form-control" /></div>
+            <div class="form-group"><label for="ddlCountry">Country</label><select id="ddlCountry" class="form-control"><option value="0">--Search Country--</option></select></div>
+            <div class="form-group"><label for="ddlClients">Client</label><select id="ddlClients" class="form-control"><option value="0">--Search Client--</option></select></div>
+            <div class="form-group"><label for="ddlSuppliers">Supplier</label><select id="ddlSuppliers" class="form-control"><option value="0">--Search Supplier--</option></select></div>
+            <div class="vt-filter-actions">
+                <button type="button" class="btn btn-outline-secondary" id="btnReset">Reset</button>
+                <button type="button" class="btn btn-primary" id="btnApply"><i class="ti-search"></i> Apply</button>
+            </div>
+        </div>
+        <div id="lblMsg"></div>
+    </div></div></div></div>
+
+    <div class="row">
+        <div class="col-xl-3 col-md-6 grid-margin stretch-card"><div class="vt-stat-card vt-stat-card--revenue w-100"><div class="vt-stat-label">Total Revenue</div><div class="vt-stat-value" id="statTotalRevenue">$0</div><div class="vt-stat-sub" id="statRevenueSub">From selected filters</div></div></div>
+        <div class="col-xl-3 col-md-6 grid-margin stretch-card"><div class="vt-stat-card vt-stat-card--complete w-100"><div class="vt-stat-label">Total Completes</div><div class="vt-stat-value" id="statTotalCompletes">0</div><div class="vt-stat-sub" id="statCompleteSub">Survey closes</div></div></div>
+        <div class="col-xl-3 col-md-6 grid-margin stretch-card"><div class="vt-stat-card vt-stat-card--rpc w-100"><div class="vt-stat-label">Revenue / Complete</div><div class="vt-stat-value" id="statRevenuePerComplete">$0.00</div><div class="vt-stat-sub">Average yield</div></div></div>
+        <div class="col-xl-3 col-md-6 grid-margin stretch-card"><div class="vt-stat-card vt-stat-card--success w-100"><div class="vt-stat-label">Project Success</div><div class="vt-stat-value" id="statProjectSuccess">0%</div><div class="vt-stat-sub" id="statProjectSuccessSub">IR Success 0%</div></div></div>
     </div>
 
     <div class="row">
-        <div class="col-12 grid-margin">
-            <div class="card card--table-section">
-                <div class="card-body">
-                    <p class="table-section-header mb-3">Filters</p>
-                    <div class="vt-filter-grid">
-                        <div class="form-group">
-                            <label for="txtSDate">Start Date</label>
-                            <input type="date" id="txtSDate" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label for="txtEDate">End Date</label>
-                            <input type="date" id="txtEDate" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <label for="ddlCountry">Country</label>
-                            <select id="ddlCountry" class="form-control">
-                                <option value="0">--Search Country--</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="ddlClients">Client</label>
-                            <select id="ddlClients" class="form-control">
-                                <option value="0">--Search Client--</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="ddlSuppliers">Supplier</label>
-                            <select id="ddlSuppliers" class="form-control">
-                                <option value="0">--Search Supplier--</option>
-                            </select>
-                        </div>
-                        <div class="vt-filter-actions">
-                            <button type="button" class="btn btn-primary" id="btnApply">
-                                <i class="ti-search"></i> Apply
-                            </button>
-                        </div>
-                    </div>
-                    <div id="lblMsg"></div>
-                </div>
-            </div>
-        </div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>CPI Distribution</h6><span>Min / Max / Mean</span></div><div class="vt-chart-wrap"><canvas id="cpiChart"></canvas></div></div></div></div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Completes Trend</h6><span>Monthly movement</span></div><div class="vt-chart-wrap"><canvas id="completeChart"></canvas></div></div></div></div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body vt-focus-card">
+            <div class="vt-kpi-title"><h6>Metric Focus</h6><span>Live mode</span></div>
+            <div class="vt-mode-switch" id="metricModeSwitch"><button type="button" class="vt-mode-btn is-active" data-mode="revenue">Revenue</button><button type="button" class="vt-mode-btn" data-mode="completes">Completes</button></div>
+            <div class="vt-focus-value" id="focusValue">$0</div><p class="vt-focus-label" id="focusLabel">Total Revenue</p><p class="vt-focus-note" id="focusNote">Top contributor: -</p>
+        </div></div></div>
     </div>
 
     <div class="row">
-        <div class="col-lg-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-kpi-title">CPI Distribution</div>
-                    <div class="vt-chart-wrap">
-                        <canvas id="cpiChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-kpi-title">Completes Trend</div>
-                    <div class="vt-chart-wrap">
-                        <canvas id="completeChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-kpi-title">Primary Metric</div>
-                    <div class="vt-metric-switch">
-                        <input type="checkbox" id="metricToggle" checked />
-                        <label for="metricToggle" class="mb-0">Revenue Mode</label>
-                    </div>
-                    <div class="vt-metric-value" id="metricValue">0</div>
-                    <p class="vt-metric-label" id="metricLabel">Revenue</p>
-                </div>
-            </div>
-        </div>
+        <div class="col-xl-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-board-header"><div><h6>Supplier Arena</h6><p class="vt-board-topline" id="supplierTopLine">Top Supplier: -</p></div><div class="vt-board-legend"><span><i class="vt-dot vt-dot--complete"></i> Completes</span><span><i class="vt-dot vt-dot--revenue"></i> Revenue</span></div></div><div class="vt-board" id="boardSupplier"></div></div></div></div>
+        <div class="col-xl-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-board-header"><div><h6>Client Arena</h6><p class="vt-board-topline" id="clientTopLine">Top Client: -</p></div><div class="vt-board-legend"><span><i class="vt-dot vt-dot--complete"></i> Completes</span><span><i class="vt-dot vt-dot--revenue"></i> Revenue</span></div></div><div class="vt-board" id="boardClient"></div></div></div></div>
+        <div class="col-xl-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-board-header"><div><h6>Country Arena</h6><p class="vt-board-topline" id="countryTopLine">Top Country: -</p></div><div class="vt-board-legend"><span><i class="vt-dot vt-dot--complete"></i> Completes</span><span><i class="vt-dot vt-dot--revenue"></i> Revenue</span></div></div><div class="vt-board" id="boardCountry"></div></div></div></div>
+        <div class="col-xl-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-board-header"><div><h6>Manager Arena</h6><p class="vt-board-topline" id="managerTopLine">Top Manager: -</p></div><div class="vt-board-legend"><span><i class="vt-dot vt-dot--complete"></i> Completes</span><span><i class="vt-dot vt-dot--revenue"></i> Revenue</span></div></div><div class="vt-board" id="boardManager"></div></div></div></div>
     </div>
 
     <div class="row">
-        <div class="col-xl-6 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table">
-                        <h6>Supplier - Completes</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Supplier</th><th>Complete</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblSupplierComBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="vt-mini-table">
-                        <h6>Supplier - Revenue</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Supplier</th><th>Value</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblSupplierRevBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table">
-                        <h6>Client - Completes</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Client</th><th>Complete</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblClientComBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="vt-mini-table">
-                        <h6>Client - Revenue</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Client</th><th>Value</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblClientRevBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table">
-                        <h6>Country - Completes</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Country</th><th>Total</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblCountryComBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="vt-mini-table">
-                        <h6>Country - Revenue</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Country</th><th>Value</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblCountryRevBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table">
-                        <h6>Manager - Completes</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Manager</th><th>Total</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblManagerComBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="vt-mini-table">
-                        <h6>Manager - Revenue</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Manager</th><th>Revenue</th><th>%</th></tr>
-                            </thead>
-                            <tbody id="tblManagerRevBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-xl-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table mb-0">
-                        <h6>Projects</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Total</th><th>Closed</th><th>In Progress</th><th>On Hold</th><th>Cancelled</th></tr>
-                            </thead>
-                            <tbody id="tblProjectsBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table">
-                        <h6>Success Rate</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Project Success Rate</th><th>IR Success Rate</th></tr>
-                            </thead>
-                            <tbody id="tblSuccessBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="vt-mini-table mb-0">
-                        <h6>Respondents</h6>
-                        <table>
-                            <thead>
-                                <tr><th>Total</th><th>Complete</th><th>Incomplete</th><th>Screened</th><th>Quotafull</th><th>Terminate</th></tr>
-                            </thead>
-                            <tbody id="tblRespondentBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-4 grid-margin stretch-card">
-            <div class="vt-kpi-card">
-                <div class="card-body">
-                    <div class="vt-mini-table mb-0">
-                        <h6>Rate Metrics</h6>
-                        <table class="vt-rate-table">
-                            <thead>
-                                <tr><th>Parameter</th><th>Min</th><th>Max</th><th>Average</th></tr>
-                            </thead>
-                            <tbody id="tblRateBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Project Snapshot</h6><span>Operational status</span></div><div class="vt-mini-grid"><div class="vt-mini-box"><span class="vt-mini-label">Total</span><span class="vt-mini-value" id="projTotal">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Closed</span><span class="vt-mini-value" id="projClosed">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">In Progress</span><span class="vt-mini-value" id="projInProgress">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">On Hold</span><span class="vt-mini-value" id="projOnHold">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Cancelled</span><span class="vt-mini-value" id="projCancelled">0</span></div></div></div></div></div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Respondent Pulse</h6><span>Funnel and quality</span></div><div class="vt-success-strip"><span class="vt-success-pill vt-success-pill--project" id="succProject">Project Success 0%</span><span class="vt-success-pill vt-success-pill--ir" id="succIr">IR Success 0%</span></div><div class="vt-mini-grid"><div class="vt-mini-box"><span class="vt-mini-label">Total</span><span class="vt-mini-value" id="respTotal">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Complete</span><span class="vt-mini-value" id="respComplete">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Incomplete</span><span class="vt-mini-value" id="respIncomplete">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Screened</span><span class="vt-mini-value" id="respScreened">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Quotafull</span><span class="vt-mini-value" id="respQuotafull">0</span></div><div class="vt-mini-box"><span class="vt-mini-label">Terminate</span><span class="vt-mini-value" id="respTerminate">0</span></div></div></div></div></div>
+        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Rate Metrics</h6><span>Min / Max / Avg</span></div><table class="vt-rate-table"><thead><tr><th>Parameter</th><th>Min</th><th>Max</th><th>Avg</th></tr></thead><tbody id="tblRateBody"></tbody></table></div></div></div>
     </div>
 </div>
 
@@ -389,6 +133,8 @@
             let cpiChart = null;
             let completeChart = null;
             let currentSnapshot = null;
+            let currentBoards = null;
+            let metricMode = "revenue";
 
             function val(obj, camel, pascal) {
                 if (!obj) return null;
@@ -402,46 +148,40 @@
                 return Array.isArray(arr) ? arr : [];
             }
 
+            function toNumber(value) {
+                const num = Number(value || 0);
+                return Number.isFinite(num) ? num : 0;
+            }
+
             function escapeHtml(value) {
                 if (value == null) return "";
-                return String(value)
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#39;");
+                return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
             }
 
-            function formatNumber(value) {
-                const num = Number(value || 0);
-                if (!Number.isFinite(num)) return "0";
-                return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+            function formatNumber(value) { return toNumber(value).toLocaleString(undefined, { maximumFractionDigits: 2 }); }
+            function formatPercent(value) { return toNumber(value).toLocaleString(undefined, { maximumFractionDigits: 2 }) + "%"; }
+            function formatCurrency(value, maxFractionDigits) {
+                return toNumber(value).toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: maxFractionDigits == null ? 0 : maxFractionDigits });
             }
-
-            function formatPercent(value) {
-                const num = Number(value || 0);
-                if (!Number.isFinite(num)) return "0%";
-                return num.toLocaleString(undefined, { maximumFractionDigits: 2 }) + "%";
+            function normalizeKey(name) { return String(name || "").trim().toLowerCase(); }
+            function pctWidth(value, max) {
+                const safeValue = toNumber(value);
+                const safeMax = toNumber(max);
+                if (safeValue <= 0 || safeMax <= 0) return 0;
+                const raw = (safeValue / safeMax) * 100;
+                if (raw < 6) return 6;
+                if (raw > 100) return 100;
+                return raw;
             }
 
             function startBusy() {
-                if (typeof BlockUI === "function") {
-                    BlockUI();
-                    return;
-                }
-                if ($.blockUI) {
-                    $.blockUI({ message: "<h5>Please wait...</h5>" });
-                }
+                if (typeof BlockUI === "function") { BlockUI(); return; }
+                if ($.blockUI) $.blockUI({ message: "<h5>Please wait...</h5>" });
             }
 
             function stopBusy() {
-                if (typeof UnblockUI === "function") {
-                    UnblockUI();
-                    return;
-                }
-                if ($.unblockUI) {
-                    $.unblockUI();
-                }
+                if (typeof UnblockUI === "function") { UnblockUI(); return; }
+                if ($.unblockUI) $.unblockUI();
             }
 
             function setDefaultDates() {
@@ -463,194 +203,280 @@
                 }
             }
 
-            function renderNamedValueTable(targetBodyId, rows) {
-                const $body = $(targetBodyId);
-                if (!rows || !rows.length) {
-                    $body.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
-                    return;
+            function mergeNamedSeries(completeRows, revenueRows) {
+                const map = new Map();
+                function ensureItem(name, id) {
+                    const cleanName = String(name || "").trim();
+                    if (!cleanName) return null;
+                    const key = normalizeKey(cleanName);
+                    if (!map.has(key)) map.set(key, { id: id || 0, name: cleanName, complete: 0, completePct: 0, revenue: 0, revenuePct: 0 });
+                    return map.get(key);
                 }
 
-                let html = "";
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    const name = val(row, "name", "Name") || "";
-                    const amount = val(row, "value", "Value") || 0;
-                    const percentage = val(row, "percentage", "Percentage") || 0;
-                    html += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(amount)}</td><td>${formatPercent(percentage)}</td></tr>`;
+                for (let i = 0; i < completeRows.length; i++) {
+                    const row = completeRows[i];
+                    const item = ensureItem(val(row, "name", "Name"), val(row, "id", "Id"));
+                    if (!item) continue;
+                    item.complete = toNumber(val(row, "value", "Value"));
+                    item.completePct = toNumber(val(row, "percentage", "Percentage"));
                 }
-                $body.html(html);
+
+                for (let j = 0; j < revenueRows.length; j++) {
+                    const row = revenueRows[j];
+                    const item = ensureItem(val(row, "name", "Name"), val(row, "id", "Id"));
+                    if (!item) continue;
+                    item.revenue = toNumber(val(row, "value", "Value"));
+                    item.revenuePct = toNumber(val(row, "percentage", "Percentage"));
+                }
+
+                return Array.from(map.values()).filter(x => !!x.name);
             }
 
-            function renderManagerTables(rows) {
-                const $comBody = $("#tblManagerComBody");
-                const $revBody = $("#tblManagerRevBody");
+            function mapManagerSeries(rows) {
+                const output = [];
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const name = String(val(row, "name", "Name") || "").trim();
+                    if (!name) continue;
+                    output.push({
+                        name: name,
+                        complete: toNumber(val(row, "complete", "Complete")),
+                        completePct: toNumber(val(row, "completepercentage", "Completepercentage")),
+                        revenue: toNumber(val(row, "revenue", "Revenue")),
+                        revenuePct: toNumber(val(row, "revenuepercentage", "Revenuepercentage"))
+                    });
+                }
+                return output;
+            }
 
+            function sortBoardRows(rows) {
+                const data = Array.isArray(rows) ? rows.slice() : [];
+                data.sort(function (a, b) {
+                    const primary = metricMode === "completes" ? (toNumber(b.complete) - toNumber(a.complete)) : (toNumber(b.revenue) - toNumber(a.revenue));
+                    if (primary !== 0) return primary;
+                    const secondary = metricMode === "completes" ? (toNumber(b.revenue) - toNumber(a.revenue)) : (toNumber(b.complete) - toNumber(a.complete));
+                    if (secondary !== 0) return secondary;
+                    return String(a.name || "").localeCompare(String(b.name || ""));
+                });
+                return data;
+            }
+
+            function renderBoard(targetId, rows) {
+                const $target = $(targetId);
                 if (!rows || !rows.length) {
-                    $comBody.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
-                    $revBody.html('<tr><td colspan="3" class="text-center text-muted">No data</td></tr>');
+                    $target.html('<div class="vt-board-empty">No data for selected filters</div>');
                     return;
                 }
 
-                let comHtml = "";
-                let revHtml = "";
+                const ordered = sortBoardRows(rows);
+                const visible = ordered.slice(0, 8);
+                const maxComplete = Math.max(1, ...ordered.map(x => toNumber(x.complete)));
+                const maxRevenue = Math.max(1, ...ordered.map(x => toNumber(x.revenue)));
 
-                for (let i = 0; i < rows.length; i++) {
-                    const r = rows[i];
-                    const name = val(r, "name", "Name") || "";
-                    const total = val(r, "complete", "Complete") || 0;
-                    const totalPct = val(r, "completepercentage", "Completepercentage") || 0;
-                    const revenue = val(r, "revenue", "Revenue") || 0;
-                    const revPct = val(r, "revenuepercentage", "Revenuepercentage") || 0;
-
-                    comHtml += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(total)}</td><td>${formatPercent(totalPct)}</td></tr>`;
-                    revHtml += `<tr><td>${escapeHtml(name)}</td><td>${formatNumber(revenue)}</td><td>${formatPercent(revPct)}</td></tr>`;
+                let html = "";
+                for (let i = 0; i < visible.length; i++) {
+                    const row = visible[i];
+                    html += '<div class="vt-board-row"><div class="vt-board-row-top">';
+                    html += `<div class="vt-board-name">${escapeHtml(row.name)}</div>`;
+                    html += '<div class="vt-board-metrics">';
+                    html += `<span class="vt-chip vt-chip--complete">C ${formatNumber(row.complete)} | ${formatPercent(row.completePct)}</span>`;
+                    html += `<span class="vt-chip vt-chip--revenue">R ${formatCurrency(row.revenue)} | ${formatPercent(row.revenuePct)}</span>`;
+                    html += '</div></div>';
+                    html += `<div class="vt-track vt-track--complete"><span style="width:${pctWidth(row.complete, maxComplete)}%;"></span></div>`;
+                    html += `<div class="vt-track vt-track--revenue"><span style="width:${pctWidth(row.revenue, maxRevenue)}%;"></span></div>`;
+                    html += '</div>';
                 }
+                $target.html(html);
+            }
 
-                $comBody.html(comHtml);
-                $revBody.html(revHtml);
+            function updateTopline(targetId, rows, groupLabel) {
+                if (!rows || !rows.length) { $(targetId).text(`Top ${groupLabel}: -`); return; }
+                const top = sortBoardRows(rows)[0];
+                const metricText = metricMode === "completes" ? `${formatNumber(top.complete)} completes` : `${formatCurrency(top.revenue)} revenue`;
+                $(targetId).text(`Top ${groupLabel}: ${top.name} (${metricText})`);
+            }
+
+            function buildBoards(data) {
+                return {
+                    supplier: mergeNamedSeries(list(data, "supplierCompletions", "SupplierCompletions"), list(data, "supplierRevenue", "SupplierRevenue")),
+                    client: mergeNamedSeries(list(data, "clientCompletions", "ClientCompletions"), list(data, "clientRevenue", "ClientRevenue")),
+                    country: mergeNamedSeries(list(data, "countryCompletions", "CountryCompletions"), list(data, "countryRevenue", "CountryRevenue")),
+                    manager: mapManagerSeries(list(data, "managerSummary", "ManagerSummary"))
+                };
+            }
+
+            function flattenBoards(boards) {
+                if (!boards) return [];
+                const output = [];
+                const add = function (rows, segment) {
+                    for (let i = 0; i < rows.length; i++) output.push({ segment: segment, name: rows[i].name, complete: toNumber(rows[i].complete), revenue: toNumber(rows[i].revenue) });
+                };
+                add(boards.supplier || [], "Supplier");
+                add(boards.client || [], "Client");
+                add(boards.country || [], "Country");
+                add(boards.manager || [], "Manager");
+                return output;
+            }
+
+            function renderPerformanceBoards(boards) {
+                renderBoard("#boardSupplier", boards.supplier);
+                renderBoard("#boardClient", boards.client);
+                renderBoard("#boardCountry", boards.country);
+                renderBoard("#boardManager", boards.manager);
+                updateTopline("#supplierTopLine", boards.supplier, "Supplier");
+                updateTopline("#clientTopLine", boards.client, "Client");
+                updateTopline("#countryTopLine", boards.country, "Country");
+                updateTopline("#managerTopLine", boards.manager, "Manager");
+            }
+
+            function renderSummaryStrip(data) {
+                const respondents = val(data, "respondents", "Respondents") || {};
+                const success = val(data, "successRate", "SuccessRate") || {};
+                const totals = val(data, "projectTotals", "ProjectTotals") || {};
+
+                const revenue = toNumber(val(data, "sumValue", "SumValue"));
+                const completes = toNumber(val(respondents, "complete", "Complete"));
+                const projectRate = toNumber(val(success, "projectSuccessRate", "ProjectSuccessRate"));
+                const irRate = toNumber(val(success, "irSuccessRate", "IrSuccessRate"));
+                const projectCount = toNumber(val(totals, "total", "Total"));
+                const rpc = completes > 0 ? (revenue / completes) : 0;
+
+                $("#statTotalRevenue").text(formatCurrency(revenue));
+                $("#statTotalCompletes").text(formatNumber(completes));
+                $("#statRevenuePerComplete").text(formatCurrency(rpc, 2));
+                $("#statProjectSuccess").text(formatPercent(projectRate));
+                $("#statProjectSuccessSub").text(`IR Success ${formatPercent(irRate)}`);
+                $("#statRevenueSub").text(`${formatNumber(projectCount)} projects in scope`);
+                $("#statCompleteSub").text(`${formatPercent(irRate)} IR conversion view`);
+            }
+
+            function renderFocusMetric(data, boards) {
+                const respondents = val(data, "respondents", "Respondents") || {};
+                const revenue = toNumber(val(data, "sumValue", "SumValue"));
+                const completes = toNumber(val(respondents, "complete", "Complete"));
+                const top = sortBoardRows(flattenBoards(boards))[0];
+
+                if (metricMode === "completes") {
+                    $("#focusValue").text(formatNumber(completes));
+                    $("#focusLabel").text("Total Completes");
+                    $("#focusNote").text(top ? `Top complete contributor: ${top.segment} - ${top.name} (${formatNumber(top.complete)})` : "Top complete contributor: -");
+                } else {
+                    $("#focusValue").text(formatCurrency(revenue));
+                    $("#focusLabel").text("Total Revenue");
+                    $("#focusNote").text(top ? `Top revenue contributor: ${top.segment} - ${top.name} (${formatCurrency(top.revenue)})` : "Top revenue contributor: -");
+                }
             }
 
             function renderProjectTotals(data) {
                 const totals = val(data, "projectTotals", "ProjectTotals") || {};
-                const total = val(totals, "total", "Total") || 0;
-                const closed = val(totals, "closed", "Closed") || 0;
-                const inprogress = val(totals, "inprogress", "Inprogress") || 0;
-                const onhold = val(totals, "onhold", "Onhold") || 0;
-                const cancelled = val(totals, "cancelled", "Cancelled") || 0;
-                $("#tblProjectsBody").html(
-                    `<tr><td>${formatNumber(total)}</td><td>${formatNumber(closed)}</td><td>${formatNumber(inprogress)}</td><td>${formatNumber(onhold)}</td><td>${formatNumber(cancelled)}</td></tr>`
-                );
+                $("#projTotal").text(formatNumber(val(totals, "total", "Total")));
+                $("#projClosed").text(formatNumber(val(totals, "closed", "Closed")));
+                $("#projInProgress").text(formatNumber(val(totals, "inprogress", "Inprogress")));
+                $("#projOnHold").text(formatNumber(val(totals, "onhold", "Onhold")));
+                $("#projCancelled").text(formatNumber(val(totals, "cancelled", "Cancelled")));
             }
 
-            function renderSuccessAndRespondents(data) {
+            function renderRespondentsAndSuccess(data) {
                 const success = val(data, "successRate", "SuccessRate") || {};
                 const respondents = val(data, "respondents", "Respondents") || {};
-
-                const projectRate = val(success, "projectSuccessRate", "ProjectSuccessRate") || 0;
-                const irRate = val(success, "irSuccessRate", "IrSuccessRate") || 0;
-                $("#tblSuccessBody").html(`<tr><td>${formatPercent(projectRate)}</td><td>${formatPercent(irRate)}</td></tr>`);
-
-                const total = val(respondents, "total", "Total") || 0;
-                const complete = val(respondents, "complete", "Complete") || 0;
-                const incomplete = val(respondents, "incomplete", "Incomplete") || 0;
-                const screened = val(respondents, "screened", "Screened") || 0;
-                const quotafull = val(respondents, "quotafull", "Quotafull") || 0;
-                const terminate = val(respondents, "terminate", "Terminate") || 0;
-
-                $("#tblRespondentBody").html(
-                    `<tr><td>${formatNumber(total)}</td><td>${formatNumber(complete)}</td><td>${formatNumber(incomplete)}</td><td>${formatNumber(screened)}</td><td>${formatNumber(quotafull)}</td><td>${formatNumber(terminate)}</td></tr>`
-                );
+                $("#succProject").text(`Project Success ${formatPercent(val(success, "projectSuccessRate", "ProjectSuccessRate"))}`);
+                $("#succIr").text(`IR Success ${formatPercent(val(success, "irSuccessRate", "IrSuccessRate"))}`);
+                $("#respTotal").text(formatNumber(val(respondents, "total", "Total")));
+                $("#respComplete").text(formatNumber(val(respondents, "complete", "Complete")));
+                $("#respIncomplete").text(formatNumber(val(respondents, "incomplete", "Incomplete")));
+                $("#respScreened").text(formatNumber(val(respondents, "screened", "Screened")));
+                $("#respQuotafull").text(formatNumber(val(respondents, "quotafull", "Quotafull")));
+                $("#respTerminate").text(formatNumber(val(respondents, "terminate", "Terminate")));
             }
 
             function renderRateTable(data) {
                 const rates = val(data, "rates", "Rates") || {};
-                const ir = val(rates, "iRate", "IRate") || {};
-                const loi = val(rates, "expectedLoi", "ExpectedLoi") || {};
-                const cpi = val(rates, "cpi", "Cpi") || {};
-                const aloi = val(rates, "actualLoi", "ActualLoi") || {};
-
-                const row = (name, obj) => {
-                    const min = val(obj, "min", "Min") || 0;
-                    const max = val(obj, "max", "Max") || 0;
-                    const avg = val(obj, "average", "Average") || 0;
-                    return `<tr><td>${name}</td><td>${formatNumber(min)}</td><td>${formatNumber(max)}</td><td>${formatNumber(avg)}</td></tr>`;
+                const row = function (title, obj) {
+                    return `<tr><td>${title}</td><td>${formatNumber(val(obj, "min", "Min"))}</td><td>${formatNumber(val(obj, "max", "Max"))}</td><td>${formatNumber(val(obj, "average", "Average"))}</td></tr>`;
                 };
-
                 $("#tblRateBody").html(
-                    row("Incident Rate", ir) +
-                    row("Expected LOI", loi) +
-                    row("Actual LOI", aloi) +
-                    row("CPI", cpi)
+                    row("Incident Rate", val(rates, "iRate", "IRate") || {}) +
+                    row("Expected LOI", val(rates, "expectedLoi", "ExpectedLoi") || {}) +
+                    row("Actual LOI", val(rates, "actualLoi", "ActualLoi") || {}) +
+                    row("CPI", val(rates, "cpi", "Cpi") || {})
                 );
             }
 
-            function renderPrimaryMetric(data) {
-                const isRevenue = $("#metricToggle").is(":checked");
-                const sumValue = val(data, "sumValue", "SumValue") || 0;
-                const respondents = val(data, "respondents", "Respondents") || {};
-                const completes = val(respondents, "complete", "Complete") || 0;
-
-                $("#metricValue").text(formatNumber(isRevenue ? sumValue : completes));
-                $("#metricLabel").text(isRevenue ? "Revenue" : "Completes");
-            }
-
             function renderCharts(data) {
-                const pie = val(data, "cpiChart", "CpiChart") || {};
-                const pieMin = Number(val(pie, "min", "Min") || 0);
-                const pieMax = Number(val(pie, "max", "Max") || 0);
-                const pieMean = Number(val(pie, "mean", "Mean") || 0);
+                if (typeof Chart === "undefined") return;
 
-                if (cpiChart) cpiChart.destroy();
-                const cpiCtx = document.getElementById("cpiChart");
-                cpiChart = new Chart(cpiCtx, {
-                    type: "doughnut",
-                    data: {
-                        labels: ["Min", "Max", "Mean"],
-                        datasets: [{
-                            data: [pieMin, pieMax, pieMean],
-                            backgroundColor: ["#2563eb", "#f97316", "#64748b"],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: "bottom" }
+                const pie = val(data, "cpiChart", "CpiChart") || {};
+                const pieMin = toNumber(val(pie, "min", "Min"));
+                const pieMax = toNumber(val(pie, "max", "Max"));
+                const pieMean = toNumber(val(pie, "mean", "Mean"));
+
+                const cpiCanvas = document.getElementById("cpiChart");
+                if (cpiCanvas) {
+                    if (cpiChart) cpiChart.destroy();
+                    cpiChart = new Chart(cpiCanvas, {
+                        type: "doughnut",
+                        data: {
+                            labels: ["Min", "Max", "Mean"],
+                            datasets: [{ data: [pieMin, pieMax, pieMean], backgroundColor: ["#2e7d32", "#1565c0", "#f59e0b"], borderWidth: 0 }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: "66%",
+                            plugins: {
+                                legend: { position: "bottom", labels: { boxWidth: 10 } },
+                                tooltip: { callbacks: { label: function (context) { return `${context.label}: ${formatNumber(context.parsed)}`; } } }
+                            }
                         }
-                    }
-                });
+                    });
+                }
 
                 const trend = list(data, "completeTrend", "CompleteTrend");
                 const labels = trend.map(x => val(x, "months", "Months") || "");
-                const values = trend.map(x => Number(val(x, "completes", "Completes") || 0));
-
-                if (completeChart) completeChart.destroy();
-                const trendCtx = document.getElementById("completeChart");
-                completeChart = new Chart(trendCtx, {
-                    type: "bar",
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: "Completes",
-                            data: values,
-                            borderWidth: 0,
-                            backgroundColor: "#1d7874"
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true }
+                const values = trend.map(x => toNumber(val(x, "completes", "Completes")));
+                const trendCanvas = document.getElementById("completeChart");
+                if (trendCanvas) {
+                    if (completeChart) completeChart.destroy();
+                    const context = trendCanvas.getContext("2d");
+                    const gradient = context.createLinearGradient(0, 0, 0, 240);
+                    gradient.addColorStop(0, "#1565c0");
+                    gradient.addColorStop(1, "#2e7d32");
+                    completeChart = new Chart(trendCanvas, {
+                        type: "bar",
+                        data: { labels: labels, datasets: [{ label: "Completes", data: values, borderWidth: 0, borderRadius: 8, maxBarThickness: 30, backgroundColor: gradient }] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { ticks: { color: "#425b68", maxRotation: 0 }, grid: { display: false } },
+                                y: { beginAtZero: true, ticks: { color: "#425b68" }, grid: { color: "rgba(19,74,88,.08)" } }
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
 
             function renderAll(data) {
-                const supplierCom = list(data, "supplierCompletions", "SupplierCompletions");
-                const clientCom = list(data, "clientCompletions", "ClientCompletions");
-                const countryCom = list(data, "countryCompletions", "CountryCompletions");
+                const safeData = data || {};
+                currentBoards = buildBoards(safeData);
+                renderSummaryStrip(safeData);
+                renderPerformanceBoards(currentBoards);
+                renderFocusMetric(safeData, currentBoards);
+                renderProjectTotals(safeData);
+                renderRespondentsAndSuccess(safeData);
+                renderRateTable(safeData);
+                renderCharts(safeData);
+            }
 
-                const supplierRev = list(data, "supplierRevenue", "SupplierRevenue");
-                const clientRev = list(data, "clientRevenue", "ClientRevenue");
-                const countryRev = list(data, "countryRevenue", "CountryRevenue");
-                const manager = list(data, "managerSummary", "ManagerSummary");
-
-                renderNamedValueTable("#tblSupplierComBody", supplierCom);
-                renderNamedValueTable("#tblSupplierRevBody", supplierRev);
-                renderNamedValueTable("#tblClientComBody", clientCom);
-                renderNamedValueTable("#tblClientRevBody", clientRev);
-                renderNamedValueTable("#tblCountryComBody", countryCom);
-                renderNamedValueTable("#tblCountryRevBody", countryRev);
-                renderManagerTables(manager);
-                renderProjectTotals(data);
-                renderSuccessAndRespondents(data);
-                renderRateTable(data);
-                renderPrimaryMetric(data);
-                renderCharts(data);
+            function setMetricMode(nextMode) {
+                metricMode = nextMode === "completes" ? "completes" : "revenue";
+                $("#metricModeSwitch .vt-mode-btn").removeClass("is-active");
+                $(`#metricModeSwitch .vt-mode-btn[data-mode='${metricMode}']`).addClass("is-active");
+                if (!currentSnapshot) return;
+                if (!currentBoards) currentBoards = buildBoards(currentSnapshot);
+                renderPerformanceBoards(currentBoards);
+                renderFocusMetric(currentSnapshot, currentBoards);
             }
 
             async function loadFilterOptions() {
@@ -660,7 +486,6 @@
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 });
-
                 fillSelect($("#ddlCountry"), list(response, "countries", "Countries"), "--Search Country--");
                 fillSelect($("#ddlClients"), list(response, "clients", "Clients"), "--Search Client--");
                 fillSelect($("#ddlSuppliers"), list(response, "suppliers", "Suppliers"), "--Search Supplier--");
@@ -668,10 +493,8 @@
 
             async function loadDashboardData() {
                 $("#lblMsg").text("");
-
                 const sDate = $("#txtSDate").val();
                 const eDate = $("#txtEDate").val();
-
                 if ((sDate && !eDate) || (!sDate && eDate)) {
                     $("#lblMsg").text("Please select both start date and end date.");
                     return;
@@ -694,7 +517,6 @@
                         dataType: "json",
                         data: JSON.stringify(payload)
                     });
-
                     currentSnapshot = response || {};
                     renderAll(currentSnapshot);
                 } catch (xhr) {
@@ -705,13 +527,13 @@
                 }
             }
 
-            $("#btnApply").on("click", function () {
+            $("#btnApply").on("click", function () { loadDashboardData(); });
+            $("#btnReset").on("click", function () {
+                setDefaultDates();
+                $("#ddlCountry, #ddlClients, #ddlSuppliers").val("0");
                 loadDashboardData();
             });
-
-            $("#metricToggle").on("change", function () {
-                renderPrimaryMetric(currentSnapshot || {});
-            });
+            $("#metricModeSwitch").on("click", ".vt-mode-btn", function () { setMetricMode($(this).data("mode")); });
 
             $(document).ready(async function () {
                 setDefaultDates();
@@ -719,6 +541,7 @@
                 try {
                     await loadFilterOptions();
                     await loadDashboardData();
+                    setMetricMode(metricMode);
                 } finally {
                     stopBusy();
                 }
