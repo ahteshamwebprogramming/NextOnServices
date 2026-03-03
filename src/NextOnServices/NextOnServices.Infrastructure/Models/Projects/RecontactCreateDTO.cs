@@ -5,7 +5,7 @@ namespace NextOnServices.Infrastructure.Models.Projects;
 /// <summary>Project option for Create Recontact dropdown (UspGetAllUsers Type P).</summary>
 public class RecontactCreateProjectDTO
 {
-    public int ID { get; set; }
+    public int ProjectId { get; set; }
     public string PName { get; set; } = string.Empty;
 }
 

@@ -49,7 +49,7 @@ public class AccountController : Controller
                 routePage = "/VT/Home/Dashboard";
             }
             else
-            {                
+            {
                 routePage = "/VT/Projects/ProjectsList";
             }
 
@@ -189,14 +189,10 @@ public class AccountController : Controller
         {
             return RedirectToAction("UsersDetails");
         }
-        var result = await _accountsApiController.GetUsers();
+        var result = await _accountsApiController.GetUserById(new GetUserByIdRequest { UserId = userId });
         if (result is not ObjectResult objRes || objRes.Value == null)
             return RedirectToAction("UsersDetails");
-        var users = (List<UserDTO>)objRes.Value;
-        var user = users.FirstOrDefault(u => u.UserId == userId);
-        if (user == null)
-            return RedirectToAction("UsersDetails");
-        return View(user);
+        return View((UserDTO)objRes.Value);
     }
 
     /// <summary>GET Edit User page; loads user and returns edit form.</summary>
@@ -236,5 +232,160 @@ public class AccountController : Controller
         if (result is ObjectResult objRes)
             return StatusCode(objRes.StatusCode ?? 200, objRes.Value);
         return BadRequest();
+    }
+
+    /// <summary>GET current user's profile (convenience route for header dropdown).</summary>
+    [Route("/VT/Account/MyProfile")]
+    [HttpGet]
+    public async Task<IActionResult> MyProfile()
+    {
+        // Try to get user id from claims first
+        int userId = 0;
+        var idClaim = User?.FindFirst("Id")?.Value;
+        if (!string.IsNullOrEmpty(idClaim) && int.TryParse(idClaim, out userId) && userId > 0)
+        {
+            // ok
+        }
+        else
+        {
+            // Fallback to session
+            var userJson = HttpContext.Session.GetString("User");
+            if (string.IsNullOrEmpty(userJson))
+                return RedirectToAction("Login");
+
+            UserDTO? sessionUser = null;
+            try
+            {
+                sessionUser = JsonConvert.DeserializeObject<UserDTO>(userJson);
+            }
+            catch
+            {
+                // ignore, will redirect to login below
+            }
+
+            if (sessionUser == null || sessionUser.UserId <= 0)
+                return RedirectToAction("Login");
+
+            userId = sessionUser.UserId;
+        }
+
+        var result = await _accountsApiController.GetUserById(new GetUserByIdRequest { UserId = userId });
+        if (result is not ObjectResult objRes || objRes.Value == null)
+            return RedirectToAction("Login");
+
+        var userDto = (UserDTO)objRes.Value;
+        return View("UserProfile", userDto);
+    }
+
+    /// <summary>GET VT Change Password page for the current user.</summary>
+    [Route("/VT/Account/ChangePassword")]
+    [HttpGet]
+    public IActionResult ChangePassword()
+    {
+        if (!User.Identity?.IsAuthenticated ?? true)
+            return RedirectToAction("Login");
+        return View();
+    }
+
+    /// <summary>POST VT Change Password for the current user.</summary>
+    [Route("/VT/Account/ChangePassword")]
+    [HttpPost]
+    public async Task<IActionResult> ChangePassword(string oldPassword, string newPassword, string confirmPassword)
+    {
+        if (!User.Identity?.IsAuthenticated ?? true)
+            return RedirectToAction("Login");
+
+        if (string.IsNullOrWhiteSpace(oldPassword) ||
+            string.IsNullOrWhiteSpace(newPassword) ||
+            string.IsNullOrWhiteSpace(confirmPassword))
+        {
+            ViewBag.Error = "All fields are required.";
+            return View();
+        }
+
+        if (!string.Equals(newPassword, confirmPassword, StringComparison.Ordinal))
+        {
+            ViewBag.Error = "New password and confirm password do not match.";
+            return View();
+        }
+
+        // Resolve current user id (claims first, then session fallback)
+        int userId = 0;
+        var idClaim = User?.FindFirst("Id")?.Value;
+        if (!string.IsNullOrEmpty(idClaim) && int.TryParse(idClaim, out userId) && userId > 0)
+        {
+            // ok
+        }
+        else
+        {
+            var userJson = HttpContext.Session.GetString("User");
+            if (string.IsNullOrEmpty(userJson))
+            {
+                return RedirectToAction("Login");
+            }
+
+            UserDTO? sessionUser = null;
+            try
+            {
+                sessionUser = JsonConvert.DeserializeObject<UserDTO>(userJson);
+            }
+            catch
+            {
+            }
+
+            if (sessionUser == null || sessionUser.UserId <= 0)
+                return RedirectToAction("Login");
+
+            userId = sessionUser.UserId;
+        }
+
+        try
+        {
+            var apiResult = await _accountsApiController.ChangePasswordVT(new ChangePasswordVTRequest
+            {
+                UserId = userId,
+                OldPassword = oldPassword,
+                NewPassword = newPassword
+            });
+
+            if (apiResult is ObjectResult objRes)
+            {
+                if (objRes.StatusCode == 200)
+                {
+                    // On success, sign the user out and ask them to log in again.
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    HttpContext.Session.Clear();
+                    TempData["ChangePasswordSuccess"] = "Password changed successfully. Please login again.";
+                    return RedirectToAction("Login");
+                }
+
+                ViewBag.Error = objRes.Value?.ToString() ?? "Unable to change password.";
+                return View();
+            }
+
+            if (apiResult is BadRequestObjectResult badRequest)
+            {
+                ViewBag.Error = badRequest.Value?.ToString() ?? "Unable to change password.";
+                return View();
+            }
+
+            ViewBag.Error = "Unable to change password.";
+            return View();
+        }
+        catch (Exception ex)
+        {
+            ViewBag.Error = ex.Message;
+            return View();
+        }
+    }
+
+    /// <summary>Logout current VT user: clear auth cookie and session, then go to login.</summary>
+    [Route("/VT/Account/Logout")]
+    [HttpGet]
+    public async Task<IActionResult> Logout()
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        HttpContext.Session.Clear();
+        return RedirectToAction("Login");
     }
 }

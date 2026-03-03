@@ -128,6 +128,41 @@ body.vt-admin {
 .vt-admin .navbar .navbar-menu-wrapper {
   padding-left: 1rem;
   padding-right: 1.5rem;
+  justify-content: flex-end !important;
+}
+
+/* Navbar profile: keep Welcome text anchored to right and visually polished */
+.vt-admin .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right {
+  margin-left: auto !important;
+  width: auto !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+.vt-admin .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right .nav-item {
+  display: flex;
+  align-items: center;
+}
+
+.vt-admin .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right .nav-item.nav-profile .nav-link {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  white-space: nowrap !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem !important;
+}
+
+.vt-admin .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right .nav-item.nav-profile .nav-link:hover,
+.vt-admin .navbar .navbar-menu-wrapper .navbar-nav.navbar-nav-right .nav-item.nav-profile .nav-link:focus {
+  background: #f1f5f9;
+  color: #0f172a !important;
 }
 
 .vt-admin .sidebar .nav .nav-item .nav-link {

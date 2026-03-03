@@ -50,7 +50,7 @@ public class HomeController : Controller
         {
             if (projectId == null)
             {
-                return RedirectToAction("/Account/Login");
+                return RedirectToAction("Login", "Account", new { area = "VT" });
             }
             ProjectDetailPageViewModel outputData = new ProjectDetailPageViewModel();
 
@@ -132,7 +132,7 @@ public class HomeController : Controller
         }
         else
         {
-            return RedirectToAction("/Account/Login");
+            return RedirectToAction("Login", "Account", new { area = "VT" });
         }
 
         return View();
@@ -168,7 +168,7 @@ public class HomeController : Controller
         }
         else
         {
-            return RedirectToAction("/VT/Account/Login");
+            return RedirectToAction("Login", "Account", new { area = "VT" });
         }
 
     }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using NextOnServices.Endpoints.Questionnaire;
 using NextOnServices.Infrastructure.Helper;
 using NextOnServices.Infrastructure.Models.Questionnaire;
@@ -8,6 +9,7 @@ using PagedListParams = NextOnServices.Infrastructure.Helper.PagedListParams;
 namespace NextOnServices.WebUI.VT.Controllers;
 
 [Area("VT")]
+[Authorize(Roles = "A")]
 public class QuestionnaireController : Controller
 {
     private readonly ILogger<QuestionnaireController> _logger;

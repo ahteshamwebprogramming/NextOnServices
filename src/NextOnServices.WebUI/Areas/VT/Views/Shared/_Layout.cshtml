@@ -113,14 +113,18 @@
 
                         <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
                             @*<img src="~/theme/images/faces/face28.jpg" alt="profile" />*@
-                            Welcome @await Component.InvokeAsync("UserName")
+                            Welcome&nbsp;@await Component.InvokeAsync("UserName")
                         </a>
                         <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-                            <a class="dropdown-item">
+                            <a class="dropdown-item" href="/VT/Account/MyProfile">
+                                <i class="ti-user text-primary"></i>
+                                Profile
+                            </a>
+                            <a class="dropdown-item" href="/VT/Account/ChangePassword">
                                 <i class="ti-settings text-primary"></i>
                                 Change Password
                             </a>
-                            <a class="dropdown-item" href="/VT/Account/Login">
+                            <a class="dropdown-item" href="/VT/Account/Logout">
                                 <i class="ti-power-off text-primary"></i>
                                 Logout
                             </a>
@@ -373,7 +377,7 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#reports" aria-expanded="false" aria-controls="reports">
@@ -542,7 +546,7 @@
                         </a>
                     </li>
                     @{
-                        if (User.IsInRole("A") || User.IsInRole("U"))
+                        if (User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#questionnaire" aria-expanded="false" aria-controls="questionnaire">

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using NextOnServices.Endpoints.Clients;
 using NextOnServices.Endpoints.Masters;
 using NextOnServices.Endpoints.Projects;
@@ -11,6 +12,7 @@ using NextOnServices.Infrastructure.Models.Supplier;
 namespace NextOnServices.WebUI.Areas.VT.Controllers;
 
 [Area("VT")]
+[Authorize(Roles = "A")]
 public class ReportsController : Controller
 {
     private readonly ILogger<ReportsController> _logger;

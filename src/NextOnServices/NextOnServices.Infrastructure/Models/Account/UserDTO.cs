@@ -29,5 +29,12 @@ public class UserDTO
     public string? UserType { get; set; }
 
     public int? IsActive { get; set; }
+
+    public string? Country { get; set; }
+
+    public string? Rating { get; set; }
+
+    public string? Projects { get; set; }
+
     public HttpResponseMessage? HttpMessage { get; set; }
 }

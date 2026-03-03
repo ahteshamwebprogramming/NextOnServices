@@ -179,6 +179,7 @@ namespace NextOnServices.Endpoints.Accounts
                     return NotFound();
                 var dto = _mapper.Map<UserDTO>(user);
                 dto.Password = null; // never return password to client
+                await PopulateLegacyProfileFieldsAsync(dto);
                 return Ok(dto);
             }
             catch (Exception ex)
@@ -186,6 +187,94 @@ namespace NextOnServices.Endpoints.Accounts
                 _logger.LogError(ex, "Error in {Method}", nameof(GetUserById));
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
+        }
+
+        private async Task PopulateLegacyProfileFieldsAsync(UserDTO dto)
+        {
+            if (dto == null || dto.UserId <= 0)
+                return;
+
+            try
+            {
+                var legacyByStoredProcedure = await _unitOfWork.GenOperations.GetEntityDataSP<LegacyUserProfileProjection>(
+                    "usp_getuserprofile",
+                    new { ID = dto.UserId.ToString() }
+                );
+
+                if (legacyByStoredProcedure != null)
+                {
+                    dto.Country = ChooseFirstNonEmpty(dto.Country, legacyByStoredProcedure.Country);
+                    dto.Rating = ChooseFirstNonEmpty(dto.Rating, legacyByStoredProcedure.Rating);
+                    dto.Projects = ChooseFirstNonEmpty(dto.Projects, legacyByStoredProcedure.Projects, legacyByStoredProcedure.Project);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Legacy profile stored procedure unavailable for user {UserId}", dto.UserId);
+            }
+
+            // Fallback: read legacy optional columns directly from Users table when available.
+            if (string.IsNullOrWhiteSpace(dto.Country) || string.IsNullOrWhiteSpace(dto.Rating) || string.IsNullOrWhiteSpace(dto.Projects))
+            {
+                try
+                {
+                    const string fallbackQuery = @"
+DECLARE @Sql NVARCHAR(MAX) = N'SELECT ';
+
+SET @Sql += CASE WHEN COL_LENGTH('dbo.Users', 'Country') IS NOT NULL
+                 THEN N'CAST([Country] AS NVARCHAR(255)) AS Country'
+                 ELSE N'NULL AS Country' END;
+
+SET @Sql += N', ' + CASE WHEN COL_LENGTH('dbo.Users', 'Rating') IS NOT NULL
+                         THEN N'CAST([Rating] AS NVARCHAR(255)) AS Rating'
+                         ELSE N'NULL AS Rating' END;
+
+SET @Sql += N', ' + CASE WHEN COL_LENGTH('dbo.Users', 'Projects') IS NOT NULL
+                         THEN N'CAST([Projects] AS NVARCHAR(4000)) AS Projects'
+                         WHEN COL_LENGTH('dbo.Users', 'Project') IS NOT NULL
+                         THEN N'CAST([Project] AS NVARCHAR(4000)) AS Projects'
+                         ELSE N'NULL AS Projects' END;
+
+SET @Sql += N' FROM [dbo].[Users] WHERE [UserId] = @UserId';
+
+EXEC sp_executesql @Sql, N'@UserId INT', @UserId = @UserId;";
+
+                    var legacyByQuery = await _unitOfWork.GenOperations.GetEntityData<LegacyUserProfileProjection>(
+                        fallbackQuery,
+                        new { dto.UserId }
+                    );
+
+                    if (legacyByQuery != null)
+                    {
+                        dto.Country = ChooseFirstNonEmpty(dto.Country, legacyByQuery.Country);
+                        dto.Rating = ChooseFirstNonEmpty(dto.Rating, legacyByQuery.Rating);
+                        dto.Projects = ChooseFirstNonEmpty(dto.Projects, legacyByQuery.Projects, legacyByQuery.Project);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Legacy profile fallback query unavailable for user {UserId}", dto.UserId);
+                }
+            }
+        }
+
+        private static string? ChooseFirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value.Trim();
+            }
+
+            return null;
+        }
+
+        private sealed class LegacyUserProfileProjection
+        {
+            public string? Country { get; set; }
+            public string? Rating { get; set; }
+            public string? Project { get; set; }
+            public string? Projects { get; set; }
         }
 
         /// <summary>Update existing user. Password optional (leave blank to keep current).</summary>
@@ -223,6 +312,86 @@ namespace NextOnServices.Endpoints.Accounts
                 return StatusCode(StatusCodes.Status500InternalServerError, "Update failed.");
             }
         }
+
+        /// <summary>
+        /// Change password for a VT user by validating the old password.
+        /// This is called from the VT web UI Change Password page.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> ChangePasswordVT([FromBody] ChangePasswordVTRequest request)
+        {
+            try
+            {
+                if (request == null || request.UserId <= 0 ||
+                    string.IsNullOrWhiteSpace(request.OldPassword) ||
+                    string.IsNullOrWhiteSpace(request.NewPassword))
+                {
+                    return BadRequest("Invalid request.");
+                }
+
+                var user = await _unitOfWork.User.GetByIdAsync(request.UserId);
+                if (user == null)
+                    return BadRequest("User not found.");
+
+                var stored = user.Password ?? string.Empty;
+                var old = request.OldPassword ?? string.Empty;
+
+                bool oldMatches = false;
+
+                // 1) Direct match (plain text)
+                if (!string.IsNullOrEmpty(stored) && stored == old)
+                {
+                    oldMatches = true;
+                }
+                else
+                {
+                    // 2) Try decrypting stored password (in case it was persisted encrypted)
+                    try
+                    {
+                        var decrypted = CommonHelper.Decrypt(stored);
+                        if (!string.IsNullOrEmpty(decrypted) && decrypted == old)
+                        {
+                            oldMatches = true;
+                        }
+                    }
+                    catch
+                    {
+                        // ignore decrypt failures; will fall back to "incorrect"
+                    }
+                }
+
+                if (!oldMatches)
+                    return BadRequest("Old password is incorrect.");
+
+                // If the existing password appears to be encrypted (decrypt != stored),
+                // then encrypt the new password as well; otherwise, store as-is.
+                bool storedWasEncrypted = false;
+                try
+                {
+                    var decrypted = CommonHelper.Decrypt(stored);
+                    if (!string.IsNullOrEmpty(decrypted) && decrypted != stored)
+                        storedWasEncrypted = true;
+                }
+                catch
+                {
+                    storedWasEncrypted = false;
+                }
+
+                user.Password = storedWasEncrypted
+                    ? CommonHelper.Encrypt(request.NewPassword)
+                    : request.NewPassword;
+
+                _unitOfWork.User.Update(user);
+                _unitOfWork.Save();
+
+                return Ok("Password changed successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in {Method}", nameof(ChangePasswordVT));
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to change password.");
+            }
+        }
     }
 
     public class GetUserByIdRequest
@@ -256,5 +425,12 @@ namespace NextOnServices.Endpoints.Accounts
         public string? ContactNumber { get; set; }
         public string? Address { get; set; }
         public string? UserType { get; set; }                 // "A" = Admin, "U" = User
+    }
+
+    public class ChangePasswordVTRequest
+    {
+        public int UserId { get; set; }
+        public string OldPassword { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

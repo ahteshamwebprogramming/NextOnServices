@@ -1380,27 +1380,28 @@ public class SurveyAPIController : ControllerBase
     {
         try
         {
-            var rows = await _unitOfWork.GenOperations.GetTableDataSP<dynamic>(
-                "UspGetAllUsers",
-                new { @ID = 0, @Type = "P" });
-
-            if (rows == null || !rows.Any())
+            // Re-use the exact same source as the old WebForms page:
+            // UspGetAllUsers with Type = \"P\". We already call this for
+            // RecontactCreate, so piggy‑back on that implementation which
+            // is known to work against the current database.
+            var baseProjects = await GetProjectsForRecontactCreate();
+            if (baseProjects == null || !baseProjects.Any())
                 return new List<ProjectWiseReportProjectOptionDTO>();
 
-            return ToDictionaryRows(rows)
-                .Select(d => new ProjectWiseReportProjectOptionDTO
+            return baseProjects
+                .Where(x => x.ProjectId > 0 && !string.IsNullOrWhiteSpace(x.PName))
+                .Select(x => new ProjectWiseReportProjectOptionDTO
                 {
-                    Id = GetIntAny(d, "ID", "Id", "projectid"),
-                    PName = GetStringAny(d, "PCode", "PName", "PID")
+                    Id = x.ProjectId,
+                    PName = x.PName
                 })
-                .Where(x => x.Id > 0 && !string.IsNullOrWhiteSpace(x.PName))
                 .OrderBy(x => x.PName)
                 .ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in {Method}", nameof(GetProjectsForProjectWiseReport));
-            throw;
+            return new List<ProjectWiseReportProjectOptionDTO>();
         }
     }
 

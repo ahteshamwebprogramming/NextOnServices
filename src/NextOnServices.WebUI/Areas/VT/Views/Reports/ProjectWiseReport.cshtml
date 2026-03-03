@@ -2,133 +2,166 @@
     ViewData["Title"] = "Project Wise Report";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
-<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
-<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css" />
 <style>
-    .vt-project-wise-page .vt-filter-row {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 0.85rem;
-        align-items: end;
+    .vt-project-wise-page .ref-page-title { margin-bottom: 1.25rem; }
+    .vt-project-wise-page .ref-page-title h1 { font-size: 1.35rem; font-weight: 700; color: #1e293b; margin: 0 0 0.25rem 0; }
+    .vt-project-wise-page .ref-page-title .ref-subtitle { font-size: 0.875rem; color: #64748b; margin: 0; }
+
+    .vt-project-wise-page .card--filter { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .vt-project-wise-page .card--filter .card-body { padding: 1.25rem 1.5rem; }
+    .vt-project-wise-page .vt-filter-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    .vt-project-wise-page .vt-filter-row .form-group { margin: 0; flex: 1 1 280px; min-width: 0; }
+    .vt-project-wise-page .vt-filter-row label { font-weight: 600; font-size: 0.8125rem; color: #334155; margin-bottom: 0.35rem; display: block; }
+    .vt-project-wise-page .vt-filter-row .form-control { border-radius: 8px; border: 1px solid #cbd5e1; min-height: 38px; font-size: 0.875rem; }
+    .vt-project-wise-page .vt-filter-row .btn-apply { min-width: 110px; min-height: 38px; border-radius: 8px; font-weight: 600; }
+    .vt-project-wise-page #lblMsg { min-height: 20px; color: #b91c1c; font-weight: 600; font-size: 0.8125rem; margin-top: 0.5rem; }
+
+    .vt-project-wise-page .vt-summary-card { border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.06); height: 100%; }
+    .vt-project-wise-page .vt-summary-card .card-body { padding: 1.25rem 1.5rem; }
+    .vt-project-wise-page .vt-summary-card h4 { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+    .vt-project-wise-page .vt-summary-table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; margin: 0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .vt-project-wise-page .vt-summary-table td { border: 1px solid #e2e8f0; padding: 0.5rem 0.75rem; vertical-align: middle; }
+    .vt-project-wise-page .vt-summary-table td:first-child { font-weight: 600; color: #0f172a; width: 45%; background: #f8fafc; }
+
+    .vt-project-wise-page .card--table-section { border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .vt-project-wise-page .card--table-section .card-body { padding: 1.25rem 1.5rem; }
+    .vt-project-wise-page .table-section-header { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 0 0 1rem 0; }
+    .vt-project-wise-page .vt-ref-table { font-size: 0.8125rem; border: 1px solid #e2e8f0; }
+    .vt-project-wise-page .vt-ref-table thead th { padding: 0.6rem 0.75rem; background: #f1f5f9; font-weight: 700; color: #334155; border-bottom: 2px solid #e2e8f0; }
+    .vt-project-wise-page .vt-ref-table tbody td { padding: 0.5rem 0.75rem; border-color: #e2e8f0; }
+
+    .vt-project-wise-page #ddProjects + .select2-container { width: 100% !important; min-width: 0 !important; }
+    .vt-project-wise-page #ddProjects + .select2-container .select2-selection--single,
+    .vt-project-wise-page .select2-container--default .vt-project-select2-selection.select2-selection--single {
+        height: 38px !important;
+        min-height: 38px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        background: #fff !important;
+        box-shadow: none !important;
+        padding: 0 2.2rem 0 0.75rem !important;
+    }
+    .vt-project-wise-page #ddProjects + .select2-container .select2-selection__rendered,
+    .vt-project-wise-page .select2-container--default .vt-project-select2-selection .select2-selection__rendered {
+        line-height: 36px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        color: #334155 !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+    }
+    .vt-project-wise-page #ddProjects + .select2-container .select2-selection__arrow,
+    .vt-project-wise-page .select2-container--default .vt-project-select2-selection .select2-selection__arrow {
+        height: 36px !important;
+        right: 10px !important;
+        width: 16px !important;
+    }
+    .vt-project-wise-page #ddProjects + .select2-container .select2-selection__clear,
+    .vt-project-wise-page .select2-container--default .vt-project-select2-selection .select2-selection__clear {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    .vt-project-wise-page #ddProjects + .select2-container.select2-container--focus .select2-selection--single,
+    .vt-project-wise-page .select2-container--default.select2-container--focus .vt-project-select2-selection.select2-selection--single {
+        border-color: #0f7f79 !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.14) !important;
+    }
+    .select2-dropdown.vt-project-select2-dropdown {
+        border: 1px solid #dbe3ea !important;
+        border-radius: 10px !important;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
+        overflow: hidden !important;
     }
 
-    .vt-project-wise-page .form-control {
-        border-radius: 10px;
-        border-color: #dbe3ea;
-        font-size: 0.87rem;
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .dt-button { border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.75rem; font-weight: 600; }
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-excel { background: #16a34a !important; color: #fff !important; border: 0 !important; }
+    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-csv { background: #475569 !important; color: #fff !important; border: 0 !important; }
+    .vt-project-wise-page .dataTables_wrapper > .row:first-child { display: flex !important; align-items: center !important; }
+    .vt-project-wise-page .dataTables_wrapper > .row:first-child > [class*="col-"]:last-child {
+        margin-left: auto !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+    .vt-project-wise-page .dataTables_wrapper .dataTables_filter {
+        float: none !important;
+        margin: 0 !important;
+        text-align: right !important;
+        width: auto !important;
+    }
+    .vt-project-wise-page .dataTables_wrapper .dataTables_filter label {
+        width: auto !important;
+        display: inline-flex !important;
+        justify-content: flex-end !important;
+        margin: 0 !important;
+    }
+    .vt-project-wise-page .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5rem !important;
+    }
+
+    .vt-project-wise-page .btn-export-overview {
+        border: 1px solid #0f7f79 !important;
+        background: linear-gradient(135deg, #0f7f79 0%, #146b66 100%) !important;
+        color: #ffffff !important;
+        border-radius: 999px !important;
         min-height: 38px;
+        padding: 0.4rem 1rem !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.01em;
+        line-height: 1.1;
+        box-shadow: 0 6px 16px rgba(15, 127, 121, 0.22);
+        transition: all 0.18s ease;
     }
 
-    .vt-project-wise-page .btn {
-        min-width: 110px;
-        min-height: 38px;
-        border-radius: 999px;
-    }
-
-    .vt-project-wise-page .vt-summary-card {
-        border: 1px solid rgba(29, 120, 116, 0.16);
-        border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-        height: 100%;
-    }
-
-    .vt-project-wise-page .vt-summary-card .card-body {
-        padding: 1rem 1.1rem;
-    }
-
-    .vt-project-wise-page .vt-summary-card h6 {
-        margin: 0 0 0.6rem 0;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #1e293b;
-    }
-
-    .vt-project-wise-page .vt-summary-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.84rem;
-        margin: 0;
-    }
-
-    .vt-project-wise-page .vt-summary-table td {
-        border: 1px solid #e2e8f0;
-        padding: 0.42rem 0.5rem;
+    .vt-project-wise-page .btn-export-overview i {
+        margin-right: 0.38rem;
+        font-size: 0.9rem;
         vertical-align: middle;
     }
 
-    .vt-project-wise-page .vt-summary-table td:first-child {
-        font-weight: 700;
-        color: #0f172a;
-        width: 44%;
-        background: #f8fafc;
+    .vt-project-wise-page .btn-export-overview:hover {
+        background: linear-gradient(135deg, #0d6f6a 0%, #125a56 100%) !important;
+        border-color: #0d6f6a !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 18px rgba(15, 111, 106, 0.26);
+        transform: translateY(-1px);
     }
 
-    .vt-project-wise-page #lblMsg {
-        min-height: 18px;
-        color: #b91c1c;
-        font-weight: 600;
-        font-size: 0.8rem;
-        margin-top: 0.4rem;
-    }
-
-    .vt-project-wise-page .dataTables_wrapper .dt-buttons .dt-button {
-        border: 0 !important;
-        border-radius: 9999px !important;
-        padding: 0.42rem 0.75rem !important;
-        margin-right: 0.35rem !important;
-        font-size: 0.75rem !important;
-        font-weight: 600 !important;
-        line-height: 1 !important;
-        color: #fff !important;
-        box-shadow: none !important;
-        background-image: none !important;
-    }
-
-    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-excel {
-        background: #16a34a !important;
-    }
-
-    .vt-project-wise-page .dataTables_wrapper .dt-buttons .buttons-csv {
-        background: #475569 !important;
+    .vt-project-wise-page .btn-export-overview:focus,
+    .vt-project-wise-page .btn-export-overview:active {
+        box-shadow: 0 0 0 0.2rem rgba(15, 127, 121, 0.18) !important;
+        color: #ffffff !important;
     }
 
     @@media (max-width: 767.98px) {
-        .vt-project-wise-page .vt-filter-row {
-            grid-template-columns: 1fr;
-        }
-
-        .vt-project-wise-page .btn {
-            width: 100%;
-        }
+        .vt-project-wise-page .vt-filter-row { flex-direction: column; }
+        .vt-project-wise-page .vt-filter-row .btn-apply { width: 100%; }
     }
 </style>
 
-<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-project-wise-page">
+<div class="vt-dashboard-ref ref-content-wrap vt-project-wise-page">
     <div class="ref-page-title">
         <h1>Project Wise Report</h1>
         <p class="ref-subtitle">Overview, country-wise value and supplier-wise value by project</p>
     </div>
 
     <div class="row">
-        <div class="col-12 grid-margin">
-            <div class="card card--table-section">
+        <div class="col-12">
+            <div class="card card--filter">
                 <div class="card-body">
-                    <p class="table-section-header mb-3">Filter</p>
                     <div class="vt-filter-row">
-                        <div class="form-group mb-0">
+                        <div class="form-group">
                             <label for="ddProjects">Projects</label>
-                            <select id="ddProjects" class="form-control">
+                            <select id="ddProjects" class="form-control" style="width:100%;">
                                 <option value="0">--Search Project--</option>
                             </select>
                         </div>
                         <div>
-                            <button type="button" class="btn btn-primary" id="btnApply">
+                            <button type="button" class="btn btn-primary btn-apply" id="btnApply">
                                 <i class="ti-search"></i> Apply
                             </button>
                         </div>
@@ -139,12 +172,20 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-6 grid-margin stretch-card" id="overviewCard" style="display:none;">
+    <div class="row mt-2">
+        <div class="col-12 text-right">
+            <button type="button" class="btn btn-sm btn-export-overview" id="btnExportOverview">
+                <i class="ti-download"></i> Export Overview to Excel
+            </button>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-lg-6 mb-4" id="overviewCard" style="display:none;">
             <div class="vt-summary-card">
                 <div class="card-body">
-                    <h6>Overview</h6>
-                    <table class="vt-summary-table">
+                    <h4 id="hOverview">Overview</h4>
+                    <table id="tblOverview" class="vt-summary-table">
                         <tbody>
                             <tr><td>Project Number</td><td id="ovProjectNumber">-</td></tr>
                             <tr><td>Status</td><td id="ovStatus">-</td></tr>
@@ -159,11 +200,11 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 grid-margin stretch-card" id="totalCard" style="display:none;">
+        <div class="col-lg-6 mb-4" id="totalCard" style="display:none;">
             <div class="vt-summary-card">
                 <div class="card-body">
-                    <h6>Overall</h6>
-                    <table class="vt-summary-table">
+                    <h4 id="hOverAll">Over All</h4>
+                    <table id="tblOverall" class="vt-summary-table">
                         <tbody>
                             <tr><td>Total Revenue</td><td id="totRevenue">-</td></tr>
                             <tr><td>Total Cost</td><td id="totCost">-</td></tr>
@@ -177,18 +218,18 @@
     </div>
 
     <div class="row">
-        <div class="col-12 grid-margin stretch-card">
+        <div class="col-12">
             <div class="card card--table-section">
                 <div class="card-body">
-                    <p class="table-section-header">Country Wise Value</p>
+                    <p class="table-section-header">Country wise Value</p>
                     <div class="table-responsive">
-                        <table id="tblCountryWise" class="table table-striped vt-ref-table ref-project-table" style="width:100%">
+                        <table id="tblCountryWise" class="table table-striped vt-ref-table" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Country</th>
                                     <th>Completes</th>
                                     <th>CPC</th>
-                                    <th>Total Revenue</th>
+                                    <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -199,13 +240,13 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-12 grid-margin stretch-card">
+    <div class="row mt-4">
+        <div class="col-12">
             <div class="card card--table-section">
                 <div class="card-body">
-                    <p class="table-section-header">Supplier Wise Value</p>
+                    <p class="table-section-header">Supplier wise Value</p>
                     <div class="table-responsive">
-                        <table id="tblSupplierWise" class="table table-striped vt-ref-table ref-project-table" style="width:100%">
+                        <table id="tblSupplierWise" class="table table-striped vt-ref-table" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Country</th>
@@ -225,10 +266,64 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
     <script>
         (function () {
-            let countryTable = null;
-            let supplierTable = null;
+            var countryTable = null;
+            var supplierTable = null;
+
+            // Simple multi-table Excel export, adapted from the legacy cust.js (tablesToExcel)
+            var tablesToExcel = (function () {
+                var uri = 'data:application/vnd.ms-excel;base64,';
+                var template =
+                    '<html xmlns:o=\"urn:schemas-microsoft-com:office:office\" ' +
+                    'xmlns:x=\"urn:schemas-microsoft-com:office:excel\" ' +
+                    'xmlns=\"http://www.w3.org/TR/REC-html40\">' +
+                    '<head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>';
+                var templateEnd = '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
+                var bodyStart = '<body>';
+                var bodyEnd = '</body></html>';
+                var wsStart = '<x:ExcelWorksheet><x:Name>';
+                var wsEnd = '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';
+
+                function base64(s) {
+                    return window.btoa(unescape(encodeURIComponent(s)));
+                }
+
+                function format(s, c) {
+                    return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; });
+                }
+
+                return function (tableIds, sheetNames, filename) {
+                    if (!Array.isArray(tableIds) || !tableIds.length) return;
+
+                    var wstemplate = '';
+                    var tableTemplate = '';
+
+                    for (var i = 0; i < tableIds.length; i++) {
+                        wstemplate += wsStart + '{worksheet' + i + '}' + wsEnd;
+                        tableTemplate += '<table>{table' + i + '}</table>';
+                    }
+
+                    var fullTemplate = template + wstemplate + templateEnd + bodyStart + tableTemplate + bodyEnd;
+
+                    var ctx = {};
+                    for (var j = 0; j < tableIds.length; j++) {
+                        ctx['worksheet' + j] = (sheetNames && sheetNames[j]) ? sheetNames[j] : ('Sheet' + (j + 1));
+                    }
+
+                    for (var k = 0; k < tableIds.length; k++) {
+                        var el = document.getElementById(tableIds[k]);
+                        ctx['table' + k] = el ? el.innerHTML : '';
+                    }
+
+                    window.location.href = uri + base64(format(fullTemplate, ctx));
+                };
+            })();
 
             function val(obj, camel, pascal) {
                 if (!obj) return null;
@@ -238,7 +333,7 @@
             }
 
             function list(obj, camel, pascal) {
-                const arr = val(obj, camel, pascal);
+                var arr = val(obj, camel, pascal);
                 return Array.isArray(arr) ? arr : [];
             }
 
@@ -253,7 +348,7 @@
             }
 
             function formatNumber(value) {
-                const num = Number(value || 0);
+                var num = Number(value || 0);
                 if (!Number.isFinite(num)) return "0";
                 return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
             }
@@ -261,9 +356,7 @@
             function startBusy() {
                 if (typeof BlockUI === "function") {
                     BlockUI();
-                    return;
-                }
-                if ($.blockUI) {
+                } else if ($.blockUI) {
                     $.blockUI({ message: "<h5>Please wait...</h5>" });
                 }
             }
@@ -271,16 +364,14 @@
             function stopBusy() {
                 if (typeof UnblockUI === "function") {
                     UnblockUI();
-                    return;
-                }
-                if ($.unblockUI) {
+                } else if ($.unblockUI) {
                     $.unblockUI();
                 }
             }
 
             function destroyTable(instance) {
-                if (instance) {
-                    instance.destroy();
+                if (instance && instance.destroy) {
+                    try { instance.destroy(); } catch (e) {}
                 }
             }
 
@@ -290,13 +381,10 @@
                     destroy: true,
                     pageLength: 25,
                     autoWidth: false,
-                    dom: '<"ref-dt-top"Bf>t<"ref-dt-bottom"ip>',
-                    language: {
-                        search: "",
-                        searchPlaceholder: "Search..."
-                    },
+                    dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>t<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                    language: { search: "", searchPlaceholder: "Search...", emptyTable: "No data" },
                     buttons: [
-                        { extend: "excelHtml5", filename: "ProjectWise_CountryValue" },
+                        { extend: "excelHtml5", filename: "ProjectWise_CountryValue", text: "Export to Excel" },
                         { extend: "csvHtml5", filename: "ProjectWise_CountryValue" }
                     ]
                 });
@@ -308,24 +396,21 @@
                     destroy: true,
                     pageLength: 25,
                     autoWidth: false,
-                    dom: '<"ref-dt-top"Bf>t<"ref-dt-bottom"ip>',
-                    language: {
-                        search: "",
-                        searchPlaceholder: "Search..."
-                    },
+                    dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>t<"row"<"col-sm-5"i><"col-sm-7"p>>',
+                    language: { search: "", searchPlaceholder: "Search...", emptyTable: "No data" },
                     buttons: [
-                        { extend: "excelHtml5", filename: "ProjectWise_SupplierValue" },
+                        { extend: "excelHtml5", filename: "ProjectWise_SupplierValue", text: "Export to Excel" },
                         { extend: "csvHtml5", filename: "ProjectWise_SupplierValue" }
                     ]
                 });
             }
 
             function renderOverview(data) {
-                const overview = val(data, "overview", "Overview") || {};
-                const totals = val(data, "totals", "Totals") || {};
+                var overview = val(data, "overview", "Overview") || {};
+                var totals = val(data, "totals", "Totals") || {};
 
-                const hasOverview = !!(val(overview, "pNumber", "PNumber") || val(overview, "company", "Company") || val(overview, "manager", "Manager"));
-                const hasTotals = !!(val(totals, "totalRevenue", "TotalRevenue") || val(totals, "totalCost", "TotalCost") || val(totals, "grossProfit", "GrossProfit"));
+                var hasOverview = !!(val(overview, "pNumber", "PNumber") || val(overview, "company", "Company") || val(overview, "manager", "Manager"));
+                var hasTotals = !!(val(totals, "totalRevenue", "TotalRevenue") != null || val(totals, "totalCost", "TotalCost") != null || val(totals, "grossProfit", "GrossProfit") != null);
 
                 if (hasOverview) {
                     $("#overviewCard").show();
@@ -353,41 +438,41 @@
             }
 
             function renderCountryRows(rows) {
-                const $body = $("#tblCountryWise tbody");
+                var $body = $("#tblCountryWise tbody");
                 if (!rows || !rows.length) {
-                    $body.html('<tr><td colspan="4" class="text-center text-muted">No data</td></tr>');
+                    // Leave body empty; DataTables will show its own empty-table message.
+                    $body.empty();
                     return;
                 }
-
-                let html = "";
-                for (let i = 0; i < rows.length; i++) {
-                    const r = rows[i];
+                var html = "";
+                for (var i = 0; i < rows.length; i++) {
+                    var r = rows[i];
                     html += "<tr>";
-                    html += `<td>${escapeHtml(val(r, "country", "Country") || "")}</td>`;
-                    html += `<td>${formatNumber(val(r, "complete", "Complete"))}</td>`;
-                    html += `<td>${formatNumber(val(r, "cpc", "Cpc"))}</td>`;
-                    html += `<td>${formatNumber(val(r, "totalRevenue", "TotalRevenue"))}</td>`;
+                    html += "<td>" + escapeHtml(val(r, "country", "Country") || "") + "</td>";
+                    html += "<td>" + formatNumber(val(r, "complete", "Complete")) + "</td>";
+                    html += "<td>" + formatNumber(val(r, "cpc", "Cpc")) + "</td>";
+                    html += "<td>" + formatNumber(val(r, "totalRevenue", "TotalRevenue")) + "</td>";
                     html += "</tr>";
                 }
                 $body.html(html);
             }
 
             function renderSupplierRows(rows) {
-                const $body = $("#tblSupplierWise tbody");
+                var $body = $("#tblSupplierWise tbody");
                 if (!rows || !rows.length) {
-                    $body.html('<tr><td colspan="5" class="text-center text-muted">No data</td></tr>');
+                    // Leave body empty; DataTables will show its own empty-table message.
+                    $body.empty();
                     return;
                 }
-
-                let html = "";
-                for (let i = 0; i < rows.length; i++) {
-                    const r = rows[i];
+                var html = "";
+                for (var i = 0; i < rows.length; i++) {
+                    var r = rows[i];
                     html += "<tr>";
-                    html += `<td>${escapeHtml(val(r, "country", "Country") || "")}</td>`;
-                    html += `<td>${escapeHtml(val(r, "supplier", "Supplier") || "")}</td>`;
-                    html += `<td>${formatNumber(val(r, "complete", "Complete"))}</td>`;
-                    html += `<td>${formatNumber(val(r, "cpc", "Cpc"))}</td>`;
-                    html += `<td>${formatNumber(val(r, "cost", "Cost"))}</td>`;
+                    html += "<td>" + escapeHtml(val(r, "country", "Country") || "") + "</td>";
+                    html += "<td>" + escapeHtml(val(r, "supplier", "Supplier") || "") + "</td>";
+                    html += "<td>" + formatNumber(val(r, "complete", "Complete")) + "</td>";
+                    html += "<td>" + formatNumber(val(r, "cpc", "Cpc")) + "</td>";
+                    html += "<td>" + formatNumber(val(r, "cost", "Cost")) + "</td>";
                     html += "</tr>";
                 }
                 $body.html(html);
@@ -395,9 +480,15 @@
 
             function renderDetails(data) {
                 renderOverview(data);
+                var countryValues = list(data, "countryValues", "CountryValues");
+                var supplierValues = list(data, "supplierValues", "SupplierValues");
 
-                const countryValues = list(data, "countryValues", "CountryValues");
-                const supplierValues = list(data, "supplierValues", "SupplierValues");
+                // Destroy DataTables first. Otherwise destroy() restores the table DOM to its
+                // initial (empty) state and wipes out the rows we are about to render.
+                destroyTable(countryTable);
+                countryTable = null;
+                destroyTable(supplierTable);
+                supplierTable = null;
 
                 renderCountryRows(countryValues);
                 renderSupplierRows(supplierValues);
@@ -405,68 +496,97 @@
                 initSupplierTable();
             }
 
-            async function loadProjects() {
-                const response = await $.ajax({
+            function loadProjects() {
+                return $.ajax({
                     type: "POST",
                     url: "/VT/ProjectWiseReport.aspx/GetProjects",
                     contentType: "application/json; charset=utf-8",
                     dataType: "json"
                 });
-
-                const projects = Array.isArray(response) ? response : [];
-                const $ddl = $("#ddProjects");
-                $ddl.empty();
-                $ddl.append('<option value="0">--Search Project--</option>');
-
-                for (let i = 0; i < projects.length; i++) {
-                    const p = projects[i];
-                    const id = val(p, "id", "Id") || 0;
-                    const name = val(p, "pName", "PName") || "";
-                    $ddl.append(`<option value="${id}">${escapeHtml(name)}</option>`);
-                }
             }
 
-            async function loadProjectDetails() {
+            function loadProjectDetails() {
                 $("#lblMsg").text("");
-                const selectedId = parseInt($("#ddProjects").val() || "0", 10);
+                var selectedId = parseInt($("#ddProjects").val() || "0", 10);
                 if (!selectedId) {
                     $("#lblMsg").text("Please select a project.");
                     return;
                 }
 
                 startBusy();
-                try {
-                    const response = await $.ajax({
-                        type: "POST",
-                        url: "/VT/ProjectWiseReport.aspx/GetProjectDetails",
-                        contentType: "application/json; charset=utf-8",
-                        dataType: "json",
-                        data: JSON.stringify({ id: selectedId })
-                    });
-                    renderDetails(response || {});
-                } catch (xhr) {
-                    const message = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Unable to load project details.";
-                    $("#lblMsg").text(message);
-                } finally {
-                    stopBusy();
-                }
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/ProjectWiseReport.aspx/GetProjectDetails",
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    data: JSON.stringify({ Id: selectedId }),
+                    success: function (response) {
+                        renderDetails(response || {});
+                    },
+                    error: function (xhr) {
+                        var message = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : "Unable to load project details.";
+                        $("#lblMsg").text(message);
+                        destroyTable(countryTable);
+                        countryTable = null;
+                        destroyTable(supplierTable);
+                        supplierTable = null;
+                        renderCountryRows([]);
+                        renderSupplierRows([]);
+                        initCountryTable();
+                        initSupplierTable();
+                    },
+                    complete: function () {
+                        stopBusy();
+                    }
+                });
             }
 
             $("#btnApply").on("click", function () {
                 loadProjectDetails();
             });
 
-            $(document).ready(async function () {
+            $("#btnExportOverview").on("click", function () {
+                var tableIds = ["tblOverview", "tblOverall", "tblCountryWise", "tblSupplierWise"];
+                var sheetNames = ["Overview", "Overall", "CountryWise", "SupplierWise"];
+                tablesToExcel(tableIds, sheetNames, "ProjectWiseReport.xls");
+            });
+
+            $(document).ready(function () {
                 startBusy();
-                try {
-                    await loadProjects();
-                    renderCountryRows([]);
-                    renderSupplierRows([]);
-                    initCountryTable();
-                    initSupplierTable();
-                } finally {
-                    stopBusy();
-                }
+                loadProjects()
+                    .done(function (response) {
+                        var projects = Array.isArray(response) ? response : (response && response.d ? response.d : []);
+                        var $ddl = $("#ddProjects");
+                        $ddl.empty();
+                        $ddl.append('<option value="0">--Search Project--</option>');
+                        for (var i = 0; i < projects.length; i++) {
+                            var p = projects[i];
+                            var id = val(p, "id", "Id") || 0;
+                            var name = val(p, "pName", "PName") || "";
+                            if (id && name) {
+                                $ddl.append($("<option></option>").attr("value", id).text(name));
+                            }
+                        }
+                        if ($("#ddProjects").length && $.fn.select2) {
+                            $("#ddProjects").select2({
+                                placeholder: "--Search Project--",
+                                allowClear: false,
+                                width: "100%",
+                                selectionCssClass: "vt-project-select2-selection",
+                                dropdownCssClass: "vt-project-select2-dropdown"
+                            });
+                        }
+                        renderCountryRows([]);
+                        renderSupplierRows([]);
+                        initCountryTable();
+                        initSupplierTable();
+                    })
+                    .fail(function () {
+                        $("#lblMsg").text("Unable to load projects.");
+                    })
+                    .always(function () {
+                        stopBusy();
+                    });
             });
         })();
     </script>
