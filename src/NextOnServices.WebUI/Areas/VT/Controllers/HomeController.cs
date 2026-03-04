@@ -143,7 +143,8 @@ public class HomeController : Controller
         if (UserId != null)
         {
             DashboardViewModel outputData = new DashboardViewModel();
-            IActionResult actionResultUsers = await _accountAPIController.GetUsers();
+            // Only show users with Status=1 and IsActive=1 in the manager dropdown
+            IActionResult actionResultUsers = await _accountAPIController.GetManagers(1, 0);
             if (actionResultUsers != null && actionResultUsers is ObjectResult objectResultUsers && objectResultUsers.Value != null)
             {
                 outputData.Managers = ((List<UserDTO>)objectResultUsers.Value) ?? new List<UserDTO>();
