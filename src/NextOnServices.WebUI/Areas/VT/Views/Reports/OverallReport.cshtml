@@ -5,6 +5,7 @@
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
 <link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
 <style>
     .vt-overall-report-page { --ink:#0d2733; --muted:#4c6978; --border:#d6e3eb; --complete:#2e7d32; --complete-dark:#1b5e20; --complete-light:#66bb6a; --revenue:#1565c0; --revenue-dark:#0d47a1; --revenue-light:#42a5f5; position:relative; }
     .vt-overall-report-page::before { content:""; position:absolute; inset:-26px 0 auto 0; height:260px; background:radial-gradient(circle at 10% 10%,rgba(15,155,142,.17),transparent 36%),radial-gradient(circle at 82% 0%,rgba(15,127,143,.16),transparent 40%),linear-gradient(180deg,#f4fbfa,transparent 85%); pointer-events:none; z-index:-1; }
@@ -13,8 +14,38 @@
     .vt-overall-report-page .vt-filter-grid .form-group { margin:0; }
     .vt-overall-report-page .vt-filter-grid label { font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; font-weight:700; color:#335060; margin-bottom:.35rem; }
     .vt-overall-report-page .form-control { border-radius:10px; border-color:#d5e2e9; min-height:38px; font-size:.86rem; }
-    .vt-overall-report-page .vt-filter-actions { display:flex; gap:.45rem; justify-content:flex-end; flex-wrap:wrap; min-width:0; }
-    .vt-overall-report-page .vt-filter-actions .btn { min-width:105px; min-height:38px; border-radius:999px; font-size:.8rem; font-weight:700; flex:0 0 auto; }
+    .vt-overall-report-page .vt-date-input { cursor:pointer; padding-right:2.2rem; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23355670' stroke-width='2'%3E%3Crect x='3' y='5' width='18' height='16' rx='2' ry='2'/%3E%3Cline x1='16' y1='3' x2='16' y2='7'/%3E%3Cline x1='8' y1='3' x2='8' y2='7'/%3E%3Cline x1='3' y1='11' x2='21' y2='11'/%3E%3C/svg%3E") no-repeat right .65rem center; background-size:15px 15px; }
+    .vt-overall-report-page .vt-date-input:focus { border-color:#0f7f79; box-shadow:0 0 0 2px rgba(15,127,121,.14); }
+    .flatpickr-calendar { border:1px solid #d6e3eb; border-radius:12px; box-shadow:0 14px 28px rgba(8,36,44,.16); }
+    .flatpickr-calendar .flatpickr-day.selected,
+    .flatpickr-calendar .flatpickr-day.startRange,
+    .flatpickr-calendar .flatpickr-day.endRange { background:#0f7f79; border-color:#0f7f79; }
+    .flatpickr-calendar .flatpickr-day.today { border-color:#0f7f79; }
+    .flatpickr-calendar .flatpickr-day:hover { background:#e6f4f3; border-color:#e6f4f3; }
+    .flatpickr-calendar .flatpickr-current-month { font-size:1rem; }
+    .vt-overall-report-page .vt-filter-actions {
+        display:flex;
+        gap:.45rem;
+        justify-content:flex-end;
+        align-items:center;
+        flex-wrap:nowrap;
+        min-width:0;
+        grid-column:span 2;
+    }
+    .vt-overall-report-page .vt-filter-actions .btn {
+        min-width:105px;
+        min-height:38px;
+        border-radius:999px;
+        font-size:.8rem;
+        font-weight:700;
+        flex:0 0 auto;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        line-height:1;
+        gap:.34rem;
+    }
+    .vt-overall-report-page .vt-filter-actions #btnApply i { margin:0; font-size:.88rem; line-height:1; }
     .vt-overall-report-page #lblMsg { min-height:18px; margin-top:.45rem; color:#b91c1c; font-size:.8rem; font-weight:600; }
     .vt-overall-report-page .vt-stat-card { border-radius:14px; color:#fff; min-height:112px; padding:.85rem .95rem; position:relative; overflow:hidden; }
     .vt-overall-report-page .vt-stat-card::after { content:""; position:absolute; right:-42px; top:-38px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,.16); }
@@ -30,7 +61,7 @@
     .vt-overall-report-page .vt-kpi-title span { font-size:.72rem; color:#587181; font-weight:600; }
     .vt-overall-report-page .vt-chart-wrap { height:232px; }
     .vt-overall-report-page .vt-focus-card { display:flex; flex-direction:column; gap:.62rem; min-height:232px; }
-    .vt-overall-report-page .vt-mode-switch { display:inline-flex; background:#e8f2f4; border-radius:999px; padding:.2rem; }
+    .vt-overall-report-page .vt-mode-switch { display:inline-flex; align-self:flex-start; width:fit-content; background:#e8f2f4; border-radius:999px; padding:.2rem; }
     .vt-overall-report-page .vt-mode-btn { border:0; background:transparent; color:#34505f; border-radius:999px; font-size:.74rem; font-weight:700; padding:.3rem .7rem; line-height:1; }
     .vt-overall-report-page .vt-mode-btn.is-active { color:#fff; background:linear-gradient(145deg,var(--revenue-light),var(--revenue-dark)); }
     .vt-overall-report-page .vt-focus-value { font-size:2.05rem; font-weight:800; line-height:1; color:#0f5566; }
@@ -70,8 +101,8 @@
     .vt-overall-report-page .vt-rate-table tbody td { padding:.36rem .48rem; border-top:1px solid #e4edf3; color:#203844; }
     .vt-overall-report-page .vt-rate-table tbody tr:nth-child(even) td { background:#f8fbfd; }
     .vt-overall-report-page .vt-rate-table tbody td:first-child { font-weight:700; }
-    @@media (max-width:1199.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;justify-content:flex-end;} }
-    @@media (max-width:767.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;}.vt-overall-report-page .vt-filter-actions .btn{width:100%;}.vt-overall-report-page .vt-stat-value{font-size:1.58rem;}.vt-overall-report-page .vt-focus-value{font-size:1.8rem;}.vt-overall-report-page .vt-mode-switch{width:100%;}.vt-overall-report-page .vt-mode-btn{flex:1 1 50%;text-align:center;} }
+    @@media (max-width:1699.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;justify-content:flex-start;} }
+    @@media (max-width:767.98px) { .vt-overall-report-page .vt-filter-actions{grid-column:1 / -1;}.vt-overall-report-page .vt-stat-value{font-size:1.58rem;}.vt-overall-report-page .vt-focus-value{font-size:1.8rem;}.vt-overall-report-page .vt-mode-switch{width:100%;}.vt-overall-report-page .vt-mode-btn{flex:1 1 50%;text-align:center;} }
 </style>
 
 <div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-overall-report-page">
@@ -83,8 +114,8 @@
     <div class="row"><div class="col-12 grid-margin"><div class="card vt-lift"><div class="card-body">
         <p class="table-section-header mb-3">Filters</p>
         <div class="vt-filter-grid">
-            <div class="form-group"><label for="txtSDate">Start Date</label><input type="date" id="txtSDate" class="form-control" /></div>
-            <div class="form-group"><label for="txtEDate">End Date</label><input type="date" id="txtEDate" class="form-control" /></div>
+            <div class="form-group"><label for="txtSDate">Start Date</label><input type="text" id="txtSDate" class="form-control vt-date-input" autocomplete="off" /></div>
+            <div class="form-group"><label for="txtEDate">End Date</label><input type="text" id="txtEDate" class="form-control vt-date-input" autocomplete="off" /></div>
             <div class="form-group"><label for="ddlCountry">Country</label><select id="ddlCountry" class="form-control"><option value="0">--Search Country--</option></select></div>
             <div class="form-group"><label for="ddlClients">Client</label><select id="ddlClients" class="form-control"><option value="0">--Search Client--</option></select></div>
             <div class="form-group"><label for="ddlSuppliers">Supplier</label><select id="ddlSuppliers" class="form-control"><option value="0">--Search Supplier--</option></select></div>
@@ -104,9 +135,8 @@
     </div>
 
     <div class="row">
-        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>CPI Distribution</h6><span>Min / Max / Mean</span></div><div class="vt-chart-wrap"><canvas id="cpiChart"></canvas></div></div></div></div>
-        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Completes Trend</h6><span>Monthly movement</span></div><div class="vt-chart-wrap"><canvas id="completeChart"></canvas></div></div></div></div>
-        <div class="col-xl-4 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body vt-focus-card">
+        <div class="col-xl-6 col-lg-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body"><div class="vt-kpi-title"><h6>Completes Trend</h6><span>Monthly movement</span></div><div class="vt-chart-wrap"><canvas id="completeChart"></canvas></div></div></div></div>
+        <div class="col-xl-6 col-lg-6 grid-margin stretch-card"><div class="card vt-lift w-100"><div class="card-body vt-focus-card">
             <div class="vt-kpi-title"><h6>Metric Focus</h6><span>Live mode</span></div>
             <div class="vt-mode-switch" id="metricModeSwitch"><button type="button" class="vt-mode-btn is-active" data-mode="revenue">Revenue</button><button type="button" class="vt-mode-btn" data-mode="completes">Completes</button></div>
             <div class="vt-focus-value" id="focusValue">$0</div><p class="vt-focus-label" id="focusLabel">Total Revenue</p><p class="vt-focus-note" id="focusNote">Top contributor: -</p>
@@ -128,13 +158,15 @@
 </div>
 
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         (function () {
-            let cpiChart = null;
             let completeChart = null;
             let currentSnapshot = null;
             let currentBoards = null;
             let metricMode = "revenue";
+            let startDatePicker = null;
+            let endDatePicker = null;
 
             function val(obj, camel, pascal) {
                 if (!obj) return null;
@@ -184,10 +216,48 @@
                 if ($.unblockUI) $.unblockUI();
             }
 
+            function toIsoDate(d) { return d.toISOString().slice(0, 10); }
+
+            function initDatePickers() {
+                if (typeof flatpickr !== "function") {
+                    $("#txtSDate, #txtEDate").attr("type", "date");
+                    return;
+                }
+
+                const baseOptions = {
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altInputClass: "form-control vt-date-input",
+                    altFormat: "d-m-Y",
+                    allowInput: false,
+                    disableMobile: true
+                };
+
+                startDatePicker = flatpickr("#txtSDate", Object.assign({}, baseOptions, {
+                    onChange: function (selectedDates) {
+                        if (!endDatePicker) return;
+                        endDatePicker.set("minDate", (selectedDates && selectedDates.length) ? selectedDates[0] : null);
+                    }
+                }));
+
+                endDatePicker = flatpickr("#txtEDate", Object.assign({}, baseOptions, {
+                    onChange: function (selectedDates) {
+                        if (!startDatePicker) return;
+                        startDatePicker.set("maxDate", (selectedDates && selectedDates.length) ? selectedDates[0] : null);
+                    }
+                }));
+            }
+
             function setDefaultDates() {
                 const now = new Date();
                 const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                const toIsoDate = (d) => d.toISOString().slice(0, 10);
+                if (startDatePicker && endDatePicker) {
+                    startDatePicker.setDate(monthStart, true);
+                    endDatePicker.setDate(now, true);
+                    startDatePicker.set("maxDate", toIsoDate(now));
+                    endDatePicker.set("minDate", toIsoDate(monthStart));
+                    return;
+                }
                 $("#txtSDate").val(toIsoDate(monthStart));
                 $("#txtEDate").val(toIsoDate(now));
             }
@@ -405,32 +475,6 @@
             function renderCharts(data) {
                 if (typeof Chart === "undefined") return;
 
-                const pie = val(data, "cpiChart", "CpiChart") || {};
-                const pieMin = toNumber(val(pie, "min", "Min"));
-                const pieMax = toNumber(val(pie, "max", "Max"));
-                const pieMean = toNumber(val(pie, "mean", "Mean"));
-
-                const cpiCanvas = document.getElementById("cpiChart");
-                if (cpiCanvas) {
-                    if (cpiChart) cpiChart.destroy();
-                    cpiChart = new Chart(cpiCanvas, {
-                        type: "doughnut",
-                        data: {
-                            labels: ["Min", "Max", "Mean"],
-                            datasets: [{ data: [pieMin, pieMax, pieMean], backgroundColor: ["#2e7d32", "#1565c0", "#f59e0b"], borderWidth: 0 }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            cutout: "66%",
-                            plugins: {
-                                legend: { position: "bottom", labels: { boxWidth: 10 } },
-                                tooltip: { callbacks: { label: function (context) { return `${context.label}: ${formatNumber(context.parsed)}`; } } }
-                            }
-                        }
-                    });
-                }
-
                 const trend = list(data, "completeTrend", "CompleteTrend");
                 const labels = trend.map(x => val(x, "months", "Months") || "");
                 const values = trend.map(x => toNumber(val(x, "completes", "Completes")));
@@ -536,6 +580,7 @@
             $("#metricModeSwitch").on("click", ".vt-mode-btn", function () { setMetricMode($(this).data("mode")); });
 
             $(document).ready(async function () {
+                initDatePickers();
                 setDefaultDates();
                 startBusy();
                 try {

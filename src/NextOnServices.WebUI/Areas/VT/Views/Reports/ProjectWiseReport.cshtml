@@ -286,7 +286,7 @@
                     '<head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>';
                 var templateEnd = '</x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head>';
                 var bodyStart = '<body>';
-                var bodyEnd = '</body></html>';
+                var bodyEnd = String.fromCharCode(60, 47, 98, 111, 100, 121, 62, 60, 47, 104, 116, 109, 108, 62);
                 var wsStart = '<x:ExcelWorksheet><x:Name>';
                 var wsEnd = '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet>';
 

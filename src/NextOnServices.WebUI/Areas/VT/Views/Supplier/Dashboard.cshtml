@@ -791,11 +791,11 @@
             excludeColumns = ["projectName", "projectMappingId", "projectId", "supplierId", "supplierName"];
 
             //const headers = Object.keys(allData[0]).filter(header => !excludeColumns.includes(header));
-            const headers = ["status", "pid", "country", "cpi", "respondants", "oLink", "mLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
+            const headers = ["status", "pid", "country", "cpi", "respondants", "oLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
 
-            // Convert data to an array of arrays, excluding specified columns
+            // Convert data to an array of arrays, excluding specified columns (MLink excluded from export)
             const data = allData.map(row => headers.map(header => row[header]));
-            const displayHeaders = ["Status", "Project Number", "Country", "CPI", "Respondants", "OLink", "MLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
+            const displayHeaders = ["Status", "Project Number", "Country", "CPI", "Respondants", "OLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
             // Add headers as the first row
             return [displayHeaders, ...data];
         }

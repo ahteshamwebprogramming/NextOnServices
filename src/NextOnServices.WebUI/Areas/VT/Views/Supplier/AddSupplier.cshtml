@@ -309,6 +309,9 @@
                 success: function (data) {
                     UnblockUI();
                     var successMessage = inputDTO.Id > 0 ? "Supplier updated successfully." : "Supplier added successfully.";
+                    if (data && data.emailSent === false) {
+                        successMessage += " However, the system could not send the login credentials by email.";
+                    }
                     Swal.fire({ title: 'Success', text: successMessage, icon: 'success', confirmButtonText: 'OK' }).then(function (result) {
                         if (result.isConfirmed) {
                             if (inputDTO.Id > 0) {

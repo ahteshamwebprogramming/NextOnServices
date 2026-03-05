@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -479,7 +479,11 @@ public class SuppliersAPIController : ControllerBase
             {
                 if (inputData.Id > 0)
                 {
-                    await UpdateSupplierUserName(inputData.Id);
+                    var (updateSuccess, emailSent) = await UpdateSupplierUserName(inputData.Id);
+                    if (!updateSuccess)
+                    {
+                        return BadRequest("Unable to create the login at the moment. Please try again");
+                    }
                     string queryCount = "Select count(1) from Suppliers where ltrim(rtrim(Name))=@SupplierName and Id!=@Id";
                     //string queryCount = "Select count(1) from Suppliers where ltrim(rtrim(Email))=@Email and Id!=@Id";
                     var parameterCount = new { @SupplierName = inputData?.Name?.Trim(), @Id = inputData.Id };
@@ -500,7 +504,7 @@ public class SuppliersAPIController : ControllerBase
                         var res = await _unitOfWork.Suppliers.UpdateAsync(_mapper.Map<Core.Entities.Supplier>(inputData));
                         if (res)
                         {
-                            return Ok(res);
+                            return Ok(new { success = true, emailSent = emailSent });
                         }
                         else
                         {
@@ -537,8 +541,12 @@ public class SuppliersAPIController : ControllerBase
                             if (inputData.Id > 0)
                             {
                                 inputData.encId = CommonHelper.EncryptURLHTML(inputData.Id.ToString());
-                                await CreateSupplierLogin(inputData.Id);
-                                return Ok(inputData);
+                                var (loginCreated, emailSent) = await CreateSupplierLoginAsync(inputData.Id);
+                                if (!loginCreated)
+                                {
+                                    return BadRequest("Unable to create the login at the moment. Please try again");
+                                }
+                                return Ok(new { encId = inputData.encId, emailSent = emailSent });
                             }
                             else
                             {
@@ -557,7 +565,11 @@ public class SuppliersAPIController : ControllerBase
         }
     }
 
-    public async Task<IActionResult> UpdateSupplierUserName(int SupplierId)
+    /// <summary>
+    /// Updates supplier username/code if missing, creates supplier login if it does not exist.
+    /// Returns true if no new login was created or email was sent; false if login was created but email failed to send.
+    /// </summary>
+    public async Task<(bool success, bool emailSent)> UpdateSupplierUserName(int SupplierId)
     {
         string sQuery = "Select * from Suppliers where Id=@Id";
         var sParam = new { @Id = SupplierId };
@@ -582,15 +594,19 @@ public class SuppliersAPIController : ControllerBase
         bool supplierLoginExists = await _unitOfWork.SupplierLogin.IsExists(lQuery, lParam);
         if (!supplierLoginExists)
         {
-            await CreateSupplierLogin(SupplierId);
+            var (loginCreated, emailSent) = await CreateSupplierLoginAsync(SupplierId);
+            return (loginCreated, emailSent);
         }
 
-        return Ok();
+        return (true, true);
     }
 
-    public async Task<IActionResult> CreateSupplierLogin(int SupplierId)
+    /// <summary>
+    /// Creates supplier login and sends credentials by email. If email is not sent successfully, the login is not created (or is removed).
+    /// Returns (loginCreated, emailSent). loginCreated is false when email was required but failed to send.
+    /// </summary>
+    private async Task<(bool loginCreated, bool emailSent)> CreateSupplierLoginAsync(int SupplierId)
     {
-        #region Create Login For Supplier
         string sQuery = "Select * from Suppliers where Id=@Id";
         var sParam = new { @Id = SupplierId };
         Supplier supplier = await _unitOfWork.Suppliers.GetEntityData<Supplier>(sQuery, sParam);
@@ -608,22 +624,24 @@ public class SuppliersAPIController : ControllerBase
         supplierLogin.Id = await _unitOfWork.SupplierLogin.AddAsync(supplierLogin);
         if (supplierLogin.Id == 0)
         {
-            return BadRequest("Unable to create the login at the moment. Please try again");
+            return (false, false);
         }
-        else
+
+        bool emailSent = true;
+        if (!String.IsNullOrEmpty(supplier.Email))
         {
             var ServerDomain = _configuration["ServerDomain"];
             string body = $"<p>Dear {supplier.Name},</p>\r\n<p>We are excited to inform you that your registration was successful! Below are your login credentials:</p>\r\n<p><strong>Supplier Code</strong>: {supplier.SupplierCode}<br /><strong>Username</strong>: {supplierLogin.UserName}<br><strong>Password</strong>: {password}</p>\r\n<p>To access your account, please click the link below:</p>\r\n<p><a href=\"{ServerDomain}/VT/Supplier/Login\" rel=\"noopener\" target=\"_new\"><strong>Login&nbsp;Here</strong></a></p>\r\n<p>For your security, we recommend changing your password after your first login.</p>\r\n<p>If you have any questions, feel free to reach out to our support team.</p>\r\n<p>Thank you,<br>Nexton Services<br>XX-XXXXXXXXXX</p>";
             string subject = "Welcome! Your Registration is Successful";
-            if (!String.IsNullOrEmpty(supplier.Email))
+            emailSent = MailHelper.SendEmail(subject, body, supplier.Email);
+            if (!emailSent)
             {
-                MailHelper.SendEmail(subject, body, supplier.Email);
+                await _unitOfWork.SupplierLogin.DeleteAsync(supplierLogin.Id);
+                return (false, false);
             }
-            //MailHelper.SendEmail(subject, body, "mhdahtesham@gmail.com");
-            return Ok(supplierLogin);
         }
 
-        #endregion
+        return (true, emailSent);
     }
 
 

@@ -51,7 +51,7 @@ function initVtDashboardProjectTable() {
         $tbl.DataTable().destroy();
     }
     var dt = $tbl.DataTable({
-        aaSorting: [],
+        order: [[1, 'desc']],
         ordering: true,
         searching: true,
         paging: true,
