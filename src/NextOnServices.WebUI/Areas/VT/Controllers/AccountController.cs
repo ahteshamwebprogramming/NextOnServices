@@ -27,14 +27,32 @@ public class AccountController : Controller
     [HttpPost]
     public async Task<IActionResult> Login(UserDTO user)
     {
+        user ??= new UserDTO();
+
+        if (string.IsNullOrWhiteSpace(user.UserName) || string.IsNullOrWhiteSpace(user.Password))
+        {
+            ModelState.AddModelError(string.Empty, "Login failed. Username and password are required.");
+            user.Password = string.Empty;
+            return View(user);
+        }
+
         IActionResult actionResult = _accountsApiController.GetLoginDetail(user);
         if (actionResult == null || !(actionResult is ObjectResult objResult) || objResult.Value == null)
         {
-            return RedirectToAction("Login");
+            ModelState.AddModelError(string.Empty, "Login failed. Username or password is incorrect.");
+            user.Password = string.Empty;
+            return View(user);
         }
 
         UserDTO objResultData = (UserDTO)objResult.Value;
-        HttpResponseMessage getdata = objResultData.HttpMessage;
+        HttpResponseMessage? getdata = objResultData.HttpMessage;
+        if (getdata == null)
+        {
+            ModelState.AddModelError(string.Empty, "Login failed. Please try again.");
+            user.Password = string.Empty;
+            return View(user);
+        }
+
         if (getdata.IsSuccessStatusCode)
         {
             string result = getdata.Content.ReadAsStringAsync().Result;
@@ -74,17 +92,17 @@ public class AccountController : Controller
         }
         else
         {
-
             if (getdata.ReasonPhrase == "Not Found")
             {
-                ModelState.AddModelError("LoginNotFound", "Login Failed. Username or password is incorrect");
-                return View();
+                ModelState.AddModelError(string.Empty, "Login failed. Username or password is incorrect.");
             }
             else
             {
-                ModelState.AddModelError("LoginNotFound", "Login Failed. " + getdata.ReasonPhrase);
-                return View();
+                ModelState.AddModelError(string.Empty, "Login failed. " + getdata.ReasonPhrase);
             }
+
+            user.Password = string.Empty;
+            return View(user);
         }
     }
     public ActionResult AdminEncryptionPage()

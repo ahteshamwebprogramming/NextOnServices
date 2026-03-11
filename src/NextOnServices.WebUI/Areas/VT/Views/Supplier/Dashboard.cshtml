@@ -506,8 +506,8 @@
                         <th>Country</th>
                         <th>CPI</th>
                         <th>Respondants</th>
-                        <th>OLink</th>
-                        @* <th>MLink</th> *@
+                        @* <th>OLink</th> *@
+                        <th>MLink</th>
                         <th>Total</th>
                         <th>Complete</th>
                         <th>Terminate</th>
@@ -575,7 +575,7 @@
                                 </td>
                                 <td>@item.CPI</td>
                                 <td>@item.Respondants</td>
-                                <td>
+                                @* <td>
                                     @{
                                         var oLinkDisplay = string.IsNullOrWhiteSpace(item.OLink)
                                             ? string.Empty
@@ -583,8 +583,8 @@
                                                 .Trim();
                                     }
                                     <div class="cell-nowrap" title="@oLinkDisplay">@oLinkDisplay</div>
-                                </td>
-                                @* <td>@item.MLink</td> *@
+                                </td> *@
+                                <td>@item.MLink</td>
                                 <td>@item.Total</td>
                                 <td>@item.Complete</td>
                                 <td>@item.Terminate</td>
@@ -791,11 +791,11 @@
             excludeColumns = ["projectName", "projectMappingId", "projectId", "supplierId", "supplierName"];
 
             //const headers = Object.keys(allData[0]).filter(header => !excludeColumns.includes(header));
-            const headers = ["status", "pid", "country", "cpi", "respondants", "oLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
+            const headers = ["status", "pid", "country", "cpi", "respondants", "mLink", "total", "complete", "terminate", "overquota", "securityTerm", "fraudError", "incomplete", "loi", "irPercent", "notes"];
 
             // Convert data to an array of arrays, excluding specified columns (MLink excluded from export)
             const data = allData.map(row => headers.map(header => row[header]));
-            const displayHeaders = ["Status", "Project Number", "Country", "CPI", "Respondants", "OLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
+            const displayHeaders = ["Status", "Project Number", "Country", "CPI", "Respondants", "MLink", "Total", "Complete", "Terminate", "Overquota", "Security Term", "Fraud Error", "Incomplete", "LOI", "IR Percent", "Notes"];
             // Add headers as the first row
             return [displayHeaders, ...data];
         }
@@ -976,29 +976,29 @@
                     },
                     { "data": "cpi" },
                     { "data": "respondants" },
-                    {
-                        "data": "oLink",
-                        "render": function (data, type, row) {
-                            if (!data) {
-                                return '';
-                            }
+                    // {
+                    //     "data": "oLink",
+                    //     "render": function (data, type, row) {
+                    //         if (!data) {
+                    //             return '';
+                    //         }
 
-                            if (type !== 'display') {
-                                return data;
-                            }
+                    //         if (type !== 'display') {
+                    //             return data;
+                    //         }
 
-                            const safeText = $('<div>').text(data).html().replace(/\s+/g, ' ').trim();
+                    //         const safeText = $('<div>').text(data).html().replace(/\s+/g, ' ').trim();
                             
-                            // Check if it's a valid URL
-                            const isUrl = safeText.startsWith('http://') || safeText.startsWith('https://');
-                            const linkHtml = isUrl 
-                                ? `<a href="${safeText}" target="_blank" title="${safeText}">${safeText}</a>`
-                                : safeText;
+                    //         // Check if it's a valid URL
+                    //         const isUrl = safeText.startsWith('http://') || safeText.startsWith('https://');
+                    //         const linkHtml = isUrl 
+                    //             ? `<a href="${safeText}" target="_blank" title="${safeText}">${safeText}</a>`
+                    //             : safeText;
                             
-                            return `<div class="cell-nowrap" title="${safeText}">${linkHtml}</div>`;
-                        }
-                    },
-                    // { "data": "mLink" },
+                    //         return `<div class="cell-nowrap" title="${safeText}">${linkHtml}</div>`;
+                    //     }
+                    // },
+                    { "data": "mLink" },
                     { "data": "total" },
                     { "data": "complete" },
                     { "data": "terminate" },

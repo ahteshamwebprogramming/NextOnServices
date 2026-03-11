@@ -15,7 +15,7 @@
     <title>VT Login</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="shortcut icon" href="~/theme/images/favicon.png" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <meta name="robots" content="noindex, follow">
 
     <!-- External libraries -->
@@ -55,7 +55,8 @@
             font-family: 'Poppins', sans-serif;
             background: #0a0a0f;
             color: #fff;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -63,13 +64,15 @@
         #container {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh;
+            height: auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow: visible;
             background: transparent;
             z-index: 1;
+            padding: 32px 16px;
         }
 
         /* Beautiful Animated Background - Flowing Waves & Morphing Blobs */
@@ -325,9 +328,17 @@
             font-size: 0.95rem;
         }
 
+        #login-form {
+            width: 100%;
+        }
+
         .form-group {
-            margin-bottom: 24px;
+            margin-bottom: 14px;
             position: relative;
+        }
+
+        #login-form .form-group:last-of-type {
+            margin-bottom: 8px;
         }
 
         .form-group label {
@@ -374,9 +385,17 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-            margin-top: 10px;
+            margin: 0 auto;
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1 !important;
+            visibility: visible !important;
+            text-align: center;
+            line-height: 1.2;
+            box-sizing: border-box;
         }
 
         .login-btn::before {
@@ -407,7 +426,7 @@
         .forgot-link {
             display: block;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 32px;
             color: rgba(255,255,255,0.7);
             text-decoration: none;
             font-size: 0.9rem;
@@ -456,6 +475,40 @@
             font-size: 13px;
             padding-left: 0;
             margin: 0;
+        }
+
+        .login-error-summary {
+            background: rgba(220, 53, 69, 0.15);
+            backdrop-filter: blur(10px);
+            color: #ff6b6b;
+            margin-bottom: 18px;
+            font-size: 0.9rem;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border-left: 3px solid #ff6b6b;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        .validation-summary-valid {
+            display: none;
+        }
+
+        .login-error-summary ul {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+        }
+
+        .field-error {
+            display: block;
+            color: #ff9aa2;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+
+        .input-validation-error {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
         }
 
         /* Logo from Supplier/Login */
@@ -555,13 +608,17 @@
             </div>
 
             <form method="post" action="/VT/Account/Login" id="login-form" novalidate>
+                <div asp-validation-summary="All" class="login-error-summary"></div>
+
                 <div class="form-group">
+                    <label for="username">Username</label>
                     <input asp-for="UserName" 
                            id="username" 
                            class="form-control" 
                            placeholder="Enter your username" 
                            aria-label="Username" 
                            required />
+                    <span asp-validation-for="UserName" class="field-error"></span>
                 </div>
 
                 <div class="form-group">
@@ -572,6 +629,7 @@
                            class="form-control" 
                            placeholder="Enter your password" 
                            aria-label="Password" />
+                    <span asp-validation-for="Password" class="field-error"></span>
                 </div>
 
                 <button type="submit" class="login-btn">Sign In</button>
@@ -589,12 +647,11 @@
     </div>
 
     <!-- Three.js animated background - Removed -->
-
+    <script>
         // GSAP animations
         gsap.from('.right-panel', { 
             duration: 1, 
             y: 50, 
-            opacity: 0, 
             scale: 0.95,
             ease: 'power3.out',
             delay: 0.3
@@ -603,24 +660,13 @@
         gsap.from('.login-header', {
             duration: 0.8,
             y: -20,
-            opacity: 0,
             ease: 'power2.out',
             delay: 0.6
-        });
-        
-        gsap.from('.form-group', {
-            duration: 0.6,
-            x: -30,
-            opacity: 0,
-            stagger: 0.1,
-            ease: 'power2.out',
-            delay: 0.8
         });
         
         gsap.from('.login-btn', {
             duration: 0.6,
             y: 20,
-            opacity: 0,
             ease: 'back.out(1.7)',
             delay: 1.2
         });
