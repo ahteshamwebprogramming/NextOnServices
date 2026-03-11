@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "Surveys (Lucid)";
+    ViewData["Title"] = "Surveys (Sago)";
     Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
 }
 <link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
@@ -127,7 +127,7 @@
     <div class="col-12 grid-margin">
         <div class="card card--table-section">
             <div class="card-body">
-                <h4 class="table-section-header">Surveys From Lucid</h4>
+                <h4 class="table-section-header">Surveys From Sago</h4>
                 <div class="d-flex justify-content-end mb-3">
                     <button type="button" class="btn btn-primary" id="btnPullSurveys">Pull Surveys</button>
                     <button style="display: none" type="button" class="btn btn-primary" data-toggle="modal" data-target="#qualificationmodel" id="btnqualificationmodel">modal</button>
@@ -469,7 +469,7 @@
             $.ajax({
                 type: "POST",
                 contentType: "application/json; charset=utf-8",
-                url: '/VT/ApiProjects/AddProjectFromLucid',
+                url: '/VT/ApiProjects/AddProjectFromSago',
                 data: JSON.stringify({ ProjectId: projectId, CPI: cpi, LOI: loi, IR: ir, TotalRemaining: totalRemaining, LiveLink: livelink }),
                 cache: false,
                 dataType: "json",

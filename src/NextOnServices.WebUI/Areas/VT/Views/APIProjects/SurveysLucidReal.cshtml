@@ -1,0 +1,920 @@
+@{
+    ViewData["Title"] = "Surveys (Lucid)";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://cdn.datatables.net/1.10.11/css/jquery.dataTables.min.css" rel="stylesheet" />
+
+<div class="row">
+    <div class="col-12 grid-margin">
+        <div class="card card--table-section">
+            <div class="card-body">
+                <h4 class="table-section-header">Surveys From Lucid</h4>
+                <div class="d-flex justify-content-end mb-3">
+                    <button type="button" class="btn btn-primary" id="btnPullSurveys">Pull Surveys</button>
+                </div>
+                <div class="table-responsive" style="overflow-x: scroll;">
+                    <table id="tblLucid" class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Survey Name</th>
+                                <th>Survey Number</th>
+                                <th>Survey SID</th>
+                                <th>Account Name</th>
+                                <th>Country Language</th>
+                                <th>LOI</th>
+                                <th>Bid Incidence</th>
+                                <th>RPI</th>
+                                <th>Currency</th>
+                                <th>Field End Date</th>
+                                <th>Industry</th>
+                                <th>Study Type</th>
+                                <th>Overall Completes</th>
+                                <th>Total Remaining</th>
+                                <th>Completion %</th>
+                                <th>Relationship Type</th>
+                                <th>View Qualification</th>
+                                <th>Accept Project</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #addSurveyParamsModal .modal-dialog {
+        max-width: 1040px;
+        width: calc(100% - 2rem);
+        margin: 1.25rem auto;
+    }
+
+    #addSurveyParamsModal .modal-content {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        border: 1px solid rgba(15, 127, 121, 0.18);
+        border-radius: 14px;
+        background: #ffffff;
+        overflow: hidden;
+        box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18);
+    }
+
+    #addSurveyParamsModal .modal-header {
+        border-bottom: 1px solid rgba(15, 127, 121, 0.16) !important;
+        background: linear-gradient(180deg, rgba(15, 127, 121, 0.1) 0%, #ffffff 88%) !important;
+        padding: 1rem 1.5rem 0.9rem;
+        position: relative;
+    }
+
+    #addSurveyParamsModal .modal-header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #0f7f79 0%, #165c59 100%);
+    }
+
+    #addSurveyParamsModal .modal-title {
+        margin-left: 0.75rem;
+        font-size: 1.25rem;
+        line-height: 1.35;
+        font-weight: 600;
+        color: #0f172a;
+        letter-spacing: 0;
+    }
+
+    #addSurveyParamsModal .close {
+        position: absolute;
+        top: 0.85rem;
+        right: 1.15rem;
+        margin: 0;
+        padding: 0.35rem;
+        color: #64748b;
+        opacity: 0.75;
+        text-shadow: none;
+        font-size: 1.55rem;
+    }
+
+    #addSurveyParamsModal .close:hover {
+        opacity: 1;
+        color: #0f172a;
+    }
+
+    #addSurveyParamsModal .modal-body {
+        padding: 1rem 1.5rem 0.5rem;
+    }
+
+    #addSurveyParamsModal .modal-footer {
+        border-top: 1px solid #e2e8f0;
+        background: linear-gradient(180deg, #ffffff 0%, rgba(15, 127, 121, 0.04) 100%);
+        padding: 0.9rem 1.5rem 1rem;
+        justify-content: flex-end;
+        gap: 0.65rem;
+    }
+
+    #addSurveyParamsModal .survey-params-grid {
+        display: grid;
+        row-gap: 0.95rem;
+    }
+
+    #addSurveyParamsModal .survey-param-row {
+        display: grid;
+        grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr);
+        column-gap: 1.75rem;
+        align-items: start;
+    }
+
+    #addSurveyParamsModal .survey-param-row--single {
+        grid-template-columns: 170px minmax(0, 390px);
+    }
+
+    #addSurveyParamsModal .survey-param-label {
+        margin: 0;
+        padding-top: 0.9rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        line-height: 1.4;
+        color: #334155;
+    }
+
+    #addSurveyParamsModal .survey-param-field {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    #addSurveyParamsModal .survey-param-field--narrow {
+        max-width: none;
+    }
+
+    #addSurveyParamsModal .survey-param-spacer {
+        min-height: 1px;
+    }
+
+    #addSurveyParamsModal .survey-field-label {
+        display: block;
+        margin-bottom: 0.2rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.3;
+        color: #64748b;
+    }
+
+    #addSurveyParamsModal .survey-input,
+    #addSurveyParamsModal .survey-input.form-control {
+        width: 100%;
+        min-height: auto;
+        height: auto;
+        border: 0 !important;
+        border-bottom: 1px solid #cbd5e1 !important;
+        border-radius: 0;
+        background: transparent !important;
+        padding: 0.2rem 0 0.35rem;
+        font-size: 0.95rem;
+        font-family: inherit !important;
+        font-weight: 400;
+        line-height: 1.35;
+        color: #0f172a;
+        box-shadow: none;
+    }
+
+    #addSurveyParamsModal .survey-input:focus,
+    #addSurveyParamsModal .survey-input.form-control:focus {
+        border-color: #0f7f79 !important;
+        background: transparent;
+        box-shadow: none;
+        outline: 0;
+    }
+
+    #addSurveyParamsModal .select2-container {
+        width: 100% !important;
+    }
+
+    #addSurveyParamsModal .select2-container--default .select2-selection--single {
+        min-height: 34px;
+        height: 34px;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        padding: 0 34px 0 10px !important;
+        box-shadow: none !important;
+    }
+
+    #addSurveyParamsModal .select2-container--default.select2-container--focus .select2-selection--single,
+    #addSurveyParamsModal .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #0f7f79 !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.2) !important;
+    }
+
+    #addSurveyParamsModal .select2-container--default .select2-selection--single .select2-selection__rendered,
+    #addSurveyParamsModal .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        line-height: 32px !important;
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+        color: #0f172a !important;
+    }
+
+    #addSurveyParamsModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px !important;
+        right: 6px !important;
+    }
+
+    #addSurveyParamsModal .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #64748b transparent transparent transparent !important;
+        border-width: 5px 4px 0 4px !important;
+        margin-left: -4px !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif !important;
+        font-size: 0.875rem !important;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 8px !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14) !important;
+        overflow: hidden;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-search--dropdown {
+        display: block;
+        padding: 8px 8px 0 !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-search--dropdown .select2-search__field {
+        width: 100% !important;
+        height: 34px;
+        border: 1px solid #dbe3ea !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        font-family: inherit !important;
+        font-size: 0.875rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-search--dropdown .select2-search__field:focus {
+        border-color: #0f7f79 !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(15, 127, 121, 0.12) !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-results__option {
+        padding: 8px 12px !important;
+        color: #0f172a !important;
+        font-size: 0.875rem !important;
+        font-weight: 400 !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-results__option--highlighted[aria-selected],
+    .select2-dropdown.survey-select2-dropdown .select2-results__option--highlighted[data-selected] {
+        background: #0f7f79 !important;
+        color: #ffffff !important;
+    }
+
+    .select2-dropdown.survey-select2-dropdown .select2-results__option[aria-selected="true"] {
+        background: rgba(15, 127, 121, 0.08) !important;
+        color: #0d6b66 !important;
+        font-weight: 500 !important;
+    }
+
+    #addSurveyParamsModal select.survey-input {
+        padding-left: 0;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image:
+            linear-gradient(45deg, transparent 50%, #64748b 50%),
+            linear-gradient(135deg, #64748b 50%, transparent 50%);
+        background-position:
+            calc(100% - 14px) calc(50% + 1px),
+            calc(100% - 9px) calc(50% + 1px);
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+        padding-right: 2rem;
+    }
+
+    #addSurveyParamsModal select.survey-input::-ms-expand {
+        display: none;
+    }
+
+    #addSurveyParamsModal input[type=number].survey-input {
+        -moz-appearance: textfield;
+    }
+
+    #addSurveyParamsModal input[type=number].survey-input::-webkit-outer-spin-button,
+    #addSurveyParamsModal input[type=number].survey-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    #addSurveyParamsModal .survey-action-btn {
+        min-width: 104px;
+        min-height: 38px;
+        padding: 0.6rem 1.15rem;
+        border: 0;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.875rem;
+        font-weight: 600;
+        line-height: 1.2;
+        letter-spacing: 0;
+        color: #fff;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    #addSurveyParamsModal .survey-action-btn:hover,
+    #addSurveyParamsModal .survey-action-btn:focus {
+        color: #fff;
+    }
+
+    #addSurveyParamsModal .survey-action-btn--submit {
+        background: linear-gradient(135deg, #1d7874 0%, #165c59 100%);
+    }
+
+    #addSurveyParamsModal .survey-action-btn--submit:hover,
+    #addSurveyParamsModal .survey-action-btn--submit:focus {
+        background: linear-gradient(135deg, #165c59 0%, #124a47 100%);
+    }
+
+    #addSurveyParamsModal .survey-action-btn--cancel {
+        background: #f97316;
+    }
+
+    #addSurveyParamsModal .survey-action-btn--cancel:hover,
+    #addSurveyParamsModal .survey-action-btn--cancel:focus {
+        background: #ea580c;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup {
+        width: 290px !important;
+        min-height: 0 !important;
+        padding: 0.7rem 0.8rem !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.16) !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup.lucid-toast-popup--error {
+        border: 1px solid rgba(239, 68, 68, 0.18) !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup.lucid-toast-popup--success {
+        border: 1px solid rgba(22, 163, 74, 0.18) !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .swal2-title,
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .lucid-toast-title {
+        display: none !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .swal2-icon {
+        width: 1.35rem !important;
+        min-width: 1.35rem !important;
+        height: 1.35rem !important;
+        margin: 0 0.55rem 0 0 !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .swal2-icon .swal2-x-mark {
+        transform: scale(0.64);
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .swal2-html-container,
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .lucid-toast-html {
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        line-height: 1.35 !important;
+        color: #0f172a !important;
+        text-align: left !important;
+        word-break: break-word;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup .swal2-timer-progress-bar {
+        background: rgba(239, 68, 68, 0.28) !important;
+    }
+
+    body.vt-admin .swal2-popup.swal2-toast.lucid-toast-popup.lucid-toast-popup--success .swal2-timer-progress-bar {
+        background: rgba(22, 163, 74, 0.24) !important;
+    }
+
+    @@media (max-width: 991.98px) {
+        #addSurveyParamsModal .modal-dialog {
+            width: calc(100% - 1rem);
+            margin: 0.75rem auto;
+        }
+
+        #addSurveyParamsModal .modal-header {
+            padding: 0.95rem 1.15rem 0.8rem;
+        }
+
+        #addSurveyParamsModal .modal-title {
+            margin-left: 0.6rem;
+            font-size: 1.1rem;
+        }
+
+        #addSurveyParamsModal .modal-body {
+            padding: 0.85rem 1.15rem 0.4rem;
+        }
+
+        #addSurveyParamsModal .modal-footer {
+            padding: 0.85rem 1.15rem 1rem;
+        }
+
+        #addSurveyParamsModal .survey-param-row {
+            grid-template-columns: 1fr;
+            column-gap: 0;
+            row-gap: 0.55rem;
+        }
+
+        #addSurveyParamsModal .survey-param-row--single {
+            grid-template-columns: 1fr;
+        }
+
+        #addSurveyParamsModal .survey-param-label {
+            padding-top: 0;
+        }
+
+        #addSurveyParamsModal .survey-param-spacer {
+            display: none;
+        }
+
+        #addSurveyParamsModal .survey-param-field--narrow {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<!-- Qualifications Modal -->
+<div class="modal fade" id="lucidQualificationsModal" tabindex="-1" role="dialog" aria-labelledby="lucidQualificationsTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lucidQualificationsTitle">Qualifications</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="lucidQualificationsBody">
+                <!-- Dynamic qualification cards will be injected here -->
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="lucidSelectedSurveyNumber" />
+                <button type="button" class="btn btn-primary" id="btnAcceptProject">Accept Project</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Survey Parameters Modal -->
+<div class="modal fade" id="addSurveyParamsModal" tabindex="-1" role="dialog" aria-labelledby="addSurveyParamsModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addSurveyParamsModalTitle">Add Survey Parameters</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addSurveyParamsForm">
+                    <div class="survey-params-grid">
+                        <div class="survey-param-row survey-param-row--single">
+                            <p class="survey-param-label">Country Language</p>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="countryLanguage" class="survey-field-label">Select Language *</label>
+                                <select class="form-control survey-input" id="countryLanguage" required>
+                                    <option value="">Select Language</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="survey-param-row">
+                            <p class="survey-param-label">Bid Incidence</p>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="bidIncidenceGte" class="survey-field-label">Greater Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="bidIncidenceGte" value="15" min="0" max="100" step="any" required />
+                            </div>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="bidIncidenceLte" class="survey-field-label">Less Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="bidIncidenceLte" value="100" min="0" max="100" step="any" required />
+                            </div>
+                        </div>
+
+                        <div class="survey-param-row survey-param-row--single">
+                            <p class="survey-param-label">Infield Conversion</p>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="infieldConversionGte" class="survey-field-label">Greater Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="infieldConversionGte" value="15" required />
+                                <input type="hidden" id="infieldConversionLte" value="" />
+                            </div>
+                        </div>
+
+                        <div class="survey-param-row">
+                            <p class="survey-param-label">Bid LOI</p>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="bidLoiGte" class="survey-field-label">Greater Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="bidLoiGte" value="0" min="0" required />
+                            </div>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="bidLoiLte" class="survey-field-label">Less Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="bidLoiLte" value="20" min="0" required />
+                            </div>
+                        </div>
+
+                        <div class="survey-param-row">
+                            <p class="survey-param-label">CPI</p>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="cpiGte" class="survey-field-label">Greater Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="cpiGte" value="3" required />
+                            </div>
+                            <div class="survey-param-field survey-param-field--narrow">
+                                <label for="cpiLte" class="survey-field-label">Less Than Equal To *</label>
+                                <input type="number" class="form-control survey-input" id="cpiLte" value="1000" required />
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="button" class="btn survey-action-btn survey-action-btn--submit" id="btnSubmitSurveyParams">Submit</button>
+                <button type="button" class="btn survey-action-btn survey-action-btn--cancel" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js"></script>
+    <script type="text/javascript">
+        let lucidTable;
+        let countryLanguageLookup = {};
+        let industryLookup = {};
+        let studyTypeLookup = {};
+
+        function formatDate(msJson) {
+            if (!msJson) return '';
+            // Expecting "/Date(1388293200000-0600)/"
+            const match = /Date\((\d+)/.exec(msJson);
+            if (!match) return msJson;
+            const dt = new Date(parseInt(match[1], 10));
+            if (isNaN(dt.getTime())) return '';
+            return dt.toISOString().slice(0, 10);
+        }
+
+        function showToastMessage(message, icon) {
+            if (typeof Swal === "undefined" || !Swal.fire) {
+                alert(message || "");
+                return;
+            }
+
+            var toastIcon = icon || "info";
+            var popupClass = "lucid-toast-popup";
+            if (toastIcon === "success") {
+                popupClass += " lucid-toast-popup--success";
+            } else if (toastIcon === "error") {
+                popupClass += " lucid-toast-popup--error";
+            }
+
+            Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: toastIcon,
+                title: "",
+                text: message || "",
+                customClass: {
+                    popup: popupClass,
+                    title: "lucid-toast-title",
+                    htmlContainer: "lucid-toast-html"
+                },
+                showConfirmButton: false,
+                timer: 2500,
+                timerProgressBar: true
+            });
+        }
+
+        function buildTable(data) {
+            const surveys = (data && data.Surveys) || [];
+
+            if (lucidTable) {
+                lucidTable.clear().destroy();
+            }
+
+            const $tbody = $("#tblLucid tbody");
+            $tbody.empty();
+
+            surveys.forEach(s => {
+                const rpiVal = s.RPI && typeof s.RPI.Value !== 'undefined' ? s.RPI.Value : '';
+                const rpiCur = s.RPI && s.RPI.CurrencyCode ? s.RPI.CurrencyCode : '';
+
+                const row = `<tr data-survey-number="${s.SurveyNumber || ''}"
+                                data-cpi="${rpiVal}"
+                                data-loi="${s.LengthOfInterview || ''}"
+                                data-ir="${s.BidIncidence || ''}"
+                                data-total-remaining="${s.TotalRemaining || ''}"
+                                data-livelink="${s.LiveLink || ''}">
+                    <td>${s.SurveyName || ''}</td>
+                    <td>${s.SurveyNumber || ''}</td>
+                    <td>${s.SurveySID || ''}</td>
+                    <td>${s.AccountName || ''}</td>
+                    <td>${countryLanguageLookup[s.CountryLanguageID] || s.CountryLanguageID || ''}</td>
+                    <td>${s.LengthOfInterview || ''}</td>
+                    <td>${s.BidIncidence || ''}</td>
+                    <td>${rpiVal}</td>
+                    <td>${rpiCur}</td>
+                    <td>${formatDate(s.FieldEndDate)}</td>
+                    <td>${industryLookup[s.IndustryID] || s.IndustryID || ''}</td>
+                    <td>${studyTypeLookup[s.StudyTypeID] || s.StudyTypeID || ''}</td>
+                    <td>${s.OverallCompletes || ''}</td>
+                    <td>${s.TotalRemaining || ''}</td>
+                    <td>${s.CompletionPercentage || ''}</td>
+                    <td>${s.RelationshipType || ''}</td>
+                    <td><button type="button" class="btn btn-sm btn-outline-primary btn-view-qualification" data-survey-number="${s.SurveyNumber}" data-country-language-id="${s.CountryLanguageID}">View Qualification</button></td>
+                    <td><button type="button" class="btn btn-sm btn-primary btn-accept-project-list" data-survey-number="${s.SurveyNumber}">Accept Project</button></td>
+                </tr>`;
+
+                $tbody.append(row);
+            });
+
+            lucidTable = $("#tblLucid").DataTable();
+        }
+
+        function initCountrySelect2() {
+            if ($.fn.select2 && $("#countryLanguage").length && !$("#countryLanguage").data("select2")) {
+                $("#countryLanguage").select2({
+                    dropdownParent: $("#addSurveyParamsModal"),
+                    dropdownCssClass: "survey-select2-dropdown",
+                    width: "100%"
+                });
+            }
+        }
+
+        function loadCountryLanguageOptions() {
+            var $sel = $("#countryLanguage");
+            if ($sel.data("select2")) $sel.select2("destroy");
+            $sel.empty().append('<option value="">Select Language</option>');
+
+            $.ajax({
+                type: "GET",
+                url: "/VT/ApiProjects/GetLucidBundledLookups",
+                headers: { "Cache-Control": "no-cache" },
+                success: function (data) {
+                    var items = (data && data.AllCountryLanguages) || [];
+                    countryLanguageLookup = {};
+                    items.forEach(function (c) {
+                        if (c.IsActive !== false) {
+                            countryLanguageLookup[c.Id] = c.Name;
+                            $sel.append($("<option></option>").attr("value", c.Id).text(c.Name));
+                        }
+                    });
+                    // Default: English - United States (Id 9 in Lucid API)
+                    $sel.val("9");
+                    initCountrySelect2();
+                },
+                error: function (xhr, status, error) {
+                    console.error("Load countries failed:", error);
+                    initCountrySelect2();
+                }
+            });
+        }
+
+        function loadIndustryLookup() {
+            $.ajax({
+                type: "GET",
+                url: "/VT/ApiProjects/GetLucidIndustriesLookup",
+                headers: { "Cache-Control": "no-cache" },
+                success: function (data) {
+                    const items = (data && data.AllIndustries) || [];
+                    industryLookup = {};
+                    items.forEach(function (i) {
+                        if (i.IsActive !== false) {
+                            industryLookup[i.Id] = i.Name;
+                        }
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Load industries failed:", error);
+                    industryLookup = {};
+                }
+            });
+        }
+
+        function loadStudyTypeLookup() {
+            $.ajax({
+                type: "GET",
+                url: "/VT/ApiProjects/GetLucidStudyTypesLookup",
+                headers: { "Cache-Control": "no-cache" },
+                success: function (data) {
+                    const items = (data && data.AllStudyTypes) || [];
+                    studyTypeLookup = {};
+                    items.forEach(function (st) {
+                        if (st.IsActive !== false) {
+                            studyTypeLookup[st.Id] = st.Name;
+                        }
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Load study types failed:", error);
+                    studyTypeLookup = {};
+                }
+            });
+        }
+        $(document).ready(function () {
+            $("#btnPullSurveys").click(function () {
+                $("#addSurveyParamsModal").modal("show");
+            });
+
+            // Pre-load lookups for display mapping
+            loadIndustryLookup();
+            loadStudyTypeLookup();
+
+            $("#addSurveyParamsModal").on("show.bs.modal", function () {
+                loadCountryLanguageOptions();
+                $("#bidIncidenceGte").val(15);
+                $("#bidIncidenceLte").val(100);
+                $("#bidLoiGte").val(0);
+                $("#bidLoiLte").val(20);
+            });
+
+            function clampBidIncidence(el) {
+                var num = parseFloat($(el).val(), 10);
+                if (!isNaN(num)) {
+                    if (num < 0) $(el).val(0);
+                    else if (num > 100) $(el).val(100);
+                }
+            }
+            $("#addSurveyParamsModal").on("blur", "#bidIncidenceGte, #bidIncidenceLte", function () {
+                clampBidIncidence(this);
+            });
+
+            function clampBidLoi(el) {
+                var num = parseInt($(el).val(), 10);
+                if (!isNaN(num) && num < 0) $(el).val(0);
+            }
+            $("#addSurveyParamsModal").on("blur", "#bidLoiGte, #bidLoiLte", function () {
+                clampBidLoi(this);
+            });
+
+            $("#tblLucid").on("click", ".btn-view-qualification", function () {
+                var surveyNumber = $(this).data("survey-number");
+                var countryLanguageId = $(this).data("country-language-id");
+                $("#lucidQualificationsTitle").text("Qualifications - Survey #" + surveyNumber);
+                $("#lucidSelectedSurveyNumber").val(surveyNumber);
+
+                var $body = $("#lucidQualificationsBody");
+                $body.empty().append("<p>Loading qualifications...</p>");
+                $("#lucidQualificationsModal").modal("show");
+
+                $.ajax({
+                    type: "GET",
+                    url: "/VT/ApiProjects/GetLucidQualificationsForOfferwall",
+                    data: {
+                        surveyNumber: surveyNumber,
+                        countryLanguageId: countryLanguageId
+                    },
+                    headers: { "Cache-Control": "no-cache" },
+                    success: function (data) {
+                        $body.empty();
+                        var questions = data || [];
+                        if (!questions.length) {
+                            $body.append("<p>No qualifications found for this survey.</p>");
+                            return;
+                        }
+
+                        questions.forEach(function (q) {
+                            var optionsHtml = "";
+                            if (q.allowedOptions && q.allowedOptions.length) {
+                                optionsHtml = "<ul class=\"mb-0\">" +
+                                    q.allowedOptions.map(function (o) { return "<li>" + o + "</li>"; }).join("") +
+                                    "</ul>";
+                            } else {
+                                optionsHtml = "<span>Not specified</span>";
+                            }
+
+                            $body.append(
+                                '<div class="card mb-3">' +
+                                '  <div class="card-body">' +
+                                '    <p><strong>Question Text :</strong> ' + (q.questionText || "") + '</p>' +
+                                '    <p><strong>Type :</strong> ' + (q.questionType || "") + '</p>' +
+                                '    <p><strong>Allowed Answer Options :</strong> ' + optionsHtml + '</p>' +
+                                '  </div>' +
+                                '</div>'
+                            );
+                        });
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error loading qualifications:", error);
+                        $body.empty().append("<p class=\"text-danger\">Failed to load qualifications.</p>");
+                    }
+                });
+            });
+
+            function acceptProjectBySurveyNumber(surveyNumber) {
+                if (!surveyNumber) {
+                    alert("Survey number not found.");
+                    return;
+                }
+
+                var $row = $("#tblLucid tbody tr[data-survey-number='" + surveyNumber + "']").first();
+                if (!$row.length) {
+                    alert("Survey row not found.");
+                    return;
+                }
+
+                var cpi = $row.data("cpi") || "";
+                var loi = $row.data("loi") || "";
+                var ir = $row.data("ir") || "";
+                var totalRemaining = $row.data("total-remaining") || "";
+                var livelink = $row.data("livelink") || "";
+
+                $.blockUI({ message: '<h5>Please wait</h5>' });
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/ApiProjects/AddProjectFromLucidOfferwall",
+                    data: {
+                        ProjectId: surveyNumber,
+                        CPI: cpi,
+                        LOI: loi,
+                        IR: ir,
+                        TotalRemaining: totalRemaining,
+                        LiveLink: livelink
+                    },
+                    cache: false,
+                    success: function (data) {
+                        var result = data.result !== undefined ? data.result : data.Result;
+                        var message = data.message || data.Message || "";
+                        if (result === true || result === "true") {
+                            showToastMessage(message || "Project added successfully.", "success");
+                            $("#lucidQualificationsModal").modal("hide");
+                        } else {
+                            if ((message || "").trim().toLowerCase() === "project already added") {
+                                showToastMessage(message, "error");
+                            } else {
+                                alert(message || "Failed to add project.");
+                            }
+                        }
+                        $.unblockUI();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("AddProjectFromLucid Error:", xhr, status, error);
+                        alert("Error adding project.");
+                        $.unblockUI();
+                    }
+                });
+            }
+
+            $("#tblLucid").on("click", ".btn-accept-project-list", function () {
+                acceptProjectBySurveyNumber($(this).data("survey-number"));
+            });
+
+            $("#btnAcceptProject").click(function () {
+                var surveyNumber = $("#lucidSelectedSurveyNumber").val();
+                acceptProjectBySurveyNumber(surveyNumber);
+            });
+
+            $("#btnSubmitSurveyParams").click(function () {
+                var form = $("#addSurveyParamsForm")[0];
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                $("#addSurveyParamsModal").modal("hide");
+
+                var countryLanguageId = $("#countryLanguage").val();
+                var bidIncidenceGte = $("#bidIncidenceGte").val();
+                var bidIncidenceLte = $("#bidIncidenceLte").val();
+                var conversionGte = $("#infieldConversionGte").val();
+                var bidLoiGte = $("#bidLoiGte").val();
+
+                $.blockUI({ message: '<h5>Please wait</h5>' });
+                $.ajax({
+                    type: "GET",
+                    url: "/VT/ApiProjects/GetRealLucidSurveys",
+                    data: {
+                        CountryLanguageID: countryLanguageId,
+                        SupplierCode: 6395,
+                        BidIncidenceGTE: bidIncidenceGte,
+                        BidIncidenceLTE: bidIncidenceLte,
+                        ConversionGTE: conversionGte,
+                        BidLengthOfInterviewGTE: bidLoiGte
+                    },
+                    headers: { "Cache-Control": "no-cache" },
+                    success: function (data) {
+                        $.unblockUI();
+                        buildTable(data);
+                    },
+                    error: function (xhr, status, error) {
+                        $.unblockUI();
+                        alert("Error fetching Lucid surveys: " + error);
+                    }
+                });
+            });
+        });
+    </script>
+}

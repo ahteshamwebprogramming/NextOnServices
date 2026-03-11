@@ -1,0 +1,18 @@
+{
+  "id": 1,
+  "sessionId": "session_abc123def456",
+  "ipAddress": "192.168.1.100",
+  "browser": "Chrome",
+  "browserVersion": "120.0",
+  "operatingSystem": "Windows 10",
+  "deviceType": "Desktop",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  "referrer": "https://www.google.com",
+  "country": "United States",
+  "region": "New York",
+  "city": "New York",
+  "latitude": 40.7128,
+  "longitude": -74.0060,
+  "createdAtUtc": "2025-01-15T10:30:00Z"
+}
+

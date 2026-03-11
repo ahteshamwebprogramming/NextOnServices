@@ -1,0 +1,179 @@
+@media (min-width:1366px)   {
+.innerHeader{height: 400px; position: relative;}
+
+}
+
+
+
+
+@media (max-width:990px) {
+.navbar-toggler{background: #fff !important; position: absolute;right: 18px;
+        top: 19px;}
+.navbar{position: absolute !important;
+    background: #063764 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    top: 0 !important;
+    left: 0 !important;}
+header .navbar-nav {
+    font-size: 17px;
+    color: #fff;
+    padding: 35px 6px;
+}
+.navbar-nav .nav-link{margin-bottom: 20px;}
+.hero .carousel-indicators {
+    bottom: 1%;
+    left: 89px;}
+    .carousel-caption h5 {
+    color: #fff;
+    font-weight: 900;
+    font-size: 4.2vw;
+}
+.hero .carousel-caption {
+    position: absolute;
+    right: auto;
+    bottom: auto;
+    left: 8% !important;
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+    color: #fff;
+    text-align: left !important;
+    width: 52%;
+    top: 40%;
+}
+.ourResources_section .s_title h2{font-size: 5.4vw;}
+.testimonials h2{font-size: 5.4vw;}
+footer figure{display: none;}
+footer{text-align: center;}
+footer ul li a {
+    font-size: 16px;
+ }
+ .emailfild input {
+    width: 100%;
+}
+.servcies_home_section{padding: 10px 20px;}
+.servcies_home_section .s_title h2 {
+    font-size: 5.4vw;}
+    .company_profile .s_title h2 {
+    font-size: 5.4vw;}
+    .company_profile .s_title p {
+    margin: 16px 21px;}
+     .list ul{padding: 0; margin: 0;}
+    .list {
+    position: relative;
+    top: 0;
+    color: #fff;
+    width: 100%;
+}
+.testimonialsBox figure {
+    margin-top: 0;
+}
+.testimonialsBox{margin-bottom: 20px;}
+.testimonials {
+    padding: 50px 0;
+}
+footer .row {
+    padding:0px 0;
+}
+footer {
+    min-height: auto;
+    margin-top: 0;
+    padding: 20px 0 20px 0;
+}
+.footer_lnks{margin-bottom: 25px;}
+.subFooter .d-flex {text-align: center; display: block !important;}
+.footerMenu{margin: 10px 0;}
+.servcies_home_section .s_title {
+    padding: 30px 0 30px 0 !important;
+}
+
+.ctext h2 {
+    margin-top: 20px;
+    font-weight: 900;
+    color: #fff;
+    font-size: 6.4vw;
+    text-align: center;
+}
+.ctext span.dvider {
+    display: inline-block;
+}
+.ctext{text-align: center;}
+.innerHeader .inner_Page_title h2 {
+    font-weight: 900;
+    color: #fff;
+    font-size: 20px;
+}
+.project_counter h2 {
+    font-weight: 900;
+    color: #fff;
+    font-size: 11.4vw;
+}
+.p_box{margin-bottom: 20px;}
+.business_section {
+    text-align: center;
+    padding: 50px 0 50px 0;
+    border-bottom: #A519B8 solid 2px;
+}
+.list2 ul{margin: 0; padding: 0;}
+.business_section .title h2 {
+    font-size: 5.4vw;
+}
+.services_box_CC {
+    display: block;
+    padding: 30px 10px;
+    margin: 50px 0;
+    background: #0F1021;
+    border-radius: 26px;
+    color: #fff;
+}
+.col1{margin-bottom: 40px;}
+.consultingBusiness {
+    padding:30px 0;
+}
+.ctext{margin-bottom: 50px;}
+.resources .services_box{margin: 20px 0 0 0; padding: 30px 30px !important}
+.project_counter_resources {
+    padding-bottom:30px;
+}
+.innerHeader .inner_Page_title2 {
+    top: 8% !important;
+    }
+    .services_box_CC2 {
+ 
+    padding: 30px 20px;
+    margin: 30px 0;
+}
+.caseStudyText{text-align: center;}
+.caseStudyText h2 {
+   
+    font-size: 6.4vw;
+    text-align: center;
+}
+.innerHeader .inner_Page_title h3 {
+ 
+    margin-top: -10px;
+    font-size: 3.8vw;
+}
+.address_block {
+    margin: 40px 0;
+}
+.address_block .address{margin-bottom: 20px;}
+}
+
+
+@media (max-width:768px)   {
+    .company_profile .services_box{min-height: auto}
+.branding img {
+    width: 172px;
+}
+header{border: 0}
+.innerHeader .inner_Page_title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -21%);
+    text-align: center;
+    width: 100%;
+    color: #fff;
+}
+}

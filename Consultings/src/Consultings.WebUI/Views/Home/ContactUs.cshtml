@@ -1,0 +1,126 @@
+﻿
+@{
+    ViewData["Title"] = "ContactUs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="innerHeader">
+  <div class="inner_Page_title">
+    <h2>Get In Touch</h2>
+    <h3>We Are Always Ready To Help You</h3>
+  </div>
+    <img loading="lazy" alt="" src="~/assets/img/contact_banner.png">
+</div>
+
+
+
+
+<div class="container">
+  <div class="row align-items-center justify-content-between">
+     <div class="col-md-6 ">
+       <div class="container address_block">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="address">
+        <h2>Address</h2>
+        <p> Jamia Nagar, New Delhi, 110025, India</p>
+      </div>
+    </div>
+    <div class="col-md-12 mt-3 mb-3">
+      <div class="address">
+        <h2>Phone Number</h2>
+        <p>+91-971 111 9133</p>
+      </div>
+    </div>
+    <div class="col-md-12">
+      <div class="address">
+        <h2>Email Address</h2>
+        <p>enquiry@08consultings.com</p>
+      </div>
+    </div>
+  </div>
+</div>
+     </div>
+    <div class="col-md-6 conatct_form">
+      <form class="row g-3">
+  <div class="col-md-6">
+    <label for="inputEmail4" class="form-label">First Name</label>
+    <input type="email" class="form-control" id="inputEmail4">
+  </div>
+  <div class="col-md-6">
+    <label for="inputPassword4" class="form-label">Email</label>
+    <input type="password" class="form-control" id="inputPassword4">
+  </div>
+  <div class="col-md-6">
+    <label for="inputPassword4" class="form-label">Phone</label>
+    <input type="password" class="form-control" id="inputPassword4">
+  </div>
+
+  <div class="col-md-6">
+    <label for="inputPassword4" class="form-label">Choose Services</label>
+   
+    <select class="form-control">
+      
+<option>Data Processing</option>
+<option>Data Management</option>
+<option>Data Analytics</option>
+<option>Advanced Statistical Analysis</option>
+<option>Data Visualization</option>
+<option>Process Automation</option>
+<option>Data Reporting & Dashboarding</option>
+<option>Data Sanitization</option>
+<option>Sampling</option>
+<option>Survey Programming</option>
+<option>Report Writing</option>
+<option>Data Collection</option>
+<option>Report Automation</option>
+<option>Excel Dashboard Automation</option>
+<option>PowerPoint Report Automation</option>
+<option>Data Formatting</option>
+<option>Data Tabulation</option>
+    </select>
+  </div>
+  <div class="col-12">
+    <label for="inputAddress" class="form-label">Message</label>
+    <textarea class="form-control"></textarea>
+  </div>
+  <div class="col-md-12">
+    <div class="captcha1">
+    <div id="user-input" class="inline">
+        <input type="text" class=" form-control" 
+               id="submit" 
+               placeholder="Captcha code" />
+    </div>
+
+    <div class="inline" onclick="generate()">
+        <i class="fas fa-sync"></i>
+    </div>
+
+    <div id="image" 
+         class="inline" 
+         selectable="False">
+    </div>
+    <input type="submit" class="btn btn-primary"
+           id="btn" 
+           onclick="printmsg()" />
+
+    <p id="key"></p></div>
+  </div>
+ 
+</form>
+    </div>
+  </div>
+</div>
+
+
+<div class="map">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d448194.82162352453!2d77.09323125!3d28.6440836!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfd5b347eb62d%3A0x37205b715389640!2sDelhi!5e0!3m2!1sen!2sin!4v1720517314478!5m2!1sen!2sin" width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Our Resources end-->
+

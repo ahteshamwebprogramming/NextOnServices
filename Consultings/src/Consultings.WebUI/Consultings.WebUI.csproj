@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\assets\carousel\jquery.min.js" />
+    <None Include="wwwroot\assets\carousel\owl.carousel.js" />
+    <None Include="wwwroot\assets\img\01.svg" />
+    <None Include="wwwroot\assets\img\02.svg" />
+    <None Include="wwwroot\assets\img\03.svg" />
+    <None Include="wwwroot\assets\img\1icon.svg" />
+    <None Include="wwwroot\assets\img\2icon.svg" />
+    <None Include="wwwroot\assets\img\3icon.svg" />
+    <None Include="wwwroot\assets\img\c_icon1.svg" />
+    <None Include="wwwroot\assets\img\c_icon2.svg" />
+    <None Include="wwwroot\assets\img\c_icon3.svg" />
+    <None Include="wwwroot\assets\img\email.svg" />
+    <None Include="wwwroot\assets\img\facebook.svg" />
+    <None Include="wwwroot\assets\img\footer_img.svg" />
+    <None Include="wwwroot\assets\img\Group 15-1.svg" />
+    <None Include="wwwroot\assets\img\Group 15.svg" />
+    <None Include="wwwroot\assets\img\icon1.svg" />
+    <None Include="wwwroot\assets\img\linkedin.svg" />
+    <None Include="wwwroot\assets\img\location.svg" />
+    <None Include="wwwroot\assets\img\logo.svg" />
+    <None Include="wwwroot\assets\img\logof.svg" />
+    <None Include="wwwroot\assets\img\menu.svg" />
+    <None Include="wwwroot\assets\img\phone.svg" />
+    <None Include="wwwroot\assets\img\s_icon1.svg" />
+    <None Include="wwwroot\assets\img\s_icon2.svg" />
+    <None Include="wwwroot\assets\img\s_icon3.svg" />
+    <None Include="wwwroot\assets\img\s_icon4.svg" />
+    <None Include="wwwroot\assets\img\s_icon5.svg" />
+    <None Include="wwwroot\assets\img\s_icon6.svg" />
+    <None Include="wwwroot\assets\img\twitter.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+  </ItemGroup>
+
+</Project>

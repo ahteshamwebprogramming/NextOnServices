@@ -20,9 +20,10 @@ public class ApiProjectsController : Controller
     private readonly ProjectURLAPIController _projectURLAPIController;
     private readonly ProjectMappingAPIController _projectMappingAPIController;
     private readonly IConfiguration _configuration;
-    private const string LUCID_API_BASE = "https://api.sample-cube.com/api";
-    private const string LUCID_SUPPLIER_ID = "1595";
-    private const string LUCID_API_KEY = "084853e8-1b98-4828-9af8-15332e5fe165";
+    // Sago (Sample Cube) API configuration (previously named Lucid)
+    private const string SAGO_API_BASE = "https://api.sample-cube.com/api";
+    private const string SAGO_SUPPLIER_ID = "1595";
+    private const string SAGO_API_KEY = "084853e8-1b98-4828-9af8-15332e5fe165";
     private const string SPECTRUM_API_BASE = "https://api.spectrumsurveys.com/suppliers/v2";
     private const string SPECTRUM_ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1NmY4YmY4YzIwZjM0NGM3YjYyZGI4ZCIsInVzcl9pZCI6IjE5NzAxIiwiaWF0IjoxNzAxODA5MTQ0fQ.1rzvWDMOvFBqzw8U2k8jFpOFOglgNWIXTrWykub-USc";
     
@@ -53,8 +54,8 @@ public class ApiProjectsController : Controller
     {
         if (string.IsNullOrEmpty(url)) return url;
         var masked = url;
-        if (!string.IsNullOrEmpty(LUCID_API_KEY) && masked.Contains(LUCID_API_KEY))
-            masked = masked.Replace(LUCID_API_KEY, "***");
+        if (!string.IsNullOrEmpty(SAGO_API_KEY) && masked.Contains(SAGO_API_KEY))
+            masked = masked.Replace(SAGO_API_KEY, "***");
         if (!string.IsNullOrEmpty(SPECTRUM_ACCESS_TOKEN) && masked.Contains(SPECTRUM_ACCESS_TOKEN))
             masked = masked.Replace(SPECTRUM_ACCESS_TOKEN, "***");
         return masked;
@@ -96,9 +97,55 @@ public class ApiProjectsController : Controller
         return obj;
     }
 
+    /// <summary>
+    /// When ConsultingApiBaseUrl is set, forwards the request to the Consultings API (where external Sago/Lucid APIs are implemented).
+    /// Returns non-null to short-circuit and return that result; returns null to continue with direct external call.
+    /// </summary>
+    private async Task<IActionResult?> ForwardLucidToConsultingIfConfigured(string actionPath)
+    {
+        var baseUrl = _configuration.GetValue<string>("ConsultingApiBaseUrl");
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            return null;
+        baseUrl = baseUrl.TrimEnd('/');
+        var url = $"{baseUrl}/VT/ApiProjects/{actionPath}{HttpContext?.Request?.QueryString.ToString()}";
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+            var response = await client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+            if (response.IsSuccessStatusCode)
+                return Content(content, "application/json");
+            return StatusCode((int)response.StatusCode, content);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Consulting API call failed. Url={Url}, TraceId={TraceId}", url, HttpContext?.TraceIdentifier);
+            return StatusCode(500, BuildSafeError(ex, "ForwardSagoToConsulting", url));
+        }
+    }
+
+    /// <summary>
+    /// Add project specifically for Lucid Offerwall surveys.
+    /// Uses standard form/url-encoded binding and reuses AddProjectFromLucid implementation.
+    /// </summary>
+    [HttpPost]
+    [Route("/VT/ApiProjects/AddProjectFromLucidOfferwall")]
+    public Task<IActionResult> AddProjectFromLucidOfferwall(AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromLucid(request);
+    }
+
     [Route("/VT/ApiProjects/SurveysLucid")]
     [Route("/VT/ProjectsListSago.aspx")]
     public IActionResult SurveysLucid()
+    {
+        ViewData["Title"] = "Surveys (Sago)";
+        return View();
+    }
+
+    [Route("/VT/ApiProjects/SurveysLucidReal")]
+    public IActionResult SurveysLucidReal()
     {
         ViewData["Title"] = "Surveys (Lucid)";
         return View();
@@ -111,13 +158,15 @@ public class ApiProjectsController : Controller
         return View();
     }
 
-    // Lucid API Endpoints
+    // Sago API Endpoints (Sample Cube)
     [HttpGet]
     [Route("/VT/ApiProjects/GetLucidSurveys")]
     public async Task<IActionResult> GetLucidSurveys()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidSurveys");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidSurveys";
-        var url = $"{LUCID_API_BASE}/Survey/GetSupplierAllocatedSurveys/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Survey/GetSupplierAllocatedSurveys/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -126,7 +175,7 @@ public class ApiProjectsController : Controller
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                _logger.LogInformation("Lucid Surveys API Response length: {Length}", content?.Length ?? 0);
+                _logger.LogInformation("Sago Surveys API Response length: {Length}", content?.Length ?? 0);
                 return Content(content, "application/json");
             }
             _logger.LogError("External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}",
@@ -147,12 +196,249 @@ public class ApiProjectsController : Controller
         }
     }
 
+    // Real Lucid (Samplicio.us) Offerwall API Endpoints
+    [HttpGet]
+    [Route("/VT/ApiProjects/GetRealLucidSurveys")]
+    public async Task<IActionResult> GetRealLucidSurveys()
+    {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetRealLucidSurveys");
+        if (forwarded != null) return forwarded;
+
+        const string context = "GetRealLucidSurveys";
+        const string lucidBase = "https://api.samplicio.us/Supply/v1";
+        const string apiKey = "DB1FBCB8-8900-459F-B0F5-8500666D137D";
+
+        var url = $"{lucidBase.TrimEnd('/')}/Surveys/AllOfferwall{HttpContext.Request.QueryString}";
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", apiKey);
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            var response = await client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Real Lucid Offerwall API Response length: {Length}", content?.Length ?? 0);
+                return Content(content, "application/json");
+            }
+
+            _logger.LogError("External Lucid Offerwall API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}",
+                context, MaskUrl(url), HttpContext?.TraceIdentifier, (int)response.StatusCode);
+            return StatusCode((int)response.StatusCode, new
+            {
+                error = true,
+                context,
+                url = MaskUrl(url),
+                message = "Failed to fetch Lucid Offerwall surveys",
+                statusCode = (int)response.StatusCode,
+                traceId = HttpContext?.TraceIdentifier
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "External Lucid Offerwall API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, MaskUrl(url), HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "External Lucid Offerwall API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, MaskUrl(url), HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+    }
+
+    [HttpGet]
+    [Route("/VT/ApiProjects/GetLucidBundledLookups")]
+    public async Task<IActionResult> GetLucidBundledLookups()
+    {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidBundledLookups");
+        if (forwarded != null) return forwarded;
+
+        const string context = "GetLucidBundledLookups";
+        const string lucidLookupBase = "https://api.samplicio.us/Lookup/v1";
+        const string apiKey = "DB1FBCB8-8900-459F-B0F5-8500666D137D";
+
+        var url = $"{lucidLookupBase.TrimEnd('/')}/BasicLookups/BundledLookups/CountryLanguages";
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", apiKey);
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            var response = await client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Lucid BundledLookups API Response length: {Length}", content?.Length ?? 0);
+                return Content(content, "application/json");
+            }
+
+            _logger.LogError("Lucid BundledLookups API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}",
+                context, url, HttpContext?.TraceIdentifier, (int)response.StatusCode);
+            return StatusCode((int)response.StatusCode, new
+            {
+                error = true,
+                context,
+                url,
+                message = "Failed to fetch Lucid bundled lookups",
+                statusCode = (int)response.StatusCode,
+                traceId = HttpContext?.TraceIdentifier
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "Lucid BundledLookups API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Lucid BundledLookups API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+    }
+
+    [HttpGet]
+    [Route("/VT/ApiProjects/GetLucidIndustriesLookup")]
+    public async Task<IActionResult> GetLucidIndustriesLookup()
+    {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidIndustriesLookup");
+        if (forwarded != null) return forwarded;
+
+        const string context = "GetLucidIndustriesLookup";
+        const string lucidLookupBase = "https://api.samplicio.us/Lookup/v1";
+        const string apiKey = "DB1FBCB8-8900-459F-B0F5-8500666D137D";
+
+        var url = $"{lucidLookupBase.TrimEnd('/')}/BasicLookups/BundledLookups/Industries";
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", apiKey);
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            var response = await client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Lucid Industries lookup API Response length: {Length}", content?.Length ?? 0);
+                return Content(content, "application/json");
+            }
+
+            _logger.LogError("Lucid Industries lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}",
+                context, url, HttpContext?.TraceIdentifier, (int)response.StatusCode);
+            return StatusCode((int)response.StatusCode, new
+            {
+                error = true,
+                context,
+                url,
+                message = "Failed to fetch industries from Lucid",
+                statusCode = (int)response.StatusCode,
+                traceId = HttpContext?.TraceIdentifier
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "Lucid Industries lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Lucid Industries lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+    }
+
+    [HttpGet]
+    [Route("/VT/ApiProjects/GetLucidStudyTypesLookup")]
+    public async Task<IActionResult> GetLucidStudyTypesLookup()
+    {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidStudyTypesLookup");
+        if (forwarded != null) return forwarded;
+
+        const string context = "GetLucidStudyTypesLookup";
+        const string lucidLookupBase = "https://api.samplicio.us/Lookup/v1";
+        const string apiKey = "DB1FBCB8-8900-459F-B0F5-8500666D137D";
+
+        var url = $"{lucidLookupBase.TrimEnd('/')}/BasicLookups/BundledLookups/StudyTypes";
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", apiKey);
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            var response = await client.GetAsync(url);
+            var content = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Lucid StudyTypes lookup API Response length: {Length}", content?.Length ?? 0);
+                return Content(content, "application/json");
+            }
+
+            _logger.LogError("Lucid StudyTypes lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}",
+                context, url, HttpContext?.TraceIdentifier, (int)response.StatusCode);
+            return StatusCode((int)response.StatusCode, new
+            {
+                error = true,
+                context,
+                url,
+                message = "Failed to fetch study types from Lucid",
+                statusCode = (int)response.StatusCode,
+                traceId = HttpContext?.TraceIdentifier
+            });
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex,
+                "Lucid StudyTypes lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Lucid StudyTypes lookup API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                context, url, HttpContext?.TraceIdentifier, FlattenException(ex));
+            return StatusCode(500, BuildSafeError(ex, context, url));
+        }
+    }
+
+    [HttpGet]
+    [Route("/VT/ApiProjects/GetLucidQualificationsForOfferwall")]
+    public async Task<IActionResult> GetLucidQualificationsForOfferwall(int surveyNumber, int countryLanguageId)
+    {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidQualificationsForOfferwall");
+        if (forwarded != null) return forwarded;
+
+        return BadRequest(new
+        {
+            error = true,
+            message = "ConsultingApiBaseUrl is not configured; qualifications endpoint is only available via Consultings bridge."
+        });
+    }
+
     [HttpGet]
     [Route("/VT/ApiProjects/GetLucidLanguages")]
     public async Task<IActionResult> GetLucidLanguages()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidLanguages");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidLanguages";
-        var url = $"{LUCID_API_BASE}/Definition/GetLanguages/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetLanguages/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -185,8 +471,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidIndustries")]
     public async Task<IActionResult> GetLucidIndustries()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidIndustries");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidIndustries";
-        var url = $"{LUCID_API_BASE}/Definition/GetIndustries/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetIndustries/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -219,8 +507,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidStudyTypes")]
     public async Task<IActionResult> GetLucidStudyTypes()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidStudyTypes");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidStudyTypes";
-        var url = $"{LUCID_API_BASE}/Definition/GetStudyTypes/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetStudyTypes/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -253,8 +543,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidSurveyStatuses")]
     public async Task<IActionResult> GetLucidSurveyStatuses()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidSurveyStatuses");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidSurveyStatuses";
-        var url = $"{LUCID_API_BASE}/Definition/GetSurveyStatuses/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetSurveyStatuses/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -287,8 +579,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidRedirectTypes")]
     public async Task<IActionResult> GetLucidRedirectTypes()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidRedirectTypes");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidRedirectTypes";
-        var url = $"{LUCID_API_BASE}/Definition/GetRedirectTypes/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetRedirectTypes/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -321,8 +615,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidQualificationTypes")]
     public async Task<IActionResult> GetLucidQualificationTypes()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidQualificationTypes");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidQualificationTypes";
-        var url = $"{LUCID_API_BASE}/Definition/GetQualificationTypes/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}";
+        var url = $"{SAGO_API_BASE}/Definition/GetQualificationTypes/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -355,8 +651,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidQualifications/{surveyId}")]
     public async Task<IActionResult> GetLucidQualifications(string surveyId)
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured($"GetLucidQualifications/{surveyId}");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidQualifications";
-        var url = $"{LUCID_API_BASE}/Survey/GetSupplierSurveyQualifications/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}/{surveyId}";
+        var url = $"{SAGO_API_BASE}/Survey/GetSupplierSurveyQualifications/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}/{surveyId}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -389,8 +687,10 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidBundledQualifications/{languageId}")]
     public async Task<IActionResult> GetLucidBundledQualifications(string languageId)
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured($"GetLucidBundledQualifications/{languageId}");
+        if (forwarded != null) return forwarded;
         const string context = "GetLucidBundledQualifications";
-        var url = $"{LUCID_API_BASE}/Definition/GetBundledQualificationAnswers/{LUCID_SUPPLIER_ID}/{LUCID_API_KEY}/{languageId}";
+        var url = $"{SAGO_API_BASE}/Definition/GetBundledQualificationAnswers/{SAGO_SUPPLIER_ID}/{SAGO_API_KEY}/{languageId}";
         try
         {
             var client = _httpClientFactory.CreateClient();
@@ -425,6 +725,8 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetSpectrumSurveys")]
     public async Task<IActionResult> GetSpectrumSurveys()
     {
+        var forwarded = await ForwardLucidToConsultingIfConfigured("GetSpectrumSurveys");
+        if (forwarded != null) return forwarded;
         const string context = "GetSpectrumSurveys";
         var url = $"{SPECTRUM_API_BASE}/surveys";
         _logger.LogInformation("GetSpectrumSurveys endpoint called - Method: {Method}", HttpContext.Request.Method);
@@ -480,9 +782,29 @@ public class ApiProjectsController : Controller
     }
 
     // Add Project Methods
+
+    /// <summary>Add project from SAGO (Surveys Sago page). Saves with ProjectFrom=SAGO.</summary>
+    [HttpPost]
+    [Route("/VT/ApiProjects/AddProjectFromSago")]
+    public Task<IActionResult> AddProjectFromSago([FromBody] AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromVendorAsync(request, "SAGO", "-Pulled from SAGO API", "Added from SAGO from API", "Added from SAGO");
+    }
+
+    /// <summary>Add project from Lucid Offerwall (Surveys Lucid page). Saves with ProjectFrom=Lucid.</summary>
     [HttpPost]
     [Route("/VT/ApiProjects/AddProjectFromLucid")]
-    public async Task<IActionResult> AddProjectFromLucid([FromBody] AddProjectFromLucidRequest request)
+    public Task<IActionResult> AddProjectFromLucid([FromBody] AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromVendorAsync(request, "Lucid", "-Pulled from Lucid API", "Added from Lucid from API", "Added from Lucid");
+    }
+
+    private async Task<IActionResult> AddProjectFromVendorAsync(
+        AddProjectFromLucidRequest request,
+        string vendorKey,
+        string descriptionSuffix,
+        string notesProject,
+        string notesUrl)
     {
         try
         {
@@ -501,7 +823,7 @@ public class ApiProjectsController : Controller
 
             try
             {
-                var checkResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId.Trim(), "Lucid");
+                var checkResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId.Trim(), vendorKey);
                 if (checkResult is ObjectResult checkObjectResult && checkObjectResult.Value != null)
                 {
                     int existingProjectId = 0;
@@ -539,7 +861,7 @@ public class ApiProjectsController : Controller
             {
                 ProjectId = 0, // New project
                 Pname = request.ProjectId,
-                Descriptions = request.ProjectId + "-Pulled from Lucid API",
+                Descriptions = request.ProjectId + descriptionSuffix,
                 Pmanager = userId.Value,
                 ClientId = DEFAULT_CLIENT_ID,
                 Loi = loi?.ToString() ?? "",
@@ -554,9 +876,9 @@ public class ApiProjectsController : Controller
                 IsActive = 1,
                 BlockDevice = "00000",
                 CreationDate = DateTime.Now,
-                Notes = "Added from Lucid from API",
+                Notes = notesProject,
                 ProjectIdFromApi = request.ProjectId,
-                ProjectFrom = "Lucid",
+                ProjectFrom = vendorKey,
                 Ltype = 0
             };
 
@@ -587,7 +909,7 @@ public class ApiProjectsController : Controller
             if (addProjectResult is ObjectResult objectResult && objectResult.StatusCode == 200)
             {
                 // Get the created project ID by querying for it
-                var getProjectResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId, "Lucid");
+                var getProjectResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId, vendorKey);
                 
                 int createdProjectId = 0;
                 if (getProjectResult is ObjectResult getObjectResult && getObjectResult.Value != null)
@@ -609,7 +931,7 @@ public class ApiProjectsController : Controller
                     Pid = createdProjectId,
                     Cid = DEFAULT_COUNTRY_ID,
                     Url = processedLiveLink,
-                    Notes = "Added from lucid",
+                    Notes = notesUrl,
                     Cpi = cpi,
                     Quota = totalRemaining?.ToString() ?? "",
                     Status = DEFAULT_STATUS,
@@ -687,7 +1009,7 @@ public class ApiProjectsController : Controller
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error adding project from Lucid. Exception: {ExceptionMessage}, InnerException: {InnerException}", 
+            _logger.LogError(ex, "Error adding project from {Vendor}. Exception: {ExceptionMessage}, InnerException: {InnerException}", vendorKey, 
                 ex.Message, ex.InnerException?.Message);
             
             // Check if it's a duplicate error - check both exception message and inner exception
@@ -710,7 +1032,7 @@ public class ApiProjectsController : Controller
                 // Double-check if project exists
                 try
                 {
-                    var verifyResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId, "Lucid");
+                    var verifyResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId, vendorKey);
                     if (verifyResult is ObjectResult verifyObjectResult && verifyObjectResult.Value != null)
                     {
                         int existingProjectId = 0;
@@ -787,52 +1109,83 @@ public class ApiProjectsController : Controller
             if (!string.IsNullOrEmpty(request.TotalRemaining) && int.TryParse(request.TotalRemaining, out int totalRemainingValue))
                 totalRemaining = totalRemainingValue;
 
-            // Call Spectrum API to register survey and get survey_entry_url
+            // Call Spectrum API to register survey and get survey_entry_url (via Consultings when configured)
             string surveyEntryUrl = null;
-            const string registerContext = "AddProjectFromSpectrum-Register";
-            var registerUrl = $"{SPECTRUM_API_BASE}/surveys/register/{request.ProjectId}";
-            try
+            var consultingBase = _configuration.GetValue<string>("ConsultingApiBaseUrl")?.Trim();
+            if (!string.IsNullOrEmpty(consultingBase))
             {
-                var registerClient = _httpClientFactory.CreateClient();
-                registerClient.DefaultRequestHeaders.Add("access-token", SPECTRUM_ACCESS_TOKEN);
-                registerClient.DefaultRequestHeaders.CacheControl = CacheControlHeaderValue.Parse("no-cache");
-                _logger.LogInformation("Calling Spectrum register API: {Url}", MaskUrl(registerUrl));
-
-                var registerResponse = await registerClient.PostAsync(registerUrl, new StringContent(""));
-                var registerContent = await registerResponse.Content.ReadAsStringAsync();
-
-                if (registerResponse.IsSuccessStatusCode)
+                try
                 {
-                    var registerJson = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(registerContent);
-                    if (registerJson != null && registerJson["apiStatus"]?.ToString() == "success")
+                    var registerUrl = $"{consultingBase.TrimEnd('/')}/VT/ApiProjects/RegisterSpectrumSurvey";
+                    var client = _httpClientFactory.CreateClient();
+                    client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+                    var body = JsonConvert.SerializeObject(new { ProjectId = request.ProjectId });
+                    var registerResponse = await client.PostAsync(registerUrl, new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
+                    var registerContent = await registerResponse.Content.ReadAsStringAsync();
+                    if (registerResponse.IsSuccessStatusCode)
                     {
-                        surveyEntryUrl = registerJson["survey_entry_url"]?.ToString();
-                        _logger.LogInformation("Spectrum survey registered successfully. Survey entry URL: {Url}", surveyEntryUrl);
+                        var registerJson = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(registerContent);
+                        if (registerJson != null && registerJson["apiStatus"]?.ToString() == "success")
+                            surveyEntryUrl = registerJson["survey_entry_url"]?.ToString();
+                        else if (registerJson != null && registerJson.Value<bool?>("error") == true)
+                            return Ok(new { result = false, message = registerJson.Value<string>("message") ?? "Failed to register survey with Spectrum API" });
+                        else
+                            return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
+                    }
+                    else
+                        return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Consulting RegisterSpectrumSurvey failed");
+                    return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
+                }
+            }
+            else
+            {
+                const string registerContext = "AddProjectFromSpectrum-Register";
+                var registerUrl = $"{SPECTRUM_API_BASE}/surveys/register/{request.ProjectId}";
+                try
+                {
+                    var registerClient = _httpClientFactory.CreateClient();
+                    registerClient.DefaultRequestHeaders.Add("access-token", SPECTRUM_ACCESS_TOKEN);
+                    registerClient.DefaultRequestHeaders.CacheControl = CacheControlHeaderValue.Parse("no-cache");
+                    _logger.LogInformation("Calling Spectrum register API: {Url}", MaskUrl(registerUrl));
+                    var registerResponse = await registerClient.PostAsync(registerUrl, new StringContent(""));
+                    var registerContent = await registerResponse.Content.ReadAsStringAsync();
+                    if (registerResponse.IsSuccessStatusCode)
+                    {
+                        var registerJson = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(registerContent);
+                        if (registerJson != null && registerJson["apiStatus"]?.ToString() == "success")
+                        {
+                            surveyEntryUrl = registerJson["survey_entry_url"]?.ToString();
+                            _logger.LogInformation("Spectrum survey registered successfully. Survey entry URL: {Url}", surveyEntryUrl);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Spectrum register API returned non-success status: {Content}", registerContent);
+                            return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
+                        }
                     }
                     else
                     {
-                        _logger.LogWarning("Spectrum register API returned non-success status: {Content}", registerContent);
-                        return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
+                        _logger.LogError("External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}, Response={Response}",
+                            registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, (int)registerResponse.StatusCode, registerContent);
+                        return StatusCode((int)registerResponse.StatusCode, new { error = true, context = registerContext, url = MaskUrl(registerUrl), message = $"Failed to register survey: {registerResponse.StatusCode}", statusCode = (int)registerResponse.StatusCode, traceId = HttpContext?.TraceIdentifier });
                     }
                 }
-                else
+                catch (HttpRequestException registerEx)
                 {
-                    _logger.LogError("External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}, StatusCode={StatusCode}, Response={Response}",
-                        registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, (int)registerResponse.StatusCode, registerContent);
-                    return StatusCode((int)registerResponse.StatusCode, new { error = true, context = registerContext, url = MaskUrl(registerUrl), message = $"Failed to register survey: {registerResponse.StatusCode}", statusCode = (int)registerResponse.StatusCode, traceId = HttpContext?.TraceIdentifier });
+                    _logger.LogError(registerEx, "External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                        registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, FlattenException(registerEx));
+                    return StatusCode(500, BuildSafeError(registerEx, registerContext, registerUrl));
                 }
-            }
-            catch (HttpRequestException registerEx)
-            {
-                _logger.LogError(registerEx, "External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
-                    registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, FlattenException(registerEx));
-                return StatusCode(500, BuildSafeError(registerEx, registerContext, registerUrl));
-            }
-            catch (Exception registerEx)
-            {
-                _logger.LogError(registerEx, "External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
-                    registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, FlattenException(registerEx));
-                return StatusCode(500, BuildSafeError(registerEx, registerContext, registerUrl));
+                catch (Exception registerEx)
+                {
+                    _logger.LogError(registerEx, "External API call failed. Context={Context}, Url={Url}, TraceId={TraceId}. Details={Details}",
+                        registerContext, MaskUrl(registerUrl), HttpContext?.TraceIdentifier, FlattenException(registerEx));
+                    return StatusCode(500, BuildSafeError(registerEx, registerContext, registerUrl));
+                }
             }
 
             if (string.IsNullOrEmpty(surveyEntryUrl))
@@ -1042,12 +1395,12 @@ public class ApiProjectsController : Controller
 // Request Models
 public class AddProjectFromLucidRequest
 {
-    public string ProjectId { get; set; }
-    public string CPI { get; set; }
-    public string LOI { get; set; }
-    public string IR { get; set; }
-    public string TotalRemaining { get; set; }
-    public string LiveLink { get; set; }
+    public string? ProjectId { get; set; }
+    public string? CPI { get; set; }
+    public string? LOI { get; set; }
+    public string? IR { get; set; }
+    public string? TotalRemaining { get; set; }
+    public string? LiveLink { get; set; }
 }
 
 public class AddProjectFromSpectrumRequest
