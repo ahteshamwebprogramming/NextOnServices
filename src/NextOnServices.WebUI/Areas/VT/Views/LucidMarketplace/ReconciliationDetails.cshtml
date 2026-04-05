@@ -1,0 +1,304 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Reconciliation Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var run = Model.ReconciliationRun;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-recon-details {
+        --vt-lm-theme: #125b50;
+        --vt-lm-theme-dark: #0d4038;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+        --vt-lm-soft: rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-recon-details .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-recon-details .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-stat-card {
+        height: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--vt-lm-border);
+        background: linear-gradient(145deg, #ffffff 0%, var(--vt-lm-soft) 100%);
+        box-shadow: 0 10px 24px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-stat-card .stat-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4b5563;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .vt-lm-stat-card .stat-value {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: var(--vt-lm-theme-dark);
+    }
+
+    .vt-lm-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .vt-lm-chip.success {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .vt-lm-chip.danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+    }
+
+    .vt-lm-chip.info {
+        background: rgba(59, 130, 246, 0.12);
+        color: #1d4ed8;
+    }
+
+    .vt-lm-json {
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 420px;
+        overflow-y: auto;
+        background: #f8fafc;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+        padding: 0.85rem;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-recon-details">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Reconciliation Details</h1>
+        <p class="ref-subtitle">Run #@run.Id compares redirect-return and async outcomes-feed signals, keeps the async feed authoritative when present, and preserves both signals for audit and debugging.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Total Reviewed</div><div class="stat-value">@run.TotalReviewed</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Matched</div><div class="stat-value">@run.TotalMatched</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Mismatched</div><div class="stat-value">@run.TotalMismatched</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Complete</div><div class="stat-value">@run.CompleteCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Terminate</div><div class="stat-value">@run.TerminateCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">OverQuota</div><div class="stat-value">@run.OverQuotaCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Quality</div><div class="stat-value">@run.QualityTerminationCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Duplicate</div><div class="stat-value">@run.DuplicateCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Security</div><div class="stat-value">@run.SecurityTerminationCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Open</div><div class="stat-value">@run.OpenCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Unknown</div><div class="stat-value">@run.UnknownCount</div></div></div></div>
+        <div class="col-md-3 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Run Status</div><div class="stat-value" style="font-size:1.05rem;"><span class="vt-lm-chip @(run.Success ? "success" : "danger")">@(run.Success ? "Success" : "Failed")</span></div></div></div></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Run Snapshot</h4>
+                        <div>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/LucidMarketplace/Reconciliation">Back to Runs</a>
+                            <a class="btn btn-outline-dark btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Run Type</div><div class="font-weight-600">@run.RunType</div></div>
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Supplier Code</div><div class="font-weight-600">@(!string.IsNullOrWhiteSpace(run.SupplierCode) ? run.SupplierCode : "-")</div></div>
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Survey ID</div><div class="font-weight-600">@(run.LucidSurveyId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Internal Project</div><div class="font-weight-600">@(run.InternalProjectId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Started On</div><div class="font-weight-600">@run.StartedOn?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                        <div class="col-md-3 mb-3"><div class="text-muted small">Completed On</div><div class="font-weight-600">@run.CompletedOn?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                        <div class="col-md-6 mb-3"><div class="text-muted small">Notes</div><div class="font-weight-600">@(!string.IsNullOrWhiteSpace(run.Notes) ? run.Notes : "-")</div></div>
+                    </div>
+                    <div class="text-muted small mb-2">Run Scope JSON</div>
+                    <div class="vt-lm-json">@run.RunScopeJson</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Reconciliation Items</h4>
+                        <div class="d-flex flex-wrap align-items-center">
+                            <label class="mb-0 mr-3"><input type="checkbox" id="ReconMismatchOnly" /> Mismatch only</label>
+                            <select class="form-control form-control-sm mr-2 mb-2 mb-md-0" id="ReconStatusFilter" style="width: 180px;">
+                                <option value="">All Final Statuses</option>
+                                <option value="Complete">Complete</option>
+                                <option value="Terminate">Terminate</option>
+                                <option value="OverQuota">OverQuota</option>
+                                <option value="QualityTermination">QualityTermination</option>
+                                <option value="Duplicate">Duplicate</option>
+                                <option value="SecurityTermination">SecurityTermination</option>
+                                <option value="Open">Open</option>
+                                <option value="Unknown">Unknown</option>
+                            </select>
+                            <select class="form-control form-control-sm mr-2 mb-2 mb-md-0" id="ReconSourceFilter" style="width: 180px;">
+                                <option value="">All Sources</option>
+                                <option value="OutcomesFeed">OutcomesFeed</option>
+                                <option value="RedirectReturn">RedirectReturn</option>
+                                <option value="None">None</option>
+                            </select>
+                            <input type="text" class="form-control form-control-sm" id="ReconSurveyFilter" style="width: 150px;" placeholder="Survey ID" />
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceReconciliationItemsTable">
+                            <thead>
+                                <tr>
+                                    <th>Session / MID</th>
+                                    <th>Respondent</th>
+                                    <th>Survey ID</th>
+                                    <th>Internal Project</th>
+                                    <th>Redirect Status</th>
+                                    <th>Outcome Status</th>
+                                    <th>Final Status</th>
+                                    <th>Final Source</th>
+                                    <th>Mismatch</th>
+                                    <th>Mismatch Type</th>
+                                    <th>Revenue</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ReconciliationItems.Any())
+                                {
+                                    foreach (var item in Model.ReconciliationItems)
+                                    {
+                                        var finalClass = item.IsMismatch ? "danger" : item.FinalStatusSource == "OutcomesFeed" ? "success" : "info";
+                                        <tr data-mismatch="@(item.IsMismatch ? "1" : "0")" data-final-status="@item.FinalStatus" data-final-source="@item.FinalStatusSource" data-survey-id="@(item.LucidSurveyId?.ToString() ?? string.Empty)">
+                                            <td>@item.SessionId</td>
+                                            <td>@item.RespondentId</td>
+                                            <td>@(item.LucidSurveyId?.ToString() ?? "-")</td>
+                                            <td>@(item.InternalProjectId?.ToString() ?? "-")</td>
+                                            <td>@(!string.IsNullOrWhiteSpace(item.RedirectStatus) ? $"{item.RedirectStatus} {item.RedirectCode}".Trim() : "-")</td>
+                                            <td>@($"{item.OutcomeMarketplaceStatus?.ToString() ?? "-"} / {item.OutcomeClientStatus?.ToString() ?? "-"}")</td>
+                                            <td><span class="vt-lm-chip @finalClass">@item.FinalStatus</span></td>
+                                            <td>@item.FinalStatusSource</td>
+                                            <td>@(item.IsMismatch ? "Yes" : "No")</td>
+                                            <td>@item.MismatchType</td>
+                                            <td>@(item.RevenueValue?.ToString("0.####") ?? "-") @item.RevenueCurrencyCode</td>
+                                            <td>
+                                                <button type="button" class="btn btn-outline-primary btn-sm mb-1 js-recon-raw" data-raw="@System.Net.WebUtility.HtmlEncode(item.RawSnapshotJson ?? string.Empty)">View Raw</button>
+                                                @if (item.LucidMarketplaceRespondentOutcomeId.HasValue && item.LucidMarketplaceRespondentOutcomeId.Value > 0)
+                                                {
+                                                    <a class="btn btn-outline-secondary btn-sm mb-1" href="/VT/LucidMarketplace/OutcomeDetails/@item.LucidMarketplaceRespondentOutcomeId.Value">Outcome</a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="12" class="text-center text-muted py-4">This reconciliation run does not have any generated items.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="LucidMarketplaceReconRawModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Raw Reconciliation Snapshot</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="vt-lm-json" id="LucidMarketplaceReconRawText">No raw snapshot available.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        var lucidMarketplaceReconTable;
+
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            if (settings.nTable.id !== 'LucidMarketplaceReconciliationItemsTable') {
+                return true;
+            }
+
+            var row = $(lucidMarketplaceReconTable.row(dataIndex).node());
+            var mismatchOnly = $('#ReconMismatchOnly').is(':checked');
+            var finalStatus = $('#ReconStatusFilter').val();
+            var finalSource = $('#ReconSourceFilter').val();
+            var surveyId = ($('#ReconSurveyFilter').val() || '').trim();
+
+            if (mismatchOnly && row.data('mismatch') !== 1 && row.data('mismatch') !== "1") {
+                return false;
+            }
+
+            if (finalStatus && row.data('final-status') !== finalStatus) {
+                return false;
+            }
+
+            if (finalSource && row.data('final-source') !== finalSource) {
+                return false;
+            }
+
+            if (surveyId && String(row.data('survey-id') || '') !== surveyId) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $(document).ready(function () {
+            lucidMarketplaceReconTable = $('#LucidMarketplaceReconciliationItemsTable').DataTable({
+                order: [[8, "desc"], [0, "desc"]],
+                paging: true,
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search reconciliation items..."
+                }
+            });
+
+            $('#ReconMismatchOnly, #ReconStatusFilter, #ReconSourceFilter').on('change', function () {
+                lucidMarketplaceReconTable.draw();
+            });
+
+            $('#ReconSurveyFilter').on('keyup change', function () {
+                lucidMarketplaceReconTable.draw();
+            });
+
+            $(document).on('click', '.js-recon-raw', function () {
+                $('#LucidMarketplaceReconRawText').text($(this).data('raw') || 'No raw snapshot available.');
+                $('#LucidMarketplaceReconRawModal').modal('show');
+            });
+        });
+    </script>
+}

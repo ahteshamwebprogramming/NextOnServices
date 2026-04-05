@@ -8,6 +8,7 @@ using NextOnServices.Infrastructure.Models.Projects;
 using NextOnServices.Infrastructure.Models.Supplier;
 using NextOnServices.Infrastructure.ViewModels.ProjectMapping;
 using NextOnServices.Infrastructure.ViewModels.ProjectsURL;
+using NextOnServices.WebUI.VT.Services;
 using System;
 using System.Configuration;
 
@@ -21,8 +22,9 @@ public class ProjectMappingController : Controller
     private readonly ProjectMappingAPIController _projectMappingAPIController;
     private readonly CountryAPIController _countryAPIController;
     private readonly SuppliersAPIController _suppliersAPIController;
+    private readonly IHashingSettingsService _hashingSettingsService;
     private readonly IConfiguration _config;
-    public ProjectMappingController(ILogger<ProjectMappingController> logger, ProjectsAPIController projectsAPIController, CountryAPIController countryAPIController, ProjectURLAPIController projectURLAPIController, ProjectMappingAPIController projectMappingAPIController, SuppliersAPIController suppliersAPIController, IConfiguration config)
+    public ProjectMappingController(ILogger<ProjectMappingController> logger, ProjectsAPIController projectsAPIController, CountryAPIController countryAPIController, ProjectURLAPIController projectURLAPIController, ProjectMappingAPIController projectMappingAPIController, SuppliersAPIController suppliersAPIController, IHashingSettingsService hashingSettingsService, IConfiguration config)
     {
         _logger = logger;
         _projectsAPIController = projectsAPIController;
@@ -30,6 +32,7 @@ public class ProjectMappingController : Controller
         _countryAPIController = countryAPIController;
         _projectMappingAPIController = projectMappingAPIController;
         _suppliersAPIController = suppliersAPIController;
+        _hashingSettingsService = hashingSettingsService;
         _config = config;
     }
     [Route("/VT/Projects/ProjectMapping/{eProjectId=null}")]
@@ -40,6 +43,7 @@ public class ProjectMappingController : Controller
         ProjectMappingWithChild projectMappingWithChild = new ProjectMappingWithChild();
         projectMappingWithChild.encProjectId = eProjectId;
         dto.ProjectMappingWithChild = projectMappingWithChild;
+        dto.HashingSettings = await _hashingSettingsService.GetAllAsync();
         return View(dto);
     }
 
@@ -62,6 +66,10 @@ public class ProjectMappingController : Controller
                     }
                 }
             }
+
+            dto.ProjectMappingWithChild ??= projectMappingWithChild;
+            dto.HashingSettings = await _hashingSettingsService.GetAllAsync();
+
             if (inputDTO.encProjectId != null)
             {
                 int projectId = Convert.ToInt32(CommonHelper.DecryptURLHTML(inputDTO.encProjectId));
@@ -83,8 +91,12 @@ public class ProjectMappingController : Controller
                         dto.Project = (ProjectDTO?)((Microsoft.AspNetCore.Mvc.ObjectResult)resProject).Value;
                     }
                 }
-                projectMappingWithChild.ParameterName = "enc";
-                dto.ProjectMappingWithChild = projectMappingWithChild;
+
+                dto.ProjectMappingWithChild ??= new ProjectMappingWithChild();
+                dto.ProjectMappingWithChild.encProjectId = inputDTO.encProjectId;
+                dto.ProjectMappingWithChild.ParameterName = string.IsNullOrWhiteSpace(dto.ProjectMappingWithChild.ParameterName)
+                    ? "enc"
+                    : dto.ProjectMappingWithChild.ParameterName;
             }
             return PartialView("_projectMapping/_addProjectMapping", dto);
         }

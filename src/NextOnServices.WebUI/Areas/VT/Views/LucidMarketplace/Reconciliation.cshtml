@@ -1,0 +1,231 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Reconciliation";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-recon-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-theme-dark: #0d4038;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-recon-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-recon-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-recon-page .form-control,
+    .vt-lm-recon-page .form-select {
+        border-radius: 10px;
+        min-height: 42px;
+    }
+
+    .vt-lm-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .vt-lm-chip.success {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .vt-lm-chip.danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+    }
+
+    .vt-lm-helper {
+        font-size: 0.86rem;
+        color: #64748b;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-recon-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Reconciliation</h1>
+        <p class="ref-subtitle">Compare browser redirect-return data against the authoritative async outcomes feed, flag mismatches, and review the latest Lucid Marketplace respondent/session status before any future payout or finance work.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Run Reconciliation</h4>
+                        <div>
+                            <a class="btn btn-outline-dark btn-sm mr-2" href="/VT/LucidMarketplace/Outcomes">Open Outcomes</a>
+                            <a class="btn btn-outline-secondary btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-3 mb-3">
+                            <label class="font-weight-600">Supplier Code</label>
+                            <input type="text" class="form-control" id="ReconciliationSupplierCode" value="@Model.ReconciliationFilter.SupplierCode" placeholder="Optional supplier code" />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="font-weight-600">Survey ID</label>
+                            <input type="number" class="form-control" id="ReconciliationSurveyId" value="@(Model.ReconciliationFilter.LucidSurveyId?.ToString() ?? string.Empty)" placeholder="Optional" />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="font-weight-600">Internal Project</label>
+                            <input type="number" class="form-control" id="ReconciliationProjectId" value="@(Model.ReconciliationFilter.InternalProjectId?.ToString() ?? string.Empty)" placeholder="Optional" />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="font-weight-600">Date From</label>
+                            <input type="date" class="form-control" id="ReconciliationDateFrom" value="@(Model.ReconciliationFilter.DateFrom?.ToString("yyyy-MM-dd") ?? string.Empty)" />
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="font-weight-600">Date To</label>
+                            <input type="date" class="form-control" id="ReconciliationDateTo" value="@(Model.ReconciliationFilter.DateTo?.ToString("yyyy-MM-dd") ?? string.Empty)" />
+                        </div>
+                        <div class="col-md-1 mb-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary btn-block" onclick="runLucidMarketplaceReconciliation()">Run</button>
+                        </div>
+                    </div>
+
+                    <p class="vt-lm-helper mb-0">If you leave all scope filters blank, the workbench reviews the last 7 days of Lucid Marketplace attempts and async outcomes by default.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Recent Reconciliation Runs</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceReconciliationRunsTable">
+                            <thead>
+                                <tr>
+                                    <th>Run Id</th>
+                                    <th>Run Type</th>
+                                    <th>Survey / Project</th>
+                                    <th>Started On</th>
+                                    <th>Completed On</th>
+                                    <th>Success</th>
+                                    <th>Total Reviewed</th>
+                                    <th>Total Mismatches</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.ReconciliationRuns.Any())
+                                {
+                                    foreach (var item in Model.ReconciliationRuns)
+                                    {
+                                        <tr>
+                                            <td>@item.Id</td>
+                                            <td>@item.RunType</td>
+                                            <td>
+                                                @if (item.InternalProjectId.HasValue)
+                                                {
+                                                    <span>Project #@item.InternalProjectId.Value</span>
+                                                }
+                                                else if (item.LucidSurveyId.HasValue)
+                                                {
+                                                    <span>Survey #@item.LucidSurveyId.Value</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>Recent / Manual</span>
+                                                }
+                                            </td>
+                                            <td>@item.StartedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.CompletedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td><span class="vt-lm-chip @(item.Success ? "success" : "danger")">@(item.Success ? "Success" : "Failed")</span></td>
+                                            <td>@item.TotalReviewed</td>
+                                            <td>@item.TotalMismatched</td>
+                                            <td><a class="btn btn-outline-primary btn-sm" href="/VT/LucidMarketplace/ReconciliationDetails/@item.Id">View Details</a></td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function runLucidMarketplaceReconciliation() {
+            var payload = {
+                supplierCode: $('#ReconciliationSupplierCode').val(),
+                lucidSurveyId: parseNullableInt($('#ReconciliationSurveyId').val()),
+                internalProjectId: parseNullableInt($('#ReconciliationProjectId').val()),
+                dateFrom: normalizeDate($('#ReconciliationDateFrom').val()),
+                dateTo: normalizeDate($('#ReconciliationDateTo').val())
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/RunReconciliation",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Lucid Marketplace reconciliation completed.", "success")
+                            .then(function () {
+                                window.location.href = "/VT/LucidMarketplace/ReconciliationDetails/" + response.runId;
+                            });
+                        return;
+                    }
+
+                    Swal.fire("Error", response.message || "Unable to complete Lucid Marketplace reconciliation.", "error");
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to complete Lucid Marketplace reconciliation.", "error");
+                }
+            });
+        }
+
+        function parseNullableInt(value) {
+            if (!value) {
+                return null;
+            }
+
+            var parsed = parseInt(value, 10);
+            return isNaN(parsed) || parsed <= 0 ? null : parsed;
+        }
+
+        function normalizeDate(value) {
+            return value ? value : null;
+        }
+
+        $(document).ready(function () {
+            $('#LucidMarketplaceReconciliationRunsTable').DataTable({
+                order: [[0, "desc"]],
+                paging: true,
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search reconciliation runs...",
+                    emptyTable: "No Lucid Marketplace reconciliation runs have been recorded yet."
+                }
+            });
+        });
+    </script>
+}

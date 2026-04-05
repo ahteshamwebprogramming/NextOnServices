@@ -14,7 +14,6 @@ namespace NextOnServices.Infrastructure.Helper;
 
 public static class CommonHelper
 {
-    private static Random random = new Random();
     public static T GetClassObject<T>(T t) where T : class, new()
     {
         if (t == null)
@@ -26,9 +25,19 @@ public static class CommonHelper
 
     public static string RandomString(int length)
     {
+        if (length <= 0)
+        {
+            return string.Empty;
+        }
+
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        return new string(Enumerable.Repeat(chars, length)
-          .Select(s => s[random.Next(s.Length)]).ToArray());
+        var buffer = new char[length];
+        for (var i = 0; i < buffer.Length; i++)
+        {
+            buffer[i] = chars[RandomNumberGenerator.GetInt32(chars.Length)];
+        }
+
+        return new string(buffer);
     }
     public static string Device(HttpRequest request)
     {

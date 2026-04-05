@@ -377,6 +377,50 @@
                         }
                     }
                     @{
+                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#lucidMarketplaceMenu" aria-expanded="false" aria-controls="lucidMarketplaceMenu">
+                                    <i class="icon-link menu-icon"></i>
+                                    <span class="menu-title">Lucid Marketplace</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="lucidMarketplaceMenu">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Dashboard">Dashboard</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Settings">Settings</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Subscriptions">Subscriptions</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Opportunities">Opportunities</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Outcomes">Outcomes</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Reconciliation">Reconciliation</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/LucidMarketplace/Logs">Logs</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
+                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#zampliaMenu" aria-expanded="false" aria-controls="zampliaMenu">
+                                    <i class="icon-link menu-icon"></i>
+                                    <span class="menu-title">Zamplia</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="zampliaMenu">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Zamplia">Dashboard</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Zamplia/Settings">Settings</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Zamplia/Surveys">Surveys</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Zamplia/Reconciliation">Reconciliation</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Zamplia/Logs">Logs</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
                         if (User.IsInRole("A"))
                         {
                             <li class="nav-item">
@@ -444,6 +488,23 @@
                                     <ul class="nav flex-column sub-menu">
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Account/AddUser">Add</a></li>
                                         <li class="nav-item"> <a class="nav-link" href="/VT/Account/UsersDetails">List</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
+                        if (User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#settingsMenu" aria-expanded="false" aria-controls="settingsMenu">
+                                    <i class="ti-settings menu-icon"></i>
+                                    <span class="menu-title">Settings</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="settingsMenu">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/Settings/HashingSettings">Hashing settings</a></li>
                                     </ul>
                                 </div>
                             </li>

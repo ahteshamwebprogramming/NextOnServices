@@ -1,0 +1,129 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Dashboard";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var lastSyncText = Model?.Dashboard?.LastSyncTime?.ToString("dd MMM yyyy hh:mm tt") ?? "No activity yet";
+    var lastReconciliationText = Model?.Dashboard?.LatestReconciliationRunTime?.ToString("dd MMM yyyy hh:mm tt") ?? "No reconciliation yet";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lucid-marketplace-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-theme-dark: #0d4038;
+        --vt-lm-soft: rgba(18, 91, 80, 0.08);
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lucid-marketplace-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lucid-marketplace-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lucid-marketplace-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-stat-card {
+        height: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--vt-lm-border);
+        background: linear-gradient(145deg, #ffffff 0%, var(--vt-lm-soft) 100%);
+        box-shadow: 0 10px 24px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-stat-card .stat-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #4b5563;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .vt-lm-stat-card .stat-value {
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: var(--vt-lm-theme-dark);
+    }
+
+    .vt-lm-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: rgba(18, 91, 80, 0.1);
+        color: var(--vt-lm-theme-dark);
+    }
+
+    .vt-lm-quick-links .btn {
+        min-width: 220px;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lucid-marketplace-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Dashboard</h1>
+        <p class="ref-subtitle">Monitor settings, subscriptions, opportunities, and sync activity for the new Lucid Marketplace module without touching the old Lucid Offerwall flow.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Settings</div><div class="stat-value">@Model.Dashboard.ActiveSettings</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Subscriptions</div><div class="stat-value">@Model.Dashboard.ActiveSubscriptions</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Opportunities</div><div class="stat-value">@Model.Dashboard.ActiveOpportunities</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Last Sync Time</div><div class="stat-value" style="font-size:1.15rem;">@lastSyncText</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Total Logs</div><div class="stat-value">@Model.Dashboard.TotalLogs</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Successful API Calls</div><div class="stat-value">@Model.Dashboard.SuccessfulApiCalls</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Failed API Calls</div><div class="stat-value">@Model.Dashboard.FailedApiCalls</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Outcomes</div><div class="stat-value">@Model.Dashboard.LatestOutcomesReceivedCount</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Last Reconciliation</div><div class="stat-value" style="font-size:1.15rem;">@lastReconciliationText</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Mismatches</div><div class="stat-value">@Model.Dashboard.LatestReconciliationMismatchCount</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Completes</div><div class="stat-value">@Model.Dashboard.LatestReconciliationCompleteCount</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Terminates</div><div class="stat-value">@Model.Dashboard.LatestReconciliationTerminateCount</div></div></div></div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-7 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Configuration Snapshot</h4>
+                    <div class="row mt-3">
+                        <div class="col-sm-6 mb-3"><div class="text-muted small">Base URL</div><div class="font-weight-600">@(string.IsNullOrWhiteSpace(Model.Setting.BaseUrl) ? "Not configured" : Model.Setting.BaseUrl)</div></div>
+                        <div class="col-sm-6 mb-3"><div class="text-muted small">Supplier Code</div><div class="font-weight-600">@(string.IsNullOrWhiteSpace(Model.Setting.SupplierCode) ? "Not configured" : Model.Setting.SupplierCode)</div></div>
+                        <div class="col-sm-6 mb-3"><div class="text-muted small">Consultings Bridge</div><div><span class="vt-lm-chip">@(Model.Setting.UseConsultingsBridge ? "Enabled" : "Disabled")</span></div></div>
+                        <div class="col-sm-6 mb-3"><div class="text-muted small">Module Status</div><div><span class="vt-lm-chip">@(Model.Setting.IsActive ? "Active" : "Inactive")</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Quick Links</h4>
+                    <div class="vt-lm-quick-links mt-3">
+                        <a class="btn btn-primary btn-sm" href="/VT/LucidMarketplace/Settings">Open Settings</a>
+                        <a class="btn btn-info btn-sm" href="/VT/LucidMarketplace/Subscriptions">Manage Subscriptions</a>
+                        <a class="btn btn-outline-primary btn-sm" href="/VT/LucidMarketplace/Opportunities">View Opportunities</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                        <a class="btn btn-outline-dark btn-sm" href="/VT/LucidMarketplace/Outcomes">Outcomes</a>
+                        <a class="btn btn-outline-dark btn-sm" href="/VT/LucidMarketplace/Reconciliation">Reconciliation</a>
+                    </div>
+                    <p class="text-muted mb-0 mt-3">Opportunities, project mapping, launch routing, async respondent outcomes, and the reconciliation workbench are now available in the new Lucid Marketplace module.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,382 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Survey Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-details .card--table-section { border: 1px solid rgba(29,79,145,.18); box-shadow: 0 10px 24px rgba(29,79,145,.08); }
+    .vt-zam-details .table-section-header { border-left-color: #1d4f91; }
+    .vt-zam-details .vt-nav { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; margin-bottom: 1rem; }
+    .vt-zam-details .vt-nav a { border: 1px solid rgba(29,79,145,.18); border-radius: 999px; padding: .35rem .8rem; color: #1d4f91; font-weight: 600; background: #fff; }
+    .vt-zam-details .kv-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: .75rem; }
+    .vt-zam-details .kv-card { padding: .85rem; border-radius: 12px; border: 1px solid rgba(29,79,145,.18); background: linear-gradient(145deg,#fff 0%,rgba(29,79,145,.05) 100%); }
+    .vt-zam-details .kv-card strong { display: block; font-size: .78rem; text-transform: uppercase; color: #64748b; margin-bottom: .35rem; }
+    .vt-zam-details pre { max-height: 340px; overflow: auto; white-space: pre-wrap; word-break: break-word; background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 1rem; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-details">
+    <div class="ref-page-title">
+        <h1>Zamplia Survey Details</h1>
+        <p class="ref-subtitle">Survey #@Model.Survey.SurveyId with local entity #@Model.Survey.ZampliaSurveyId. Review hydrated details, internal mapping, launch tracking, and raw vendor payloads.</p>
+    </div>
+
+    <div class="vt-nav">
+        <a href="#core">Core Info</a>
+        <a href="#mapping">Mapping</a>
+        <a href="#quals">Qualifications</a>
+        <a href="#quotas">Quotas</a>
+        <a href="#attempts">Runtime Audit</a>
+        <a href="#logs">Logs</a>
+        <a href="#raw">Raw JSON</a>
+    </div>
+
+    <div class="mb-3">
+        <button type="button" class="btn btn-primary btn-sm mr-2" onclick="syncSurvey(@Model.Survey.ZampliaSurveyId)">Sync Details</button>
+        <button type="button" class="btn btn-success btn-sm mr-2" onclick="generateEntryLink(@Model.Survey.ZampliaSurveyId)">Generate Survey Link</button>
+        @if (!Model.Survey.IsMapped)
+        {
+            <button type="button" class="btn btn-warning btn-sm mr-2" onclick="addProject(@Model.Survey.ZampliaSurveyId)">Add Project</button>
+        }
+        <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/Zamplia/Surveys">Back to Surveys</a>
+        <a class="btn btn-outline-info btn-sm" href="/VT/Zamplia/Logs">Open Logs</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card" id="core">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Core Survey Info</h4>
+                <div class="kv-grid mt-3">
+                    <div class="kv-card"><strong>Survey Name</strong><span>@Model.Survey.SurveyName</span></div>
+                    <div class="kv-card"><strong>CPI</strong><span>@(Model.Survey.CPI?.ToString("0.####") ?? "-")</span></div>
+                    <div class="kv-card"><strong>IR</strong><span>@(Model.Survey.IR?.ToString("0.##") ?? "-")</span></div>
+                    <div class="kv-card"><strong>LOI</strong><span>@(Model.Survey.LOI?.ToString() ?? "-")</span></div>
+                    <div class="kv-card"><strong>Language</strong><span>@(!string.IsNullOrWhiteSpace(Model.Survey.LanguageCode) ? Model.Survey.LanguageCode : (Model.Survey.LanguageId?.ToString() ?? "-"))</span></div>
+                    <div class="kv-card"><strong>Device</strong><span>@(Model.Survey.Device ?? "-")</span></div>
+                    <div class="kv-card"><strong>Study Types</strong><span>@(Model.Survey.StudyTypes ?? "-")</span></div>
+                    <div class="kv-card"><strong>Industry</strong><span>@(Model.Survey.IndustryId ?? "-")</span></div>
+                    <div class="kv-card"><strong>Total Complete Required</strong><span>@(Model.Survey.TotalCompleteRequired?.ToString() ?? "-")</span></div>
+                    <div class="kv-card"><strong>Survey End Date</strong><span>@(Model.Survey.SurveyEndDate?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</span></div>
+                    <div class="kv-card"><strong>Last Synced</strong><span>@(Model.Survey.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</span></div>
+                    <div class="kv-card"><strong>Local State</strong><span>@(Model.Survey.LocalState ?? "New")</span></div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="mapping">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Mapping And Entry Link</h4>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr><th>Internal Project</th><td>@(Model.ProjectMap.InternalProjectId?.ToString() ?? "-")</td></tr>
+                                <tr><th>Project URL Id</th><td>@(Model.ProjectMap.InternalProjectUrlId?.ToString() ?? "-")</td></tr>
+                                <tr><th>Project Mapping Id</th><td>@(Model.ProjectMap.InternalProjectMappingId?.ToString() ?? "-")</td></tr>
+                                <tr><th>Added On</th><td>@(Model.ProjectMap.AddedOn?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</td></tr>
+                                <tr>
+                                    <th>Internal Launch Template</th>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(Model.EntryLink.InternalLaunchUrl) && !Model.EntryLink.InternalLaunchUrl.Contains("[respondentID]", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <a href="@Model.EntryLink.InternalLaunchUrl" target="_blank">Open</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(Model.EntryLink.InternalLaunchUrl))
+                                        {
+                                            <span>Template link</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr><th>Generated Survey Link</th><td>@if (!string.IsNullOrWhiteSpace(Model.EntryLink.VendorLink)) { <a href="@Model.EntryLink.VendorLink" target="_blank">Open</a> } else { <span>-</span> }</td></tr>
+                                <tr><th>Latest Transaction Id</th><td><span id="ZampliaEntryTransactionId">@(Model.EntryLink.TransactionId ?? "-")</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap mb-2">
+                            <label class="font-weight-600 mb-0">Generated Survey Link</label>
+                            <button type="button" class="btn btn-success btn-sm mt-2 mt-sm-0" onclick="generateEntryLink(@Model.Survey.ZampliaSurveyId)">Generate Survey Link</button>
+                        </div>
+                        <textarea class="form-control" rows="4" id="ZampliaVendorLink" readonly placeholder="Generate Survey Link to load the LiveLink returned by Zamplia.">@Model.EntryLink.VendorLink</textarea>
+                        <small class="text-muted d-block mt-2">This calls Zamplia <code>/Surveys/GenerateLink</code> and stores the returned <code>LiveLink</code> for quick reference on this page.</small>
+                        <small class="text-muted d-block mt-1">Latest Transaction ID: <span id="ZampliaEntryTransactionIdText">@(Model.EntryLink.TransactionId ?? "-")</span></small>
+                        <label class="font-weight-600 mt-3">Internal Launch Template</label>
+                        <textarea class="form-control" rows="4" id="ZampliaInternalLaunchUrl" readonly placeholder="The internal VT launch template will appear here when available.">@Model.EntryLink.InternalLaunchUrl</textarea>
+                        <small class="text-muted d-block mt-2">This template is used by the VT runtime flow and is different from the generated survey link above.</small>
+                        @if (!string.IsNullOrWhiteSpace(Model.EntryLink.InternalLaunchUrl) && Model.EntryLink.InternalLaunchUrl.Contains("[respondentID]", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <div class="mt-2">
+                                <label class="font-weight-600">Test Respondent ID</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" id="ZampliaTestRespondentId" placeholder="Enter a real respondent id" />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" onclick="openTestLaunch()">Open Test Launch</button>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Replace <code>[respondentID]</code> with a real VT respondent id to test the internal entry path; the real Zamplia vendor URL is generated only at live respondent launch time.</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="quals">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Qualifications</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaQualificationsTable">
+                        <thead><tr><th>Order</th><th>Question Id</th><th>Question Text</th><th>Question Type</th><th>Operator</th><th>Answer Codes</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Qualifications)
+                            {
+                                <tr>
+                                    <td>@item.SortOrder</td>
+                                    <td>@item.QuestionId</td>
+                                    <td>@item.QuestionText</td>
+                                    <td>@item.QuestionType</td>
+                                    <td>@item.LogicalOperator</td>
+                                    <td>@item.AnswerCodesJson</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="quotas">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Quotas</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaQuotasTable">
+                        <thead><tr><th>Order</th><th>Quota Id</th><th>Name</th><th>Respondents</th><th>Conversion</th><th>Questions</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Quotas)
+                            {
+                                <tr>
+                                    <td>@item.SortOrder</td>
+                                    <td>@item.QuotaId</td>
+                                    <td>@item.QuotaName</td>
+                                    <td>@item.NumberOfRespondents</td>
+                                    <td>@(item.Conversion?.ToString("0.####") ?? "-")</td>
+                                    <td>@item.QuestionsJson</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="attempts">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Entry Link And Runtime Audit</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaAttemptsTable">
+                        <thead><tr><th>Attempt</th><th>Respondent</th><th>Transaction</th><th>Status</th><th>HMAC</th><th>Attempted On</th><th>Completed On</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Attempts)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>@item.RespondentId</td>
+                                    <td>@item.TransactionId</td>
+                                    <td>@(item.FinalStatus ?? item.ReturnStatus ?? "Open")</td>
+                                    <td>@(item.HmacValid.HasValue ? (item.HmacValid.Value ? "Valid" : "Invalid") : "-")</td>
+                                    <td>@item.AttemptedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td>@item.CompletedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.TransactionId))
+                                        {
+                                            <button type="button" class="btn btn-outline-info btn-sm mb-1" onclick="loadSessionEvents(@Model.Survey.SurveyId, '@item.TransactionId')">Session Events</button>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(item.VendorLaunchUrl))
+                                        {
+                                            <a class="btn btn-outline-secondary btn-sm mb-1" target="_blank" href="@item.VendorLaunchUrl">Vendor Link</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3">
+                    <label class="font-weight-600">Session Event Debug</label>
+                    <pre id="ZampliaSessionEventsViewer">Use a launch attempt row to fetch getUsersSessionEvents.</pre>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="logs">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Recent Logs</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaLogsTable">
+                        <thead><tr><th>Log Id</th><th>Action</th><th>Status</th><th>Request Url</th><th>Created</th><th>Details</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Logs)
+                            {
+                                <tr>
+                                    <td>@item.ZampliaSyncLogId</td>
+                                    <td>@item.ActionName</td>
+                                    <td>@(item.IsSuccess ? "Success" : "Failure")</td>
+                                    <td>@item.RequestUrl</td>
+                                    <td>@item.CreatedDate?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td><button type="button" class="btn btn-outline-dark btn-sm" onclick="showLogDetails(@item.ZampliaSyncLogId)">View</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card" id="raw">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Raw JSON</h4>
+                <pre>@Model.Survey.RawJson</pre>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#ZampliaQualificationsTable, #ZampliaQuotasTable, #ZampliaAttemptsTable, #ZampliaLogsTable").DataTable({
+                paging: true,
+                pageLength: 10,
+                scrollX: true,
+                autoWidth: false
+            });
+        });
+
+        function syncSurvey(zampliaSurveyId) {
+            $.ajax({ type: "POST", url: "/VT/ZampliaApi/SyncSurveyDetails", contentType: "application/json", data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }), success: handleRefreshResponse, error: handleXhrError });
+        }
+
+        function addProject(zampliaSurveyId) {
+            $.ajax({ type: "POST", url: "/VT/ZampliaApi/AddProjectFromZamplia", contentType: "application/json", data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }), success: handleRefreshResponse, error: handleXhrError });
+        }
+
+        function generateEntryLink(zampliaSurveyId) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/GenerateSurveyLink",
+                contentType: "application/json",
+                data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }),
+                success: function (response) {
+                    if (!response.result) {
+                        Swal.fire("Error", response.message || "Unable to generate the survey link.", "error");
+                        return;
+                    }
+
+                    const vendorLink = (response.vendorLink || "").trim();
+                    const transactionId = (response.transactionId || "").trim();
+                    const internalLaunchUrl = (response.internalLaunchUrl || "").trim();
+
+                    if (vendorLink) {
+                        $("#ZampliaVendorLink").val(vendorLink);
+                    }
+
+                    if (transactionId) {
+                        $("#ZampliaEntryTransactionId").text(transactionId);
+                        $("#ZampliaEntryTransactionIdText").text(transactionId);
+                    }
+
+                    if (internalLaunchUrl) {
+                        $("#ZampliaInternalLaunchUrl").val(internalLaunchUrl);
+                    }
+
+                    const details = [];
+                    if (transactionId) {
+                        details.push('<p class="text-left mb-2"><strong>Transaction ID:</strong> ' + escapeHtml(transactionId) + '</p>');
+                    }
+                    if (vendorLink) {
+                        details.push('<textarea class="form-control" rows="4" readonly>' + escapeHtml(vendorLink) + '</textarea>');
+                    }
+                    if (details.length === 0) {
+                        details.push('<p class="text-left mb-0">' + escapeHtml(response.message || "Survey link generated successfully.") + '</p>');
+                    }
+
+                    Swal.fire({
+                        title: "Survey Entry Link",
+                        html: details.join(''),
+                        icon: "success",
+                        width: 760
+                    });
+                },
+                error: handleXhrError
+            });
+        }
+
+        function loadSessionEvents(surveyId, transactionId) {
+            $("#ZampliaSessionEventsViewer").text("Loading session events...");
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/GetSessionEvents",
+                contentType: "application/json",
+                data: JSON.stringify({ surveyId: surveyId, transactionId: transactionId }),
+                success: function (response) { $("#ZampliaSessionEventsViewer").text(response.rawJson || response.message || "No session events returned."); },
+                error: function (xhr) { $("#ZampliaSessionEventsViewer").text(xhr.responseText || "Unable to load session events."); }
+            });
+        }
+
+        function showLogDetails(logId) {
+            $.get("/VT/ZampliaApi/LogDetails/" + logId, function (response) {
+                Swal.fire({ title: "Log Details", html: '<pre style="text-align:left;max-height:420px;overflow:auto;">' + escapeHtml(JSON.stringify(response, null, 2)) + '</pre>', width: 900 });
+            }).fail(function (xhr) {
+                Swal.fire("Error", xhr.responseText || "Unable to load log details.", "error");
+            });
+        }
+
+        function openTestLaunch() {
+            const templateUrl = ($("#ZampliaInternalLaunchUrl").val() || "").trim();
+            const respondentId = ($("#ZampliaTestRespondentId").val() || "").trim();
+
+            if (!templateUrl) {
+                Swal.fire("Unavailable", "No internal launch URL template is available yet.", "warning");
+                return;
+            }
+
+            if (!respondentId) {
+                Swal.fire("Required", "Enter a real respondent id before opening the Zamplia launch link.", "warning");
+                return;
+            }
+
+            const resolvedUrl = templateUrl.replace(/\[respondentID\]/ig, encodeURIComponent(respondentId));
+            window.open(resolvedUrl, "_blank");
+        }
+
+        function handleRefreshResponse(response) {
+            if (response.result) {
+                Swal.fire("Success", response.message || "Operation completed.", "success").then(function () { window.location.reload(); });
+                return;
+            }
+            Swal.fire("Error", response.message || "Operation failed.", "error");
+        }
+
+        function handleXhrError(xhr) {
+            Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Request failed.", "error");
+        }
+
+        function escapeHtml(text) {
+            return (text || "").replace(/[&<>\"']/g, function (match) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' })[match];
+            });
+        }
+    </script>
+}
+
+
+

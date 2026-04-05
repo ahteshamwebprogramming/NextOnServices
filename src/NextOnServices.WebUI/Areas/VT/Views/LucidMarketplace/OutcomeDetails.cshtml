@@ -1,0 +1,204 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Outcome Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var outcome = Model.Outcome;
+    var linkedAttempt = outcome.RelatedAttemptId.HasValue
+        ? Model.RespondentAttempts.FirstOrDefault(x => x.Id == outcome.RelatedAttemptId.Value)
+        : null;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-outcome-details {
+        --vt-lm-theme: #125b50;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-outcome-details .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-outcome-details .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-kv {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-kv .label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-lm-kv .value {
+        font-size: 0.95rem;
+        color: #0f172a;
+        word-break: break-word;
+    }
+
+    .vt-lm-json {
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 420px;
+        overflow-y: auto;
+        background: #f8fafc;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+        padding: 0.85rem;
+    }
+}</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-outcome-details">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Outcome Details</h1>
+        <p class="ref-subtitle">Stored async outcome payload, parsed fields, linked project context, and message history for the same respondent session.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Basic Outcome Information</h4>
+                        <div>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/LucidMarketplace/Outcomes">Back to Outcomes</a>
+                            @if (outcome.RelatedOpportunityId.HasValue && outcome.RelatedOpportunityId.Value > 0)
+                            {
+                                <a class="btn btn-primary btn-sm" href="/VT/LucidMarketplace/OpportunityDetails/@outcome.RelatedOpportunityId.Value">Open Opportunity / Attempt</a>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Outcome Id</div><div class="value">@outcome.Id</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Received On</div><div class="value">@outcome.ReceivedOn?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Final Status</div><div class="value">@outcome.FinalStatus</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Source</div><div class="value">@outcome.Source</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Supplier Code</div><div class="value">@outcome.SupplierCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Session / MID</div><div class="value">@outcome.SessionId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Respondent</div><div class="value">@outcome.RespondentId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Panelist</div><div class="value">@outcome.PanelistId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Parent Session</div><div class="value">@outcome.ParentSessionId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Survey ID</div><div class="value">@outcome.SurveyId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Marketplace Status</div><div class="value">@outcome.MarketplaceStatus</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Client Status</div><div class="value">@outcome.ClientStatus</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Entry Date</div><div class="value">@outcome.EntryDate?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Last Date</div><div class="value">@outcome.LastDate?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Revenue</div><div class="value">@(outcome.RevenueValue?.ToString("0.####") ?? "-") @outcome.RevenueCurrencyCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Study Type</div><div class="value">@outcome.StudyType</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Buyer Id</div><div class="value">@outcome.BuyerId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Proof CPI</div><div class="value">@(outcome.ProofCostPerInterview?.ToString("0.####") ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Linked Attempt</div><div class="value">@(outcome.RelatedAttemptId?.ToString() ?? "Not matched")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Linked Opportunity</div><div class="value">@(outcome.RelatedOpportunityId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Linked Project</div><div class="value">@(outcome.RelatedInternalProjectId?.ToString() ?? "-")</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Raw Outcome Payload</h4>
+                    <div class="vt-lm-json mt-3">@outcome.RawJson</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Linked Attempt Snapshot</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Attempted On</th>
+                                    <th>Respondent</th>
+                                    <th>Session</th>
+                                    <th>Redirect Return</th>
+                                    <th>Final Status</th>
+                                    <th>Source</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (linkedAttempt != null)
+                                {
+                                    <tr>
+                                        <td>@linkedAttempt.AttemptedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                        <td>@linkedAttempt.RespondentId</td>
+                                        <td>@linkedAttempt.SessionId</td>
+                                        <td>@linkedAttempt.ReturnStatus</td>
+                                        <td>@linkedAttempt.FinalStatus</td>
+                                        <td>@linkedAttempt.FinalStatusSource</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr><td colspan="6" class="text-center text-muted py-3">No linked attempt rows are available for this outcome.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">History For This Session</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Received On</th>
+                                    <th>Session</th>
+                                    <th>Respondent</th>
+                                    <th>Marketplace</th>
+                                    <th>Client</th>
+                                    <th>Final Status</th>
+                                    <th>Latest?</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.OutcomeHistory.Any())
+                                {
+                                    foreach (var item in Model.OutcomeHistory)
+                                    {
+                                        <tr>
+                                            <td>@item.ReceivedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.SessionId</td>
+                                            <td>@item.RespondentId</td>
+                                            <td>@item.MarketplaceStatus</td>
+                                            <td>@item.ClientStatus</td>
+                                            <td>@item.FinalStatus</td>
+                                            <td>@(item.IsLatest ? "Yes" : "No")</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="7" class="text-center text-muted py-3">No additional history was found for this outcome identity.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

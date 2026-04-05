@@ -1,0 +1,212 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Surveys";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var inactiveSurveyCount = Model.Surveys.Count(item => !item.IsActive);
+}
+
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-surveys .card--table-section { border: 1px solid rgba(29,79,145,.18); box-shadow: 0 10px 24px rgba(29,79,145,.08); }
+    .vt-zam-surveys .table-section-header { border-left-color: #1d4f91; }
+    .vt-zam-pill { display: inline-flex; align-items: center; padding: .3rem .7rem; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+    .vt-zam-pill.good { background: rgba(22,163,74,.12); color: #166534; }
+    .vt-zam-pill.warn { background: rgba(245,158,11,.14); color: #92400e; }
+    .vt-zam-pill.neutral { background: rgba(148,163,184,.16); color: #475569; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-surveys">
+    <div class="ref-page-title">
+        <h1>Zamplia Surveys</h1>
+        <p class="ref-subtitle">Review synced Zamplia surveys, hydrate missing details, map projects into VT, and prepare internal launch URLs without impacting Lucid or Supplier modules.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Stored Surveys</h4>
+                        <div>
+                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="syncAllocatedSurveys()">Sync Allocated Surveys</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" onclick="removeInactiveSurveys()" @(inactiveSurveyCount == 0 ? "disabled" : null)>Remove Inactive Surveys (@inactiveSurveyCount)</button>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/Zamplia/Settings">Settings</a>
+                            <a class="btn btn-outline-info btn-sm" href="/VT/Zamplia/Logs">Logs</a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="ZampliaSurveysTable">
+                            <thead>
+                                <tr>
+                                    <th>Survey ID</th>
+                                    <th>Survey Name</th>
+                                    <th>CPI</th>
+                                    <th>IR</th>
+                                    <th>LOI</th>
+                                    <th>Language</th>
+                                    <th>Quotas</th>
+                                    <th>Qualifications</th>
+                                    <th>Local State</th>
+                                    <th>Mapping</th>
+                                    <th>Last Synced</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Surveys)
+                                {
+                                    var mappingLabel = item.IsMapped ? $"Mapped #{item.InternalProjectId}" : "Not Mapped";
+                                    <tr>
+                                        <td>@item.SurveyId</td>
+                                        <td>@item.SurveyName</td>
+                                        <td>@(item.CPI?.ToString("0.####") ?? "-")</td>
+                                        <td>@(item.IR?.ToString("0.##") ?? "-")</td>
+                                        <td>@(item.LOI?.ToString() ?? "-")</td>
+                                        <td>@(!string.IsNullOrWhiteSpace(item.LanguageCode) ? item.LanguageCode : (item.LanguageId?.ToString() ?? "-"))</td>
+                                        <td>@item.QuotaCount</td>
+                                        <td>@item.QualificationCount</td>
+                                        <td><span class="vt-zam-pill @(item.IsActive ? "good" : "warn")">@(!string.IsNullOrWhiteSpace(item.LocalState) ? item.LocalState : "New")</span></td>
+                                        <td><span class="vt-zam-pill @(item.IsMapped ? "good" : "warn")">@mappingLabel</span></td>
+                                        <td>@item.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                        <td>
+                                            <a class="btn btn-outline-primary btn-sm mb-1" href="/VT/Zamplia/SurveyDetails/@item.ZampliaSurveyId">View Details</a>
+                                            <button type="button" class="btn btn-outline-info btn-sm mb-1" onclick="syncSurvey(@item.ZampliaSurveyId)">Sync Details</button>
+                                            @if (item.IsMapped)
+                                            {
+                                                <button type="button" class="btn btn-success btn-sm mb-1" onclick="generateEntryLink(@item.ZampliaSurveyId)">Refresh Launch Template</button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-warning btn-sm mb-1" onclick="addProject(@item.ZampliaSurveyId)">Add Project</button>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#ZampliaSurveysTable").DataTable({
+                order: [[10, "desc"]],
+                paging: true,
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                language: { search: "", searchPlaceholder: "Search Zamplia surveys...", emptyTable: "No Zamplia surveys are stored yet. Run Sync Allocated Surveys to populate the workbench." }
+            });
+        });
+
+        function syncAllocatedSurveys() {
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/SyncAllocatedSurveys",
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Allocated surveys synced successfully.", "success").then(function () { window.location.reload(); });
+                        return;
+                    }
+
+                    const errors = response.errors && response.errors.length ? response.errors.join("\n") : (response.message || "Sync failed.");
+                    Swal.fire("Attention", errors, "warning");
+                },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to sync allocated surveys.", "error"); }
+            });
+        }
+
+        function removeInactiveSurveys() {
+            Swal.fire({
+                title: "Remove inactive surveys?",
+                text: "Are you sure you want to remove the inctive surevys , they will be deleted permanantly",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Remove Permanently",
+                confirmButtonColor: "#dc3545"
+            }).then(function (result) {
+                if (!result.isConfirmed) { return; }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/ZampliaApi/RemoveInactiveSurveys",
+                    success: function (response) {
+                        if (response.result) {
+                            Swal.fire("Success", response.message || "Inactive surveys removed permanently.", "success").then(function () { window.location.reload(); });
+                            return;
+                        }
+
+                        Swal.fire("Attention", response.message || "Unable to remove inactive surveys.", "warning");
+                    },
+                    error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to remove inactive surveys.", "error"); }
+                });
+            });
+        }
+
+        function syncSurvey(zampliaSurveyId) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/SyncSurveyDetails",
+                contentType: "application/json",
+                data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Survey details synced.", "success").then(function () { window.location.reload(); });
+                        return;
+                    }
+                    Swal.fire("Error", response.message || "Survey detail sync failed.", "error");
+                },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Survey detail sync failed.", "error"); }
+            });
+        }
+
+        function addProject(zampliaSurveyId) {
+            Swal.fire({ title: "Add Project?", text: "This will create the internal VT project mapping for the selected Zamplia survey.", icon: "question", showCancelButton: true, confirmButtonText: "Add Project" })
+                .then(function (result) {
+                    if (!result.isConfirmed) { return; }
+                    $.ajax({
+                        type: "POST",
+                        url: "/VT/ZampliaApi/AddProjectFromZamplia",
+                        contentType: "application/json",
+                        data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }),
+                        success: function (response) {
+                            if (response.result) {
+                                Swal.fire("Success", response.message || "Project mapped successfully.", "success").then(function () { window.location.reload(); });
+                                return;
+                            }
+                            Swal.fire("Error", response.message || "Unable to map the survey.", "error");
+                        },
+                        error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to map the survey.", "error"); }
+                    });
+                });
+        }
+
+        function generateEntryLink(zampliaSurveyId) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/GenerateEntryLinkFromSurvey",
+                contentType: "application/json",
+                data: JSON.stringify({ zampliaSurveyId: zampliaSurveyId }),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.internalLaunchUrl || response.message || "Launch template refreshed.", "success");
+                        return;
+                    }
+                    Swal.fire("Error", response.message || "Unable to refresh the launch template.", "error");
+                },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to refresh the launch template.", "error"); }
+            });
+        }
+    </script>
+}
+

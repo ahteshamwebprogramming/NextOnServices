@@ -1,0 +1,82 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Logs";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-logs .card--table-section { border: 1px solid rgba(29,79,145,.18); box-shadow: 0 10px 24px rgba(29,79,145,.08); }
+    .vt-zam-logs .table-section-header { border-left-color: #1d4f91; }
+    .vt-zam-logs .chip { display: inline-flex; align-items: center; padding: .3rem .7rem; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+    .vt-zam-logs .chip.ok { background: rgba(22,163,74,.12); color: #166534; }
+    .vt-zam-logs .chip.bad { background: rgba(239,68,68,.12); color: #991b1b; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-logs">
+    <div class="ref-page-title">
+        <h1>Zamplia Logs</h1>
+        <p class="ref-subtitle">Inspect sync, launch, return, and reconciliation logs with raw request and response snapshots for operational troubleshooting.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h4 class="table-section-header mb-3 mb-md-0">Recent Logs</h4>
+                    <div>
+                        <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/Zamplia/Surveys">Surveys</a>
+                        <a class="btn btn-outline-info btn-sm" href="/VT/Zamplia/Reconciliation">Reconciliation</a>
+                    </div>
+                </div>
+
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaLogsTable">
+                        <thead><tr><th>Log Id</th><th>Action</th><th>Source</th><th>Status</th><th>Survey</th><th>Entity</th><th>Request Url</th><th>Created</th><th>Details</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.Logs)
+                            {
+                                <tr>
+                                    <td>@item.ZampliaSyncLogId</td>
+                                    <td>@item.ActionName</td>
+                                    <td>@item.Source</td>
+                                    <td><span class="chip @(item.IsSuccess ? "ok" : "bad")">@(item.IsSuccess ? "Success" : "Failure")</span></td>
+                                    <td>@item.RelatedSurveyId</td>
+                                    <td>@item.RelatedEntityId</td>
+                                    <td>@item.RequestUrl</td>
+                                    <td>@item.CreatedDate?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td><button type="button" class="btn btn-outline-dark btn-sm" onclick="showLogDetails(@item.ZampliaSyncLogId)">View</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#ZampliaLogsTable").DataTable({ order: [[0, "desc"]], paging: true, pageLength: 25, scrollX: true, autoWidth: false });
+        });
+
+        function showLogDetails(logId) {
+            $.get("/VT/ZampliaApi/LogDetails/" + logId, function (response) {
+                Swal.fire({ title: "Log Details", html: '<pre style="text-align:left;max-height:420px;overflow:auto;">' + escapeHtml(JSON.stringify(response, null, 2)) + '</pre>', width: 920 });
+            }).fail(function (xhr) {
+                Swal.fire("Error", xhr.responseText || "Unable to load log details.", "error");
+            });
+        }
+
+        function escapeHtml(text) {
+            return (text || "").replace(/[&<>\"']/g, function (match) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;' })[match];
+            });
+        }
+    </script>
+}

@@ -1,0 +1,189 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Dashboard";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-page {
+        --vt-zam-theme: #1d4f91;
+        --vt-zam-accent: #c46f1a;
+        --vt-zam-soft: rgba(29, 79, 145, 0.08);
+        --vt-zam-border: rgba(29, 79, 145, 0.18);
+    }
+
+    .vt-zam-page .card--table-section {
+        border: 1px solid var(--vt-zam-border);
+        box-shadow: 0 10px 24px rgba(29, 79, 145, 0.08);
+    }
+
+    .vt-zam-page .table-section-header {
+        border-left-color: var(--vt-zam-theme);
+    }
+
+    .vt-zam-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .vt-zam-stat {
+        padding: 1rem;
+        border-radius: 14px;
+        border: 1px solid var(--vt-zam-border);
+        background: linear-gradient(145deg, #ffffff 0%, #f6f9ff 100%);
+    }
+
+    .vt-zam-stat__label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #5b6474;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.45rem;
+    }
+
+    .vt-zam-stat__value {
+        display: block;
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #102a43;
+        line-height: 1;
+    }
+
+    .vt-zam-stat__meta {
+        display: block;
+        margin-top: 0.55rem;
+        color: #64748b;
+        font-size: 0.84rem;
+    }
+
+    .vt-zam-callout {
+        padding: 1rem 1.1rem;
+        border-radius: 14px;
+        background: linear-gradient(135deg, rgba(29, 79, 145, 0.08) 0%, rgba(196, 111, 26, 0.12) 100%);
+        border: 1px solid rgba(196, 111, 26, 0.16);
+    }
+
+    .vt-zam-callout p:last-child {
+        margin-bottom: 0;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-page">
+    <div class="ref-page-title">
+        <h1>Zamplia Supply Dashboard</h1>
+        <p class="ref-subtitle">Monitor Zamplia settings, survey sync coverage, launch attempts, and reconciliation activity without touching the Lucid Marketplace flow.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Overview</h4>
+                        <div>
+                            <a class="btn btn-outline-primary btn-sm mr-2" href="/VT/Zamplia/Settings">Settings</a>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/Zamplia/Surveys">Surveys</a>
+                            <a class="btn btn-outline-dark btn-sm mr-2" href="/VT/Zamplia/Reconciliation">Reconciliation</a>
+                            <a class="btn btn-outline-info btn-sm" href="/VT/Zamplia/Logs">Logs</a>
+                        </div>
+                    </div>
+
+                    <div class="vt-zam-grid">
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Active Settings</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.ActiveSettings</span>
+                            <span class="vt-zam-stat__meta">Configured module records</span>
+                        </div>
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Active Surveys</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.ActiveSurveys</span>
+                            <span class="vt-zam-stat__meta">Currently stored and active</span>
+                        </div>
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Mapped Surveys</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.MappedSurveys</span>
+                            <span class="vt-zam-stat__meta">Ready for VT routing</span>
+                        </div>
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Launch Attempts</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.TotalAttempts</span>
+                            <span class="vt-zam-stat__meta">Tracked respondent launches</span>
+                        </div>
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Successful API Calls</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.SuccessfulApiCalls</span>
+                            <span class="vt-zam-stat__meta">Captured in Zamplia sync logs</span>
+                        </div>
+                        <div class="vt-zam-stat">
+                            <span class="vt-zam-stat__label">Failed API Calls</span>
+                            <span class="vt-zam-stat__value">@Model.Dashboard.FailedApiCalls</span>
+                            <span class="vt-zam-stat__meta">Worth reviewing in logs</span>
+                        </div>
+                    </div>
+
+                    <div class="vt-zam-callout mt-4">
+                        <p class="mb-2"><strong>Configured Base URL:</strong> @(string.IsNullOrWhiteSpace(Model.Setting.BaseUrl) ? "Not configured yet" : Model.Setting.BaseUrl)</p>
+                        <p class="mb-2"><strong>Last Survey Sync:</strong> @(Model.Dashboard.LastSyncTime?.ToString("dd MMM yyyy hh:mm tt") ?? "No sync recorded")</p>
+                        <p><strong>Latest Reconciliation:</strong> @(Model.Dashboard.LatestReconciliationRunTime?.ToString("dd MMM yyyy hh:mm tt") ?? "No run recorded") with @Model.Dashboard.LatestReconciliationMismatchCount mismatch(es)</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary btn-sm mr-2" onclick="syncAllocatedSurveys()">Sync Allocated Surveys</button>
+                        <a class="btn btn-success btn-sm mr-2" href="/VT/Zamplia/Surveys">Open Surveys</a>
+                        <a class="btn btn-info btn-sm mr-2" href="/VT/Zamplia/Reconciliation">Run Reconciliation</a>
+                        <a class="btn btn-light btn-sm" href="/VT/Zamplia/Logs">Inspect Logs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function syncAllocatedSurveys() {
+            Swal.fire({
+                title: "Sync allocated surveys?",
+                text: "This will fetch allocated Zamplia surveys, hydrate details, and update local storage.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Sync"
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/ZampliaApi/SyncAllocatedSurveys",
+                    success: function (response) {
+                        if (response.result) {
+                            Swal.fire("Success", response.message || "Zamplia sync completed.", "success")
+                                .then(function () { window.location.href = "/VT/Zamplia/Surveys"; });
+                            return;
+                        }
+
+                        const errorText = response.errors && response.errors.length
+                            ? response.errors.join("\n")
+                            : (response.message || "Zamplia sync failed.");
+                        Swal.fire("Attention", errorText, "warning");
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to sync Zamplia surveys.", "error");
+                    }
+                });
+            });
+        }
+    </script>
+}

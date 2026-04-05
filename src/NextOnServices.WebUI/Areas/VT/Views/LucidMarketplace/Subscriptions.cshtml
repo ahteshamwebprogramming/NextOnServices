@@ -1,0 +1,358 @@
+@using System.Linq
+@using Newtonsoft.Json.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Subscriptions";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var opportunitySubscription = Model.Subscriptions.FirstOrDefault(x => string.Equals(x.SubscriptionType, "Opportunities", StringComparison.OrdinalIgnoreCase));
+    var outcomesSubscription = Model.Subscriptions.FirstOrDefault(x => string.Equals(x.SubscriptionType, "RespondentOutcomes", StringComparison.OrdinalIgnoreCase));
+    var opportunityCountryLanguageCodes = string.Empty;
+    var outcomesFiltersSnapshot = string.Empty;
+    if (!string.IsNullOrWhiteSpace(opportunitySubscription?.RequestPayloadSnapshot))
+    {
+        try
+        {
+            var opportunityToken = JToken.Parse(opportunitySubscription.RequestPayloadSnapshot);
+            var savedCountryLanguages = opportunityToken
+                .SelectTokens("$..country_language.in[*]")
+                .Select(token => token?.ToString())
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            opportunityCountryLanguageCodes = savedCountryLanguages.Any()
+                ? string.Join(", ", savedCountryLanguages)
+                : string.Empty;
+        }
+        catch
+        {
+            opportunityCountryLanguageCodes = string.Empty;
+        }
+    }
+
+    if (!string.IsNullOrWhiteSpace(outcomesSubscription?.RequestPayloadSnapshot))
+    {
+        try
+        {
+            var token = JToken.Parse(outcomesSubscription.RequestPayloadSnapshot);
+            outcomesFiltersSnapshot = token.Type == JTokenType.Object && token["outcomes"] != null
+                ? token["outcomes"]!.ToString(Newtonsoft.Json.Formatting.None)
+                : token.ToString(Newtonsoft.Json.Formatting.None);
+        }
+        catch
+        {
+            outcomesFiltersSnapshot = outcomesSubscription.RequestPayloadSnapshot;
+        }
+    }
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-subs-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-subs-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-subs-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-subs-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .vt-lm-status.active {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .vt-lm-status.inactive {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+    }
+
+    .vt-lm-snapshot {
+        max-width: 240px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vt-lm-note {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        color: #475569;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-subs-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Subscriptions</h1>
+        <p class="ref-subtitle">Create, inspect, and remove Lucid Marketplace opportunities and respondent outcomes subscriptions through the Consultings proxy.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Opportunities Subscription</h4>
+                    <div class="mt-3">
+                        <div class="form-group">
+                            <label>Callback URL</label>
+                            <input type="text" class="form-control form-control-sm" id="lmOpportunityCallbackUrl" value="@(opportunitySubscription?.CallbackUrl ?? Model.Setting.OpportunitiesCallbackUrl)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Country-Language Codes</label>
+                            <input type="text" class="form-control form-control-sm" id="lmCountryLanguageCodes" value="@opportunityCountryLanguageCodes" placeholder="eng_us, eng_gb" />
+                            <small class="text-muted">Provide one or more Lucid Marketplace locale codes. This is required by the remote opportunities subscription payload.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="d-block">Include Quotas</label>
+                            <input type="checkbox" id="lmIncludeQuotas" @(opportunitySubscription?.IncludeQuotas == true ? "checked" : "") />
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier Code</label>
+                            <input type="text" class="form-control form-control-sm" id="lmOpportunitySupplierCode" value="@Model.Setting.SupplierCode" />
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="createOpportunitySubscription()">Create / Replace Opportunities Subscription</button>
+                            <button type="button" class="btn btn-info btn-sm mr-2" onclick="refreshLucidMarketplaceSubscriptions()">Refresh Remote Subscription</button>
+                            @if (opportunitySubscription != null)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deactivateLucidMarketplaceSubscription(@opportunitySubscription.LucidMarketplaceSubscriptionId)">Delete / Deactivate</button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="vt-lm-note mt-4">
+                        Opportunity subscriptions still control study ingestion and can keep the existing locale and quota filters from earlier phases.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Respondent Outcomes Subscription</h4>
+                    <div class="mt-3">
+                        <div class="form-group">
+                            <label>Callback URL</label>
+                            <input type="text" class="form-control form-control-sm" id="lmOutcomeCallbackUrl" value="@(outcomesSubscription?.CallbackUrl ?? Model.Setting.OutcomesCallbackUrl)" />
+                        </div>
+                        <div class="form-group">
+                            <label>Outcome Filters JSON</label>
+                            <textarea class="form-control form-control-sm" id="lmOutcomeFiltersJson" rows="5" placeholder='[{"marketplace_status":{"eq":3},"client_status":{"in":[11,26,28]}}]'>@outcomesFiltersSnapshot</textarea>
+                            <small class="text-muted">Optional. Leave blank to subscribe to all outcome messages by sending a single empty rule object.</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier Code</label>
+                            <input type="text" class="form-control form-control-sm" id="lmOutcomeSupplierCode" value="@Model.Setting.SupplierCode" />
+                        </div>
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="createOutcomeSubscription()">Create / Replace Outcomes Subscription</button>
+                            <button type="button" class="btn btn-info btn-sm mr-2" onclick="refreshLucidMarketplaceSubscriptions()">Refresh Remote Subscription</button>
+                            @if (outcomesSubscription != null)
+                            {
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deactivateLucidMarketplaceSubscription(@outcomesSubscription.LucidMarketplaceSubscriptionId)">Delete / Deactivate</button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="vt-lm-note mt-4">
+                        The outcomes feed is the authoritative async status source for Lucid Marketplace respondent sessions. Latest-message wins semantics are handled on the callback side.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Saved Subscription Records</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceSubscriptionsTable">
+                            <thead>
+                                <tr>
+                                    <th>Subscription Type</th>
+                                    <th>Supplier Code</th>
+                                    <th>Callback URL</th>
+                                    <th>Include Quotas</th>
+                                    <th>Filters / Request</th>
+                                    <th>Active</th>
+                                    <th>Last Validated</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Subscriptions.Any())
+                                {
+                                    foreach (var item in Model.Subscriptions)
+                                    {
+                                        <tr>
+                                            <td>@item.SubscriptionType</td>
+                                            <td>@item.SupplierCode</td>
+                                            <td class="vt-lm-snapshot" title="@item.CallbackUrl">@item.CallbackUrl</td>
+                                            <td>@(item.IncludeQuotas ? "Yes" : "No")</td>
+                                            <td class="vt-lm-snapshot" title="@item.RequestPayloadSnapshot">@item.RequestPayloadSnapshot</td>
+                                            <td><span class="vt-lm-status @(item.IsActive ? "active" : "inactive")">@(item.IsActive ? "Active" : "Inactive")</span></td>
+                                            <td>@item.LastValidatedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td class="vt-lm-snapshot" title="@item.LastStatus">@(!string.IsNullOrWhiteSpace(item.LastStatus) ? item.LastStatus : item.ResponsePayloadSnapshot)</td>
+                                            <td>
+                                                @if (string.Equals(item.SubscriptionType, "Opportunities", StringComparison.OrdinalIgnoreCase) ||
+                                                     string.Equals(item.SubscriptionType, "RespondentOutcomes", StringComparison.OrdinalIgnoreCase))
+                                                {
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="deactivateLucidMarketplaceSubscription(@item.LucidMarketplaceSubscriptionId)">Delete</button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>N/A</button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#LucidMarketplaceSubscriptionsTable').DataTable({
+                order: [],
+                paging: true,
+                pageLength: 10,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search subscriptions...",
+                    emptyTable: "No Lucid Marketplace subscription records have been stored yet."
+                }
+            });
+        });
+
+        function getCountryLanguageCodes() {
+            return ($("#lmCountryLanguageCodes").val() || "")
+                .split(",")
+                .map(function (item) { return item.trim(); })
+                .filter(function (item) { return item.length > 0; });
+        }
+
+        function createOpportunitySubscription() {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/CreateSubscription",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    subscriptionType: "Opportunities",
+                    supplierCode: $("#lmOpportunitySupplierCode").val(),
+                    callbackUrl: $("#lmOpportunityCallbackUrl").val(),
+                    includeQuotas: $("#lmIncludeQuotas").is(":checked"),
+                    countryLanguageCodes: getCountryLanguageCodes()
+                }),
+                success: function (response) {
+                    Swal.fire(response.remoteResult ? "Subscription Updated" : "Subscription Recorded", response.message || "Request completed.", response.remoteResult ? "success" : "info")
+                        .then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to create the subscription.", "error");
+                }
+            });
+        }
+
+        function createOutcomeSubscription() {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/CreateSubscription",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    subscriptionType: "RespondentOutcomes",
+                    supplierCode: $("#lmOutcomeSupplierCode").val(),
+                    callbackUrl: $("#lmOutcomeCallbackUrl").val(),
+                    outcomeFiltersJson: ($("#lmOutcomeFiltersJson").val() || "").trim()
+                }),
+                success: function (response) {
+                    Swal.fire(response.remoteResult ? "Subscription Updated" : "Subscription Recorded", response.message || "Request completed.", response.remoteResult ? "success" : "info")
+                        .then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to create the outcomes subscription.", "error");
+                }
+            });
+        }
+
+        function refreshLucidMarketplaceSubscriptions() {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/RefreshSubscriptions",
+                success: function (response) {
+                    Swal.fire("Subscriptions", response.message || "Subscription list refreshed.", "info")
+                        .then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseText || "Unable to refresh subscriptions.", "error");
+                }
+            });
+        }
+
+        function deactivateLucidMarketplaceSubscription(subscriptionId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will remove the opportunities subscription remotely and deactivate the local record.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it'
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/LucidMarketplaceApi/DeactivateSubscription",
+                    contentType: "application/json",
+                    data: JSON.stringify({ lucidMarketplaceSubscriptionId: subscriptionId }),
+                    success: function () {
+                        Swal.fire("Success", "Subscription deleted successfully.", "success")
+                            .then(function () { window.location.reload(); });
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error", xhr.responseText || "Unable to delete the subscription.", "error");
+                    }
+                });
+            });
+        }
+    </script>
+}

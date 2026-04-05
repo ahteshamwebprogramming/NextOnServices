@@ -79,6 +79,9 @@ builder.Services.AddAutoMapper(typeof(GRPSC.MapperInitializer));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.IZampliaLaunchService, NextOnServices.WebUI.VT.Services.ZampliaLaunchService>();
+builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.IHashingSettingsService, NextOnServices.WebUI.VT.Services.HashingSettingsService>();
+builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.ILegacyProjectStatusService, NextOnServices.WebUI.VT.Services.ConfiguredLegacyProjectStatusService>();
 //SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());
 //SqlMapper.AddTypeHandler(new DapperSqlDateOnlyTypeHandler());
 
@@ -246,5 +249,4 @@ finally
 {
     Log.CloseAndFlush();
 }
-
 

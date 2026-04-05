@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using NextOnServices.Core.Entities;
 using NextOnServices.Core.Repository;
+using NextOnServices.Infrastructure.Models.APIProjects;
 using NextOnServices.Infrastructure.Models.Projects;
 using NextOnServices.Infrastructure.ViewModels.Dashboard;
 using NextOnServices.Infrastructure.ViewModels.Supplier;
@@ -263,6 +264,82 @@ public class SurveyAPIController : ControllerBase
             throw;
         }
     }
+
+    public async Task<ProjectLaunchRuntimeContextDTO?> GetProjectLaunchRuntimeContextBySidAsync(string sid)
+    {
+        return await GetProjectLaunchRuntimeContextAsync(sid, null);
+    }
+
+    public async Task<ProjectLaunchRuntimeContextDTO?> GetProjectLaunchRuntimeContextAsync(string sid, string? code)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(sid))
+            {
+                return null;
+            }
+
+            const string query = @"
+                SELECT TOP 1
+                    pm.ProjectID AS ProjectId,
+                    p.ProjectFrom,
+                    p.ProjectIdFromApi,
+                    pu.ID AS ProjectUrlId,
+                    pm.ID AS ProjectMappingId,
+                    pm.SID AS ProjectMappingSid,
+                    pm.Code AS ProjectMappingCode,
+                    pu.Url AS ProjectUrl,
+                    pu.OriginalURL AS ProjectUrlOriginalUrl,
+                    pm.OLink AS ProjectMappingOlink
+                FROM ProjectMapping pm
+                INNER JOIN Projects p ON p.ProjectId = pm.ProjectID
+                OUTER APPLY (
+                    SELECT TOP 1 *
+                    FROM ProjectsUrl pu
+                    WHERE pu.PID = pm.ProjectID
+                      AND (pm.CountryID IS NULL OR pu.CID = pm.CountryID)
+                    ORDER BY CASE WHEN pu.CID = pm.CountryID THEN 0 ELSE 1 END, pu.ID DESC
+                ) pu
+                WHERE pm.SID = @SID
+                ORDER BY CASE WHEN @Code IS NOT NULL AND pm.Code = @Code THEN 0 ELSE 1 END, pm.ID DESC";
+
+            return await _unitOfWork.ProjectMapping.GetEntityData<ProjectLaunchRuntimeContextDTO>(query, new
+            {
+                SID = sid.Trim(),
+                Code = string.IsNullOrWhiteSpace(code) ? null : code.Trim()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(GetProjectLaunchRuntimeContextAsync)}");
+            throw;
+        }
+    }
+
+    public async Task<(int? ProjectId, string? ProjectFrom, string? ProjectIdFromApi, string? ProjectMappingSid, string? ProjectMappingCode)> GetProjectLaunchMetadataBySidAsync(string sid)
+    {
+        try
+        {
+            var context = await GetProjectLaunchRuntimeContextBySidAsync(sid);
+            if (context == null)
+            {
+                return (null, null, null, null, null);
+            }
+
+            return (
+                context.ProjectId,
+                context.ProjectFrom,
+                context.ProjectIdFromApi,
+                context.ProjectMappingSid,
+                context.ProjectMappingCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(GetProjectLaunchMetadataBySidAsync)}");
+            throw;
+        }
+    }
+
     public async Task<IActionResult> UpdateSupplierENCByUID(string UID, string hashcode)
     {
         try
@@ -280,6 +357,64 @@ public class SurveyAPIController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error in retriving Attendance {nameof(AuthenticateIP)}");
+            throw;
+        }
+    }
+
+    public async Task<SupplierProjects?> GetSupplierProjectByUidAsync(string uid, string? sid = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(uid))
+            {
+                return null;
+            }
+
+            const string query = @"
+                SELECT TOP 1 *
+                FROM SupplierProjects
+                WHERE UID = @UID
+                  AND (@SID IS NULL OR SID = @SID)
+                ORDER BY ID DESC";
+
+            return await _unitOfWork.SupplierProjects.GetEntityData<SupplierProjects>(query, new
+            {
+                UID = uid.Trim(),
+                SID = string.IsNullOrWhiteSpace(sid) ? null : sid.Trim()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(GetSupplierProjectByUidAsync)}");
+            throw;
+        }
+    }
+
+    public async Task<SupplierProjects?> GetSupplierProjectByPmidAsync(string pmid, string? sid = null)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(pmid))
+            {
+                return null;
+            }
+
+            const string query = @"
+                SELECT TOP 1 *
+                FROM SupplierProjects
+                WHERE PMID = @PMID
+                  AND (@SID IS NULL OR SID = @SID)
+                ORDER BY ID DESC";
+
+            return await _unitOfWork.SupplierProjects.GetEntityData<SupplierProjects>(query, new
+            {
+                PMID = pmid.Trim(),
+                SID = string.IsNullOrWhiteSpace(sid) ? null : sid.Trim()
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error in {nameof(GetSupplierProjectByPmidAsync)}");
             throw;
         }
     }
@@ -1505,4 +1640,12 @@ public class SurveyAPIController : ControllerBase
         }
     }
 
+    private sealed class SupplierLaunchMetadataRow
+    {
+        public int? ProjectId { get; set; }
+        public string? ProjectFrom { get; set; }
+        public string? ProjectIdFromApi { get; set; }
+        public string? ProjectMappingSid { get; set; }
+        public string? ProjectMappingCode { get; set; }
+    }
 }

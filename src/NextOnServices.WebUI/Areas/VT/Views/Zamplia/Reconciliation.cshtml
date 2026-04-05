@@ -1,0 +1,140 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Reconciliation";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var selectedRunId = 0;
+    int.TryParse(Context.Request.Query["runId"], out selectedRunId);
+}
+
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-recon .card--table-section { border: 1px solid rgba(29,79,145,.18); box-shadow: 0 10px 24px rgba(29,79,145,.08); }
+    .vt-zam-recon .table-section-header { border-left-color: #1d4f91; }
+    .vt-zam-recon .chip { display: inline-flex; align-items: center; padding: .3rem .7rem; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+    .vt-zam-recon .chip.ok { background: rgba(22,163,74,.12); color: #166534; }
+    .vt-zam-recon .chip.bad { background: rgba(239,68,68,.12); color: #991b1b; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-recon">
+    <div class="ref-page-title">
+        <h1>Zamplia Reconciliation</h1>
+        <p class="ref-subtitle">Compare Zamplia reconciliation payloads with locally tracked respondent attempts and review mismatch records for operational follow-up.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section"><div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <h4 class="table-section-header mb-3 mb-md-0">Run Reconciliation</h4>
+                    <div><a class="btn btn-outline-secondary btn-sm" href="/VT/Zamplia/Logs">View Logs</a></div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-2 mb-3"><label class="font-weight-600">Survey ID</label><input type="number" class="form-control" id="ReconSurveyId" /></div>
+                    <div class="col-md-2 mb-3"><label class="font-weight-600">Internal Project</label><input type="number" class="form-control" id="ReconProjectId" /></div>
+                    <div class="col-md-3 mb-3"><label class="font-weight-600">Transaction ID</label><input type="text" class="form-control" id="ReconTransactionId" /></div>
+                    <div class="col-md-2 mb-3"><label class="font-weight-600">Date From</label><input type="date" class="form-control" id="ReconDateFrom" /></div>
+                    <div class="col-md-2 mb-3"><label class="font-weight-600">Date To</label><input type="date" class="form-control" id="ReconDateTo" /></div>
+                    <div class="col-md-1 mb-3 d-flex align-items-end"><button type="button" class="btn btn-primary btn-block" onclick="runReconciliation()">Run</button></div>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Recent Runs</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaRunsTable">
+                        <thead><tr><th>Run Id</th><th>Run Type</th><th>Survey / Project</th><th>Started</th><th>Completed</th><th>Success</th><th>Reviewed</th><th>Mismatches</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.ReconciliationRuns)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>@item.RunType</td>
+                                    <td>@(item.InternalProjectId.HasValue ? $"Project #{item.InternalProjectId}" : item.SurveyId.HasValue ? $"Survey #{item.SurveyId}" : "Recent / Manual")</td>
+                                    <td>@item.StartedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td>@item.CompletedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                    <td><span class="chip @(item.Success ? "ok" : "bad")">@(item.Success ? "Success" : "Failed")</span></td>
+                                    <td>@item.TotalReviewed</td>
+                                    <td>@item.TotalMismatched</td>
+                                    <td><a class="btn btn-outline-primary btn-sm" href="/VT/Zamplia/Reconciliation?runId=@item.Id">View</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section"><div class="card-body">
+                <h4 class="table-section-header">Selected Run Items @(selectedRunId > 0 ? $"#{selectedRunId}" : string.Empty)</h4>
+                <div class="table-responsive mt-3">
+                    <table class="table table-striped" id="ZampliaRunItemsTable">
+                        <thead><tr><th>Attempt</th><th>Survey</th><th>Transaction</th><th>Respondent</th><th>Local Status</th><th>Vendor Status</th><th>Final Status</th><th>Mismatch</th><th>Notes</th></tr></thead>
+                        <tbody>
+                            @foreach (var item in Model.ReconciliationItems)
+                            {
+                                <tr>
+                                    <td>@item.ZampliaRespondentAttemptId</td>
+                                    <td>@item.SurveyId</td>
+                                    <td>@item.TransactionId</td>
+                                    <td>@item.RespondentId</td>
+                                    <td>@item.LocalStatus</td>
+                                    <td>@item.VendorStatus</td>
+                                    <td>@item.FinalStatus</td>
+                                    <td><span class="chip @(item.IsMismatch ? "bad" : "ok")">@(item.IsMismatch ? "Mismatch" : "Match")</span></td>
+                                    <td>@item.Notes</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $("#ZampliaRunsTable, #ZampliaRunItemsTable").DataTable({ paging: true, pageLength: 25, scrollX: true, autoWidth: false });
+        });
+
+        function runReconciliation() {
+            const payload = {
+                runType: "Manual",
+                surveyId: parseNullableInt($("#ReconSurveyId").val()),
+                internalProjectId: parseNullableInt($("#ReconProjectId").val()),
+                transactionId: $("#ReconTransactionId").val() || null,
+                dateFrom: $("#ReconDateFrom").val() || null,
+                dateTo: $("#ReconDateTo").val() || null
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/RunReconciliation",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Reconciliation completed.", "success").then(function () { window.location.href = "/VT/Zamplia/Reconciliation?runId=" + response.runId; });
+                        return;
+                    }
+                    Swal.fire("Error", response.message || "Unable to complete reconciliation.", "error");
+                },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to complete reconciliation.", "error"); }
+            });
+        }
+
+        function parseNullableInt(value) {
+            if (!value) { return null; }
+            const parsed = parseInt(value, 10);
+            return isNaN(parsed) || parsed <= 0 ? null : parsed;
+        }
+    </script>
+}

@@ -1,0 +1,293 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Opportunities";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var isRecentView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewRecent, StringComparison.OrdinalIgnoreCase);
+    var isAddedView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewAdded, StringComparison.OrdinalIgnoreCase);
+    var isAllView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewAll, StringComparison.OrdinalIgnoreCase);
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-opportunities-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-opportunities-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-opportunities-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-opportunities-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .vt-lm-pill.live {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .vt-lm-pill.off {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+    }
+
+    .vt-lm-pill.ignored {
+        background: rgba(245, 158, 11, 0.14);
+        color: #92400e;
+    }
+
+    .vt-lm-pill.mapped {
+        background: rgba(37, 99, 235, 0.12);
+        color: #1d4ed8;
+    }
+
+    .vt-lm-table-note {
+        max-width: 170px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .vt-lm-filter-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-filter-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .vt-lm-filter-note {
+        margin: 0;
+        color: #4b5563;
+        font-size: 0.92rem;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-opportunities-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Opportunities</h1>
+        <p class="ref-subtitle">Review the opportunities captured from Lucid Marketplace callbacks and keep them isolated from old Lucid Offerwall surveys.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Stored Opportunities</h4>
+                        <div>
+                            <a class="btn btn-info btn-sm mr-2" href="/VT/LucidMarketplace/Subscriptions">Manage Subscription</a>
+                            <a class="btn btn-outline-secondary btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                        </div>
+                    </div>
+
+                    <div class="vt-lm-filter-bar">
+                        <div class="vt-lm-filter-actions">
+                            <a class="btn @(isRecentView ? "btn-primary" : "btn-outline-primary") btn-sm" href="/VT/LucidMarketplace/Opportunities?view=recent">Recent 500</a>
+                            <a class="btn @(isAddedView ? "btn-primary" : "btn-outline-primary") btn-sm" href="/VT/LucidMarketplace/Opportunities?view=added">Added Projects</a>
+                            <a class="btn @(isAllView ? "btn-primary" : "btn-outline-primary") btn-sm" href="/VT/LucidMarketplace/Opportunities?view=all">All Opportunities</a>
+                        </div>
+                        <p class="vt-lm-filter-note">
+                            @if (isRecentView)
+                            {
+                                <span>Showing the latest 500 stored opportunities. Switch to <strong>Added Projects</strong> or <strong>All Opportunities</strong> to browse older records.</span>
+                            }
+                            else if (isAddedView)
+                            {
+                                <span>Showing all opportunities that already have a project added in VT.</span>
+                            }
+                            else
+                            {
+                                <span>Showing every stored Lucid Marketplace opportunity.</span>
+                            }
+                            <span class="font-weight-semibold ml-2">Rows loaded: @Model.OpportunityCount</span>
+                        </p>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceOpportunitiesTable">
+                            <thead>
+                                <tr>
+                                    <th>Survey ID</th>
+                                    <th>Survey Name</th>
+                                    <th>Country-Language</th>
+                                    <th>Study Type</th>
+                                    <th>Industry</th>
+                                    <th>CPI</th>
+                                    <th>IR</th>
+                                    <th>LOI</th>
+                                    <th>Total Remaining</th>
+                                    <th>Is Live</th>
+                                    <th>Recontact</th>
+                                    <th>Survey Group IDs</th>
+                                    <th>Message Reason</th>
+                                    <th>Last Synced</th>
+                                    <th>Status</th>
+                                    <th>Mapping Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Opportunities.Any())
+                                {
+                                    foreach (var item in Model.Opportunities)
+                                    {
+                                        var localState = string.IsNullOrWhiteSpace(item.LocalState) ? "New" : item.LocalState;
+                                        var mappingLabel = item.IsMapped
+                                            ? (item.InternalProjectId.HasValue ? $"Mapped #{item.InternalProjectId}" : "Mapped")
+                                            : "Not Added";
+                                        <tr>
+                                            <td>@item.SurveyId</td>
+                                            <td class="vt-lm-table-note" title="@item.SurveyName">@item.SurveyName</td>
+                                            <td>@item.CountryLanguageCode</td>
+                                            <td>@item.StudyType</td>
+                                            <td>@item.Industry</td>
+                                            <td>@(item.RevenuePerInterview?.ToString("0.##") ?? "-")</td>
+                                            <td>@(item.BidIncidence?.ToString("0.##") ?? "-")</td>
+                                            <td>@(item.BidLengthOfInterview?.ToString("0.##") ?? "-")</td>
+                                            <td>@(item.TotalRemaining?.ToString() ?? "-")</td>
+                                            <td><span class="vt-lm-pill @((item.IsLive ?? false) ? "live" : "off")">@((item.IsLive ?? false) ? "Live" : "Not Live")</span></td>
+                                            <td>@(item.RecontactCount?.ToString() ?? "0")</td>
+                                            <td class="vt-lm-table-note" title="@item.SurveyGroupIdsJson">@(!string.IsNullOrWhiteSpace(item.SurveyGroupIdsJson) ? item.SurveyGroupIdsJson : "-")</td>
+                                            <td>@item.MessageReason</td>
+                                            <td>@item.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>
+                                                <span class="vt-lm-pill @(localState.Equals("Ignored", StringComparison.OrdinalIgnoreCase) ? "ignored" : (item.IsActive ? "live" : "off"))">@localState</span>
+                                            </td>
+                                            <td>
+                                                <span class="vt-lm-pill @(item.IsMapped ? "mapped" : "off")">@mappingLabel</span>
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-outline-primary btn-sm mb-1" href="/VT/LucidMarketplace/OpportunityDetails/@item.LucidMarketplaceOpportunityId">View Details</a>
+                                                @if (item.IsMapped)
+                                                {
+                                                    <button type="button" class="btn btn-secondary btn-sm mb-1" disabled>Already Added</button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-success btn-sm mb-1" onclick="addProjectFromOpportunity(@item.LucidMarketplaceOpportunityId)">Add Project</button>
+                                                }
+
+                                                @if (item.IsActive)
+                                                {
+                                                    <button type="button" class="btn btn-outline-warning btn-sm mb-1" onclick="updateOpportunityState(@item.LucidMarketplaceOpportunityId, false, 'Ignored')">Ignore</button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="button" class="btn btn-outline-success btn-sm mb-1" onclick="updateOpportunityState(@item.LucidMarketplaceOpportunityId, true, 'New')">Activate</button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#LucidMarketplaceOpportunitiesTable').DataTable({
+                order: [[13, 'desc']],
+                paging: true,
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search opportunities...",
+                    emptyTable: "No Lucid Marketplace opportunities have been stored yet. Once the callback receives payloads, they will appear here."
+                }
+            });
+        });
+
+        function addProjectFromOpportunity(opportunityId) {
+            Swal.fire({
+                title: "Add Project?",
+                text: "This will create the internal project, project URL, and project mapping for the selected Lucid Marketplace opportunity.",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Add Project"
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        lucidMarketplaceOpportunityId: opportunityId
+                    }),
+                    success: function (response) {
+                        if (response.result) {
+                            Swal.fire("Success", response.message || "Project added successfully.", "success")
+                                .then(function () { window.location.reload(); });
+                            return;
+                        }
+
+                        Swal.fire("Error", response.message || "Unable to add the project.", "error");
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to add the project.", "error");
+                    }
+                });
+            });
+        }
+
+        function updateOpportunityState(opportunityId, isActive, localState) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/UpdateOpportunityState",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    lucidMarketplaceOpportunityId: opportunityId,
+                    isActive: isActive,
+                    localState: localState
+                }),
+                success: function () {
+                    Swal.fire("Updated", "Opportunity state updated successfully.", "success")
+                        .then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseText || "Unable to update the opportunity state.", "error");
+                }
+            });
+        }
+    </script>
+}

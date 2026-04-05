@@ -1,0 +1,164 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Outcomes";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-outcomes-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-outcomes-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-outcomes-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.3rem 0.7rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .vt-lm-pill.complete {
+        background: rgba(22, 163, 74, 0.12);
+        color: #166534;
+    }
+
+    .vt-lm-pill.warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: #92400e;
+    }
+
+    .vt-lm-pill.danger {
+        background: rgba(239, 68, 68, 0.12);
+        color: #991b1b;
+    }
+
+    .vt-lm-pill.info {
+        background: rgba(59, 130, 246, 0.12);
+        color: #1d4ed8;
+    }
+}</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-outcomes-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Outcomes</h1>
+        <p class="ref-subtitle">Latest async respondent outcomes stored from the Lucid Marketplace outcomes feed. These records override browser redirect return status when both exist.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Latest Outcome Messages</h4>
+                        <div>
+                            <a class="btn btn-primary btn-sm mr-2" href="/VT/LucidMarketplace/Subscriptions">Manage Subscriptions</a>
+                            <a class="btn btn-outline-secondary btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceOutcomesTable">
+                            <thead>
+                                <tr>
+                                    <th>Received On</th>
+                                    <th>Session / MID</th>
+                                    <th>Respondent</th>
+                                    <th>Panelist</th>
+                                    <th>Survey ID</th>
+                                    <th>Marketplace</th>
+                                    <th>Client</th>
+                                    <th>Entry Date</th>
+                                    <th>Last Date</th>
+                                    <th>Revenue</th>
+                                    <th>Study Type</th>
+                                    <th>Internal Project</th>
+                                    <th>Attempt Matched?</th>
+                                    <th>Final Status</th>
+                                    <th>Source</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Outcomes.Any())
+                                {
+                                    foreach (var item in Model.Outcomes)
+                                    {
+                                        var finalClass = item.FinalStatus switch
+                                        {
+                                            "Complete" => "complete",
+                                            "OverQuota" => "warning",
+                                            "Open" => "info",
+                                            _ => "danger"
+                                        };
+                                        <tr>
+                                            <td>@item.ReceivedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.SessionId</td>
+                                            <td>@item.RespondentId</td>
+                                            <td>@item.PanelistId</td>
+                                            <td>@item.SurveyId</td>
+                                            <td>@item.MarketplaceStatus</td>
+                                            <td>@item.ClientStatus</td>
+                                            <td>@item.EntryDate?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.LastDate?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@(item.RevenueValue?.ToString("0.####") ?? "-") @item.RevenueCurrencyCode</td>
+                                            <td>@item.StudyType</td>
+                                            <td>@(item.RelatedInternalProjectId?.ToString() ?? "-")</td>
+                                            <td>@(item.AttemptMatched ? "Yes" : "No")</td>
+                                            <td><span class="vt-lm-pill @finalClass">@item.FinalStatus</span></td>
+                                            <td>@item.Source</td>
+                                            <td>
+                                                <a class="btn btn-outline-primary btn-sm mb-1" href="/VT/LucidMarketplace/OutcomeDetails/@item.Id">View Details</a>
+                                                @if (item.RelatedOpportunityId.HasValue && item.RelatedOpportunityId.Value > 0)
+                                                {
+                                                    <a class="btn btn-outline-secondary btn-sm mb-1" href="/VT/LucidMarketplace/OpportunityDetails/@item.RelatedOpportunityId.Value">View Linked Attempt</a>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            $('#LucidMarketplaceOutcomesTable').DataTable({
+                order: [[0, "desc"]],
+                paging: true,
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    search: "",
+                    searchPlaceholder: "Search outcomes...",
+                    emptyTable: "No Lucid Marketplace respondent outcomes have been stored yet."
+                }
+            });
+        });
+    </script>
+}

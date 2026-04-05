@@ -1,0 +1,49 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-coming-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-coming-page .card--table-section {
+        border: 1px solid rgba(18, 91, 80, 0.2);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-coming-page .table-section-header {
+        border-left-color: #125b50;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-coming-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace @Model.PlaceholderTitle</h1>
+        <p class="ref-subtitle">This route is intentionally present in Phase 1 so the Lucid Marketplace module has a clean future navigation structure.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body text-center py-5">
+                    <h4 class="table-section-header text-left">Coming Soon</h4>
+                    <h3 class="mt-4">@Model.PlaceholderTitle</h3>
+                    <p class="text-muted mt-3">@Model.PlaceholderMessage</p>
+                    <div class="mt-4">
+                        <a class="btn btn-primary btn-sm mr-2" href="/VT/LucidMarketplace/Dashboard">Back to Dashboard</a>
+                        <a class="btn btn-light btn-sm" href="/VT/LucidMarketplace/Settings">Open Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

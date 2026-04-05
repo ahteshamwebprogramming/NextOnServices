@@ -1,5 +1,6 @@
 using NextOnServices.Infrastructure.Helper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Extensions;
 using System;
 using GRP.Endpoints.Masters;
 using NextOnServices.Endpoints.Projects;
@@ -13,7 +14,11 @@ using Microsoft.Identity.Client;
 using Microsoft.CodeAnalysis;
 using DocumentFormat.OpenXml.Office2010.Excel;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using NextOnServices.Core.Entities;
+using NextOnServices.Infrastructure.Models.APIProjects;
+using NextOnServices.WebUI.VT.Services;
 
 namespace NextOnServices.WebUI.Areas.VT.Controllers
 {
@@ -24,16 +29,37 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
         private readonly ILogger<SurveyController> _logger;
         private readonly SurveyAPIController _surveyAPIController;
+        private readonly LucidMarketplaceAPIController _lucidMarketplaceAPIController;
+        private readonly ZampliaAPIController _zampliaAPIController;
+        private readonly IZampliaLaunchService _zampliaLaunchService;
+        private readonly ILegacyProjectStatusService _legacyProjectStatusService;
+        private readonly IHashingSettingsService _hashingSettingsService;
+        private readonly IConfiguration _configuration;
 
         private string _browserType;
         private string _iPAddress;
 
         private string _SID = "", _Code = "", _clientdevice = "", _OLDUID, _enc, _counter = "", _GIPAddress = string.Empty, _Status = "", _Resp = "", _ReqUrl = "", _ClientID = "";
         private int _ISRC = 0, _RC = 0, _cnt = 0, _PID = 0, _PX = 0;
-        public SurveyController(ILogger<SurveyController> logger, SurveyAPIController surveyAPIController, ProfileInfoSurveyAPIController profileInfoSurveyAPIController)
+        public SurveyController(
+            ILogger<SurveyController> logger,
+            SurveyAPIController surveyAPIController,
+            LucidMarketplaceAPIController lucidMarketplaceAPIController,
+            ZampliaAPIController zampliaAPIController,
+            ProfileInfoSurveyAPIController profileInfoSurveyAPIController,
+            IZampliaLaunchService zampliaLaunchService,
+            ILegacyProjectStatusService legacyProjectStatusService,
+            IHashingSettingsService hashingSettingsService,
+            IConfiguration configuration)
         {
             _logger = logger;
             _surveyAPIController = surveyAPIController;
+            _lucidMarketplaceAPIController = lucidMarketplaceAPIController;
+            _zampliaAPIController = zampliaAPIController;
+            _zampliaLaunchService = zampliaLaunchService;
+            _legacyProjectStatusService = legacyProjectStatusService;
+            _hashingSettingsService = hashingSettingsService;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -51,6 +77,20 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 string? Code = Request.Query["ID"];
                 string? enc = Request.Query["ENC"];
                 string clientdevice = CommonHelper.Device(Request);
+                _SID = SID ?? string.Empty;
+                _Code = Code ?? string.Empty;
+                _enc = enc ?? string.Empty;
+                _clientdevice = clientdevice;
+
+                _logger.LogInformation(
+                    "MaskingURL launch request. SID={SID}, Code={Code}, ENC={ENC}, NID={NID}, IPAddress={IPAddress}, Browser={Browser}, Device={Device}",
+                    SID,
+                    Code,
+                    enc,
+                    NID,
+                    _iPAddress,
+                    _browserType,
+                    clientdevice);
 
 
 
@@ -86,8 +126,6 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
                 string IPValidation = await AuthenticateIP(SID, Code);
                 string isToken = await TokensCheckandFetch(NID, SID, 0);
-
-                await ProjectStatus(SID, "SEC_TERM", "SEC_TERM", _iPAddress, _browserType, NID, enc ?? "");
 
                 if (DeviceLock == "LockDevice")
                 {
@@ -136,7 +174,9 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                         return View();
                     }
                     string IPAddress = _iPAddress;
+                    _logger.LogInformation("NID : " + NID);
                     string St = await _surveyAPIController.SaveSupplierProject(IPAddress, _browserType, "InComplete", SID, Code, NID, "", clientdevice, 0, enc);
+                    _logger.LogInformation("NID : " + NID);
                     if (St == "3")
                     {
                         ViewBag.Message = "SID value does not exist";
@@ -156,14 +196,38 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
                             string Url = firstRow?.OLink ?? "";
                             string ID = firstRow?.UID ?? "";
-                            if (Url.IndexOf("[respondentID]") > 0 || Url.IndexOf("[RespondentID]") > 0 || Url.IndexOf("[RESPONDENTID]") > 0)
+                            var launchContext = await _surveyAPIController.GetProjectLaunchRuntimeContextAsync(SID ?? string.Empty, Code);
+
+                            if (string.Equals(launchContext?.ProjectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var runtimeLaunchResult = await TryHandleRuntimeProjectLaunchAsync(
+                                    launchContext,
+                                    SID,
+                                    Code,
+                                    NID,
+                                    St,
+                                    Url,
+                                    ID,
+                                    DSPrescreen,
+                                    isToken,
+                                    clientdevice,
+                                    enc);
+
+                                if (runtimeLaunchResult != null)
+                                {
+                                    return runtimeLaunchResult;
+                                }
+                            }
+
+                            if (ContainsRespondentPlaceholder(Url))
                             {
                                 Url = Url.Replace("[respondentID]", ID);
                                 Url = Url.Replace("[RespondentID]", ID);
                                 Url = Url.Replace("[RESPONDENTID]", ID);
+
                                 if (isToken == "1")
                                 {
-                                    if (Url.IndexOf("[tokenID]") > 0 || Url.IndexOf("[TokenID]") > 0 || Url.IndexOf("[TOKENID]") > 0)
+                                    if (ContainsTokenPlaceholder(Url))
                                     {
                                         string token = await TokensCheckandFetch(NID, SID, 1);
                                         token = token.Replace("\n", "");
@@ -173,7 +237,7 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                                             Url = Url.Replace("[tokenID]", token);
                                             Url = Url.Replace("[TokenID]", token);
                                             Url = Url.Replace("[TOKENID]", token);
-                                            //if (Convert.ToString(DSPrescreen.Tables[0].Rows[0][0]) == "Exists")                                            
+                                            Url = await ApplyProjectMappingLaunchHashingAsync(SID, ID, Url);
                                             if (DSPrescreen != null && DSPrescreen.Any() && DSPrescreen.First().Exists?.ToString() == "Exists")
                                             {
                                                 string PrID = DSPrescreen != null && DSPrescreen.Any() && DSPrescreen.First().ProjectID?.ToString() ?? "";
@@ -183,12 +247,11 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                                                 HttpContext.Session.SetString("CntryID", CntryID);
                                                 HttpContext.Session.SetString("UID", ID);
                                                 HttpContext.Session.SetString("URL", Url);
-                                                Response.Redirect("SurveyMaster.aspx", false);
+                                                return Redirect("SurveyMaster.aspx");
                                             }
                                             else
                                             {
                                                 return Redirect(Url);
-                                                //Response.Redirect(Url, false);
                                             }
                                         }
                                         else
@@ -207,9 +270,9 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                                 {
                                     if (await _surveyAPIController.CheckUIDForRecontact(Code, SID))
                                     {
-                                        //await _surveyAPIController.UpdateRecontactProjectIds(0, SID, ID, Code);
                                         await _surveyAPIController.GenericDataFetcher("updateRecontactProjectsIDs", new { @opt = 0, @PMID = SID, @UIDnew = ID, @UID = Code });
-                                        return Redirect(Url); //Response.Redirect(Url, false);
+                                        Url = await ApplyProjectMappingLaunchHashingAsync(SID, ID, Url);
+                                        return Redirect(Url);
                                     }
                                     else
                                     {
@@ -219,23 +282,21 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                                 }
                                 else
                                 {
+                                    Url = await ApplyProjectMappingLaunchHashingAsync(SID, ID, Url);
                                     if (DSPrescreen != null && DSPrescreen.Any() && (((IDictionary<string, object>)DSPrescreen.First()).Values.ElementAtOrDefault(0)?.ToString()) == "Exists")
                                     {
-
-                                        //string PrID = DSPrescreen != null && DSPrescreen.Any() && DSPrescreen.First()[1]?.ToString() ?? "";
                                         string PrID = DSPrescreen != null && DSPrescreen.Any() && DSPrescreen.First()[1]?.ToString() ?? "";
                                         HttpContext.Session.SetString("PrID", PrID);
 
                                         string CntryID = DSPrescreen != null && DSPrescreen.Any() && DSPrescreen.First()[2]?.ToString() ?? "";
                                         HttpContext.Session.SetString("CntryID", CntryID);
-                                        HttpContext.Session.SetString("UID", ID);
+                                        HttpContext.Session.SetString("UID", NID);
                                         HttpContext.Session.SetString("URL", Url);
-                                        Response.Redirect("SurveyMaster.aspx", false);
+                                        return Redirect("SurveyMaster.aspx");
                                     }
                                     else
                                     {
-                                        //ClsDAL.WriteErrorLog("   ----------  Entered in else part ------------      ");
-                                        Response.Redirect(Url, false);
+                                        return Redirect(Url);
                                     }
                                 }
                             }
@@ -264,6 +325,49 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
             return View();
         }
+
+        private async Task<string> ApplyProjectMappingLaunchHashingAsync(string? sid, string? supplierProjectUid, string launchUrl)
+        {
+            if (string.IsNullOrWhiteSpace(sid) || string.IsNullOrWhiteSpace(launchUrl))
+            {
+                return launchUrl;
+            }
+
+            try
+            {
+                var projectMapping = await _surveyAPIController.GetProjectMappingRecordBYSID(sid);
+                if (projectMapping == null)
+                {
+                    return launchUrl;
+                }
+
+                var hashingResult = await _hashingSettingsService.ApplyHashAsync(
+                    launchUrl,
+                    projectMapping.AddHashing,
+                    projectMapping.HashingType,
+                    projectMapping.ParameterName);
+
+                if (hashingResult.HashApplied && !string.IsNullOrWhiteSpace(supplierProjectUid))
+                {
+                    await _surveyAPIController.UpdateSupplierENCByUID(supplierProjectUid, hashingResult.HashCode);
+
+                    _logger.LogInformation(
+                        "MaskingURL applied launch hashing. SID={SID}, UID={UID}, HashingType={HashingType}, ParameterName={ParameterName}",
+                        sid,
+                        supplierProjectUid,
+                        projectMapping.HashingType,
+                        projectMapping.ParameterName);
+                }
+
+                return hashingResult.RequestUrl;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "MaskingURL hashing failed. SID={SID}, UID={UID}", sid, supplierProjectUid);
+                return launchUrl;
+            }
+        }
+
         protected async Task<string> AuthenticateIP(string SID, string Code)
         {
             string IPADD = _iPAddress;
@@ -309,6 +413,207 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 return "Error";
             }
         }
+
+        private async Task<string> ResolveLaunchRuntimeUidAsync(string? sid, string? code, string generatedUid, string saveResult)
+        {
+            SupplierProjects? supplierProject = null;
+
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                supplierProject = await _surveyAPIController.GetSupplierProjectByPmidAsync(code, sid);
+            }
+
+            if (supplierProject == null && !string.IsNullOrWhiteSpace(generatedUid))
+            {
+                supplierProject = await _surveyAPIController.GetSupplierProjectByUidAsync(generatedUid, sid);
+            }
+
+            var resolvedUid = supplierProject?.UID;
+            if (!string.IsNullOrWhiteSpace(resolvedUid))
+            {
+                if (!string.Equals(resolvedUid, generatedUid, StringComparison.Ordinal))
+                {
+                    _logger.LogWarning(
+                        "MaskingURL resolved runtime UID different from generated NID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}, RuntimeUID={RuntimeUID}",
+                        sid,
+                        code,
+                        saveResult,
+                        generatedUid,
+                        resolvedUid);
+                }
+
+                return resolvedUid;
+            }
+
+            if (string.Equals(saveResult, "1", StringComparison.Ordinal))
+            {
+                _logger.LogInformation(
+                    "MaskingURL falling back to generated NID after save success. SID={SID}, Code={Code}, GeneratedNID={GeneratedNID}",
+                    sid,
+                    code,
+                    generatedUid);
+                return generatedUid;
+            }
+
+            _logger.LogWarning(
+                "MaskingURL could not resolve runtime UID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}",
+                sid,
+                code,
+                saveResult,
+                generatedUid);
+
+            return string.Empty;
+        }
+
+        private async Task<IActionResult?> TryHandleRuntimeProjectLaunchAsync(
+            ProjectLaunchRuntimeContextDTO? launchContext,
+            string? sid,
+            string? code,
+            string generatedUid,
+            string saveResult,
+            string currentUrl,
+            string currentId,
+            IEnumerable<dynamic>? prescreenRows,
+            string isToken,
+            string clientDevice,
+            string? enc)
+        {
+            if (!IsRuntimeLaunchProjectSource(launchContext?.ProjectFrom))
+            {
+                return null;
+            }
+
+            launchContext ??= new ProjectLaunchRuntimeContextDTO
+            {
+                ProjectMappingSid = sid,
+                ProjectMappingCode = code
+            };
+
+            var runtimeUid = await ResolveLaunchRuntimeUidAsync(sid, code, generatedUid, saveResult);
+            if (!string.IsNullOrWhiteSpace(runtimeUid))
+            {
+                currentId = runtimeUid;
+            }
+            else if (string.Equals(saveResult, "1", StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(generatedUid))
+            {
+                _logger.LogInformation(
+                    "MaskingURL using generated NID as runtime UID fallback for project source {ProjectFrom}. SID={SID}, Code={Code}, GeneratedNID={GeneratedNID}",
+                    launchContext.ProjectFrom,
+                    sid,
+                    code,
+                    generatedUid);
+                currentId = generatedUid;
+            }
+
+            if (string.IsNullOrWhiteSpace(currentId))
+            {
+                ViewBag.Title = "Launch Unavailable";
+                ViewBag.Message = "Unable to resolve the respondent identifier for this launch.";
+                return View();
+            }
+
+            if (ContainsRespondentPlaceholder(currentUrl))
+            {
+                currentUrl = currentUrl.Replace("[respondentID]", currentId);
+                currentUrl = currentUrl.Replace("[RespondentID]", currentId);
+                currentUrl = currentUrl.Replace("[RESPONDENTID]", currentId);
+            }
+
+            if (isToken == "1" && ContainsTokenPlaceholder(currentUrl))
+            {
+                string token = await TokensCheckandFetch(generatedUid, sid, 1);
+                token = token.Replace("\n", string.Empty);
+                token = token.Replace("\r", string.Empty);
+
+                if (token == "Error" || token == "NOTOKENSLEFT")
+                {
+                    ViewBag.Message = "You are out of tokens";
+                    return View();
+                }
+
+                currentUrl = currentUrl.Replace("[tokenID]", token);
+                currentUrl = currentUrl.Replace("[TokenID]", token);
+                currentUrl = currentUrl.Replace("[TOKENID]", token);
+            }
+
+            var resolvedUrl = await TryResolveVendorRedirectUrlAsync(launchContext, currentUrl, currentId, code, clientDevice, enc);
+            if (string.IsNullOrWhiteSpace(resolvedUrl))
+            {
+                ViewBag.Title = "Launch Unavailable";
+                ViewBag.Message = BuildRuntimeLaunchUnavailableMessage(launchContext.ProjectFrom);
+                return View();
+            }
+
+            var prescreenExists = HasPrescreenRows(prescreenRows);
+            if (prescreenExists)
+            {
+                string projectId = GetPrescreenColumnValue(prescreenRows, "ProjectID", 1);
+                HttpContext.Session.SetString("PrID", projectId);
+
+                string countryId = GetPrescreenColumnValue(prescreenRows, "CountryID", 2);
+                HttpContext.Session.SetString("CntryID", countryId);
+                HttpContext.Session.SetString("UID", currentId);
+                HttpContext.Session.SetString("URL", resolvedUrl);
+                return Redirect("SurveyMaster.aspx");
+            }
+
+            return Redirect(resolvedUrl);
+        }
+
+        private static bool IsRuntimeLaunchProjectSource(string? projectFrom)
+        {
+            return string.Equals(projectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(projectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool HasPrescreenRows(IEnumerable<dynamic>? prescreenRows)
+        {
+            if (prescreenRows == null)
+            {
+                return false;
+            }
+
+            var firstRow = prescreenRows.FirstOrDefault();
+            if (firstRow == null)
+            {
+                return false;
+            }
+
+            if (firstRow is IDictionary<string, object> dictionary)
+            {
+                return string.Equals(dictionary.Values.ElementAtOrDefault(0)?.ToString(), "Exists", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(dictionary.TryGetValue("Exists", out var existsValue) ? existsValue?.ToString() : null, "Exists", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(dictionary.TryGetValue("Exist", out var existValue) ? existValue?.ToString() : null, "Exists", StringComparison.OrdinalIgnoreCase);
+            }
+
+            return string.Equals(firstRow.Exists?.ToString(), "Exists", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetPrescreenColumnValue(IEnumerable<dynamic>? prescreenRows, string columnName, int fallbackIndex)
+        {
+            var firstRow = prescreenRows?.FirstOrDefault();
+            if (firstRow == null)
+            {
+                return string.Empty;
+            }
+
+            if (firstRow is IDictionary<string, object> dictionary)
+            {
+                if (dictionary.TryGetValue(columnName, out var namedValue) && namedValue != null)
+                {
+                    return namedValue.ToString() ?? string.Empty;
+                }
+
+                return dictionary.Values.ElementAtOrDefault(fallbackIndex)?.ToString() ?? string.Empty;
+            }
+
+            return columnName switch
+            {
+                "ProjectID" => firstRow.ProjectID?.ToString() ?? string.Empty,
+                "CountryID" => firstRow.CountryID?.ToString() ?? string.Empty,
+                _ => string.Empty
+            };
+        }
         protected string GetIPAddress()
         {
             // Get the remote IP address from the current HTTP context
@@ -323,6 +628,425 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 remoteIpAddress = remoteIpAddress.MapToIPv4();
 
             return remoteIpAddress.ToString();
+        }
+
+        private static bool ContainsRespondentPlaceholder(string url)
+        {
+            return !string.IsNullOrWhiteSpace(url) &&
+                   (url.Contains("[respondentID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[RespondentID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[RESPONDENTID]", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool ContainsTokenPlaceholder(string url)
+        {
+            return !string.IsNullOrWhiteSpace(url) &&
+                   (url.Contains("[tokenID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[TokenID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[TOKENID]", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string BuildRuntimeLaunchUnavailableMessage(string? projectFrom)
+        {
+            if (string.Equals(projectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Lucid Marketplace launch link could not be prepared right now.";
+            }
+
+            if (string.Equals(projectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Zamplia launch link could not be generated right now.";
+            }
+
+            return "Vendor launch link could not be generated right now.";
+        }
+
+        private static string BuildRuntimeLaunchTemplateMessage(string? projectFrom)
+        {
+            if (string.Equals(projectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Stored Lucid Marketplace link is not configured correctly.";
+            }
+
+            if (string.Equals(projectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Runtime launch template is not configured correctly.";
+            }
+
+            return "[respondentID] identifier is not found";
+        }
+
+        private async Task<string?> TryResolveVendorRedirectUrlAsync(
+            ProjectLaunchRuntimeContextDTO launchContext,
+            string currentUrl,
+            string supplierProjectUid,
+            string? sourceRespondentId,
+            string clientDevice,
+            string? enc)
+        {
+            if (string.Equals(launchContext.ProjectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+            {
+                return await TryResolveLucidRedirectUrlAsync(launchContext, currentUrl, supplierProjectUid);
+            }
+
+            return await TryResolveZampliaRedirectUrlAsync(launchContext, currentUrl, supplierProjectUid, sourceRespondentId, clientDevice, enc);
+        }
+
+        private async Task<string?> TryResolveZampliaRedirectUrlAsync(
+            ProjectLaunchRuntimeContextDTO launchContext,
+            string currentUrl,
+            string supplierProjectUid,
+            string? sourceRespondentId,
+            string clientDevice,
+            string? enc)
+        {
+            if (!string.Equals(launchContext.ProjectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase))
+            {
+                return currentUrl;
+            }
+
+            var resolution = await _zampliaLaunchService.TryResolveVendorLaunchAsync(new ZampliaLaunchServiceRequest
+            {
+                ProjectMappingSid = launchContext.ProjectMappingSid,
+                ProjectMappingCode = launchContext.ProjectMappingCode,
+                SupplierProjectUid = supplierProjectUid,
+                SourceRespondentId = sourceRespondentId,
+                ClientIp = _iPAddress,
+                ClientBrowser = _browserType,
+                ClientDevice = clientDevice,
+                Enc = enc,
+                LaunchRequestUrl = Request.GetDisplayUrl(),
+                UserId = HttpContext.Session.GetInt32("UserId")
+            });
+
+            if (!resolution.Success || string.IsNullOrWhiteSpace(resolution.VendorLaunchUrl))
+            {
+                _logger.LogWarning("Unable to resolve Zamplia redirect URL for SID {Sid}. Message: {Message}", launchContext.ProjectMappingSid, resolution.Message);
+                return null;
+            }
+
+            SetZampliaAttemptCookie(resolution);
+            return await ApplyProjectMappingLaunchHashingAsync(
+                launchContext.ProjectMappingSid,
+                FirstNonEmpty(resolution.SupplierProjectUid, supplierProjectUid),
+                resolution.VendorLaunchUrl);
+        }
+
+        private async Task<string?> TryResolveLucidRedirectUrlAsync(
+            ProjectLaunchRuntimeContextDTO launchContext,
+            string currentUrl,
+            string supplierProjectUid)
+        {
+            if (!string.Equals(launchContext.ProjectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+            {
+                return currentUrl;
+            }
+
+            if (!launchContext.ProjectId.HasValue || launchContext.ProjectId.Value <= 0)
+            {
+                _logger.LogWarning("Unable to resolve Lucid Marketplace redirect URL because the internal project id is missing for SID {Sid}.", launchContext.ProjectMappingSid);
+                return null;
+            }
+
+            var lucidContext = await _lucidMarketplaceAPIController.GetLucidMarketplaceLaunchContextAsync(
+                internalProjectId: launchContext.ProjectId,
+                internalProjectMappingId: launchContext.ProjectMappingId);
+
+            if (lucidContext == null || lucidContext.LucidMarketplaceOpportunityId <= 0 || lucidContext.LucidSurveyId <= 0)
+            {
+                _logger.LogWarning("Unable to resolve Lucid Marketplace launch context for project {ProjectId} / SID {Sid}.", launchContext.ProjectId, launchContext.ProjectMappingSid);
+                return null;
+            }
+
+            var storedLucidLink = await ResolveStoredLucidBaseLinkAsync(launchContext, currentUrl, lucidContext);
+            if (string.IsNullOrWhiteSpace(storedLucidLink))
+            {
+                _logger.LogWarning("Stored Lucid Marketplace launch link was not found for project {ProjectId} / opportunity {OpportunityId}.", launchContext.ProjectId, lucidContext.LucidMarketplaceOpportunityId);
+                return null;
+            }
+
+            var vendorLaunchUrl = BuildLucidRespondentLaunchUrl(storedLucidLink, supplierProjectUid, out _, out _);
+            if (string.IsNullOrWhiteSpace(vendorLaunchUrl))
+            {
+                _logger.LogWarning("Unable to build Lucid Marketplace respondent launch URL for project {ProjectId} / opportunity {OpportunityId}.", launchContext.ProjectId, lucidContext.LucidMarketplaceOpportunityId);
+                return null;
+            }
+
+            var savedAttempt = await PersistLucidCompatibilityAttemptAsync(lucidContext, supplierProjectUid);
+            if (savedAttempt == null || savedAttempt.Id <= 0)
+            {
+                _logger.LogWarning("Unable to create the minimal Lucid Marketplace redirect correlation row for project {ProjectId} / opportunity {OpportunityId}.", launchContext.ProjectId, lucidContext.LucidMarketplaceOpportunityId);
+                return null;
+            }
+
+            SetLucidAttemptCookie(savedAttempt.Id, lucidContext.InternalProjectMappingId, lucidContext.LucidMarketplaceOpportunityId);
+            return vendorLaunchUrl;
+        }
+
+        private async Task<string?> ResolveStoredLucidBaseLinkAsync(
+            ProjectLaunchRuntimeContextDTO launchContext,
+            string currentUrl,
+            LucidMarketplaceLaunchContextDTO lucidContext)
+        {
+            foreach (var candidate in new[]
+                     {
+                         launchContext.ProjectUrlOriginalUrl,
+                         launchContext.ProjectUrl,
+                         launchContext.ProjectMappingOlink,
+                         currentUrl
+                     })
+            {
+                if (IsUsableLucidVendorLink(candidate))
+                {
+                    return candidate?.Trim();
+                }
+            }
+
+            if (lucidContext.LucidMarketplaceOpportunityId <= 0)
+            {
+                return null;
+            }
+
+            var entryLinkResult = await _lucidMarketplaceAPIController.GetLucidMarketplaceEntryLink(lucidContext.LucidMarketplaceOpportunityId);
+            if (entryLinkResult is not ObjectResult entryLinkObject || entryLinkObject.StatusCode != StatusCodes.Status200OK)
+            {
+                return null;
+            }
+
+            var entryLink = entryLinkObject.Value as LucidMarketplaceEntryLinkDTO;
+            var fallbackLink = string.IsNullOrWhiteSpace(entryLink?.LiveLink) ? entryLink?.TestLink : entryLink.LiveLink;
+            return IsUsableLucidVendorLink(fallbackLink)
+                ? fallbackLink?.Trim()
+                : null;
+        }
+
+        private static bool IsUsableLucidVendorLink(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return false;
+            }
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out _))
+            {
+                return false;
+            }
+
+            return !url.Contains("/VT/LucidMarketplace/LaunchRespondent", StringComparison.OrdinalIgnoreCase) &&
+                   !url.Contains("/VT/MaskingUrl.aspx", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string BuildLucidRespondentLaunchUrl(
+            string liveLink,
+            string respondentId,
+            out bool hashApplied,
+            out string? hashParameterName)
+        {
+            hashApplied = false;
+            hashParameterName = null;
+
+            var resolvedUrl = InjectLucidRespondentIdentifier(liveLink, respondentId, ResolveLucidRespondentParameterName());
+            if (string.IsNullOrWhiteSpace(resolvedUrl))
+            {
+                return string.Empty;
+            }
+
+            var launchHashSecret = ResolveLucidLaunchHashSecret();
+            if (string.IsNullOrWhiteSpace(launchHashSecret))
+            {
+                return resolvedUrl;
+            }
+
+            hashParameterName = ResolveLucidLaunchHashParameterName();
+            resolvedUrl = ApplyLucidLaunchHash(resolvedUrl, launchHashSecret, hashParameterName, ResolveLucidLaunchHashAlgorithm());
+            hashApplied = !string.IsNullOrWhiteSpace(hashParameterName);
+            return resolvedUrl;
+        }
+
+        private static string InjectLucidRespondentIdentifier(string liveLink, string respondentId, string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(liveLink) || string.IsNullOrWhiteSpace(respondentId))
+            {
+                return string.Empty;
+            }
+
+            var encodedRespondentId = Uri.EscapeDataString(respondentId);
+            if (ContainsRespondentPlaceholder(liveLink))
+            {
+                return liveLink
+                    .Replace("[respondentID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase)
+                    .Replace("[RespondentID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase)
+                    .Replace("[RESPONDENTID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase);
+            }
+
+            foreach (var candidateParameterName in new[] { parameterName, "PID" }
+                         .Where(value => !string.IsNullOrWhiteSpace(value))
+                         .Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var parameterRegex = new Regex($"(?i)([?&]){Regex.Escape(candidateParameterName)}=([^&]*)");
+                var updated = parameterRegex.Replace(
+                    liveLink,
+                    match => $"{match.Groups[1].Value}{candidateParameterName}={encodedRespondentId}",
+                    1);
+
+                if (!string.Equals(updated, liveLink, StringComparison.Ordinal))
+                {
+                    return updated;
+                }
+            }
+
+            var targetParameterName = string.IsNullOrWhiteSpace(parameterName) ? "PID" : parameterName.Trim();
+            return liveLink.Contains("?", StringComparison.Ordinal)
+                ? $"{liveLink}&{targetParameterName}={encodedRespondentId}"
+                : $"{liveLink}?{targetParameterName}={encodedRespondentId}";
+        }
+
+        private static string ApplyLucidLaunchHash(
+            string url,
+            string secret,
+            string parameterName,
+            string algorithm)
+        {
+            var normalizedParameterName = string.IsNullOrWhiteSpace(parameterName) ? "hash" : parameterName.Trim();
+            var unsignedUrl = RemoveQueryParameter(url, normalizedParameterName);
+            var signature = ComputeLucidLaunchHash(secret, unsignedUrl, algorithm);
+            if (string.IsNullOrWhiteSpace(signature))
+            {
+                return unsignedUrl;
+            }
+
+            var encodedSignature = Uri.EscapeDataString(signature);
+            return unsignedUrl.Contains("?", StringComparison.Ordinal)
+                ? $"{unsignedUrl}&{normalizedParameterName}={encodedSignature}"
+                : $"{unsignedUrl}?{normalizedParameterName}={encodedSignature}";
+        }
+
+        private static string RemoveQueryParameter(string url, string parameterName)
+        {
+            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(parameterName))
+            {
+                return url;
+            }
+
+            var parameterRegex = new Regex($"(?i)([?&]){Regex.Escape(parameterName)}=[^&]*");
+            var normalized = parameterRegex.Replace(url, "$1", 1);
+
+            normalized = normalized.Replace("?&", "?", StringComparison.Ordinal)
+                                   .Replace("&&", "&", StringComparison.Ordinal)
+                                   .TrimEnd('&', '?');
+
+            return normalized;
+        }
+
+        private static string ComputeLucidLaunchHash(string secret, string message, string algorithm)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(secret ?? string.Empty);
+            var messageBytes = Encoding.UTF8.GetBytes(message ?? string.Empty);
+            var normalizedAlgorithm = string.IsNullOrWhiteSpace(algorithm)
+                ? "HMACSHA256"
+                : algorithm.Trim().ToUpperInvariant();
+
+            byte[] hashBytes = normalizedAlgorithm switch
+            {
+                "HMACSHA1" => new HMACSHA1(keyBytes).ComputeHash(messageBytes),
+                _ => new HMACSHA256(keyBytes).ComputeHash(messageBytes)
+            };
+
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
+        }
+
+        private string? ResolveLucidLaunchHashSecret()
+        {
+            return FirstNonEmpty(
+                _configuration["LucidMarketplace:LaunchHashSecret"],
+                _configuration["LucidMarketplace:LaunchSigningSecret"],
+                _configuration["LucidMarketplaceLaunchHashSecret"],
+                _configuration["LucidMarketplaceLaunchSigningSecret"]);
+        }
+
+        private string ResolveLucidLaunchHashParameterName()
+        {
+            return FirstNonEmpty(
+                       _configuration["LucidMarketplace:LaunchHashParameterName"],
+                       _configuration["LucidMarketplaceLaunchHashParameterName"])
+                   ?? "hash";
+        }
+
+        private string ResolveLucidLaunchHashAlgorithm()
+        {
+            return FirstNonEmpty(
+                       _configuration["LucidMarketplace:LaunchHashAlgorithm"],
+                       _configuration["LucidMarketplaceLaunchHashAlgorithm"])
+                   ?? "HMACSHA256";
+        }
+
+        private string ResolveLucidRespondentParameterName()
+        {
+            return FirstNonEmpty(
+                       _configuration["LucidMarketplace:RespondentParameterName"],
+                       _configuration["LucidMarketplaceRespondentParameterName"])
+                   ?? "PID";
+        }
+
+        private async Task<LucidMarketplaceRespondentAttemptDTO?> PersistLucidCompatibilityAttemptAsync(
+            LucidMarketplaceLaunchContextDTO lucidContext,
+            string supplierProjectUid)
+        {
+            var attemptPayload = new LucidMarketplaceRespondentAttemptDTO
+            {
+                LucidMarketplaceOpportunityId = lucidContext.LucidMarketplaceOpportunityId,
+                InternalProjectId = lucidContext.InternalProjectId,
+                InternalProjectUrlId = lucidContext.InternalProjectUrlId,
+                InternalProjectMappingId = lucidContext.InternalProjectMappingId,
+                LucidSurveyId = lucidContext.LucidSurveyId,
+                SupplierCode = lucidContext.SupplierCode,
+                RespondentId = supplierProjectUid,
+                AttemptType = "Live",
+                AttemptedOn = DateTime.Now,
+                Notes = "MaskingURL launch compatibility row."
+            };
+
+            var saveAttemptResult = await _lucidMarketplaceAPIController.SaveLucidMarketplaceRespondentAttempt(attemptPayload);
+            return saveAttemptResult is ObjectResult saveAttemptObject && saveAttemptObject.StatusCode == StatusCodes.Status200OK
+                ? saveAttemptObject.Value as LucidMarketplaceRespondentAttemptDTO
+                : null;
+        }
+
+        private void SetLucidAttemptCookie(int attemptId, int? internalProjectMappingId, int lucidMarketplaceOpportunityId)
+        {
+            if (attemptId <= 0 || lucidMarketplaceOpportunityId <= 0)
+            {
+                return;
+            }
+
+            Response.Cookies.Append(
+                $"lm_attempt_{internalProjectMappingId.GetValueOrDefault()}_{lucidMarketplaceOpportunityId}",
+                attemptId.ToString(),
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = Request.IsHttps,
+                    Expires = DateTimeOffset.UtcNow.AddHours(4)
+                });
+        }
+
+        private void SetZampliaAttemptCookie(ZampliaLaunchResolution resolution)
+        {
+            if (!resolution.AttemptId.HasValue || !resolution.ZampliaSurveyId.HasValue || resolution.AttemptId.Value <= 0 || resolution.ZampliaSurveyId.Value <= 0)
+            {
+                return;
+            }
+
+            Response.Cookies.Append($"zamplia_attempt_{resolution.ZampliaSurveyId.Value}", resolution.AttemptId.Value.ToString(), new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax,
+                Secure = Request.IsHttps,
+                Expires = DateTimeOffset.UtcNow.AddHours(4)
+            });
         }
 
         protected async Task<string> GetCountryCodeByIP(string countryIP)
@@ -597,21 +1321,29 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 _Status = await ReformStatus(Request.Query["Status"]);
                 _RC = Convert.ToInt32(Request.Query["RC"]);
                 _SID = _SID?.Replace("[", "").Replace("]", "");
+                _SID = await ResolveLegacyProjectStatusUidAsync(_SID, TempStat, _Status);
 
-                if (_RC == 0)
-                {
-                    _Resp = await _surveyAPIController.UpdateProjectDetails("", TempStat ?? "", _Status, "", _SID?.Trim() ?? "", 1, 2);
-                }
-                else if (_RC == 1)
+                if (_RC == 1)
                 {
                     _PID = Convert.ToInt32(Request.Query["PID"]);
-                    _Resp = await _surveyAPIController.UpdateProjectDetails("", TempStat ?? "", _Status, _PID.ToString(), _SID?.Trim() ?? "", 1, 3);
                 }
 
                 if (Request.Query.ContainsKey("PX"))
                 {
                     _PX = 1;
                 }
+
+                var legacyStatusResult = await _legacyProjectStatusService.ApplyAsync(
+                    _SID?.Trim() ?? string.Empty,
+                    TempStat,
+                    _RC,
+                    _RC == 1 ? _PID : null,
+                    _PX == 1);
+
+                _Status = legacyStatusResult.NormalizedStatus;
+                _Resp = legacyStatusResult.UpdateResponse;
+                ViewBag.RedirectUrl = legacyStatusResult.RedirectUrl;
+
                 if (_Resp == "1")
                 {
                     if (_Status.ToUpper() == "COMPLETE")
@@ -653,7 +1385,6 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                     {
                         // Response.Write("Thank you for your interest in this survey. <br> Unfortunately, you have not completed the survey.");
                     }
-                    await RequestUrlPS(_SID?.Trim() ?? "", _RC, _PID, _PX);
                 }
                 else
                 {
@@ -665,6 +1396,221 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 ViewBag.Message = "Required Parameters";
             }
             return View();
+        }
+
+        private async Task<string> ResolveLegacyProjectStatusUidAsync(string? rawId, string? rawStatus, string normalizedStatus)
+        {
+            var normalizedId = rawId?.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedId))
+            {
+                return string.Empty;
+            }
+
+            var existingSupplierProject = await _surveyAPIController.GetSupplierProjectByUidAsync(normalizedId);
+            if (existingSupplierProject != null && !string.IsNullOrWhiteSpace(existingSupplierProject.UID))
+            {
+                return existingSupplierProject.UID.Trim();
+            }
+
+            var fallbackAttempt = await LoadZampliaAttemptForLegacyProjectStatusAsync(normalizedId);
+            if (fallbackAttempt != null)
+            {
+                var runtimeUid = FirstNonEmpty(fallbackAttempt.TransactionId, fallbackAttempt.RespondentId);
+                if (!string.IsNullOrWhiteSpace(runtimeUid))
+                {
+                    var runtimeSupplierProject = await _surveyAPIController.GetSupplierProjectByUidAsync(runtimeUid);
+                    if (runtimeSupplierProject != null && !string.IsNullOrWhiteSpace(runtimeSupplierProject.UID))
+                    {
+                        fallbackAttempt.ReturnCode ??= rawStatus?.Trim();
+                        fallbackAttempt.ReturnStatus ??= normalizedStatus;
+                        fallbackAttempt.FinalStatus ??= normalizedStatus;
+                        fallbackAttempt.FinalStatusSource ??= "LegacyProjectStatusFallback";
+                        fallbackAttempt.CompletedOn ??= DateTime.Now;
+                        await _zampliaAPIController.SaveZampliaRespondentAttempt(fallbackAttempt);
+
+                        foreach (var cookieName in Request.Cookies.Keys.Where(key => key.StartsWith("zamplia_attempt_", StringComparison.OrdinalIgnoreCase)).ToList())
+                        {
+                            Response.Cookies.Delete(cookieName);
+                        }
+
+                        _logger.LogInformation("Resolved legacy ProjectStatus callback to Zamplia SupplierProjects UID {Uid} from raw ID {RawId}.", runtimeSupplierProject.UID, normalizedId);
+                        return runtimeSupplierProject.UID.Trim();
+                    }
+                }
+            }
+
+            var lucidAttempt = await LoadLucidAttemptForLegacyProjectStatusAsync(normalizedId);
+            if (lucidAttempt == null)
+            {
+                return normalizedId;
+            }
+
+            var lucidRuntimeUid = FirstNonEmpty(lucidAttempt.RespondentId);
+            if (string.IsNullOrWhiteSpace(lucidRuntimeUid))
+            {
+                return normalizedId;
+            }
+
+            var lucidSupplierProject = await _surveyAPIController.GetSupplierProjectByUidAsync(lucidRuntimeUid);
+            if (lucidSupplierProject == null || string.IsNullOrWhiteSpace(lucidSupplierProject.UID))
+            {
+                return normalizedId;
+            }
+
+            var redirectStatusInfo = LucidMarketplaceReconciliationHelper.ResolveRedirectStatusInfo(rawStatus);
+            lucidAttempt.ReturnCode ??= rawStatus?.Trim();
+            lucidAttempt.ReturnStatus ??= LucidMarketplaceReconciliationHelper.NormalizeRedirectStatus(rawStatus) ?? redirectStatusInfo.FinalStatus;
+            if (!string.Equals(lucidAttempt.FinalStatusSource, "OutcomesFeed", StringComparison.OrdinalIgnoreCase))
+            {
+                lucidAttempt.FinalStatus = redirectStatusInfo.FinalStatus;
+                lucidAttempt.FinalStatusSource = "LegacyProjectStatusFallback";
+                lucidAttempt.IsCompleted = redirectStatusInfo.IsCompleted;
+                lucidAttempt.IsTerminated = redirectStatusInfo.IsTerminated;
+                lucidAttempt.IsOverQuota = redirectStatusInfo.IsOverQuota;
+                lucidAttempt.IsQualityTermination = redirectStatusInfo.IsQualityTermination;
+                lucidAttempt.IsDuplicate = redirectStatusInfo.IsDuplicate;
+                lucidAttempt.IsSecurityTermination = redirectStatusInfo.IsSecurityTermination;
+            }
+
+            lucidAttempt.ModifiedDate = DateTime.Now;
+            await _lucidMarketplaceAPIController.SaveLucidMarketplaceRespondentAttempt(lucidAttempt);
+
+            foreach (var cookieName in Request.Cookies.Keys.Where(key => key.StartsWith("lm_attempt_", StringComparison.OrdinalIgnoreCase)).ToList())
+            {
+                Response.Cookies.Delete(cookieName);
+            }
+
+            _logger.LogInformation("Resolved legacy ProjectStatus callback to Lucid Marketplace SupplierProjects UID {Uid} from raw ID {RawId}.", lucidSupplierProject.UID, normalizedId);
+            return lucidSupplierProject.UID.Trim();
+        }
+
+        private async Task<ZampliaRespondentAttemptDTO?> LoadZampliaAttemptForLegacyProjectStatusAsync(string rawId)
+        {
+            var cookieAttemptIds = Request.Cookies
+                .Where(item => item.Key.StartsWith("zamplia_attempt_", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Value)
+                .Where(value => int.TryParse(value, out var parsed) && parsed > 0)
+                .Select(value => int.Parse(value!))
+                .Distinct()
+                .ToList();
+
+            if (cookieAttemptIds.Count == 0)
+            {
+                return null;
+            }
+
+            var attempts = new List<ZampliaRespondentAttemptDTO>();
+            foreach (var attemptId in cookieAttemptIds)
+            {
+                var result = await _zampliaAPIController.GetZampliaRespondentAttempt(attemptId);
+                if (result is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK && objectResult.Value is ZampliaRespondentAttemptDTO attempt)
+                {
+                    attempts.Add(attempt);
+                }
+            }
+
+            if (attempts.Count == 0)
+            {
+                return null;
+            }
+
+            if (long.TryParse(rawId, out var vendorSurveyId) && vendorSurveyId > 0)
+            {
+                var surveyMatched = attempts
+                    .Where(item => item.SurveyId == vendorSurveyId)
+                    .OrderByDescending(item => item.AttemptedOn ?? item.CreatedDate)
+                    .FirstOrDefault();
+                if (surveyMatched != null)
+                {
+                    return surveyMatched;
+                }
+            }
+
+            var exactMatched = attempts
+                .Where(item => string.Equals(item.TransactionId, rawId, StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(item.RespondentId, rawId, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(item => item.AttemptedOn ?? item.CreatedDate)
+                .FirstOrDefault();
+            if (exactMatched != null)
+            {
+                return exactMatched;
+            }
+
+            return attempts.Count == 1
+                ? attempts[0]
+                : attempts.OrderByDescending(item => item.AttemptedOn ?? item.CreatedDate).FirstOrDefault();
+        }
+
+        private static string? FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return value.Trim();
+                }
+            }
+
+            return null;
+        }
+
+        private async Task<LucidMarketplaceRespondentAttemptDTO?> LoadLucidAttemptForLegacyProjectStatusAsync(string rawId)
+        {
+            var cookieAttemptIds = Request.Cookies
+                .Where(item => item.Key.StartsWith("lm_attempt_", StringComparison.OrdinalIgnoreCase))
+                .Select(item => item.Value)
+                .Where(value => int.TryParse(value, out var parsed) && parsed > 0)
+                .Select(value => int.Parse(value!))
+                .Distinct()
+                .ToList();
+
+            if (cookieAttemptIds.Count == 0)
+            {
+                return null;
+            }
+
+            var attempts = new List<LucidMarketplaceRespondentAttemptDTO>();
+            foreach (var attemptId in cookieAttemptIds)
+            {
+                var result = await _lucidMarketplaceAPIController.GetLucidMarketplaceRespondentAttempt(attemptId);
+                if (result is ObjectResult objectResult &&
+                    objectResult.StatusCode == StatusCodes.Status200OK &&
+                    objectResult.Value is LucidMarketplaceRespondentAttemptDTO attempt)
+                {
+                    attempts.Add(attempt);
+                }
+            }
+
+            if (attempts.Count == 0)
+            {
+                return null;
+            }
+
+            var exactMatched = attempts
+                .Where(item => string.Equals(item.SessionId, rawId, StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(item.RespondentId, rawId, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(item => item.AsyncLastReceivedOn ?? item.ModifiedDate ?? item.AttemptedOn ?? item.CreatedDate)
+                .FirstOrDefault();
+            if (exactMatched != null)
+            {
+                return exactMatched;
+            }
+
+            if (int.TryParse(rawId, out var lucidSurveyId) && lucidSurveyId > 0)
+            {
+                var surveyMatched = attempts
+                    .Where(item => item.LucidSurveyId == lucidSurveyId)
+                    .OrderByDescending(item => item.AsyncLastReceivedOn ?? item.ModifiedDate ?? item.AttemptedOn ?? item.CreatedDate)
+                    .FirstOrDefault();
+                if (surveyMatched != null)
+                {
+                    return surveyMatched;
+                }
+            }
+
+            return attempts.Count == 1
+                ? attempts[0]
+                : attempts.OrderByDescending(item => item.AsyncLastReceivedOn ?? item.ModifiedDate ?? item.AttemptedOn ?? item.CreatedDate).FirstOrDefault();
         }
 
         public async Task<string> ReformStatus(string Status)
@@ -730,7 +1676,7 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                     _ClientID = firstRow?.ClientID ?? "";
 
                     var projectMapping = await _surveyAPIController.GetProjectMappingRecordBYSID(_SID);
-                    int addHashing = projectMapping.AddHashing ?? default(int);
+                    int addHashing = projectMapping?.AddHashing ?? default(int);
                     string parameterName = projectMapping?.ParameterName ?? "";
                     string hashingType = projectMapping?.HashingType ?? "";
 
@@ -742,16 +1688,9 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                         _ReqUrl = _ReqUrl.Replace("[RespondentID]", _ClientID);
                         _ReqUrl = _ReqUrl.Replace("[RESPONDENTID]", _ClientID);
 
-                        if (addHashing == 1 && hashingType.ToUpper().Trim() == "SHA3")
-                        {
-                            hashcode = Encryption.HashSHA3(_ReqUrl, "9c1ea7525fdb73c4498bbc55b961b381c1054d6b");
-                            _ReqUrl = _ReqUrl + "&" + parameterName + "=" + hashcode;
-                        }
-                        else if (addHashing == 1 && hashingType.ToUpper().Trim() == "SHA1")
-                        {
-                            hashcode = Encryption.HashSHA1_C(_ReqUrl, "50e8a826d47d488cbf7a036b38fab5");
-                            _ReqUrl = _ReqUrl + "&" + parameterName + "=" + hashcode;
-                        }
+                        var hashingResult = await _hashingSettingsService.ApplyHashAsync(_ReqUrl, addHashing, hashingType, parameterName);
+                        _ReqUrl = hashingResult.RequestUrl;
+                        hashcode = hashingResult.HashCode;
 
                         if (trackingtype == 1)
                         {
@@ -841,3 +1780,9 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
     }
 }
+
+
+
+
+
+

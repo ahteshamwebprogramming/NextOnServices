@@ -67,15 +67,36 @@
 
                     <div class="form-group col-md-4 ParameterContent">
                         <label for="ParameterName">Parameter Name</label>
-                        <input type="text" class="form-control form-control-sm" id="ParameterName" value="enc" readonly asp-for="ProjectMappingWithChild.ParameterName">
+                        <select class="form-control form-control-sm" id="ParameterName" asp-for="ProjectMappingWithChild.ParameterName">
+                            <option value="enc">enc</option>
+                            <option value="hash">hash</option>
+                        </select>
                     </div>
 
                     <div class="form-group col-md-4 ParameterContent">
                         <label for="HashingType">Hashing Type</label>
+                        @{
+                            var selectedHashingType = Model?.ProjectMappingWithChild?.HashingType?.Trim() ?? string.Empty;
+                            var configuredHashTypes = (Model?.HashingSettings ?? new List<NextOnServices.Infrastructure.Models.Settings.HashingSettingDTO>())
+                                .Where(x => x.IsActive && !string.IsNullOrWhiteSpace(x.HashingType))
+                                .Select(x => x.HashingType!.Trim())
+                                .Distinct(StringComparer.OrdinalIgnoreCase)
+                                .OrderBy(x => x)
+                                .ToList();
+                            var hasSelectedHashingType = configuredHashTypes.Any(x => string.Equals(x, selectedHashingType, StringComparison.OrdinalIgnoreCase));
+                        }
                         <select class="form-control form-control-sm" id="HashingType" asp-for="ProjectMappingWithChild.HashingType">
-                            <option value="SHA3" selected>SHA3</option>
-                            <option value="SHA1">SHA1</option>
+                            <option value="">--Select Hashing Type--</option>
+                            @foreach (var hashingType in configuredHashTypes)
+                            {
+                                <option value="@hashingType">@hashingType</option>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(selectedHashingType) && !hasSelectedHashingType)
+                            {
+                                <option value="@selectedHashingType">@selectedHashingType</option>
+                            }
                         </select>
+                        <small class="text-muted d-block mt-1">Manage available hashing types from Settings > Hashing settings.</small>
                     </div>
                 </div>
 

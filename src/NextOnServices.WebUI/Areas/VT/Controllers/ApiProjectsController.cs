@@ -799,6 +799,32 @@ public class ApiProjectsController : Controller
         return AddProjectFromVendorAsync(request, "Lucid", "-Pulled from Lucid API", "Added from Lucid from API", "Added from Lucid");
     }
 
+    /// <summary>Add project from Lucid Marketplace opportunities. Saves with ProjectFrom=LucidMarketplace.</summary>
+    [HttpPost]
+    [Route("/VT/ApiProjects/AddProjectFromLucidMarketplace")]
+    public Task<IActionResult> AddProjectFromLucidMarketplace([FromBody] AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromVendorAsync(
+            request,
+            "LucidMarketplace",
+            "-Pulled from Lucid Marketplace",
+            "Added from Lucid Marketplace from API",
+            "Added from Lucid Marketplace");
+    }
+
+    /// <summary>Add project from Zamplia supply surveys. Saves with ProjectFrom=Zamplia.</summary>
+    [HttpPost]
+    [Route("/VT/ApiProjects/AddProjectFromZamplia")]
+    public Task<IActionResult> AddProjectFromZamplia([FromBody] AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromVendorAsync(
+            request,
+            "Zamplia",
+            "-Pulled from Zamplia",
+            "Added from Zamplia from API",
+            "Added from Zamplia");
+    }
+
     private async Task<IActionResult> AddProjectFromVendorAsync(
         AddProjectFromLucidRequest request,
         string vendorKey,
@@ -856,14 +882,27 @@ public class ApiProjectsController : Controller
             if (!string.IsNullOrEmpty(request.TotalRemaining) && int.TryParse(request.TotalRemaining, out int totalRemainingValue))
                 totalRemaining = totalRemainingValue;
 
+            var clientId = request.ClientId.HasValue && request.ClientId.Value > 0
+                ? request.ClientId.Value
+                : DEFAULT_CLIENT_ID;
+            var countryId = request.CountryId.HasValue && request.CountryId.Value > 0
+                ? request.CountryId.Value
+                : DEFAULT_COUNTRY_ID;
+            var supplierId = request.SupplierId.HasValue && request.SupplierId.Value > 0
+                ? request.SupplierId.Value
+                : DEFAULT_SUPPLIER_ID;
+            var projectName = string.IsNullOrWhiteSpace(request.ProjectName)
+                ? request.ProjectId?.Trim()
+                : request.ProjectName.Trim();
+
             // Create ProjectDTO
             ProjectDTO projectDTO = new ProjectDTO
             {
                 ProjectId = 0, // New project
-                Pname = request.ProjectId,
+                Pname = projectName,
                 Descriptions = request.ProjectId + descriptionSuffix,
                 Pmanager = userId.Value,
-                ClientId = DEFAULT_CLIENT_ID,
+                ClientId = clientId,
                 Loi = loi?.ToString() ?? "",
                 Irate = ir?.ToString() ?? "",
                 Cpi = cpi,
@@ -871,7 +910,7 @@ public class ApiProjectsController : Controller
                 Quota = totalRemaining?.ToString() ?? "",
                 Sdate = DateTime.Now.ToString("MM-dd-yyyy"),
                 Edate = DateTime.Now.AddMonths(1).ToString("MM-dd-yyyy"),
-                CountryId = DEFAULT_COUNTRY_ID,
+                CountryId = countryId,
                 Status = DEFAULT_STATUS,
                 IsActive = 1,
                 BlockDevice = "00000",
@@ -929,8 +968,9 @@ public class ApiProjectsController : Controller
                 ProjectsUrlDTO projectUrlDTO = new ProjectsUrlDTO
                 {
                     Pid = createdProjectId,
-                    Cid = DEFAULT_COUNTRY_ID,
+                    Cid = countryId,
                     Url = processedLiveLink,
+                    OriginalUrl = string.IsNullOrWhiteSpace(processedLiveLink) ? null : processedLiveLink,
                     Notes = notesUrl,
                     Cpi = cpi,
                     Quota = totalRemaining?.ToString() ?? "",
@@ -939,7 +979,10 @@ public class ApiProjectsController : Controller
                 };
 
                 var addUrlResult = await _projectURLAPIController.AddProjectURL(projectUrlDTO);
-                if (!(addUrlResult is ObjectResult urlObjectResult && urlObjectResult.StatusCode == 200))
+                var savedProjectUrl = addUrlResult is ObjectResult addUrlObjectResult && addUrlObjectResult.StatusCode == 200
+                    ? addUrlObjectResult.Value as ProjectsUrlDTO
+                    : null;
+                if (savedProjectUrl == null)
                 {
                     _logger.LogWarning("Failed to create ProjectURL for project {ProjectId}", createdProjectId);
                     // Continue anyway - project is created
@@ -955,8 +998,8 @@ public class ApiProjectsController : Controller
                 ProjectMappingDTO projectMappingDTO = new ProjectMappingDTO
                 {
                     ProjectId = createdProjectId,
-                    CountryId = DEFAULT_COUNTRY_ID,
-                    SupplierId = DEFAULT_SUPPLIER_ID,
+                    CountryId = countryId,
+                    SupplierId = supplierId,
                     Olink = oUrl,
                     Cpi = cpi,
                     Mlink = mUrl,
@@ -972,13 +1015,23 @@ public class ApiProjectsController : Controller
                 };
 
                 var addMappingResult = await _projectMappingAPIController.AddProjectMapping(projectMappingDTO);
-                if (!(addMappingResult is ObjectResult mappingObjectResult && mappingObjectResult.StatusCode == 200))
+                var savedProjectMapping = addMappingResult is ObjectResult addMappingObjectResult && addMappingObjectResult.StatusCode == 200
+                    ? addMappingObjectResult.Value as ProjectMappingDTO
+                    : null;
+                if (savedProjectMapping == null)
                 {
                     _logger.LogWarning("Failed to create ProjectMapping for project {ProjectId}", createdProjectId);
                     // Continue anyway - project and URL are created
                 }
 
-                return Ok(new { Result = true, Message = "Project added successfully" });
+                return Ok(new VendorAddProjectResult
+                {
+                    Result = true,
+                    Message = "Project added successfully",
+                    ProjectId = createdProjectId,
+                    ProjectUrlId = savedProjectUrl?.Id,
+                    ProjectMappingId = savedProjectMapping?.Id
+                });
             }
             else
             {
@@ -1396,11 +1449,24 @@ public class ApiProjectsController : Controller
 public class AddProjectFromLucidRequest
 {
     public string? ProjectId { get; set; }
+    public string? ProjectName { get; set; }
     public string? CPI { get; set; }
     public string? LOI { get; set; }
     public string? IR { get; set; }
     public string? TotalRemaining { get; set; }
     public string? LiveLink { get; set; }
+    public int? ClientId { get; set; }
+    public int? CountryId { get; set; }
+    public int? SupplierId { get; set; }
+}
+
+public class VendorAddProjectResult
+{
+    public bool Result { get; set; }
+    public string? Message { get; set; }
+    public int? ProjectId { get; set; }
+    public int? ProjectUrlId { get; set; }
+    public int? ProjectMappingId { get; set; }
 }
 
 public class AddProjectFromSpectrumRequest

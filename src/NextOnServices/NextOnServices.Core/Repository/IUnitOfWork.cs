@@ -26,5 +26,28 @@ public interface IUnitOfWork : IDisposable
     public ISupplierProjectMessageAttachmentRepository SupplierProjectMessageAttachments { get; }
     public IQuestionsMasterRepository QuestionsMaster { get; }
     public IQuestionOptionRepository QuestionOption { get; }
+    public IHashingSettingRepository HashingSetting { get; }
+    public ILucidMarketplaceSettingRepository LucidMarketplaceSetting { get; }
+    public ILucidMarketplaceSubscriptionRepository LucidMarketplaceSubscription { get; }
+    public ILucidMarketplaceSyncLogRepository LucidMarketplaceSyncLog { get; }
+    public ILucidMarketplaceOpportunityRepository LucidMarketplaceOpportunity { get; }
+    public ILucidMarketplaceOpportunityQualificationRepository LucidMarketplaceOpportunityQualification { get; }
+    public ILucidMarketplaceOpportunityQuotaRepository LucidMarketplaceOpportunityQuota { get; }
+    public ILucidMarketplaceProjectMapRepository LucidMarketplaceProjectMap { get; }
+    public ILucidMarketplaceEntryLinkRepository LucidMarketplaceEntryLink { get; }
+    public ILucidMarketplaceRespondentAttemptRepository LucidMarketplaceRespondentAttempt { get; }
+    public ILucidMarketplaceRespondentOutcomeRepository LucidMarketplaceRespondentOutcome { get; }
+    public ILucidMarketplaceReconciliationRunRepository LucidMarketplaceReconciliationRun { get; }
+    public ILucidMarketplaceReconciliationItemRepository LucidMarketplaceReconciliationItem { get; }
+    public IZampliaSettingRepository ZampliaSetting { get; }
+    public IZampliaSyncLogRepository ZampliaSyncLog { get; }
+    public IZampliaSurveyRepository ZampliaSurvey { get; }
+    public IZampliaSurveyQualificationRepository ZampliaSurveyQualification { get; }
+    public IZampliaSurveyQuotaRepository ZampliaSurveyQuota { get; }
+    public IZampliaProjectMapRepository ZampliaProjectMap { get; }
+    public IZampliaEntryLinkRepository ZampliaEntryLink { get; }
+    public IZampliaRespondentAttemptRepository ZampliaRespondentAttempt { get; }
+    public IZampliaReconciliationRunRepository ZampliaReconciliationRun { get; }
+    public IZampliaReconciliationItemRepository ZampliaReconciliationItem { get; }
     int Save();
 }

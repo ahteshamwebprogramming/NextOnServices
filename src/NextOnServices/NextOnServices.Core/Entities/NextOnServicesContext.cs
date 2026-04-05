@@ -78,6 +78,32 @@ public partial class NextOnServicesContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<HashingSetting> HashingSettings { get; set; }
+
+    public virtual DbSet<LucidMarketplaceSetting> LucidMarketplaceSettings { get; set; }
+
+    public virtual DbSet<LucidMarketplaceSubscription> LucidMarketplaceSubscriptions { get; set; }
+
+    public virtual DbSet<LucidMarketplaceSyncLog> LucidMarketplaceSyncLogs { get; set; }
+
+    public virtual DbSet<LucidMarketplaceOpportunity> LucidMarketplaceOpportunities { get; set; }
+
+    public virtual DbSet<LucidMarketplaceOpportunityQualification> LucidMarketplaceOpportunityQualifications { get; set; }
+
+    public virtual DbSet<LucidMarketplaceOpportunityQuota> LucidMarketplaceOpportunityQuotas { get; set; }
+
+    public virtual DbSet<LucidMarketplaceProjectMap> LucidMarketplaceProjectMaps { get; set; }
+
+    public virtual DbSet<LucidMarketplaceEntryLink> LucidMarketplaceEntryLinks { get; set; }
+
+    public virtual DbSet<LucidMarketplaceRespondentAttempt> LucidMarketplaceRespondentAttempts { get; set; }
+
+    public virtual DbSet<LucidMarketplaceRespondentOutcome> LucidMarketplaceRespondentOutcomes { get; set; }
+
+    public virtual DbSet<LucidMarketplaceReconciliationRun> LucidMarketplaceReconciliationRuns { get; set; }
+
+    public virtual DbSet<LucidMarketplaceReconciliationItem> LucidMarketplaceReconciliationItems { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         // Connection string must be configured via AddDbContext (from appsettings) or IDesignTimeDbContextFactory.
@@ -744,6 +770,252 @@ public partial class NextOnServicesContext : DbContext
             entity.Property(e => e.UserType)
                 .HasMaxLength(5)
                 .IsUnicode(false);
+        });
+
+        modelBuilder.Entity<HashingSetting>(entity =>
+        {
+            entity.HasKey(e => e.HashingSettingId).HasName("PK_HashingSetting");
+
+            entity.ToTable("HashingSetting");
+
+            entity.HasIndex(e => e.HashingType, "UX_HashingSetting_HashingType")
+                .IsUnique();
+
+            entity.Property(e => e.HashingType).HasMaxLength(50);
+            entity.Property(e => e.HashingKey).HasMaxLength(500);
+            entity.Property(e => e.IsActive).HasDefaultValueSql("((1))");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<LucidMarketplaceSetting>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceSettingId).HasName("PK_LucidMarketplaceSetting");
+
+            entity.ToTable("LucidMarketplaceSetting");
+
+            entity.Property(e => e.ApiKey).HasMaxLength(500);
+            entity.Property(e => e.BaseUrl).HasMaxLength(500);
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.OpportunitiesCallbackUrl).HasMaxLength(500);
+            entity.Property(e => e.OutcomesCallbackUrl).HasMaxLength(500);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.SupplierLinkTypeCode).HasMaxLength(20);
+            entity.Property(e => e.TrackingTypeCode).HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceSubscription>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceSubscriptionId).HasName("PK_LucidMarketplaceSubscription");
+
+            entity.ToTable("LucidMarketplaceSubscription");
+
+            entity.Property(e => e.CallbackUrl).HasMaxLength(500);
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LastStatus).HasMaxLength(200);
+            entity.Property(e => e.LastValidatedOn).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.RemoteSubscriptionId).HasMaxLength(200);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.SubscriptionType).HasMaxLength(50);
+            entity.Property(e => e.WebhookKeyId).HasMaxLength(100);
+            entity.Property(e => e.WebhookKeyIdFull).HasMaxLength(200);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceSyncLog>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceSyncLogId).HasName("PK_LucidMarketplaceSyncLog");
+
+            entity.ToTable("LucidMarketplaceSyncLog");
+
+            entity.Property(e => e.ActionName).HasMaxLength(100);
+            entity.Property(e => e.CompletedOn).HasColumnType("datetime");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModuleName).HasMaxLength(100);
+            entity.Property(e => e.RequestUrl).HasMaxLength(1000);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.Source).HasMaxLength(50);
+            entity.Property(e => e.StartedOn).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<LucidMarketplaceOpportunity>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceOpportunityId).HasName("PK_LucidMarketplaceOpportunity");
+
+            entity.ToTable("LucidMarketplaceOpportunity");
+
+            entity.Property(e => e.AccountName).HasMaxLength(200);
+            entity.Property(e => e.BidIncidence).HasColumnType("decimal(18,4)");
+            entity.Property(e => e.BidLengthOfInterview).HasColumnType("decimal(18,4)");
+            entity.Property(e => e.CountryLanguageCode).HasMaxLength(50);
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Industry).HasMaxLength(100);
+            entity.Property(e => e.LastSyncedOn).HasColumnType("datetime");
+            entity.Property(e => e.LastVendorUpdatedOn).HasColumnType("datetime");
+            entity.Property(e => e.LocalState).HasMaxLength(50);
+            entity.Property(e => e.MessageReason).HasMaxLength(100);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.RevenueCurrencyCode).HasMaxLength(10);
+            entity.Property(e => e.RevenuePerInterview).HasColumnType("decimal(18,4)");
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.SurveyName).HasMaxLength(500);
+            entity.Property(e => e.SurveyNumber).HasMaxLength(100);
+            entity.Property(e => e.StudyType).HasMaxLength(100);
+            entity.Property(e => e.TargetGroupId).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceOpportunityQualification>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceOpportunityQualificationId).HasName("PK_LucidMarketplaceOpportunityQualification");
+
+            entity.ToTable("LucidMarketplaceOpportunityQualification");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.LogicalOperator).HasMaxLength(50);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.QuestionText).HasMaxLength(500);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceOpportunityQuota>(entity =>
+        {
+            entity.HasKey(e => e.LucidMarketplaceOpportunityQuotaId).HasName("PK_LucidMarketplaceOpportunityQuota");
+
+            entity.ToTable("LucidMarketplaceOpportunityQuota");
+
+            entity.Property(e => e.Conversion).HasColumnType("decimal(18,4)");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.SurveyQuotaType).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceProjectMap>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceProjectMap");
+
+            entity.ToTable("LucidMarketplaceProjectMap");
+
+            entity.Property(e => e.AddedOn)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceEntryLink>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceEntryLink");
+
+            entity.ToTable("LucidMarketplaceEntryLink");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+            entity.Property(e => e.SupplierLinkSid).HasMaxLength(150);
+            entity.Property(e => e.SupplierLinkTypeCode).HasMaxLength(20);
+            entity.Property(e => e.TrackingTypeCode).HasMaxLength(20);
+            entity.Property(e => e.RPIValue).HasColumnType("decimal(18,4)");
+            entity.Property(e => e.RPICurrencyCode).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceRespondentAttempt>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceRespondentAttempt");
+
+            entity.ToTable("LucidMarketplaceRespondentAttempt");
+
+            entity.Property(e => e.AttemptType).HasMaxLength(20);
+            entity.Property(e => e.AttemptedOn).HasColumnType("datetime");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FinalStatus).HasMaxLength(50);
+            entity.Property(e => e.FinalStatusSource).HasMaxLength(50);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.PanelistId).HasMaxLength(150);
+            entity.Property(e => e.ParentSessionId).HasMaxLength(150);
+            entity.Property(e => e.RevenueCurrencyCode).HasMaxLength(10);
+            entity.Property(e => e.RespondentId).HasMaxLength(100);
+            entity.Property(e => e.ReturnCode).HasMaxLength(50);
+            entity.Property(e => e.ReturnStatus).HasMaxLength(50);
+            entity.Property(e => e.SessionId).HasMaxLength(100);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceRespondentOutcome>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceRespondentOutcome");
+
+            entity.ToTable("LucidMarketplaceRespondentOutcome");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FinalStatus).HasMaxLength(50);
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
+            entity.Property(e => e.PanelistId).HasMaxLength(150);
+            entity.Property(e => e.ParentSessionId).HasMaxLength(150);
+            entity.Property(e => e.ReceivedOn).HasColumnType("datetime");
+            entity.Property(e => e.RespondentId).HasMaxLength(150);
+            entity.Property(e => e.RevenueCurrencyCode).HasMaxLength(10);
+            entity.Property(e => e.SessionId).HasMaxLength(150);
+            entity.Property(e => e.Source).HasMaxLength(50);
+            entity.Property(e => e.StudyType).HasMaxLength(100);
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceReconciliationRun>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceReconciliationRun");
+
+            entity.ToTable("LucidMarketplaceReconciliationRun");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.CompletedOn).HasColumnType("datetime");
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.RunType).HasMaxLength(50);
+            entity.Property(e => e.StartedOn).HasColumnType("datetime");
+            entity.Property(e => e.SupplierCode).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<LucidMarketplaceReconciliationItem>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK_LucidMarketplaceReconciliationItem");
+
+            entity.ToTable("LucidMarketplaceReconciliationItem");
+
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FinalStatus).HasMaxLength(50);
+            entity.Property(e => e.FinalStatusSource).HasMaxLength(50);
+            entity.Property(e => e.MismatchType).HasMaxLength(100);
+            entity.Property(e => e.Notes).HasMaxLength(1000);
+            entity.Property(e => e.PanelistId).HasMaxLength(150);
+            entity.Property(e => e.RedirectCode).HasMaxLength(50);
+            entity.Property(e => e.RedirectStatus).HasMaxLength(50);
+            entity.Property(e => e.RevenueCurrencyCode).HasMaxLength(10);
+            entity.Property(e => e.RespondentId).HasMaxLength(150);
+            entity.Property(e => e.SessionId).HasMaxLength(150);
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -1,0 +1,317 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Settings";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/validation.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-settings-page {
+        --vt-lm-theme: #125b50;
+        --vt-lm-theme-dark: #0d4038;
+        --vt-lm-soft: rgba(18, 91, 80, 0.08);
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-settings-page .ref-page-title {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-settings-page .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-settings-page .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-settings-page .vt-form-section {
+        margin-bottom: 0.9rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--vt-lm-border);
+        border-radius: 8px;
+        background: linear-gradient(135deg, #fff 0%, var(--vt-lm-soft) 100%);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: var(--vt-lm-theme-dark);
+    }
+
+    .vt-lm-settings-page .form-control,
+    .vt-lm-settings-page textarea.form-control {
+        border-radius: 8px;
+        border: 1px solid #dbe3ea;
+    }
+
+    .vt-lm-settings-page .form-control:focus {
+        border-color: var(--vt-lm-theme);
+        box-shadow: 0 0 0 2px rgba(18, 91, 80, 0.12);
+    }
+
+    .vt-lm-settings-page .input-group .btn {
+        border-radius: 0 8px 8px 0;
+        border: 1px solid #dbe3ea;
+        border-left: 0;
+        color: var(--vt-lm-theme-dark);
+        background: #f8fafc;
+    }
+
+    .vt-lm-settings-page .input-group .btn:focus {
+        box-shadow: 0 0 0 2px rgba(18, 91, 80, 0.12);
+    }
+
+    .vt-lm-settings-page .select2-container {
+        width: 100% !important;
+    }
+
+    .vt-lm-settings-page .switch-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 38px;
+    }
+
+    .vt-lm-settings-page .required::after {
+        content: " *";
+        color: #dc2626;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-settings-page">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Settings</h1>
+        <p class="ref-subtitle">Store the base configuration for the new Lucid Marketplace module and keep it separate from legacy Lucid Offerwall settings.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Configuration</h4>
+                    <form id="LucidMarketplaceSettingsForm" class="forms-sample">
+                        <div class="vt-form-section">API Settings</div>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label class="required">Base URL</label>
+                                <input asp-for="Setting.BaseUrl" class="form-control form-control-sm requiredInput" />
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="required">API Key</label>
+                                <div class="input-group input-group-sm">
+                                    <input asp-for="Setting.ApiKey" type="password" class="form-control form-control-sm" autocomplete="new-password" />
+                                    <div class="input-group-append">
+                                        <button type="button"
+                                                class="btn btn-light"
+                                                id="toggleLucidMarketplaceApiKey"
+                                                aria-label="Show password"
+                                                aria-pressed="false"
+                                                title="Show password">
+                                            <span class="mdi mdi-eye" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Leave blank to keep existing API key.</small>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label class="required">Supplier Code</label>
+                                <input asp-for="Setting.SupplierCode" class="form-control form-control-sm requiredInput" />
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="required">Opportunities Callback URL</label>
+                                <input asp-for="Setting.OpportunitiesCallbackUrl" class="form-control form-control-sm" />
+                                <small class="text-muted d-block mt-1">Required for Opportunities subscription.</small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label class="required">Outcomes Callback URL</label>
+                                <input asp-for="Setting.OutcomesCallbackUrl" class="form-control form-control-sm" />
+                                <small class="text-muted d-block mt-1">Required for Outcomes subscription.</small>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Behavior</div>
+                        <div class="row">
+                            <div class="form-group col-md-3">
+                                <label>Supplier Link Type</label>
+                                <select asp-for="Setting.SupplierLinkTypeCode" class="form-control form-control-sm">
+                                    <option value="">-- Default (OWS) --</option>
+                                    <option value="OWS">OWS</option>
+                                    <option value="TS">TS</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Tracking Type</label>
+                                <select asp-for="Setting.TrackingTypeCode" class="form-control form-control-sm">
+                                    <option value="">-- Default (NONE) --</option>
+                                    <option value="NONE">NONE</option>
+                                    <option value="PIXEL">PIXEL</option>
+                                    <option value="S2S">S2S</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Use Consultings Bridge</label>
+                                <div class="switch-wrap"><input asp-for="Setting.UseConsultingsBridge" type="checkbox" /><span>Route external calls through Consultings</span></div>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Auto Sync Enabled</label>
+                                <div class="switch-wrap"><input asp-for="Setting.AutoSyncEnabled" type="checkbox" /><span>Enable scheduled sync foundation</span></div>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Sync Interval Minutes</label>
+                                <input asp-for="Setting.SyncIntervalMinutes" class="form-control form-control-sm" type="number" min="1" />
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Is Active</label>
+                                <div class="switch-wrap"><input asp-for="Setting.IsActive" type="checkbox" /><span>Enable the Lucid Marketplace module</span></div>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Defaults</div>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label>Default Client</label>
+                                <select asp-for="Setting.DefaultClientId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Client --</option>
+                                    @foreach (var client in Model.Clients)
+                                    {
+                                        <option value="@client.ClientId">@client.Company</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Default Country</label>
+                                <select asp-for="Setting.DefaultCountryId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Country --</option>
+                                    @foreach (var country in Model.Countries)
+                                    {
+                                        <option value="@country.CountryId">@country.Country</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Default Supplier</label>
+                                <select asp-for="Setting.DefaultSupplierId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Supplier --</option>
+                                    @foreach (var supplier in Model.Suppliers.Where(x => x.IsActive == 1))
+                                    {
+                                        <option value="@supplier.Id">@supplier.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <input asp-for="Setting.LucidMarketplaceSettingId" type="hidden" />
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="saveLucidMarketplaceSettings()">Save Settings</button>
+                            <button type="button" class="btn btn-info btn-sm mr-2" onclick="testLucidMarketplaceConnectivity()">Test Connectivity</button>
+                            <a class="btn btn-light btn-sm" href="/VT/LucidMarketplace/Dashboard">Back to Dashboard</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/customJS/Validation.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            $(".select2").select2({
+                dropdownCssClass: 'vt-theme-dropdown',
+                width: '100%'
+            });
+
+            $("#toggleLucidMarketplaceApiKey").on("click", function () {
+                const $button = $(this);
+                const $icon = $button.find(".mdi");
+                const $input = $("#Setting_ApiKey");
+                const showValue = $input.attr("type") === "password";
+
+                $input.attr("type", showValue ? "text" : "password");
+                $button.attr("aria-pressed", showValue ? "true" : "false");
+                $button.attr("aria-label", showValue ? "Hide password" : "Show password");
+                $button.attr("title", showValue ? "Hide password" : "Show password");
+                $icon.toggleClass("mdi-eye", !showValue);
+                $icon.toggleClass("mdi-eye-off", showValue);
+            });
+        });
+
+        function buildSettingsPayload() {
+            const $form = $("#LucidMarketplaceSettingsForm");
+            return {
+                lucidMarketplaceSettingId: parseInt($form.find("[name='Setting.LucidMarketplaceSettingId']").val() || "0"),
+                baseUrl: $form.find("[name='Setting.BaseUrl']").val(),
+                apiKey: $form.find("[name='Setting.ApiKey']").val(),
+                supplierCode: $form.find("[name='Setting.SupplierCode']").val(),
+                opportunitiesCallbackUrl: $form.find("[name='Setting.OpportunitiesCallbackUrl']").val(),
+                outcomesCallbackUrl: $form.find("[name='Setting.OutcomesCallbackUrl']").val(),
+                supplierLinkTypeCode: $form.find("[name='Setting.SupplierLinkTypeCode']").val(),
+                trackingTypeCode: $form.find("[name='Setting.TrackingTypeCode']").val(),
+                useConsultingsBridge: $form.find("[name='Setting.UseConsultingsBridge']").is(":checked"),
+                autoSyncEnabled: $form.find("[name='Setting.AutoSyncEnabled']").is(":checked"),
+                syncIntervalMinutes: parseInt($form.find("[name='Setting.SyncIntervalMinutes']").val() || "0") || null,
+                defaultClientId: parseInt($form.find("[name='Setting.DefaultClientId']").val() || "0") || null,
+                defaultCountryId: parseInt($form.find("[name='Setting.DefaultCountryId']").val() || "0") || null,
+                defaultSupplierId: parseInt($form.find("[name='Setting.DefaultSupplierId']").val() || "0") || null,
+                isActive: $form.find("[name='Setting.IsActive']").is(":checked")
+            };
+        }
+
+        function saveLucidMarketplaceSettings() {
+            if (!isValidateForm("LucidMarketplaceSettingsForm")) {
+                return;
+            }
+
+            const payload = buildSettingsPayload();
+            if (payload.lucidMarketplaceSettingId <= 0 && !(payload.apiKey || "").trim()) {
+                Swal.fire("Required", "Enter an API key before saving new Lucid Marketplace settings.", "warning");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/SaveSettings",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function () {
+                    Swal.fire({ title: "Success", text: "Lucid Marketplace settings saved successfully.", icon: "success" })
+                        .then(function () { window.location.reload(); });
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseText || "Unable to save settings right now.", "error");
+                }
+            });
+        }
+
+        function testLucidMarketplaceConnectivity() {
+            const payload = buildSettingsPayload();
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/TestConnectivity",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    baseUrl: payload.baseUrl,
+                    apiKey: payload.apiKey,
+                    supplierCode: payload.supplierCode,
+                    useConsultingsBridge: payload.useConsultingsBridge
+                }),
+                success: function (response) {
+                    Swal.fire(response.result ? "Connected" : "Not Connected", response.message || "Connectivity test completed.", response.result ? "success" : "info");
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseText || "Connectivity test failed.", "error");
+                }
+            });
+        }
+    </script>
+}

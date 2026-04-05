@@ -1,0 +1,359 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel
+@{
+    ViewData["Title"] = "Lucid Marketplace Opportunity Details";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var opportunity = Model.Opportunity;
+    var entryLink = Model.EntryLink;
+    var hasMappedProject = opportunity.IsMapped && opportunity.InternalProjectId.HasValue && opportunity.InternalProjectMappingId.HasValue;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-lm-opportunity-details {
+        --vt-lm-theme: #125b50;
+        --vt-lm-border: rgba(18, 91, 80, 0.2);
+    }
+
+    .vt-lm-opportunity-details .card--table-section {
+        border: 1px solid var(--vt-lm-border);
+        box-shadow: 0 8px 22px rgba(18, 91, 80, 0.08);
+    }
+
+    .vt-lm-opportunity-details .table-section-header {
+        border-left-color: var(--vt-lm-theme);
+    }
+
+    .vt-lm-kv {
+        margin-bottom: 1rem;
+    }
+
+    .vt-lm-kv .label {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+    }
+
+    .vt-lm-kv .value {
+        font-size: 0.95rem;
+        color: #0f172a;
+        word-break: break-word;
+    }
+
+    .vt-lm-json {
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 420px;
+        overflow-y: auto;
+        background: #f8fafc;
+        border: 1px solid #dbe3ea;
+        border-radius: 8px;
+        padding: 0.85rem;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-opportunity-details">
+    <div class="ref-page-title">
+        <h1>Lucid Marketplace Opportunity Details</h1>
+        <p class="ref-subtitle">Survey ID @opportunity.SurveyId with stored qualifications, quotas, callback payload, and recent sync activity.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Basic Information</h4>
+                        <div>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/LucidMarketplace/Opportunities">Back to Opportunities</a>
+                            <a class="btn btn-outline-dark btn-sm" href="/VT/LucidMarketplace/Outcomes">Open Outcomes</a>
+                            <a class="btn btn-outline-primary btn-sm ml-2" href="/VT/LucidMarketplace/Reconciliation?surveyId=@opportunity.SurveyId@(opportunity.InternalProjectId.HasValue ? $"&internalProjectId={opportunity.InternalProjectId.Value}" : string.Empty)">Open Reconciliation</a>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Survey ID</div><div class="value">@opportunity.SurveyId</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Survey Name</div><div class="value">@opportunity.SurveyName</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Country-Language</div><div class="value">@opportunity.CountryLanguageCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Study Type</div><div class="value">@opportunity.StudyType</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Industry</div><div class="value">@opportunity.Industry</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">CPI</div><div class="value">@(opportunity.RevenuePerInterview?.ToString("0.##") ?? "-") @opportunity.RevenueCurrencyCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">IR</div><div class="value">@(opportunity.BidIncidence?.ToString("0.##") ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">LOI</div><div class="value">@(opportunity.BidLengthOfInterview?.ToString("0.##") ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Total Remaining</div><div class="value">@(opportunity.TotalRemaining?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Is Live</div><div class="value">@((opportunity.IsLive ?? false) ? "Yes" : "No")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Recontact Count</div><div class="value">@(opportunity.RecontactCount?.ToString() ?? "0")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Survey Group IDs</div><div class="value">@(!string.IsNullOrWhiteSpace(opportunity.SurveyGroupIdsJson) ? opportunity.SurveyGroupIdsJson : "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Message Reason</div><div class="value">@opportunity.MessageReason</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Local State</div><div class="value">@opportunity.LocalState</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Last Synced</div><div class="value">@opportunity.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Entry Link & Launch</h4>
+                        <div>
+                            @if (hasMappedProject)
+                            {
+                                <button type="button" class="btn btn-primary btn-sm mr-2" onclick="generateEntryLink(@opportunity.LucidMarketplaceOpportunityId, 'Live')">Generate Live Link</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="generateEntryLink(@opportunity.LucidMarketplaceOpportunityId, 'Test')">Generate Test Link</button>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary btn-sm" disabled>Map Project First</button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Mapped Project</div><div class="value">@(opportunity.InternalProjectId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Project URL Id</div><div class="value">@(opportunity.InternalProjectUrlId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Project Mapping Id</div><div class="value">@(opportunity.InternalProjectMappingId?.ToString() ?? "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Link Record</div><div class="value">@(entryLink.Id > 0 ? $"Saved #{entryLink.Id}" : "Not generated yet")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Supplier Link Type</div><div class="value">@(!string.IsNullOrWhiteSpace(entryLink.SupplierLinkTypeCode) ? entryLink.SupplierLinkTypeCode : "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Tracking Type</div><div class="value">@(!string.IsNullOrWhiteSpace(entryLink.TrackingTypeCode) ? entryLink.TrackingTypeCode : "-")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Live Link</div><div class="value">@(!string.IsNullOrWhiteSpace(entryLink.LiveLink) ? "Available" : "Not available")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Test Link</div><div class="value">@(!string.IsNullOrWhiteSpace(entryLink.TestLink) ? "Available" : "Not available")</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">RPI</div><div class="value">@(entryLink.RPIValue?.ToString("0.####") ?? "-") @entryLink.RPICurrencyCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">Last Updated</div><div class="value">@entryLink.ModifiedDate?.ToString("dd MMM yyyy hh:mm tt")</div></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="label mb-2">Live Link Snapshot</div>
+                            <div class="vt-lm-json" style="max-height:140px;">@(!string.IsNullOrWhiteSpace(entryLink.LiveLink) ? entryLink.LiveLink : "No live supplier link is stored yet.")</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="label mb-2">Test Link Snapshot</div>
+                            <div class="vt-lm-json" style="max-height:140px;">@(!string.IsNullOrWhiteSpace(entryLink.TestLink) ? entryLink.TestLink : "No test supplier link is stored yet.")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Qualifications</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Question ID</th>
+                                    <th>Operator</th>
+                                    <th>Precodes</th>
+                                    <th>Raw JSON</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.OpportunityQualifications.Any())
+                                {
+                                    foreach (var item in Model.OpportunityQualifications)
+                                    {
+                                        <tr>
+                                            <td>@item.QuestionId</td>
+                                            <td>@item.LogicalOperator</td>
+                                            <td>@item.PrecodesJson</td>
+                                            <td><div class="vt-lm-json" style="max-height:120px;">@item.RawJson</div></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-3">No qualifications were stored for this opportunity.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Quotas</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Quota ID</th>
+                                    <th>Quota Type</th>
+                                    <th>Conversion</th>
+                                    <th>Respondents</th>
+                                    <th>Questions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.OpportunityQuotas.Any())
+                                {
+                                    foreach (var item in Model.OpportunityQuotas)
+                                    {
+                                        <tr>
+                                            <td>@item.SurveyQuotaId</td>
+                                            <td>@item.SurveyQuotaType</td>
+                                            <td>@(item.Conversion?.ToString("0.####") ?? "-")</td>
+                                            <td>@(item.NumberOfRespondents?.ToString() ?? "-")</td>
+                                            <td><div class="vt-lm-json" style="max-height:120px;">@(!string.IsNullOrWhiteSpace(item.QuestionsJson) ? item.QuestionsJson : item.RawJson)</div></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="5" class="text-center text-muted py-3">No quotas were stored for this opportunity.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Raw JSON Snapshot</h4>
+                    <div class="vt-lm-json mt-3">@opportunity.RawJson</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Recent Sync Logs</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>Status</th>
+                                    <th>Started On</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.OpportunityLogs.Any())
+                                {
+                                    foreach (var item in Model.OpportunityLogs)
+                                    {
+                                        <tr>
+                                            <td>@item.ActionName</td>
+                                            <td>@(item.IsSuccess ? "Success" : "Failed")</td>
+                                            <td>@item.StartedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.ErrorText</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-3">No related sync logs are available yet.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Recent Respondent Attempts</h4>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Attempted On</th>
+                                    <th>Attempt Type</th>
+                                    <th>Respondent</th>
+                                    <th>Session / MID</th>
+                                    <th>Redirect Return</th>
+                                    <th>Final Status</th>
+                                    <th>Final Source</th>
+                                    <th>Marketplace / Client</th>
+                                    <th>Flags</th>
+                                    <th>Launch URL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RespondentAttempts.Any())
+                                {
+                                    foreach (var item in Model.RespondentAttempts)
+                                    {
+                                        var flagText = item.IsCompleted
+                                            ? "Complete"
+                                            : item.IsOverQuota
+                                                ? "OverQuota"
+                                                : item.IsQualityTermination
+                                                    ? "Quality"
+                                                    : item.IsTerminated
+                                                        ? "Terminate"
+                                                        : "Open";
+                                        <tr>
+                                            <td>@item.AttemptedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
+                                            <td>@item.AttemptType</td>
+                                            <td>@item.RespondentId</td>
+                                            <td>@item.SessionId</td>
+                                            <td>@item.ReturnStatus @item.ReturnCode</td>
+                                            <td>@item.FinalStatus</td>
+                                            <td>@item.FinalStatusSource</td>
+                                            <td>@item.MarketplaceStatus / @item.ClientStatus</td>
+                                            <td>@flagText</td>
+                                            <td><div class="vt-lm-json" style="max-height:100px;">@item.LaunchUrl</div></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="9" class="text-center text-muted py-3">No Lucid Marketplace respondent launches have been recorded yet.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function generateEntryLink(opportunityId, attemptType) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/GenerateEntryLinkFromOpportunity",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    lucidMarketplaceOpportunityId: opportunityId,
+                    attemptType: attemptType,
+                    forceRefresh: true
+                }),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Lucid Marketplace entry link generated.", "success")
+                            .then(function () { window.location.reload(); });
+                        return;
+                    }
+
+                    Swal.fire("Error", response.message || "Unable to generate the Lucid Marketplace entry link.", "error");
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to generate the Lucid Marketplace entry link.", "error");
+                }
+            });
+        }
+    </script>
+}

@@ -1,0 +1,205 @@
+@using System.Linq
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.ZampliaViewModel
+@{
+    ViewData["Title"] = "Zamplia Settings";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+}
+
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/validation.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-zam-settings .card--table-section { border: 1px solid rgba(29,79,145,.18); box-shadow: 0 10px 24px rgba(29,79,145,.08); }
+    .vt-zam-settings .table-section-header { border-left-color: #1d4f91; }
+    .vt-zam-settings .vt-form-section { margin-bottom: .9rem; padding: .55rem .8rem; border-radius: 10px; border: 1px solid rgba(29,79,145,.18); background: linear-gradient(135deg,#fff 0%,rgba(29,79,145,.07) 100%); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #143b6d; }
+    .vt-zam-settings .form-control { border-radius: 10px; border-color: #d7e1ed; }
+    .vt-zam-settings .select2-container { width: 100% !important; }
+    .vt-zam-settings .switch-wrap { display: flex; align-items: center; gap: .6rem; min-height: 38px; }
+    .vt-zam-settings .required::after { content: " *"; color: #dc2626; }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-zam-settings">
+    <div class="ref-page-title">
+        <h1>Zamplia Settings</h1>
+        <p class="ref-subtitle">Store the isolated Zamplia supply configuration, default VT mapping values, and bridge behavior for the new module.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <h4 class="table-section-header">Configuration</h4>
+                    <form id="ZampliaSettingsForm" class="forms-sample">
+                        <div class="vt-form-section">API Settings</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label class="required">Base URL</label>
+                                <input asp-for="Setting.BaseUrl" class="form-control form-control-sm requiredInput" placeholder="https://surveysupplysandbox.zamplia.com" />
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label class="required">API Key</label>
+                                <div class="input-group input-group-sm">
+                                    <input asp-for="Setting.ApiKey" type="password" class="form-control" autocomplete="new-password" />
+                                    <div class="input-group-append"><button type="button" class="btn btn-light" id="toggleZampliaApiKey"><span class="mdi mdi-eye"></span></button></div>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label>Exit HMAC Key</label>
+                                <div class="input-group input-group-sm">
+                                    <input asp-for="Setting.ExitHmacKey" type="password" class="form-control" autocomplete="new-password" />
+                                    <div class="input-group-append"><button type="button" class="btn btn-light" id="toggleZampliaHmacKey"><span class="mdi mdi-eye"></span></button></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Behavior</div>
+                        <div class="row">
+                            <div class="form-group col-md-3"><label>Use Consultings Bridge</label><div class="switch-wrap"><input asp-for="Setting.UseConsultingsBridge" type="checkbox" /><span>Route external calls through Consultings</span></div></div>
+                            <div class="form-group col-md-3"><label>Auto Sync Enabled</label><div class="switch-wrap"><input asp-for="Setting.AutoSyncEnabled" type="checkbox" /><span>Enable scheduled sync foundation</span></div></div>
+                            <div class="form-group col-md-3"><label>Sync Interval Minutes</label><input asp-for="Setting.SyncIntervalMinutes" type="number" min="1" class="form-control form-control-sm" /></div>
+                            <div class="form-group col-md-3"><label>Is Active</label><div class="switch-wrap"><input asp-for="Setting.IsActive" type="checkbox" /><span>Enable the Zamplia module</span></div></div>
+                        </div>
+
+                        <div class="vt-form-section">Default Mapping</div>
+                        <div class="row">
+                            <div class="form-group col-md-4">
+                                <label>Default Client</label>
+                                <select asp-for="Setting.DefaultClientId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Client --</option>
+                                    @foreach (var client in Model.Clients.Where(x => x.IsActive == 1 || x.IsActive == null))
+                                    {
+                                        <option value="@client.ClientId">@client.Company</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Default Country</label>
+                                <select asp-for="Setting.DefaultCountryId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Country --</option>
+                                    @foreach (var country in Model.Countries)
+                                    {
+                                        <option value="@country.CountryId">@country.Country</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Default Supplier</label>
+                                <select asp-for="Setting.DefaultSupplierId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Supplier --</option>
+                                    @foreach (var supplier in Model.Suppliers.Where(x => x.IsActive == 1 || x.IsActive == null))
+                                    {
+                                        <option value="@supplier.Id">@supplier.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <input asp-for="Setting.ZampliaSettingId" type="hidden" />
+
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="saveZampliaSettings()">Save Settings</button>
+                            <button type="button" class="btn btn-info btn-sm mr-2" onclick="testZampliaConnectivity()">Test Connectivity</button>
+                            <button type="button" class="btn btn-success btn-sm mr-2" onclick="syncAllocatedSurveys()">Sync Allocated Surveys</button>
+                            <a class="btn btn-light btn-sm" href="/VT/Zamplia">Back to Dashboard</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/customJS/Validation.js" asp-append-version="true"></script>
+    <script>
+        $(document).ready(function () {
+            $(".select2").select2({ dropdownCssClass: "vt-theme-dropdown", width: "100%" });
+            bindPasswordToggle("#toggleZampliaApiKey", "#Setting_ApiKey");
+            bindPasswordToggle("#toggleZampliaHmacKey", "#Setting_ExitHmacKey");
+        });
+
+        function bindPasswordToggle(buttonSelector, inputSelector) {
+            $(buttonSelector).on("click", function () {
+                const $button = $(this);
+                const $icon = $button.find(".mdi");
+                const $input = $(inputSelector);
+                const reveal = $input.attr("type") === "password";
+                $input.attr("type", reveal ? "text" : "password");
+                $icon.toggleClass("mdi-eye", !reveal);
+                $icon.toggleClass("mdi-eye-off", reveal);
+            });
+        }
+
+        function buildSettingsPayload() {
+            const $form = $("#ZampliaSettingsForm");
+            return {
+                zampliaSettingId: parseInt($form.find("[name='Setting.ZampliaSettingId']").val() || "0", 10),
+                baseUrl: $form.find("[name='Setting.BaseUrl']").val(),
+                apiKey: $form.find("[name='Setting.ApiKey']").val(),
+                exitHmacKey: $form.find("[name='Setting.ExitHmacKey']").val(),
+                useConsultingsBridge: $form.find("[name='Setting.UseConsultingsBridge']").is(":checked"),
+                autoSyncEnabled: $form.find("[name='Setting.AutoSyncEnabled']").is(":checked"),
+                syncIntervalMinutes: parseNullableInt($form.find("[name='Setting.SyncIntervalMinutes']").val()),
+                defaultClientId: parseNullableInt($form.find("[name='Setting.DefaultClientId']").val()),
+                defaultCountryId: parseNullableInt($form.find("[name='Setting.DefaultCountryId']").val()),
+                defaultSupplierId: parseNullableInt($form.find("[name='Setting.DefaultSupplierId']").val()),
+                isActive: $form.find("[name='Setting.IsActive']").is(":checked")
+            };
+        }
+
+        function saveZampliaSettings() {
+            if (!isValidateForm("ZampliaSettingsForm")) { return; }
+            const payload = buildSettingsPayload();
+            if (payload.zampliaSettingId <= 0 && !(payload.apiKey || "").trim()) {
+                Swal.fire("Required", "Enter an API key before saving new Zamplia settings.", "warning");
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/SaveSettings",
+                contentType: "application/json",
+                data: JSON.stringify(payload),
+                success: function () { Swal.fire("Success", "Zamplia settings saved successfully.", "success").then(function () { window.location.reload(); }); },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to save Zamplia settings.", "error"); }
+            });
+        }
+
+        function testZampliaConnectivity() {
+            const payload = buildSettingsPayload();
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/TestConnectivity",
+                contentType: "application/json",
+                data: JSON.stringify({ baseUrl: payload.baseUrl, apiKey: payload.apiKey, useConsultingsBridge: payload.useConsultingsBridge }),
+                success: function (response) { Swal.fire(response.result ? "Connected" : "Not Connected", response.message || "Connectivity test completed.", response.result ? "success" : "info"); },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Connectivity test failed.", "error"); }
+            });
+        }
+
+        function syncAllocatedSurveys() {
+            $.ajax({
+                type: "POST",
+                url: "/VT/ZampliaApi/SyncAllocatedSurveys",
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Allocated surveys synced successfully.", "success").then(function () { window.location.href = "/VT/Zamplia/Surveys"; });
+                        return;
+                    }
+
+                    const errors = response.errors && response.errors.length ? response.errors.join("\n") : (response.message || "Allocated survey sync failed.");
+                    Swal.fire("Attention", errors, "warning");
+                },
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Allocated survey sync failed.", "error"); }
+            });
+        }
+
+        function parseNullableInt(value) {
+            if (!value) { return null; }
+            const parsed = parseInt(value, 10);
+            return isNaN(parsed) || parsed <= 0 ? null : parsed;
+        }
+    </script>
+}
