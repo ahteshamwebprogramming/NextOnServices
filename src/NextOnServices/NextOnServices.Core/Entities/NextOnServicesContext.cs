@@ -819,6 +819,9 @@ public partial class NextOnServicesContext : DbContext
 
             entity.Property(e => e.SurveysUrl).HasMaxLength(1000);
             entity.Property(e => e.SecretKey).HasMaxLength(500);
+            entity.Property(e => e.DefaultClientId).HasColumnName("DefaultClientId");
+            entity.Property(e => e.RespondentIdUrlParts).HasMaxLength(2000);
+            entity.Property(e => e.RespondentPanelistIdUrlParts).HasMaxLength(2000);
             entity.Property(e => e.DefaultSupplierIds).HasMaxLength(1000);
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")

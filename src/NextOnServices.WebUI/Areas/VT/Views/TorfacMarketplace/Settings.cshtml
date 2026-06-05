@@ -102,6 +102,17 @@
 
                         <div class="vt-form-section">Default Mapping</div>
                         <div class="row">
+                            <div class="form-group col-md-4">
+                                <label>Default Client</label>
+                                <select asp-for="Setting.DefaultClientId" class="form-control form-control-sm select2">
+                                    <option value="">-- Select Client --</option>
+                                    @foreach (var client in Model.Clients.Where(x => x.IsActive == 1 || x.IsActive == null))
+                                    {
+                                        <option value="@client.ClientId">@client.Company</option>
+                                    }
+                                </select>
+                                <small class="text-muted d-block mt-2">When a Torfac project is added, this client will be assigned automatically if one is selected here.</small>
+                            </div>
                             <div class="form-group col-md-8">
                                 <label>Default Suppliers</label>
                                 <select asp-for="Setting.DefaultSupplierIds" class="form-control form-control-sm select2" multiple>
@@ -111,6 +122,20 @@
                                     }
                                 </select>
                                 <small class="text-muted d-block mt-2">When a Torfac project is added, one supplier mapping is created for each selected supplier. Mapping CPI uses 40% of the project CPI and mapping quota matches the project quota.</small>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Entry Link Mapping</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>[respondentID]</label>
+                                <input asp-for="Setting.RespondentIdUrlParts" class="form-control form-control-sm" placeholder="[#scid#]&uid=[#scid2#],[%%tid%%]" />
+                                <small class="text-muted d-block mt-2">Enter comma-separated Torfac URL parts that should be converted to <code>[respondentID]</code> when the project link is saved.</small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>[respondentpanelistID]</label>
+                                <input asp-for="Setting.RespondentPanelistIdUrlParts" class="form-control form-control-sm" placeholder="[%%pid%%],[%pid%]" />
+                                <small class="text-muted d-block mt-2">Enter comma-separated Torfac URL parts that should be converted to <code>[respondentpanelistID]</code> when the project link is saved.</small>
                             </div>
                         </div>
 
@@ -144,9 +169,22 @@
                 torfacMarketplaceSettingId: parseInt($form.find("[name='Setting.TorfacMarketplaceSettingId']").val() || "0", 10),
                 surveysUrl: $form.find("[name='Setting.SurveysUrl']").val(),
                 secretKey: $form.find("[name='Setting.SecretKey']").val(),
+                defaultClientId: parseNullableInt($form.find("[name='Setting.DefaultClientId']").val()),
+                respondentIdUrlParts: normalizeNullableText($form.find("[name='Setting.RespondentIdUrlParts']").val()),
+                respondentPanelistIdUrlParts: normalizeNullableText($form.find("[name='Setting.RespondentPanelistIdUrlParts']").val()),
                 defaultSupplierIds: parseIntArray($form.find("[name='Setting.DefaultSupplierIds']").val()),
                 isActive: $form.find("[name='Setting.IsActive']").is(":checked")
             };
+        }
+
+        function parseNullableInt(value) {
+            const parsedValue = parseInt(value || "", 10);
+            return isNaN(parsedValue) || parsedValue <= 0 ? null : parsedValue;
+        }
+
+        function normalizeNullableText(value) {
+            const normalizedValue = (value || "").trim();
+            return normalizedValue ? normalizedValue : null;
         }
 
         function parseIntArray(values) {

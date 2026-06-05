@@ -12,6 +12,12 @@ public class TorfacMarketplaceSettingDTO
 
     public string? SecretKey { get; set; }
 
+    public int? DefaultClientId { get; set; }
+
+    public string? RespondentIdUrlParts { get; set; }
+
+    public string? RespondentPanelistIdUrlParts { get; set; }
+
     public List<int> DefaultSupplierIds { get; set; } = new();
 
     public bool IsActive { get; set; } = true;

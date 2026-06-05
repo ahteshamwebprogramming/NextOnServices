@@ -13,6 +13,12 @@ public class TorfacMarketplaceSetting
 
     public string? SecretKey { get; set; }
 
+    public int? DefaultClientId { get; set; }
+
+    public string? RespondentIdUrlParts { get; set; }
+
+    public string? RespondentPanelistIdUrlParts { get; set; }
+
     public string? DefaultSupplierIds { get; set; }
 
     public bool IsActive { get; set; }

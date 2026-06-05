@@ -55,6 +55,9 @@ public class TorfacMarketplaceAPIController : ControllerBase
             {
                 SurveysUrl = inputData.SurveysUrl.Trim(),
                 SecretKey = inputData.SecretKey.Trim(),
+                DefaultClientId = inputData.DefaultClientId,
+                RespondentIdUrlParts = NormalizeMappingText(inputData.RespondentIdUrlParts),
+                RespondentPanelistIdUrlParts = NormalizeMappingText(inputData.RespondentPanelistIdUrlParts),
                 DefaultSupplierIds = SerializeSupplierIds(normalizedSupplierIds),
                 IsActive = inputData.IsActive,
                 CreatedBy = inputData.CreatedBy,
@@ -78,6 +81,9 @@ public class TorfacMarketplaceAPIController : ControllerBase
             current.SecretKey = inputData.SecretKey.Trim();
         }
 
+        current.DefaultClientId = inputData.DefaultClientId;
+        current.RespondentIdUrlParts = NormalizeMappingText(inputData.RespondentIdUrlParts);
+        current.RespondentPanelistIdUrlParts = NormalizeMappingText(inputData.RespondentPanelistIdUrlParts);
         current.DefaultSupplierIds = SerializeSupplierIds(normalizedSupplierIds);
         current.IsActive = inputData.IsActive;
         current.ModifiedDate = DateTime.Now;
@@ -117,6 +123,9 @@ public class TorfacMarketplaceAPIController : ControllerBase
             TorfacMarketplaceSettingId = entity.TorfacMarketplaceSettingId,
             SurveysUrl = entity.SurveysUrl,
             SecretKey = entity.SecretKey,
+            DefaultClientId = entity.DefaultClientId,
+            RespondentIdUrlParts = entity.RespondentIdUrlParts,
+            RespondentPanelistIdUrlParts = entity.RespondentPanelistIdUrlParts,
             DefaultSupplierIds = ParseSupplierIds(entity.DefaultSupplierIds),
             IsActive = entity.IsActive,
             CreatedDate = entity.CreatedDate,
@@ -156,5 +165,12 @@ public class TorfacMarketplaceAPIController : ControllerBase
         return normalizedSupplierIds.Count > 0
             ? string.Join(",", normalizedSupplierIds)
             : null;
+    }
+
+    private static string? NormalizeMappingText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim();
     }
 }

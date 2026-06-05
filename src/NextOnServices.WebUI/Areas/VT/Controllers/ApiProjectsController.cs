@@ -923,11 +923,14 @@ public class ApiProjectsController : Controller
         return sourceCpi;
     }
 
-    private async Task<(List<int> SupplierIds, string? ErrorMessage)> ResolveSupplierIdsForVendorAsync(string vendorKey, int? requestedSupplierId)
+    private async Task<(List<int> SupplierIds, string? ErrorMessage)> ResolveSupplierIdsForVendorAsync(
+        string vendorKey,
+        int? requestedSupplierId,
+        TorfacMarketplaceSettingDTO? torfacSetting = null)
     {
         if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
         {
-            var setting = await GetTorfacMarketplaceSettingAsync();
+            var setting = torfacSetting ?? await GetTorfacMarketplaceSettingAsync();
             var supplierIds = setting?.DefaultSupplierIds?
                 .Where(supplierId => supplierId > 0)
                 .Distinct()
@@ -949,6 +952,28 @@ public class ApiProjectsController : Controller
         return (new List<int> { supplierId }, null);
     }
 
+    private async Task<int?> ResolveClientIdForVendorAsync(
+        string vendorKey,
+        int? requestedClientId,
+        TorfacMarketplaceSettingDTO? torfacSetting = null)
+    {
+        if (requestedClientId.HasValue && requestedClientId.Value > 0)
+        {
+            return requestedClientId.Value;
+        }
+
+        if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+        {
+            var setting = torfacSetting ?? await GetTorfacMarketplaceSettingAsync();
+            if (setting?.DefaultClientId.HasValue == true && setting.DefaultClientId.Value > 0)
+            {
+                return setting.DefaultClientId.Value;
+            }
+        }
+
+        return null;
+    }
+
     private async Task<TorfacMarketplaceSettingDTO?> GetTorfacMarketplaceSettingAsync()
     {
         var result = await _torfacMarketplaceAPIController.GetTorfacMarketplaceSetting();
@@ -965,27 +990,79 @@ public class ApiProjectsController : Controller
             : defaultMessage;
     }
 
-    private static string NormalizeVendorLiveLink(string? liveLink, string vendorKey)
+    private static string NormalizeVendorLiveLink(string? liveLink, string vendorKey, TorfacMarketplaceSettingDTO? torfacSetting = null)
     {
         if (string.IsNullOrWhiteSpace(liveLink))
         {
             return string.Empty;
         }
 
-        var normalizedLink = liveLink
-            .Replace("[#scid#]&uid=[#scid2#]", "[respondentID]", StringComparison.OrdinalIgnoreCase);
+        var normalizedLink = liveLink;
 
         if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
         {
+            normalizedLink = ApplyConfiguredTorfacPlaceholderMappings(normalizedLink, torfacSetting);
+        }
+        else
+        {
             normalizedLink = normalizedLink
-                .Replace("[%%tid%%]", "[respondentID]", StringComparison.OrdinalIgnoreCase)
-                .Replace("[%tid%]", "[respondentID]", StringComparison.OrdinalIgnoreCase)
-                .Replace("[%%pid%%]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase)
-                .Replace("[%pid%]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase)
-                .Replace("[pid]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase);
+                .Replace("[#scid#]&uid=[#scid2#]", "[respondentID]", StringComparison.OrdinalIgnoreCase);
         }
 
         return normalizedLink;
+    }
+
+    private static string ApplyConfiguredTorfacPlaceholderMappings(string liveLink, TorfacMarketplaceSettingDTO? torfacSetting)
+    {
+        var normalizedLink = liveLink;
+
+        foreach (var sourcePart in GetConfiguredUrlParts(
+            torfacSetting?.RespondentIdUrlParts,
+            "[#scid#]&uid=[#scid2#]",
+            "[%%tid%%]",
+            "[%tid%]"))
+        {
+            normalizedLink = normalizedLink.Replace(sourcePart, "[respondentID]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        foreach (var sourcePart in GetConfiguredUrlParts(
+            torfacSetting?.RespondentPanelistIdUrlParts,
+            "[%%pid%%]",
+            "[%pid%]",
+            "[pid]"))
+        {
+            normalizedLink = normalizedLink.Replace(sourcePart, "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return normalizedLink;
+    }
+
+    private static List<string> GetConfiguredUrlParts(string? configuredValue, params string[] fallbackValues)
+    {
+        var configuredParts = SplitConfiguredUrlParts(configuredValue);
+        if (configuredParts.Count > 0)
+        {
+            return configuredParts;
+        }
+
+        return fallbackValues
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static List<string> SplitConfiguredUrlParts(string? configuredValue)
+    {
+        if (string.IsNullOrWhiteSpace(configuredValue))
+        {
+            return new List<string>();
+        }
+
+        return configuredValue
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private static double? ParseNullableDouble(string? value)
@@ -1098,14 +1175,21 @@ public class ApiProjectsController : Controller
             var projectEndDate = projectStartDate.AddDays(30);
 
             var projectMappingCpi = GetProjectMappingCpiForVendor(vendorKey, cpi);
-            var supplierResolution = await ResolveSupplierIdsForVendorAsync(vendorKey, request.SupplierId);
+            TorfacMarketplaceSettingDTO? torfacSetting = null;
+            if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+            {
+                torfacSetting = await GetTorfacMarketplaceSettingAsync();
+            }
+
+            var supplierResolution = await ResolveSupplierIdsForVendorAsync(vendorKey, request.SupplierId, torfacSetting);
             if (!string.IsNullOrWhiteSpace(supplierResolution.ErrorMessage))
             {
                 return Ok(new { Result = false, Message = supplierResolution.ErrorMessage });
             }
 
-            var clientId = request.ClientId.HasValue && request.ClientId.Value > 0
-                ? request.ClientId.Value
+            var resolvedClientId = await ResolveClientIdForVendorAsync(vendorKey, request.ClientId, torfacSetting);
+            var clientId = resolvedClientId.HasValue && resolvedClientId.Value > 0
+                ? resolvedClientId.Value
                 : DEFAULT_CLIENT_ID;
             var countryId = request.CountryId.HasValue && request.CountryId.Value > 0
                 ? request.CountryId.Value
@@ -1182,7 +1266,7 @@ public class ApiProjectsController : Controller
                 }
 
                 // Normalize vendor-specific respondent placeholders into VT launch placeholders.
-                string processedLiveLink = NormalizeVendorLiveLink(request.LiveLink, vendorKey);
+                string processedLiveLink = NormalizeVendorLiveLink(request.LiveLink, vendorKey, torfacSetting);
 
                 // Create ProjectURL
                 ProjectsUrlDTO projectUrlDTO = new ProjectsUrlDTO
