@@ -33,6 +33,10 @@ public class MapperInitializer : Profile
         CreateMap<QuestionsMaster, QuestionsMasterDTO>().ReverseMap();
         CreateMap<QuestionOption, QuestionOptionDTO>().ReverseMap();
         CreateMap<HashingSetting, HashingSettingDTO>().ReverseMap();
+        CreateMap<TorfacMarketplaceSetting, TorfacMarketplaceSettingDTO>()
+            .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore())
+            .ReverseMap()
+            .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore());
         CreateMap<LucidMarketplaceSetting, LucidMarketplaceSettingDTO>().ReverseMap();
         CreateMap<LucidMarketplaceSubscription, LucidMarketplaceSubscriptionDTO>().ReverseMap();
         CreateMap<LucidMarketplaceSyncLog, LucidMarketplaceSyncLogDTO>().ReverseMap();

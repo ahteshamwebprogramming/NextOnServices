@@ -12,7 +12,7 @@ using NextOnServices.Infrastructure.Models.Supplier;
 namespace NextOnServices.WebUI.Areas.VT.Controllers;
 
 [Area("VT")]
-[Authorize(Roles = "A")]
+[Authorize(Roles = "A,R,GM")]
 public class ReportsController : Controller
 {
     private readonly ILogger<ReportsController> _logger;

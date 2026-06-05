@@ -122,6 +122,23 @@
                                 <small class="text-muted d-block mt-1">Leave blank to keep existing API key.</small>
                             </div>
                             <div class="form-group col-md-4">
+                                <label>Entry Link Secret Key</label>
+                                <div class="input-group input-group-sm">
+                                    <input asp-for="Setting.EntryLinkSecretKey" type="password" class="form-control form-control-sm" autocomplete="new-password" />
+                                    <div class="input-group-append">
+                                        <button type="button"
+                                                class="btn btn-light"
+                                                id="toggleLucidMarketplaceEntryLinkSecretKey"
+                                                aria-label="Show password"
+                                                aria-pressed="false"
+                                                title="Show password">
+                                            <span class="mdi mdi-eye" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Used only for Lucid Marketplace respondent entry-link signing. Leave blank to keep the existing secret.</small>
+                            </div>
+                            <div class="form-group col-md-4">
                                 <label class="required">Supplier Code</label>
                                 <input asp-for="Setting.SupplierCode" class="form-control form-control-sm requiredInput" />
                             </div>
@@ -244,6 +261,20 @@
                 $icon.toggleClass("mdi-eye", !showValue);
                 $icon.toggleClass("mdi-eye-off", showValue);
             });
+
+            $("#toggleLucidMarketplaceEntryLinkSecretKey").on("click", function () {
+                const $button = $(this);
+                const $icon = $button.find(".mdi");
+                const $input = $("#Setting_EntryLinkSecretKey");
+                const showValue = $input.attr("type") === "password";
+
+                $input.attr("type", showValue ? "text" : "password");
+                $button.attr("aria-pressed", showValue ? "true" : "false");
+                $button.attr("aria-label", showValue ? "Hide password" : "Show password");
+                $button.attr("title", showValue ? "Hide password" : "Show password");
+                $icon.toggleClass("mdi-eye", !showValue);
+                $icon.toggleClass("mdi-eye-off", showValue);
+            });
         });
 
         function buildSettingsPayload() {
@@ -252,6 +283,7 @@
                 lucidMarketplaceSettingId: parseInt($form.find("[name='Setting.LucidMarketplaceSettingId']").val() || "0"),
                 baseUrl: $form.find("[name='Setting.BaseUrl']").val(),
                 apiKey: $form.find("[name='Setting.ApiKey']").val(),
+                entryLinkSecretKey: $form.find("[name='Setting.EntryLinkSecretKey']").val(),
                 supplierCode: $form.find("[name='Setting.SupplierCode']").val(),
                 opportunitiesCallbackUrl: $form.find("[name='Setting.OpportunitiesCallbackUrl']").val(),
                 outcomesCallbackUrl: $form.find("[name='Setting.OutcomesCallbackUrl']").val(),
@@ -315,3 +347,4 @@
         }
     </script>
 }
+

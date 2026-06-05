@@ -322,7 +322,7 @@
                         var isDashboard = string.Equals(vtController, "Home", StringComparison.OrdinalIgnoreCase) && string.Equals(vtAction, "Dashboard", StringComparison.OrdinalIgnoreCase);
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
                         {
                             <li class="nav-item @(isDashboard ? "active" : "")">
                                 <a class="nav-link @(isDashboard ? "active" : "")" href="/VT/Home/Dashboard">
@@ -333,7 +333,7 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#projects" aria-expanded="false" aria-controls="ui-basic">
@@ -358,7 +358,7 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#apiProjects" aria-expanded="false" aria-controls="apiProjects">
@@ -377,7 +377,7 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#lucidMarketplaceMenu" aria-expanded="false" aria-controls="lucidMarketplaceMenu">
@@ -400,7 +400,7 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("U") || User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#zampliaMenu" aria-expanded="false" aria-controls="zampliaMenu">
@@ -421,7 +421,26 @@
                         }
                     }
                     @{
-                        if (User.IsInRole("A"))
+                        if (User.IsInRole("U") || User.IsInRole("GM") || User.IsInRole("A"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" data-toggle="collapse" href="#torfacMarketplaceMenu" aria-expanded="false" aria-controls="torfacMarketplaceMenu">
+                                    <i class="icon-link menu-icon"></i>
+                                    <span class="menu-title">Torfac MP</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="torfacMarketplaceMenu">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/TorfacMarketplace">Dashboard</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/TorfacMarketplace/GetSurveys">Get Surveys</a></li>
+                                        <li class="nav-item"> <a class="nav-link" href="/VT/TorfacMarketplace/Settings">Settings</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                        }
+                    }
+                    @{
+                        if (User.IsInRole("A") || User.IsInRole("R") || User.IsInRole("GM"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="collapse" href="#reports" aria-expanded="false" aria-controls="reports">

@@ -37,6 +37,7 @@ public class UnitOfWork : IUnitOfWork
         QuestionsMaster = new QuestionsMasterRepository(dbSetting);
         QuestionOption = new QuestionOptionRepository(dbSetting);
         HashingSetting = new HashingSettingRepository(dbSetting);
+        TorfacMarketplaceSetting = new TorfacMarketplaceSettingRepository(dbSetting);
         LucidMarketplaceSetting = new LucidMarketplaceSettingRepository(dbSetting);
         LucidMarketplaceSubscription = new LucidMarketplaceSubscriptionRepository(dbSetting);
         LucidMarketplaceSyncLog = new LucidMarketplaceSyncLogRepository(dbSetting);
@@ -84,6 +85,7 @@ public class UnitOfWork : IUnitOfWork
     public IQuestionsMasterRepository QuestionsMaster { get; private set; }
     public IQuestionOptionRepository QuestionOption { get; private set; }
     public IHashingSettingRepository HashingSetting { get; private set; }
+    public ITorfacMarketplaceSettingRepository TorfacMarketplaceSetting { get; private set; }
     public ILucidMarketplaceSettingRepository LucidMarketplaceSetting { get; private set; }
     public ILucidMarketplaceSubscriptionRepository LucidMarketplaceSubscription { get; private set; }
     public ILucidMarketplaceSyncLogRepository LucidMarketplaceSyncLog { get; private set; }
@@ -119,6 +121,7 @@ public class UnitOfWork : IUnitOfWork
             SupplierLogin as IDisposable, GenOperations as IDisposable, SupplierProjects as IDisposable,
             SupplierProjectMessages as IDisposable, SupplierProjectMessageAttachments as IDisposable,
             QuestionsMaster as IDisposable, QuestionOption as IDisposable, HashingSetting as IDisposable,
+            TorfacMarketplaceSetting as IDisposable,
             LucidMarketplaceSetting as IDisposable, LucidMarketplaceSubscription as IDisposable,
             LucidMarketplaceSyncLog as IDisposable, LucidMarketplaceOpportunity as IDisposable,
             LucidMarketplaceOpportunityQualification as IDisposable, LucidMarketplaceOpportunityQuota as IDisposable,

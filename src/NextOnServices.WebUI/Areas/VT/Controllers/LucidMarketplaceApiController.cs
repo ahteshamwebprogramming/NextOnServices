@@ -28,6 +28,7 @@ public class LucidMarketplaceApiController : Controller
     private readonly SurveyAPIController _surveyAPIController;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILegacyProjectStatusService _legacyProjectStatusService;
+    private readonly ILucidMarketplaceLinkSigner _lucidMarketplaceLinkSigner;
     private readonly IConfiguration _configuration;
 
     public LucidMarketplaceApiController(
@@ -36,6 +37,7 @@ public class LucidMarketplaceApiController : Controller
         SurveyAPIController surveyAPIController,
         IHttpClientFactory httpClientFactory,
         ILegacyProjectStatusService legacyProjectStatusService,
+        ILucidMarketplaceLinkSigner lucidMarketplaceLinkSigner,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -43,6 +45,7 @@ public class LucidMarketplaceApiController : Controller
         _surveyAPIController = surveyAPIController;
         _httpClientFactory = httpClientFactory;
         _legacyProjectStatusService = legacyProjectStatusService;
+        _lucidMarketplaceLinkSigner = lucidMarketplaceLinkSigner;
         _configuration = configuration;
     }
 
@@ -951,9 +954,38 @@ public class LucidMarketplaceApiController : Controller
         }
 
         var supplierProjectUid = supplierProjectResolution.SupplierProjectUid;
+        LucidMarketplaceSignedLinkResult? signedLaunch = null;
         var vendorLaunchUrl = normalizedAttemptType == "Test"
             ? resolution.EntryLink.TestLink
-            : BuildLucidRespondentLaunchUrl(resolution.EntryLink.LiveLink, supplierProjectUid);
+            : null;
+
+        if (!string.Equals(normalizedAttemptType, "Test", StringComparison.OrdinalIgnoreCase))
+        {
+            signedLaunch = _lucidMarketplaceLinkSigner.BuildSignedEntryLink(new LucidMarketplaceLinkSignRequest
+            {
+                BaseLink = resolution.EntryLink.LiveLink,
+                SecretKey = resolution.Context.EntryLinkSecretKey,
+                RespondentId = supplierProjectUid,
+                OpportunityId = resolution.Context.LucidMarketplaceOpportunityId,
+                InternalProjectId = resolution.Context.InternalProjectId,
+                LucidSurveyId = resolution.Context.LucidSurveyId,
+                AttemptType = normalizedAttemptType
+            });
+
+            if (!signedLaunch.Success || string.IsNullOrWhiteSpace(signedLaunch.SignedUrl))
+            {
+                _logger.LogWarning(
+                    "Lucid Marketplace signed respondent launch could not be prepared. OpportunityId={OpportunityId}, InternalProjectId={InternalProjectId}, SurveyId={SurveyId}, AttemptType={AttemptType}, Message={Message}",
+                    resolution.Context.LucidMarketplaceOpportunityId,
+                    resolution.Context.InternalProjectId,
+                    resolution.Context.LucidSurveyId,
+                    normalizedAttemptType,
+                    signedLaunch.Message);
+                return Content(signedLaunch.Message ?? "Unable to prepare the Lucid Marketplace signed entry link.", "text/plain");
+            }
+
+            vendorLaunchUrl = signedLaunch.SignedUrl;
+        }
 
         if (string.IsNullOrWhiteSpace(vendorLaunchUrl))
         {
@@ -1365,7 +1397,7 @@ public class LucidMarketplaceApiController : Controller
         }
     }
 
-    private async Task AppendLogAsync(
+    private Task AppendLogAsync(
         string actionName,
         string? requestUrl,
         string? requestBody,
@@ -1379,55 +1411,9 @@ public class LucidMarketplaceApiController : Controller
         int? responseStatusCodeOverride = null,
         bool? forceSuccess = null)
     {
-        var log = new LucidMarketplaceSyncLogDTO
-        {
-            ModuleName = "Lucid Marketplace",
-            ActionName = actionName,
-            RequestUrl = requestUrl,
-            RequestBodySnapshot = requestBody,
-            Source = source,
-            SupplierCode = supplierCode,
-            RelatedEntityId = relatedEntityId,
-            RelatedSurveyId = relatedSurveyId,
-            StartedOn = DateTime.Now,
-            CompletedOn = DateTime.Now,
-            CreatedBy = GetCurrentUserId()
-        };
-
-        if (proxyResponse != null)
-        {
-            log.ResponseStatusCode = proxyResponse.StatusCode;
-            log.ResponseBodySnapshot = responseBodyOverride ?? proxyResponse.ResponseBody ?? proxyResponse.Message;
-            log.IsSuccess = forceSuccess ?? proxyResponse.Result;
-            log.ErrorText = log.IsSuccess ? null : (proxyResponse.Message ?? responseBodyOverride);
-        }
-        else if (apiResult != null)
-        {
-            switch (apiResult)
-            {
-                case ObjectResult objectResult:
-                    log.ResponseStatusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
-                    log.ResponseBodySnapshot = responseBodyOverride ?? JsonConvert.SerializeObject(objectResult.Value);
-                    log.IsSuccess = forceSuccess ?? ((objectResult.StatusCode ?? StatusCodes.Status200OK) < 400);
-                    log.ErrorText = log.IsSuccess ? null : JsonConvert.SerializeObject(objectResult.Value);
-                    break;
-                case StatusCodeResult statusCodeResult:
-                    log.ResponseStatusCode = responseStatusCodeOverride ?? statusCodeResult.StatusCode;
-                    log.ResponseBodySnapshot = responseBodyOverride;
-                    log.IsSuccess = forceSuccess ?? (statusCodeResult.StatusCode < 400);
-                    log.ErrorText = log.IsSuccess ? null : $"Status code {statusCodeResult.StatusCode}";
-                    break;
-            }
-        }
-        else
-        {
-            log.ResponseStatusCode = responseStatusCodeOverride;
-            log.ResponseBodySnapshot = responseBodyOverride;
-            log.IsSuccess = forceSuccess ?? true;
-            log.ErrorText = log.IsSuccess ? null : responseBodyOverride;
-        }
-
-        await _lucidMarketplaceAPIController.AddLucidMarketplaceLog(log);
+        // Lucid Marketplace sync logging is intentionally disabled to keep the
+        // LucidMarketplaceSyncLog table from growing too quickly.
+        return Task.CompletedTask;
     }
 
     private int? GetCurrentUserId()
@@ -2538,14 +2524,16 @@ public class LucidMarketplaceApiController : Controller
             throw new InvalidOperationException("Enter one or more Country-Language codes, for example eng_us, before creating the opportunities subscription.");
         }
 
+        var includeQuotas = false;
+
         return new LucidMarketplaceSubscriptionDTO
         {
             SubscriptionType = "Opportunities",
             SupplierCode = supplierCode,
             CallbackUrl = callbackUrl.Trim(),
-            IncludeQuotas = inputData.IncludeQuotas,
+            IncludeQuotas = includeQuotas,
             RemoteSubscriptionId = supplierCode,
-            RequestPayloadSnapshot = BuildOpportunitySubscriptionPayload(callbackUrl.Trim(), inputData.IncludeQuotas, countryLanguageCodes, inputData),
+            RequestPayloadSnapshot = BuildOpportunitySubscriptionPayload(callbackUrl.Trim(), includeQuotas, countryLanguageCodes, inputData),
             CreatedBy = currentUserId,
             ModifiedBy = currentUserId
         };
@@ -2763,7 +2751,7 @@ public class LucidMarketplaceApiController : Controller
                     : existingSubscription?.CallbackUrl ?? currentSetting.OpportunitiesCallbackUrl,
                 IncludeQuotas = normalizedSubscriptionType == "RespondentOutcomes"
                     ? false
-                    : existingSubscription?.IncludeQuotas ?? false,
+                    : false,
                 RemoteSubscriptionId = existingSubscription?.RemoteSubscriptionId ?? currentSetting.SupplierCode,
                 LastStatus = normalizedSubscriptionType == "RespondentOutcomes"
                     ? "Remote respondent outcomes subscription not found."
@@ -2842,7 +2830,7 @@ public class LucidMarketplaceApiController : Controller
                 callbackUrl = existingSubscription?.CallbackUrl ?? currentSetting.OpportunitiesCallbackUrl;
             }
 
-            var includeQuotas = GetJsonBoolean(root, "include_quotas") ?? existingSubscription?.IncludeQuotas ?? false;
+            var includeQuotas = false;
 
             var surveysCount = root.TryGetProperty("surveys", out var surveysElement) && surveysElement.ValueKind == JsonValueKind.Array
                 ? surveysElement.GetArrayLength()

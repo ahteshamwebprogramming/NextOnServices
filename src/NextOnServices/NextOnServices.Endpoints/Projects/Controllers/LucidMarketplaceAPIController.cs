@@ -20,6 +20,8 @@ public class LucidMarketplaceAPIController : ControllerBase
     private const string OpportunityViewRecent = LucidMarketplaceViewModel.OpportunityViewRecent;
     private const string OpportunityViewAdded = LucidMarketplaceViewModel.OpportunityViewAdded;
     private const string OpportunityViewAll = LucidMarketplaceViewModel.OpportunityViewAll;
+    private const string OpportunitiesSubscriptionType = "Opportunities";
+    private const string RespondentOutcomesSubscriptionType = "RespondentOutcomes";
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<LucidMarketplaceAPIController> _logger;
@@ -91,6 +93,10 @@ public class LucidMarketplaceAPIController : ControllerBase
             {
                 current.ApiKey = inputData.ApiKey.Trim();
             }
+            if (!string.IsNullOrWhiteSpace(inputData.EntryLinkSecretKey))
+            {
+                current.EntryLinkSecretKey = inputData.EntryLinkSecretKey.Trim();
+            }
             current.SupplierCode = inputData.SupplierCode?.Trim();
             current.OpportunitiesCallbackUrl = inputData.OpportunitiesCallbackUrl?.Trim();
             current.OutcomesCallbackUrl = inputData.OutcomesCallbackUrl?.Trim();
@@ -153,6 +159,8 @@ public class LucidMarketplaceAPIController : ControllerBase
             {
                 return BadRequest("Invalid subscription payload.");
             }
+
+            inputData.IncludeQuotas = NormalizeIncludeQuotas(inputData.SubscriptionType, inputData.IncludeQuotas);
 
             var current = await GetCurrentSubscriptionEntityAsync(
                 inputData.LucidMarketplaceSubscriptionId,
@@ -269,16 +277,8 @@ public class LucidMarketplaceAPIController : ControllerBase
                         WHEN COALESCE(pm.InternalProjectId, p.ProjectId, 0) > 0 THEN 'Mapped'
                         ELSE ISNULL(NULLIF(o.LocalState, ''), 'New')
                     END,
-                    QualificationCount = (
-                        SELECT COUNT(1)
-                        FROM LucidMarketplaceOpportunityQualification q
-                        WHERE q.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
-                    ),
-                    QuotaCount = (
-                        SELECT COUNT(1)
-                        FROM LucidMarketplaceOpportunityQuota qt
-                        WHERE qt.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
-                    )
+                    QualificationCount = CAST(0 AS int),
+                    QuotaCount = CAST(0 AS int)
                 FROM LucidMarketplaceOpportunity o
                 OUTER APPLY (
                     SELECT TOP 1 *
@@ -354,16 +354,8 @@ public class LucidMarketplaceAPIController : ControllerBase
                         WHEN COALESCE(pm.InternalProjectId, p.ProjectId, 0) > 0 THEN 'Mapped'
                         ELSE ISNULL(NULLIF(o.LocalState, ''), 'New')
                     END,
-                    QualificationCount = (
-                        SELECT COUNT(1)
-                        FROM LucidMarketplaceOpportunityQualification q
-                        WHERE q.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
-                    ),
-                    QuotaCount = (
-                        SELECT COUNT(1)
-                        FROM LucidMarketplaceOpportunityQuota qt
-                        WHERE qt.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
-                    )
+                    QualificationCount = CAST(0 AS int),
+                    QuotaCount = CAST(0 AS int)
                 FROM LucidMarketplaceOpportunity o
                 OUTER APPLY (
                     SELECT TOP 1 *
@@ -407,65 +399,19 @@ public class LucidMarketplaceAPIController : ControllerBase
     [HttpGet("Opportunity/{id}/Qualifications")]
     public async Task<IActionResult> GetLucidMarketplaceOpportunityQualifications(int id)
     {
-        try
-        {
-            const string query = @"SELECT *
-                                   FROM LucidMarketplaceOpportunityQualification
-                                   WHERE LucidMarketplaceOpportunityId = @Id
-                                   ORDER BY ISNULL(SortOrder, 0), LucidMarketplaceOpportunityQualificationId";
-
-            var items = await _unitOfWork.LucidMarketplaceOpportunityQualification
-                .GetTableData<LucidMarketplaceOpportunityQualificationDTO>(query, new { Id = id });
-
-            return Ok(items ?? new List<LucidMarketplaceOpportunityQualificationDTO>());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Lucid Marketplace opportunity qualifications");
-            throw;
-        }
+        return Ok(new List<LucidMarketplaceOpportunityQualificationDTO>());
     }
 
     [HttpGet("Opportunity/{id}/Quotas")]
     public async Task<IActionResult> GetLucidMarketplaceOpportunityQuotas(int id)
     {
-        try
-        {
-            const string query = @"SELECT *
-                                   FROM LucidMarketplaceOpportunityQuota
-                                   WHERE LucidMarketplaceOpportunityId = @Id
-                                   ORDER BY ISNULL(SortOrder, 0), LucidMarketplaceOpportunityQuotaId";
-
-            var items = await _unitOfWork.LucidMarketplaceOpportunityQuota
-                .GetTableData<LucidMarketplaceOpportunityQuotaDTO>(query, new { Id = id });
-
-            return Ok(items ?? new List<LucidMarketplaceOpportunityQuotaDTO>());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Lucid Marketplace opportunity quotas");
-            throw;
-        }
+        return Ok(new List<LucidMarketplaceOpportunityQuotaDTO>());
     }
 
     [HttpGet("Opportunity/{id}/Logs")]
     public async Task<IActionResult> GetLucidMarketplaceOpportunityLogs(int id)
     {
-        try
-        {
-            const string query = @"SELECT TOP 100 *
-                                   FROM LucidMarketplaceSyncLog
-                                   WHERE RelatedEntityId = @Id
-                                   ORDER BY ISNULL(CreatedDate, StartedOn) DESC, LucidMarketplaceSyncLogId DESC";
-
-            var items = await _unitOfWork.LucidMarketplaceSyncLog.GetTableData<LucidMarketplaceSyncLogDTO>(query, new { Id = id });
-            return Ok(items ?? new List<LucidMarketplaceSyncLogDTO>());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Lucid Marketplace opportunity logs");
-            throw;
-        }
+        return Ok(new List<LucidMarketplaceSyncLogDTO>());
     }
 
     [HttpGet("Opportunity/{id}/ProjectMap")]
@@ -1196,71 +1142,24 @@ public class LucidMarketplaceAPIController : ControllerBase
     [HttpGet("Logs")]
     public async Task<IActionResult> GetLucidMarketplaceLogs(int take = 250)
     {
-        try
-        {
-            var safeTake = take <= 0 ? 250 : Math.Min(take, 1000);
-            var query = $@"SELECT TOP ({safeTake}) *
-                           FROM LucidMarketplaceSyncLog
-                           ORDER BY ISNULL(CreatedDate, StartedOn) DESC, LucidMarketplaceSyncLogId DESC";
-
-            var items = await _unitOfWork.LucidMarketplaceSyncLog.GetTableData<LucidMarketplaceSyncLogDTO>(query);
-            return Ok(items ?? new List<LucidMarketplaceSyncLogDTO>());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Lucid Marketplace logs");
-            throw;
-        }
+        return Ok(new List<LucidMarketplaceSyncLogDTO>());
     }
 
     [HttpGet("Log/{id}")]
     public async Task<IActionResult> GetLucidMarketplaceLog(int id)
     {
-        try
-        {
-            var item = await _unitOfWork.LucidMarketplaceSyncLog.FindByIdAsync(id);
-            if (item == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(_mapper.Map<LucidMarketplaceSyncLogDTO>(item));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading Lucid Marketplace log detail");
-            throw;
-        }
+        return NotFound();
     }
 
     [HttpPost("Log")]
     public async Task<IActionResult> AddLucidMarketplaceLog(LucidMarketplaceSyncLogDTO inputData)
     {
-        try
+        if (inputData == null)
         {
-            if (inputData == null)
-            {
-                return BadRequest("Invalid log payload.");
-            }
-
-            var entity = _mapper.Map<LucidMarketplaceSyncLog>(inputData);
-            entity.CreatedDate = entity.CreatedDate ?? DateTime.Now;
-            entity.LucidMarketplaceSyncLogId = await _unitOfWork.LucidMarketplaceSyncLog.AddAsync(entity);
-
-            if (entity.LucidMarketplaceSyncLogId <= 0)
-            {
-                return BadRequest("Unable to save Lucid Marketplace log.");
-            }
-
-            inputData.LucidMarketplaceSyncLogId = entity.LucidMarketplaceSyncLogId;
-            inputData.CreatedDate = entity.CreatedDate;
-            return Ok(inputData);
+            return BadRequest("Invalid log payload.");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving Lucid Marketplace log");
-            throw;
-        }
+
+        return Ok(inputData);
     }
 
     [HttpGet("Dashboard")]
@@ -1273,10 +1172,10 @@ public class LucidMarketplaceAPIController : ControllerBase
                     ActiveSettings = (SELECT COUNT(1) FROM LucidMarketplaceSetting WHERE IsActive = 1),
                     ActiveSubscriptions = (SELECT COUNT(1) FROM LucidMarketplaceSubscription WHERE IsActive = 1),
                     ActiveOpportunities = (SELECT COUNT(1) FROM LucidMarketplaceOpportunity WHERE IsActive = 1),
-                    LastSyncTime = (SELECT MAX(COALESCE(CompletedOn, StartedOn, CreatedDate)) FROM LucidMarketplaceSyncLog),
-                    TotalLogs = (SELECT COUNT(1) FROM LucidMarketplaceSyncLog),
-                    SuccessfulApiCalls = (SELECT COUNT(1) FROM LucidMarketplaceSyncLog WHERE IsSuccess = 1),
-                    FailedApiCalls = (SELECT COUNT(1) FROM LucidMarketplaceSyncLog WHERE IsSuccess = 0),
+                    LastSyncTime = (SELECT MAX(LastSyncedOn) FROM LucidMarketplaceOpportunity),
+                    TotalLogs = CAST(0 AS int),
+                    SuccessfulApiCalls = CAST(0 AS int),
+                    FailedApiCalls = CAST(0 AS int),
                     LatestOutcomesReceivedCount = (SELECT COUNT(1) FROM LucidMarketplaceRespondentOutcome WHERE IsLatest = 1),
                     LatestReconciliationRunTime = (
                         SELECT MAX(COALESCE(CompletedOn, StartedOn, CreatedDate))
@@ -1302,7 +1201,7 @@ public class LucidMarketplaceAPIController : ControllerBase
                         ORDER BY ISNULL(CompletedOn, ISNULL(StartedOn, CreatedDate)) DESC, Id DESC
                     ), 0)";
 
-            var summary = await _unitOfWork.LucidMarketplaceSyncLog.GetEntityData<LucidMarketplaceDashboardVM>(query);
+            var summary = await _unitOfWork.LucidMarketplaceOpportunity.GetEntityData<LucidMarketplaceDashboardVM>(query);
             return Ok(summary ?? new LucidMarketplaceDashboardVM());
         }
         catch (Exception ex)
@@ -1684,6 +1583,7 @@ public class LucidMarketplaceAPIController : ControllerBase
                 SupplierId = COALESCE(mapById.SUpplierID, mapFallback.SUpplierID, settingRow.DefaultSupplierId),
                 settingRow.BaseUrl,
                 settingRow.ApiKey,
+                settingRow.EntryLinkSecretKey,
                 settingRow.UseConsultingsBridge,
                 settingRow.SupplierLinkTypeCode,
                 settingRow.TrackingTypeCode,
@@ -3164,7 +3064,7 @@ public class LucidMarketplaceAPIController : ControllerBase
             entity.LastVendorUpdatedOn = GetDateTimeValue(opportunityElement, "survey_lastSend", "survey_last_send", "last_vendor_updated_on", "updated_at", "lastUpdatedOn");
             entity.LastSyncedOn = now;
             entity.LocalState = localState;
-            entity.RawJson = opportunityElement.GetRawText();
+            entity.RawJson = null;
             entity.IsActive = preserveIgnored ? false : (isLive ?? existing?.IsActive ?? true);
             entity.ModifiedDate = now;
             entity.ModifiedBy = userId;
@@ -3235,21 +3135,6 @@ public class LucidMarketplaceAPIController : ControllerBase
                 await connection.ExecuteAsync(updateOpportunitySql, entity, transaction);
                 opportunityId = existing.LucidMarketplaceOpportunityId;
             }
-
-            await connection.ExecuteAsync(
-                @"DELETE FROM LucidMarketplaceOpportunityQualification
-                  WHERE LucidMarketplaceOpportunityId = @LucidMarketplaceOpportunityId",
-                new { LucidMarketplaceOpportunityId = opportunityId },
-                transaction);
-
-            await connection.ExecuteAsync(
-                @"DELETE FROM LucidMarketplaceOpportunityQuota
-                  WHERE LucidMarketplaceOpportunityId = @LucidMarketplaceOpportunityId",
-                new { LucidMarketplaceOpportunityId = opportunityId },
-                transaction);
-
-            await InsertQualificationsAsync(connection, transaction, opportunityId, supplierCode, surveyId, opportunityElement, userId);
-            await InsertQuotasAsync(connection, transaction, opportunityId, supplierCode, surveyId, opportunityElement, userId);
 
             transaction.Commit();
             return opportunityId;
@@ -3376,11 +3261,18 @@ public class LucidMarketplaceAPIController : ControllerBase
         }
     }
 
-    private async Task InsertLogAsync(LucidMarketplaceSyncLogDTO log)
+    private Task InsertLogAsync(LucidMarketplaceSyncLogDTO log)
     {
-        var entity = _mapper.Map<LucidMarketplaceSyncLog>(log);
-        entity.CreatedDate ??= DateTime.Now;
-        await _unitOfWork.LucidMarketplaceSyncLog.AddAsync(entity);
+        // Lucid Marketplace sync logging is intentionally disabled to keep the
+        // LucidMarketplaceSyncLog table from growing too quickly.
+        return Task.CompletedTask;
+    }
+
+    private static bool NormalizeIncludeQuotas(string? subscriptionType, bool includeQuotas)
+    {
+        return string.Equals(subscriptionType?.Trim(), OpportunitiesSubscriptionType, StringComparison.OrdinalIgnoreCase)
+            ? false
+            : includeQuotas;
     }
 
     private async Task<SqlConnection> CreateOpenConnectionAsync()

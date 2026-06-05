@@ -12,6 +12,8 @@ public class LucidMarketplaceSettingDTO
     [Required]
     public string? ApiKey { get; set; }
 
+    public string? EntryLinkSecretKey { get; set; }
+
     [Required]
     public string? SupplierCode { get; set; }
 
@@ -45,3 +47,4 @@ public class LucidMarketplaceSettingDTO
 
     public int? ModifiedBy { get; set; }
 }
+

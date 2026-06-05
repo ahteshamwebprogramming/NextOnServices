@@ -62,9 +62,13 @@ public class AccountController : Controller
 
             string routePage = "";
 
-            if (objResultData.UserType == "A" || objResultData.UserType == "U")
+            if (objResultData.UserType == "A" || objResultData.UserType == "GM"|| objResultData.UserType == "U")
             {
                 routePage = "/VT/Home/Dashboard";
+            }
+            else if (objResultData.UserType == "R" )
+            {
+                routePage = "/VT/OverallReport.aspx";
             }
             else
             {

@@ -44,6 +44,14 @@ public class ProjectsAPIController : ControllerBase
         _dapperDBSetting = dapperDBSetting;
 
     }
+
+    private static string? NormalizeProjectDate(string? dateValue)
+    {
+        var parsedDate = CommonHelper.ConvertStringToDateTime(dateValue, "yyyy-MM-dd")
+            ?? CommonHelper.ConvertStringToDateTime(dateValue, "MM-dd-yyyy");
+
+        return parsedDate?.ToString("MM-dd-yyyy");
+    }
     //[HttpPost]
     //public async Task<IActionResult> GetProjects1()
     //{
@@ -186,6 +194,60 @@ public class ProjectsAPIController : ControllerBase
         {
             _logger.LogError(ex, $"Error in retriving Attendance {nameof(GetProjects)}");
             throw;
+        }
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeactivateProjectAndRelatedData(int projectId, int inactiveStatus = 0)
+    {
+        try
+        {
+            if (projectId <= 0)
+            {
+                return BadRequest("Project ID is required.");
+            }
+
+            var project = await _unitOfWork.Project.FindByIdAsync(projectId);
+            if (project == null)
+            {
+                return NotFound("Project not found.");
+            }
+
+            project.IsActive = 0;
+            var projectUpdated = await _unitOfWork.Project.UpdateAsync(project);
+            if (!projectUpdated)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to deactivate project.");
+            }
+
+            var mappingsUpdated = await _unitOfWork.ProjectMapping.ExecuteQueryAsync(
+                @"UPDATE dbo.ProjectMapping
+                  SET IsActive = 0
+                  WHERE ProjectID = @ProjectId",
+                new { ProjectId = projectId });
+
+            var urlsUpdated = await _unitOfWork.ProjectsUrl.ExecuteQueryAsync(
+                @"UPDATE dbo.ProjectsUrl
+                  SET Status = @Status
+                  WHERE PID = @ProjectId",
+                new { Status = inactiveStatus, ProjectId = projectId });
+
+            if (!mappingsUpdated || !urlsUpdated)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Unable to deactivate all related project data.");
+            }
+
+            return Ok(new
+            {
+                Success = true,
+                ProjectId = projectId,
+                Message = "Project and related VT data were deactivated successfully."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in {Action} for ProjectId {ProjectId}", nameof(DeactivateProjectAndRelatedData), projectId);
+            return StatusCode(StatusCodes.Status500InternalServerError, "Unable to deactivate project data.");
         }
     }
 
@@ -650,8 +712,8 @@ public class ProjectsAPIController : ControllerBase
                 string query = "SELECT max(p.PID) FROM dbo.Projects p where projectfrom is null";
                 var res = await _unitOfWork.Project.GetEntityData<string>(query);
                 inputData.Pid = await GenerateProjectId(res);
-                inputData.Sdate = CommonHelper.ConvertStringToDateTime(inputData.Sdate, "yyyy-MM-dd")?.ToString("MM-dd-yyyy");
-                inputData.Edate = CommonHelper.ConvertStringToDateTime(inputData.Edate, "yyyy-MM-dd")?.ToString("MM-dd-yyyy");
+                inputData.Sdate = NormalizeProjectDate(inputData.Sdate);
+                inputData.Edate = NormalizeProjectDate(inputData.Edate);
                 inputData.ProjectId = await _unitOfWork.Project.AddAsync(_mapper.Map<Project>(inputData));
                 if (inputData.ProjectId > 0)
                 {

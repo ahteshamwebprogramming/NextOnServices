@@ -136,18 +136,18 @@ public class ClientsAPIController : ControllerBase
                         }
                         else
                         {
-                            return BadRequest("Error in updating supplier");
+                            return BadRequest("Error in updating client");
                         }
                     }
                 }
                 else
                 {
-                    string queryCount = "Select count(1) from Suppliers where ltrim(rtrim(Company))=@Company";
+                    string queryCount = "Select count(1) from Clients where ltrim(rtrim(Company))=@Company";
                     var parameterCount = new { @Company = inputData?.Company?.Trim() };
                     int ClientCount = await _unitOfWork.Client.GetEntityCount(queryCount, parameterCount);
                     if (ClientCount > 0)
                     {
-                        return BadRequest("Duplicate Supplier");
+                        return BadRequest("Duplicate Client");
                     }
                     else
                     {
@@ -159,7 +159,7 @@ public class ClientsAPIController : ControllerBase
                         }
                         else
                         {
-                            return BadRequest("Error in adding supplier");
+                            return BadRequest("Error in adding client");
                         }
                     }
                 }

@@ -80,6 +80,7 @@ builder.Services.AddAutoMapper(typeof(GRPSC.MapperInitializer));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.IZampliaLaunchService, NextOnServices.WebUI.VT.Services.ZampliaLaunchService>();
+builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.ILucidMarketplaceLinkSigner, NextOnServices.WebUI.VT.Services.LucidMarketplaceLinkSigner>();
 builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.IHashingSettingsService, NextOnServices.WebUI.VT.Services.HashingSettingsService>();
 builder.Services.AddScoped<NextOnServices.WebUI.VT.Services.ILegacyProjectStatusService, NextOnServices.WebUI.VT.Services.ConfiguredLegacyProjectStatusService>();
 //SqlMapper.AddTypeHandler(new SqlTimeOnlyTypeHandler());

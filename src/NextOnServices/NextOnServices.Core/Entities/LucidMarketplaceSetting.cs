@@ -13,6 +13,8 @@ public class LucidMarketplaceSetting
 
     public string? ApiKey { get; set; }
 
+    public string? EntryLinkSecretKey { get; set; }
+
     public string? SupplierCode { get; set; }
 
     public string? OpportunitiesCallbackUrl { get; set; }
@@ -45,3 +47,4 @@ public class LucidMarketplaceSetting
 
     public int? ModifiedBy { get; set; }
 }
+

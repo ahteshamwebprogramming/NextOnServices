@@ -83,6 +83,8 @@ public partial class NextOnServicesDbContext : DbContext
 
     public virtual DbSet<HashingSetting> HashingSettings { get; set; }
 
+    public virtual DbSet<TorfacMarketplaceSetting> TorfacMarketplaceSettings { get; set; }
+
     public virtual DbSet<LucidMarketplaceSetting> LucidMarketplaceSettings { get; set; }
 
     public virtual DbSet<LucidMarketplaceSubscription> LucidMarketplaceSubscriptions { get; set; }
@@ -802,6 +804,7 @@ public partial class NextOnServicesDbContext : DbContext
 
             entity.Property(e => e.ApiKey).HasMaxLength(500);
             entity.Property(e => e.BaseUrl).HasMaxLength(500);
+            entity.Property(e => e.EntryLinkSecretKey).HasMaxLength(500);
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -811,6 +814,21 @@ public partial class NextOnServicesDbContext : DbContext
             entity.Property(e => e.SupplierCode).HasMaxLength(100);
             entity.Property(e => e.SupplierLinkTypeCode).HasMaxLength(20);
             entity.Property(e => e.TrackingTypeCode).HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<TorfacMarketplaceSetting>(entity =>
+        {
+            entity.HasKey(e => e.TorfacMarketplaceSettingId).HasName("PK_TorfacMarketplaceSetting");
+
+            entity.ToTable("TorfacMarketplaceSetting");
+
+            entity.Property(e => e.SurveysUrl).HasMaxLength(1000);
+            entity.Property(e => e.SecretKey).HasMaxLength(500);
+            entity.Property(e => e.DefaultSupplierIds).HasMaxLength(1000);
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<LucidMarketplaceSubscription>(entity =>
@@ -1028,3 +1046,4 @@ public partial class NextOnServicesDbContext : DbContext
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 
 }
+

@@ -4,6 +4,9 @@ using NextOnServices.Core.Repository;
 using NextOnServices.Infrastructure.Helper;
 using NextOnServices.Infrastructure.Models.APIProjects;
 using NextOnServices.Infrastructure.Models.Settings;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace NextOnServices.WebUI.VT.Services;
 
@@ -35,7 +38,7 @@ public sealed class HashingSettingsService : IHashingSettingsService
                 ON [dbo].[HashingSetting] ([HashingType] ASC);
         END;
         """;
-    private static readonly string[] _supportedHashingTypes = new[] { "SHA1", "SHA3", "HMACSHA256" };
+    private static readonly string[] _supportedHashingTypes = new[] { "SHA1", "SHA3", "HMACSHA256", "TORFAC_MD5" };
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -214,8 +217,18 @@ public sealed class HashingSettingsService : IHashingSettingsService
         }
 
         var normalizedParameterName = string.IsNullOrWhiteSpace(parameterName)
-            ? (string.Equals(normalizedType, "HMACSHA256", StringComparison.Ordinal) ? "hash" : "enc")
+            ? string.Equals(normalizedType, "HMACSHA256", StringComparison.Ordinal)
+                ? "hash"
+                : string.Equals(normalizedType, "TORFAC_MD5", StringComparison.Ordinal)
+                    ? "token"
+                    : "enc"
             : parameterName.Trim();
+
+        if (string.Equals(normalizedType, "TORFAC_MD5", StringComparison.Ordinal))
+        {
+            _logger.LogInformation("TORFAC_MD5 selected for launch hashing. ParameterName={ParameterName}", normalizedParameterName);
+            return ApplyTorfacMd5Hash(result, hashingKey, normalizedParameterName);
+        }
 
         if (string.Equals(normalizedType, "HMACSHA256", StringComparison.Ordinal))
         {
@@ -310,6 +323,64 @@ public sealed class HashingSettingsService : IHashingSettingsService
         return result;
     }
 
+    private HashingApplicationResult ApplyTorfacMd5Hash(
+        HashingApplicationResult result,
+        string hashingKey,
+        string parameterName)
+    {
+        var pid = GetQueryParameterValue(result.RequestUrl, "pid");
+        if (string.IsNullOrWhiteSpace(pid) || IsUnresolvedPlaceholderValue(pid))
+        {
+            _logger.LogWarning("TORFAC_MD5 hashing skipped because pid query parameter is missing. Url={Url}", result.RequestUrl);
+            return result;
+        }
+
+        var supcode = GetQueryParameterValue(result.RequestUrl, "supcode");
+        if (string.IsNullOrWhiteSpace(supcode) || IsUnresolvedPlaceholderValue(supcode))
+        {
+            _logger.LogWarning("TORFAC_MD5 hashing skipped because supcode query parameter is missing. Url={Url}", result.RequestUrl);
+            return result;
+        }
+
+        var survnum = GetQueryParameterValue(result.RequestUrl, "survnum");
+        var surveyId = GetQueryParameterValue(result.RequestUrl, "survey_id");
+
+        string tokenSource;
+        if (!string.IsNullOrWhiteSpace(survnum))
+        {
+            if (!TryBase64Decode(survnum, out var decodedSurveyValue))
+            {
+                _logger.LogWarning("TORFAC_MD5 hashing skipped because survnum could not be base64 decoded. Url={Url}", result.RequestUrl);
+                return result;
+            }
+
+            tokenSource = $"{decodedSurveyValue}{supcode}{pid}{hashingKey}";
+        }
+        else if (!string.IsNullOrWhiteSpace(surveyId) && !IsUnresolvedPlaceholderValue(surveyId))
+        {
+            _logger.LogWarning("TORFAC_MD5 is using survey_id fallback formula because survnum is not present. Confirm with Torfac if token fails.");
+            tokenSource = $"{surveyId}{supcode}{pid}{hashingKey}";
+        }
+        else
+        {
+            _logger.LogWarning("TORFAC_MD5 hashing skipped because both survnum and survey_id query parameters are missing. Url={Url}", result.RequestUrl);
+            return result;
+        }
+
+        var token = ComputeMd5Hex(tokenSource);
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return result;
+        }
+
+        result.HashCode = token;
+        result.RequestUrl = AppendOrReplaceQueryParameter(result.RequestUrl, parameterName, token);
+        result.HashApplied = true;
+
+        _logger.LogInformation("TORFAC_MD5 token successfully added or replaced. ParameterName={ParameterName}", parameterName);
+        return result;
+    }
+
     private static string NormalizeUrlWithoutHashParameter(string requestUrl, string parameterName)
     {
         var normalizedUrl = ZampliaHmacHelper.NormalizeRawUrlWithoutHash(requestUrl);
@@ -349,5 +420,134 @@ public sealed class HashingSettingsService : IHashingSettingsService
             .ToList();
 
         return remainingSegments.Count == 0 ? baseUrl : $"{baseUrl}?{string.Join("&", remainingSegments)}";
+    }
+
+    private static string? GetQueryParameterValue(string url, string key)
+    {
+        if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+        {
+            return null;
+        }
+
+        var fragmentIndex = url.IndexOf('#');
+        var withoutFragment = fragmentIndex >= 0 ? url[..fragmentIndex] : url;
+        var questionIndex = withoutFragment.IndexOf('?');
+        if (questionIndex < 0 || questionIndex == withoutFragment.Length - 1)
+        {
+            return null;
+        }
+
+        var query = withoutFragment[(questionIndex + 1)..];
+        foreach (var segment in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var equalsIndex = segment.IndexOf('=');
+            var rawKey = equalsIndex >= 0 ? segment[..equalsIndex] : segment;
+            var rawValue = equalsIndex >= 0 ? segment[(equalsIndex + 1)..] : string.Empty;
+
+            if (string.Equals(WebUtility.UrlDecode(rawKey), key, StringComparison.OrdinalIgnoreCase))
+            {
+                return WebUtility.UrlDecode(rawValue);
+            }
+        }
+
+        return null;
+    }
+
+    private static string AppendOrReplaceQueryParameter(string url, string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(key))
+        {
+            return url;
+        }
+
+        var normalizedKey = key.Trim();
+        var encodedValue = WebUtility.UrlEncode(value ?? string.Empty);
+        var fragmentIndex = url.IndexOf('#');
+        var fragment = fragmentIndex >= 0 ? url[fragmentIndex..] : string.Empty;
+        var withoutFragment = fragmentIndex >= 0 ? url[..fragmentIndex] : url;
+        var questionIndex = withoutFragment.IndexOf('?');
+        var baseUrl = questionIndex >= 0 ? withoutFragment[..questionIndex] : withoutFragment;
+        var query = questionIndex >= 0 && questionIndex < withoutFragment.Length - 1
+            ? withoutFragment[(questionIndex + 1)..]
+            : string.Empty;
+
+        var segments = new List<string>();
+        var replaced = false;
+
+        foreach (var segment in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var equalsIndex = segment.IndexOf('=');
+            var rawKey = equalsIndex >= 0 ? segment[..equalsIndex] : segment;
+
+            if (string.Equals(WebUtility.UrlDecode(rawKey), normalizedKey, StringComparison.OrdinalIgnoreCase))
+            {
+                if (!replaced)
+                {
+                    segments.Add($"{normalizedKey}={encodedValue}");
+                    replaced = true;
+                }
+
+                continue;
+            }
+
+            segments.Add(segment);
+        }
+
+        if (!replaced)
+        {
+            segments.Add($"{normalizedKey}={encodedValue}");
+        }
+
+        var rebuiltUrl = segments.Count == 0
+            ? baseUrl
+            : $"{baseUrl}?{string.Join("&", segments)}";
+
+        return $"{rebuiltUrl}{fragment}";
+    }
+
+    private static bool TryBase64Decode(string value, out string decoded)
+    {
+        decoded = string.Empty;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        try
+        {
+            var normalized = value.Trim()
+                .Replace(' ', '+')
+                .Replace('-', '+')
+                .Replace('_', '/');
+
+            var remainder = normalized.Length % 4;
+            if (remainder > 0)
+            {
+                normalized = normalized.PadRight(normalized.Length + (4 - remainder), '=');
+            }
+
+            var decodedBytes = Convert.FromBase64String(normalized);
+            decoded = Encoding.UTF8.GetString(decodedBytes);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static string ComputeMd5Hex(string input)
+    {
+        using var md5 = MD5.Create();
+        var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(input ?? string.Empty));
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
+    }
+
+    private static bool IsUnresolvedPlaceholderValue(string? value)
+    {
+        var trimmed = value?.Trim();
+        return !string.IsNullOrWhiteSpace(trimmed) &&
+               trimmed.StartsWith("[", StringComparison.Ordinal) &&
+               trimmed.EndsWith("]", StringComparison.Ordinal);
     }
 }

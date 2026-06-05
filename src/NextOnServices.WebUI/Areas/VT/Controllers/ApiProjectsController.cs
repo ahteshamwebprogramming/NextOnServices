@@ -4,10 +4,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using NextOnServices.Endpoints.Projects;
+using NextOnServices.Infrastructure.Models.APIProjects;
 using NextOnServices.Infrastructure.Models.Projects;
 using NextOnServices.Infrastructure.Helper;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
+using System.Globalization;
 
 namespace NextOnServices.WebUI.VT.Controllers;
 
@@ -19,6 +21,7 @@ public class ApiProjectsController : Controller
     private readonly ProjectsAPIController _projectsAPIController;
     private readonly ProjectURLAPIController _projectURLAPIController;
     private readonly ProjectMappingAPIController _projectMappingAPIController;
+    private readonly TorfacMarketplaceAPIController _torfacMarketplaceAPIController;
     private readonly IConfiguration _configuration;
     // Sago (Sample Cube) API configuration (previously named Lucid)
     private const string SAGO_API_BASE = "https://api.sample-cube.com/api";
@@ -32,6 +35,9 @@ public class ApiProjectsController : Controller
     private const int DEFAULT_COUNTRY_ID = 235;
     private const int DEFAULT_SUPPLIER_ID = 1064; // Arete Research
     private const int DEFAULT_STATUS = 5;
+    private const int INACTIVE_STATUS = 0;
+    private const string TORFAC_HASH_PARAMETER_NAME = "token";
+    private const string TORFAC_HASHING_TYPE = "TORFAC_MD5";
 
     public ApiProjectsController(
         ILogger<ApiProjectsController> logger, 
@@ -39,6 +45,7 @@ public class ApiProjectsController : Controller
         ProjectsAPIController projectsAPIController,
         ProjectURLAPIController projectURLAPIController,
         ProjectMappingAPIController projectMappingAPIController,
+        TorfacMarketplaceAPIController torfacMarketplaceAPIController,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -46,6 +53,7 @@ public class ApiProjectsController : Controller
         _projectsAPIController = projectsAPIController;
         _projectURLAPIController = projectURLAPIController;
         _projectMappingAPIController = projectMappingAPIController;
+        _torfacMarketplaceAPIController = torfacMarketplaceAPIController;
         _configuration = configuration;
     }
 
@@ -825,6 +833,219 @@ public class ApiProjectsController : Controller
             "Added from Zamplia");
     }
 
+    /// <summary>Add project from Torfac marketplace surveys. Saves with ProjectFrom=Torfac.</summary>
+    [HttpPost]
+    [Route("/VT/ApiProjects/AddProjectFromTorfac")]
+    public Task<IActionResult> AddProjectFromTorfac([FromBody] AddProjectFromLucidRequest request)
+    {
+        return AddProjectFromVendorAsync(
+            request,
+            "Torfac",
+            "-Pulled from Torfac Marketplace",
+            "Added from Torfac Marketplace from API",
+            "Added from Torfac Marketplace");
+    }
+
+    [HttpPost]
+    [Route("/VT/ApiProjects/RemoveProjectFromTorfac")]
+    public async Task<IActionResult> RemoveProjectFromTorfac([FromBody] RemoveMarketplaceProjectRequest request)
+    {
+        try
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null || userId == 0)
+            {
+                return Ok(new { Result = false, Message = "Session expired. Please login again." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request?.ProjectId))
+            {
+                return Ok(new { Result = false, Message = "Project ID is required." });
+            }
+
+            var activeProjectResult = await _projectsAPIController.GetProjectByProjectIdFromAPI(request.ProjectId.Trim(), "Torfac");
+            var internalProjectId = 0;
+
+            if (activeProjectResult is ObjectResult activeProjectObjectResult
+                && activeProjectObjectResult.Value != null
+                && int.TryParse(activeProjectObjectResult.Value.ToString(), out var parsedProjectId))
+            {
+                internalProjectId = parsedProjectId;
+            }
+
+            if (internalProjectId <= 0)
+            {
+                return Ok(new { Result = false, Message = "This Torfac project is already removed or inactive." });
+            }
+
+            var deactivateResult = await _projectsAPIController.DeactivateProjectAndRelatedData(internalProjectId, INACTIVE_STATUS);
+            if (deactivateResult is ObjectResult deactivateObjectResult
+                && deactivateObjectResult.StatusCode == StatusCodes.Status200OK)
+            {
+                return Ok(new
+                {
+                    Result = true,
+                    Message = "Project removed successfully. VT project data was deactivated and SupplierProjects were left unchanged.",
+                    ProjectId = internalProjectId
+                });
+            }
+
+            var errorMessage = deactivateResult switch
+            {
+                ObjectResult errorObjectResult when errorObjectResult.Value != null => errorObjectResult.Value.ToString(),
+                StatusCodeResult statusCodeResult when statusCodeResult.StatusCode == StatusCodes.Status404NotFound => "Project not found.",
+                _ => "Unable to remove the project."
+            };
+
+            return Ok(new { Result = false, Message = errorMessage });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing project from Torfac. ProjectIdFromApi={ProjectId}", request?.ProjectId);
+            return Ok(new { Result = false, Message = "Unable to remove the project." });
+        }
+    }
+
+    private static double? GetProjectMappingCpiForVendor(string vendorKey, double? sourceCpi)
+    {
+        if (!sourceCpi.HasValue)
+        {
+            return null;
+        }
+
+        if (string.Equals(vendorKey, "Zamplia", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+        {
+            // Vendor supplier mappings should store only 40% of the source CPI.
+            return Math.Round(sourceCpi.Value * 0.4d, 4, MidpointRounding.AwayFromZero);
+        }
+
+        return sourceCpi;
+    }
+
+    private async Task<(List<int> SupplierIds, string? ErrorMessage)> ResolveSupplierIdsForVendorAsync(string vendorKey, int? requestedSupplierId)
+    {
+        if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+        {
+            var setting = await GetTorfacMarketplaceSettingAsync();
+            var supplierIds = setting?.DefaultSupplierIds?
+                .Where(supplierId => supplierId > 0)
+                .Distinct()
+                .ToList()
+                ?? new List<int>();
+
+            if (supplierIds.Count == 0)
+            {
+                return (new List<int>(), "Select at least one default supplier in Torfac Marketplace settings before adding projects.");
+            }
+
+            return (supplierIds, null);
+        }
+
+        var supplierId = requestedSupplierId.HasValue && requestedSupplierId.Value > 0
+            ? requestedSupplierId.Value
+            : DEFAULT_SUPPLIER_ID;
+
+        return (new List<int> { supplierId }, null);
+    }
+
+    private async Task<TorfacMarketplaceSettingDTO?> GetTorfacMarketplaceSettingAsync()
+    {
+        var result = await _torfacMarketplaceAPIController.GetTorfacMarketplaceSetting();
+        return result is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK
+            ? objectResult.Value as TorfacMarketplaceSettingDTO
+            : null;
+    }
+
+    private static string GetProjectMappingFailureMessage(IActionResult result, int supplierId)
+    {
+        var defaultMessage = $"Unable to create supplier mapping for supplier {supplierId}.";
+        return result is ObjectResult objectResult && objectResult.Value != null
+            ? objectResult.Value.ToString() ?? defaultMessage
+            : defaultMessage;
+    }
+
+    private static string NormalizeVendorLiveLink(string? liveLink, string vendorKey)
+    {
+        if (string.IsNullOrWhiteSpace(liveLink))
+        {
+            return string.Empty;
+        }
+
+        var normalizedLink = liveLink
+            .Replace("[#scid#]&uid=[#scid2#]", "[respondentID]", StringComparison.OrdinalIgnoreCase);
+
+        if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedLink = normalizedLink
+                .Replace("[%%tid%%]", "[respondentID]", StringComparison.OrdinalIgnoreCase)
+                .Replace("[%tid%]", "[respondentID]", StringComparison.OrdinalIgnoreCase)
+                .Replace("[%%pid%%]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase)
+                .Replace("[%pid%]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase)
+                .Replace("[pid]", "[respondentpanelistID]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return normalizedLink;
+    }
+
+    private static double? ParseNullableDouble(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmedValue = value.Trim();
+
+        if (double.TryParse(trimmedValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var invariantValue))
+        {
+            return invariantValue;
+        }
+
+        if (double.TryParse(trimmedValue, NumberStyles.Any, CultureInfo.CurrentCulture, out var currentCultureValue))
+        {
+            return currentCultureValue;
+        }
+
+        return null;
+    }
+
+    private static int? ParseNullableWholeNumber(string? value)
+    {
+        var parsedValue = ParseNullableDouble(value);
+        if (!parsedValue.HasValue)
+        {
+            return null;
+        }
+
+        return Convert.ToInt32(Math.Round(parsedValue.Value, 0, MidpointRounding.AwayFromZero));
+    }
+
+    private static string FormatNullableWholeNumber(int? value)
+    {
+        return value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+    }
+
+    private static void ApplyVendorHashingDefaults(ProjectMappingDTO projectMappingDTO, string vendorKey)
+    {
+        if (projectMappingDTO == null)
+        {
+            return;
+        }
+
+        if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
+        {
+            projectMappingDTO.AddHashing = 1;
+            projectMappingDTO.ParameterName = TORFAC_HASH_PARAMETER_NAME;
+            projectMappingDTO.HashingType = TORFAC_HASHING_TYPE;
+            return;
+        }
+
+        projectMappingDTO.AddHashing = 0;
+        projectMappingDTO.ParameterName = null;
+        projectMappingDTO.HashingType = null;
+    }
+
     private async Task<IActionResult> AddProjectFromVendorAsync(
         AddProjectFromLucidRequest request,
         string vendorKey,
@@ -868,19 +1089,20 @@ public class ApiProjectsController : Controller
             }
 
             // Parse input values
-            double? cpi = null;
-            int? loi = null;
-            int? ir = null;
-            int? totalRemaining = null;
+            var cpi = ParseNullableDouble(request.CPI);
+            var loi = ParseNullableWholeNumber(request.LOI);
+            var ir = ParseNullableWholeNumber(request.IR);
+            var totalRemaining = ParseNullableWholeNumber(request.TotalRemaining);
+            var quotaText = FormatNullableWholeNumber(totalRemaining);
+            var projectStartDate = DateTime.Today;
+            var projectEndDate = projectStartDate.AddDays(30);
 
-            if (!string.IsNullOrEmpty(request.CPI) && double.TryParse(request.CPI, out double cpiValue))
-                cpi = cpiValue;
-            if (!string.IsNullOrEmpty(request.LOI) && int.TryParse(request.LOI, out int loiValue))
-                loi = loiValue;
-            if (!string.IsNullOrEmpty(request.IR) && int.TryParse(request.IR, out int irValue))
-                ir = irValue;
-            if (!string.IsNullOrEmpty(request.TotalRemaining) && int.TryParse(request.TotalRemaining, out int totalRemainingValue))
-                totalRemaining = totalRemainingValue;
+            var projectMappingCpi = GetProjectMappingCpiForVendor(vendorKey, cpi);
+            var supplierResolution = await ResolveSupplierIdsForVendorAsync(vendorKey, request.SupplierId);
+            if (!string.IsNullOrWhiteSpace(supplierResolution.ErrorMessage))
+            {
+                return Ok(new { Result = false, Message = supplierResolution.ErrorMessage });
+            }
 
             var clientId = request.ClientId.HasValue && request.ClientId.Value > 0
                 ? request.ClientId.Value
@@ -888,9 +1110,7 @@ public class ApiProjectsController : Controller
             var countryId = request.CountryId.HasValue && request.CountryId.Value > 0
                 ? request.CountryId.Value
                 : DEFAULT_COUNTRY_ID;
-            var supplierId = request.SupplierId.HasValue && request.SupplierId.Value > 0
-                ? request.SupplierId.Value
-                : DEFAULT_SUPPLIER_ID;
+            var supplierIds = supplierResolution.SupplierIds;
             var projectName = string.IsNullOrWhiteSpace(request.ProjectName)
                 ? request.ProjectId?.Trim()
                 : request.ProjectName.Trim();
@@ -903,13 +1123,13 @@ public class ApiProjectsController : Controller
                 Descriptions = request.ProjectId + descriptionSuffix,
                 Pmanager = userId.Value,
                 ClientId = clientId,
-                Loi = loi?.ToString() ?? "",
-                Irate = ir?.ToString() ?? "",
+                Loi = FormatNullableWholeNumber(loi),
+                Irate = FormatNullableWholeNumber(ir),
                 Cpi = cpi,
-                SampleSize = totalRemaining?.ToString() ?? "",
-                Quota = totalRemaining?.ToString() ?? "",
-                Sdate = DateTime.Now.ToString("MM-dd-yyyy"),
-                Edate = DateTime.Now.AddMonths(1).ToString("MM-dd-yyyy"),
+                SampleSize = quotaText,
+                Quota = quotaText,
+                Sdate = projectStartDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                Edate = projectEndDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                 CountryId = countryId,
                 Status = DEFAULT_STATUS,
                 IsActive = 1,
@@ -961,8 +1181,8 @@ public class ApiProjectsController : Controller
                     return Ok(new { Result = false, Message = "Failed to retrieve created project ID" });
                 }
 
-                // Process LiveLink - replace Lucid-specific placeholders
-                string processedLiveLink = request.LiveLink?.Replace("[#scid#]&uid=[#scid2#]", "[respondentID]") ?? request.LiveLink ?? "";
+                // Normalize vendor-specific respondent placeholders into VT launch placeholders.
+                string processedLiveLink = NormalizeVendorLiveLink(request.LiveLink, vendorKey);
 
                 // Create ProjectURL
                 ProjectsUrlDTO projectUrlDTO = new ProjectsUrlDTO
@@ -973,7 +1193,7 @@ public class ApiProjectsController : Controller
                     OriginalUrl = string.IsNullOrWhiteSpace(processedLiveLink) ? null : processedLiveLink,
                     Notes = notesUrl,
                     Cpi = cpi,
-                    Quota = totalRemaining?.ToString() ?? "",
+                    Quota = quotaText,
                     Status = DEFAULT_STATUS,
                     CreationDate = DateTime.Now
                 };
@@ -988,49 +1208,78 @@ public class ApiProjectsController : Controller
                     // Continue anyway - project is created
                 }
 
-                // Create ProjectMapping
-                string kid = CommonHelper.RandomString(32);
-                string sid = CommonHelper.RandomString(8);
                 string? maskingUrl = _configuration.GetValue<string>("MaskingUrl");
-                string mUrl = $"{maskingUrl}?SID={sid}&ID=XXXXXXXXXX";
                 string oUrl = processedLiveLink;
+                var savedProjectMappings = new List<ProjectMappingDTO>();
+                var mappingWarnings = new List<string>();
 
-                ProjectMappingDTO projectMappingDTO = new ProjectMappingDTO
+                foreach (var currentSupplierId in supplierIds)
                 {
-                    ProjectId = createdProjectId,
-                    CountryId = countryId,
-                    SupplierId = supplierId,
-                    Olink = oUrl,
-                    Cpi = cpi,
-                    Mlink = mUrl,
-                    Sid = sid,
-                    Code = kid,
-                    AddHashing = 0,
-                    IsUsed = 0,
-                    CreationDate = DateTime.Now,
-                    IsSent = 0,
-                    Block = 0,
-                    TrackingType = 0,
-                    Rc = 0
-                };
+                    string kid = CommonHelper.RandomString(32);
+                    string sid = CommonHelper.RandomString(8);
+                    string mUrl = $"{maskingUrl}?SID={sid}&ID=XXXXXXXXXX";
 
-                var addMappingResult = await _projectMappingAPIController.AddProjectMapping(projectMappingDTO);
-                var savedProjectMapping = addMappingResult is ObjectResult addMappingObjectResult && addMappingObjectResult.StatusCode == 200
-                    ? addMappingObjectResult.Value as ProjectMappingDTO
-                    : null;
-                if (savedProjectMapping == null)
-                {
-                    _logger.LogWarning("Failed to create ProjectMapping for project {ProjectId}", createdProjectId);
-                    // Continue anyway - project and URL are created
+                    ProjectMappingDTO projectMappingDTO = new ProjectMappingDTO
+                    {
+                        ProjectId = createdProjectId,
+                        CountryId = countryId,
+                        SupplierId = currentSupplierId,
+                        Olink = oUrl,
+                        Cpi = projectMappingCpi,
+                        Respondants = totalRemaining,
+                        Mlink = mUrl,
+                        Sid = sid,
+                        Code = kid,
+                        AddHashing = 0,
+                        IsUsed = 0,
+                        CreationDate = DateTime.Now,
+                        IsSent = 0,
+                        Block = 0,
+                        TrackingType = 0,
+                        Rc = 0
+                    };
+
+                    ApplyVendorHashingDefaults(projectMappingDTO, vendorKey);
+
+                    try
+                    {
+                        var addMappingResult = await _projectMappingAPIController.AddProjectMapping(projectMappingDTO);
+                        var savedProjectMapping = addMappingResult is ObjectResult addMappingObjectResult && addMappingObjectResult.StatusCode == 200
+                            ? addMappingObjectResult.Value as ProjectMappingDTO
+                            : null;
+
+                        if (savedProjectMapping != null)
+                        {
+                            savedProjectMappings.Add(savedProjectMapping);
+                            continue;
+                        }
+
+                        var warningMessage = GetProjectMappingFailureMessage(addMappingResult, currentSupplierId);
+                        mappingWarnings.Add($"Supplier {currentSupplierId}: {warningMessage}");
+                        _logger.LogWarning("Failed to create ProjectMapping for project {ProjectId} and supplier {SupplierId}. {Message}", createdProjectId, currentSupplierId, warningMessage);
+                    }
+                    catch (Exception mappingEx)
+                    {
+                        mappingWarnings.Add($"Supplier {currentSupplierId}: {mappingEx.Message}");
+                        _logger.LogError(mappingEx, "Failed to create ProjectMapping for project {ProjectId} and supplier {SupplierId}", createdProjectId, currentSupplierId);
+                    }
                 }
+
+                var addProjectMessage = mappingWarnings.Count == 0
+                    ? "Project added successfully"
+                    : savedProjectMappings.Count > 0
+                        ? $"Project added successfully, but {mappingWarnings.Count} supplier mapping(s) could not be created."
+                        : "Project added successfully, but no supplier mappings could be created.";
 
                 return Ok(new VendorAddProjectResult
                 {
                     Result = true,
-                    Message = "Project added successfully",
+                    Message = addProjectMessage,
                     ProjectId = createdProjectId,
                     ProjectUrlId = savedProjectUrl?.Id,
-                    ProjectMappingId = savedProjectMapping?.Id
+                    ProjectMappingId = savedProjectMappings.FirstOrDefault()?.Id,
+                    ProjectMappingIds = savedProjectMappings.Select(mapping => mapping.Id).ToList(),
+                    Warnings = mappingWarnings
                 });
             }
             else
@@ -1460,6 +1709,11 @@ public class AddProjectFromLucidRequest
     public int? SupplierId { get; set; }
 }
 
+public class RemoveMarketplaceProjectRequest
+{
+    public string? ProjectId { get; set; }
+}
+
 public class VendorAddProjectResult
 {
     public bool Result { get; set; }
@@ -1467,6 +1721,8 @@ public class VendorAddProjectResult
     public int? ProjectId { get; set; }
     public int? ProjectUrlId { get; set; }
     public int? ProjectMappingId { get; set; }
+    public List<int> ProjectMappingIds { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
 }
 
 public class AddProjectFromSpectrumRequest

@@ -1,0 +1,1088 @@
+@model NextOnServices.VT.Infrastructure.ViewModels.Project.TorfacMarketplaceViewModel
+@{
+    ViewData["Title"] = "Torfac Marketplace Get Surveys";
+    Layout = "~/Areas/VT/Views/Shared/_Layout.cshtml";
+    var hasConfiguredUrl = !string.IsNullOrWhiteSpace(Model?.Setting?.SurveysUrl);
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="~/css/custmahte.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-project-page.css" rel="stylesheet" asp-append-version="true" />
+<link href="~/css/VT/vt-dashboard-ref.css" rel="stylesheet" asp-append-version="true" />
+
+<style>
+    .vt-torfac-get-page {
+        --vt-torfac-theme: #8a4b14;
+        --vt-torfac-border: rgba(138, 75, 20, 0.18);
+        --vt-torfac-action-theme: #0f7f79;
+        --vt-torfac-action-theme-dark: #0d6b66;
+        --vt-torfac-action-theme-soft: rgba(15, 127, 121, 0.12);
+        --vt-torfac-action-shadow: rgba(15, 127, 121, 0.22);
+    }
+
+    .vt-torfac-get-page .card--table-section {
+        border: 1px solid rgba(138, 75, 20, 0.18);
+        box-shadow: 0 10px 24px rgba(138, 75, 20, 0.08);
+    }
+
+    .vt-torfac-get-page .table-section-header {
+        border-left-color: #8a4b14;
+    }
+
+    .vt-torfac-meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+        margin-top: 1rem;
+    }
+
+    .vt-torfac-meta__card {
+        border-radius: 12px;
+        border: 1px solid var(--vt-torfac-border);
+        background: linear-gradient(145deg, #ffffff 0%, #fff7ef 100%);
+        padding: 0.9rem 1rem;
+    }
+
+    .vt-torfac-meta__label {
+        display: block;
+        color: #6b7280;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.35rem;
+    }
+
+    .vt-torfac-meta__value {
+        color: #5b3110;
+        font-weight: 700;
+        word-break: break-word;
+    }
+
+    .vt-torfac-table-wrap {
+        position: relative;
+        min-height: 320px;
+        margin-top: 1.25rem;
+        border-radius: 14px;
+        border: 1px solid #eadfd6;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .vt-torfac-table-wrap .table {
+        margin-bottom: 0;
+    }
+
+    .vt-torfac-table-wrap .table thead th {
+        white-space: nowrap;
+        background: #fff7ef;
+        color: #5b3110;
+        border-bottom-width: 1px;
+    }
+
+    .vt-torfac-table-wrap .table td {
+        vertical-align: top;
+        word-break: break-word;
+        max-width: 280px;
+    }
+
+    .vt-torfac-table-wrap .table td:last-child,
+    .vt-torfac-table-wrap .table th:last-child {
+        width: 84px;
+        min-width: 84px;
+        text-align: right;
+    }
+
+    .vt-torfac-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .vt-torfac-kebab {
+        width: 38px;
+        height: 38px;
+        border: 1px solid rgba(15, 127, 121, 0.12);
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--vt-torfac-action-theme) 0%, var(--vt-torfac-action-theme-dark) 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+        box-shadow: 0 14px 28px var(--vt-torfac-action-shadow);
+    }
+
+    .vt-torfac-kebab:hover:not(:disabled),
+    .vt-torfac-kebab:focus-visible {
+        border-color: rgba(15, 127, 121, 0.22);
+        box-shadow: 0 18px 32px rgba(15, 127, 121, 0.28);
+        transform: translateY(-1px);
+        outline: none;
+    }
+
+    .vt-torfac-kebab:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .vt-torfac-kebab.is-open {
+        border-color: rgba(15, 127, 121, 0.3);
+        box-shadow: 0 22px 36px rgba(15, 127, 121, 0.3);
+        background: linear-gradient(135deg, var(--vt-torfac-action-theme-dark) 0%, #0b5854 100%);
+    }
+
+    .vt-torfac-kebab__dots {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .vt-torfac-kebab__dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: #ffffff;
+        display: block;
+    }
+
+    .vt-torfac-action-menu-popover {
+        position: fixed;
+        z-index: 1085;
+        min-width: 236px;
+        max-width: 280px;
+        padding: 0.65rem;
+        border: 1px solid rgba(15, 127, 121, 0.12);
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow: 0 24px 60px rgba(15, 127, 121, 0.14);
+    }
+
+    .vt-torfac-action-menu-popover[hidden] {
+        display: none !important;
+    }
+
+    .vt-torfac-action-menu__eyebrow {
+        display: block;
+        padding: 0.2rem 0.6rem 0.5rem;
+        color: var(--vt-torfac-action-theme);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .vt-torfac-action-menu__item {
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        background: transparent;
+        padding: 0.82rem 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        color: #17315f;
+        font-size: 0.96rem;
+        font-weight: 600;
+        text-align: left;
+        transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+    }
+
+    .vt-torfac-action-menu__item:hover:not(:disabled),
+    .vt-torfac-action-menu__item:focus-visible:not(:disabled) {
+        background: var(--vt-torfac-action-theme-soft);
+        color: #0f172a;
+        transform: translateX(1px);
+        outline: none;
+    }
+
+    .vt-torfac-action-menu__item:disabled {
+        color: #a8b0c0;
+        cursor: not-allowed;
+    }
+
+    .vt-torfac-action-menu__item--danger {
+        color: #ff4d4f;
+    }
+
+    .vt-torfac-action-menu__icon {
+        width: 22px;
+        height: 22px;
+        flex: 0 0 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .vt-torfac-action-menu__icon svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        stroke-width: 1.9;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .vt-torfac-action-menu__icon--view {
+        color: #2563eb;
+    }
+
+    .vt-torfac-action-menu__icon--add {
+        color: #10b981;
+    }
+
+    .vt-torfac-action-menu__icon--launch {
+        color: var(--vt-torfac-action-theme);
+    }
+
+    .vt-torfac-action-menu__icon--remove {
+        color: #ff4d4f;
+    }
+
+    .vt-torfac-action-menu__item-label {
+        display: inline-block;
+        line-height: 1.2;
+    }
+
+    .vt-torfac-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 0.85rem;
+        background: rgba(255, 255, 255, 0.9);
+        z-index: 5;
+    }
+
+    .vt-torfac-overlay__text {
+        color: #7c4a1d;
+        font-weight: 700;
+    }
+
+    .vt-torfac-alert {
+        margin-top: 1rem;
+        border-radius: 12px;
+    }
+
+    .vt-torfac-empty {
+        color: #6b7280;
+        text-align: center;
+        padding: 2.5rem 1rem;
+    }
+
+    .vt-torfac-detail-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.85rem;
+        margin-bottom: 1.25rem;
+        text-align: left;
+    }
+
+    .vt-torfac-detail-card {
+        border: 1px solid #eadfd6;
+        border-radius: 12px;
+        padding: 0.9rem 1rem;
+        background: #fffaf5;
+    }
+
+    .vt-torfac-detail-card__label {
+        display: block;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7c4a1d;
+        margin-bottom: 0.35rem;
+    }
+
+    .vt-torfac-detail-card__value {
+        color: #3f2b1b;
+        font-weight: 600;
+        word-break: break-word;
+    }
+
+    .vt-torfac-detail-table-wrap {
+        max-height: 420px;
+        overflow: auto;
+        border: 1px solid #eadfd6;
+        border-radius: 12px;
+    }
+
+    .vt-torfac-detail-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .vt-torfac-detail-table th,
+    .vt-torfac-detail-table td {
+        padding: 0.75rem 0.9rem;
+        border-bottom: 1px solid #f1e7de;
+        vertical-align: top;
+        word-break: break-word;
+    }
+
+    .vt-torfac-detail-table thead th {
+        position: sticky;
+        top: 0;
+        background: #fff7ef;
+        color: #5b3110;
+        z-index: 1;
+    }
+
+    .vt-torfac-detail-table tbody tr:nth-child(even) {
+        background: #fffaf6;
+    }
+
+    .vt-torfac-detail-table code {
+        color: #7c2d12;
+        background: #fff2e6;
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+    }
+
+    .vt-torfac-raw-json {
+        margin: 0;
+        white-space: pre-wrap;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        color: #3f2b1b;
+    }
+</style>
+
+<div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-torfac-get-page">
+    <div class="ref-page-title">
+        <h1>Torfac Marketplace Get Surveys</h1>
+        <p class="ref-subtitle">Open this page to stage a fetch. The survey table starts empty and fills only after you click Fetch Surveys.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12 grid-margin stretch-card">
+            <div class="card card--table-section">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Survey Fetch Workbench</h4>
+                        <div>
+                            <button type="button" id="TorfacFetchButton" class="btn btn-primary btn-sm mr-2" onclick="fetchTorfacSurveys()" @(hasConfiguredUrl ? null : "disabled")>Fetch Surveys</button>
+                            <a class="btn btn-light btn-sm" href="/VT/TorfacMarketplace/Settings">Edit Settings</a>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="font-weight-600">Configured Survey URL</label>
+                        <input type="text" class="form-control form-control-sm mt-2" value="@(Model?.Setting?.SurveysUrl ?? string.Empty)" readonly placeholder="Save the survey URL in Settings first." />
+                        <small class="text-muted d-block mt-2">This page stays empty until you run a fetch. Once the response comes back, the table is built from the survey payload returned by Torfac.</small>
+                    </div>
+
+                    <div class="vt-torfac-meta">
+                        <div class="vt-torfac-meta__card">
+                            <span class="vt-torfac-meta__label">Status</span>
+                            <span class="vt-torfac-meta__value" id="TorfacFetchStatus">Idle</span>
+                        </div>
+                        <div class="vt-torfac-meta__card">
+                            <span class="vt-torfac-meta__label">HTTP Code</span>
+                            <span class="vt-torfac-meta__value" id="TorfacFetchHttpCode">-</span>
+                        </div>
+                        <div class="vt-torfac-meta__card">
+                            <span class="vt-torfac-meta__label">Surveys Loaded</span>
+                            <span class="vt-torfac-meta__value" id="TorfacFetchSurveyCount">0</span>
+                        </div>
+                        <div class="vt-torfac-meta__card">
+                            <span class="vt-torfac-meta__label">Collection Path</span>
+                            <span class="vt-torfac-meta__value" id="TorfacFetchCollectionPath">-</span>
+                        </div>
+                    </div>
+
+                    <div id="TorfacFetchMessage" class="alert alert-light border vt-torfac-alert" role="alert">
+                        No surveys fetched yet. Click <strong>Fetch Surveys</strong> to populate the table.
+                    </div>
+
+                    <div class="vt-torfac-table-wrap">
+                        <div id="TorfacFetchOverlay" class="vt-torfac-overlay">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <div class="vt-torfac-overlay__text">Fetching Torfac surveys...</div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped vt-ref-table ref-project-table" id="TorfacSurveysTable">
+                                <thead id="TorfacSurveysHead">
+                                    <tr>
+                                        <th>Survey ID</th>
+                                        <th>Name</th>
+                                        <th>LOI</th>
+                                        <th>IR</th>
+                                        <th>CPI</th>
+                                        <th>Country Name</th>
+                                        <th>Device Type</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="TorfacSurveysBody">
+                                    <tr>
+                                        <td colspan="8" class="vt-torfac-empty">No surveys fetched yet. Click Fetch Surveys to load data.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <a class="btn btn-primary btn-sm mr-2" href="/VT/TorfacMarketplace">Back to Dashboard</a>
+                        <a class="btn btn-light btn-sm" href="/VT/TorfacMarketplace/Settings">Open Settings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="TorfacActionMenu" class="vt-torfac-action-menu-popover" hidden></div>
+
+@section scripts {
+    <script>
+        let torfacSurveyDataTable = null;
+        let torfacSurveyRows = [];
+        let torfacActionMenuSurveyId = "";
+        let torfacActionMenuTrigger = null;
+
+        function fetchTorfacSurveys() {
+            toggleFetchState(true);
+            setFetchMessage("info", "Fetching Torfac surveys. The table will populate when the response arrives.");
+            $("#TorfacFetchStatus").text("Loading...");
+            $("#TorfacFetchHttpCode").text("-");
+            $("#TorfacFetchSurveyCount").text("0");
+            $("#TorfacFetchCollectionPath").text("-");
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/TorfacMarketplaceApi/GetSurveys",
+                success: function (response) {
+                    const rows = Array.isArray(response.rows) ? response.rows : [];
+
+                    $("#TorfacFetchStatus").text(response.result ? "Success" : "Failed");
+                    $("#TorfacFetchHttpCode").text(response.statusCode || "-");
+                    $("#TorfacFetchSurveyCount").text(rows.length.toString());
+                    $("#TorfacFetchCollectionPath").text(response.collectionPath || "-");
+
+                    torfacSurveyRows = rows;
+                    renderSurveyTable(rows, response.message);
+                    setFetchMessage(response.result ? "success" : "warning", response.message || "Fetch completed.");
+                },
+                error: function (xhr) {
+                    const message = xhr.responseJSON?.message || xhr.responseText || "Unable to fetch Torfac surveys.";
+                    $("#TorfacFetchStatus").text("Failed");
+                    $("#TorfacFetchHttpCode").text(xhr.status || "-");
+                    $("#TorfacFetchSurveyCount").text("0");
+                    $("#TorfacFetchCollectionPath").text("-");
+                    torfacSurveyRows = [];
+                    renderEmptySurveyTable("Unable to fetch Torfac surveys.");
+                    setFetchMessage("danger", message);
+                },
+                complete: function () {
+                    toggleFetchState(false);
+                }
+            });
+        }
+
+        function renderSurveyTable(rows, message) {
+            if (!rows.length) {
+                renderEmptySurveyTable(message || "No survey rows were returned from Torfac.");
+                return;
+            }
+
+            hideTorfacActionsMenu();
+            destroyTorfacDataTable();
+
+            const headerHtml = [
+                "<tr>",
+                "<th>Survey ID</th>",
+                "<th>Name</th>",
+                "<th>LOI</th>",
+                "<th>IR</th>",
+                "<th>CPI</th>",
+                "<th>Country Name</th>",
+                "<th>Device Type</th>",
+                "<th>Actions</th>",
+                "</tr>"
+            ].join("");
+
+            const bodyHtml = rows.map(function (row, index) {
+                const surveyId = getRowValue(row, "surveyId");
+                const name = getRowValue(row, "name");
+                const loi = getRowValue(row, "loi");
+                const ir = getRowValue(row, "ir");
+                const cpi = getRowValue(row, "cpi");
+                const countryName = getRowValue(row, "countryName");
+                const deviceType = getRowValue(row, "deviceType");
+                const internalProjectId = getRowValue(row, "internalProjectId");
+                const actionsButton = surveyId === ""
+                    ? buildTorfacActionsButtonMarkup("", index)
+                    : buildTorfacActionsButtonMarkup(surveyId, index);
+
+                return "<tr data-survey-id='" + escapeHtml(surveyId) + "'>"
+                    + "<td>" + escapeHtml(surveyId || "-") + "</td>"
+                    + "<td>" + escapeHtml(name || "-") + "</td>"
+                    + "<td>" + escapeHtml(loi || "-") + "</td>"
+                    + "<td>" + escapeHtml(ir || "-") + "</td>"
+                    + "<td>" + escapeHtml(cpi || "-") + "</td>"
+                    + "<td>" + escapeHtml(countryName || "-") + "</td>"
+                    + "<td>" + escapeHtml(deviceType || "-") + "</td>"
+                    + "<td><div class='vt-torfac-actions'>" + actionsButton + "</div></td>"
+                    + "</tr>";
+            }).join("");
+
+            $("#TorfacSurveysHead").html(headerHtml);
+            $("#TorfacSurveysBody").html(bodyHtml);
+
+            if ($.fn.DataTable) {
+                torfacSurveyDataTable = $("#TorfacSurveysTable").DataTable({
+                    order: [[1, "asc"]],
+                    paging: true,
+                    pageLength: 25,
+                    scrollX: true,
+                    autoWidth: false,
+                    destroy: true,
+                    language: {
+                        search: "",
+                        searchPlaceholder: "Search Torfac surveys..."
+                    }
+                });
+            }
+        }
+
+        function renderEmptySurveyTable(message) {
+            hideTorfacActionsMenu();
+            destroyTorfacDataTable();
+            $("#TorfacSurveysHead").html("<tr><th>Survey ID</th><th>Name</th><th>LOI</th><th>IR</th><th>CPI</th><th>Country Name</th><th>Device Type</th><th>Actions</th></tr>");
+            $("#TorfacSurveysBody").html("<tr><td colspan='8' class='vt-torfac-empty'>" + escapeHtml(message || "No survey rows returned.") + "</td></tr>");
+        }
+
+        function destroyTorfacDataTable() {
+            hideTorfacActionsMenu();
+            if ($.fn.DataTable && $.fn.DataTable.isDataTable("#TorfacSurveysTable")) {
+                $("#TorfacSurveysTable").DataTable().destroy();
+            }
+
+            torfacSurveyDataTable = null;
+        }
+
+        function buildTorfacActionsButtonMarkup(surveyId, index) {
+            const isDisabled = surveyId === "";
+            const buttonId = "torfac-action-trigger-" + index;
+            const disabledAttribute = isDisabled ? " disabled" : "";
+            const clickHandler = isDisabled
+                ? ""
+                : " onclick=\"toggleTorfacActionsMenu(event, '" + escapeJsValue(surveyId) + "')\"";
+
+            return "<button type='button' id='" + buttonId + "' class='vt-torfac-kebab' aria-label='Open actions menu' aria-haspopup='true' aria-expanded='false'" + disabledAttribute + clickHandler + ">"
+                + "<span class='vt-torfac-kebab__dots' aria-hidden='true'>"
+                + "<span class='vt-torfac-kebab__dot'></span>"
+                + "<span class='vt-torfac-kebab__dot'></span>"
+                + "<span class='vt-torfac-kebab__dot'></span>"
+                + "</span>"
+                + "<span class='sr-only'>Actions</span>"
+                + "</button>";
+        }
+
+        function toggleTorfacActionsMenu(event, surveyId) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            const trigger = event ? event.currentTarget : null;
+            const menu = getTorfacActionsMenuElement();
+
+            if (!trigger || !surveyId || !menu) {
+                hideTorfacActionsMenu();
+                return;
+            }
+
+            if (torfacActionMenuSurveyId === surveyId && !menu.hidden) {
+                hideTorfacActionsMenu(true);
+                return;
+            }
+
+            showTorfacActionsMenu(trigger, surveyId);
+        }
+
+        function showTorfacActionsMenu(trigger, surveyId) {
+            const row = findSurveyRowById(surveyId);
+            const menu = getTorfacActionsMenuElement();
+
+            if (!row || !menu) {
+                hideTorfacActionsMenu();
+                return;
+            }
+
+            const internalProjectId = getRowValue(row, "internalProjectId");
+            const hasProject = internalProjectId !== "";
+
+            menu.innerHTML = buildTorfacActionsMenuMarkup(surveyId, hasProject);
+            menu.hidden = false;
+            menu.style.visibility = "hidden";
+
+            torfacActionMenuSurveyId = surveyId;
+            torfacActionMenuTrigger = trigger;
+            setTorfacActionTriggerState(trigger, true);
+            positionTorfacActionsMenu(trigger, menu);
+            menu.style.visibility = "visible";
+        }
+
+        function buildTorfacActionsMenuMarkup(surveyId, hasProject) {
+            return "<span class='vt-torfac-action-menu__eyebrow'>Survey Actions</span>"
+                + buildTorfacActionMenuItem("View Project", "view", surveyId, true, "", "view")
+                + buildTorfacActionMenuItem("Add Project", "add", surveyId, !hasProject, "", "add")
+                + buildTorfacActionMenuItem("View Project in VT", "viewvt", surveyId, hasProject, "", "launch")
+                + buildTorfacActionMenuItem("Remove Project", "remove", surveyId, hasProject, "vt-torfac-action-menu__item--danger", "remove");
+        }
+
+        function buildTorfacActionMenuItem(label, actionName, surveyId, isEnabled, extraClass, iconName) {
+            const classes = ["vt-torfac-action-menu__item"];
+            if (extraClass) {
+                classes.push(extraClass);
+            }
+
+            return "<button type='button' class='" + classes.join(" ") + "' onclick=\"runTorfacMenuAction('" + escapeJsValue(actionName) + "', '" + escapeJsValue(surveyId) + "')\"" + (isEnabled ? "" : " disabled") + ">"
+                + getTorfacActionMenuIconMarkup(iconName)
+                + "<span class='vt-torfac-action-menu__item-label'>" + escapeHtml(label) + "</span>"
+                + "</button>";
+        }
+
+        function getTorfacActionMenuIconMarkup(iconName) {
+            if (iconName === "view") {
+                return "<span class='vt-torfac-action-menu__icon vt-torfac-action-menu__icon--view' aria-hidden='true'>"
+                    + "<svg viewBox='0 0 24 24'><path d='M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z'></path><circle cx='12' cy='12' r='3'></circle></svg>"
+                    + "</span>";
+            }
+
+            if (iconName === "add") {
+                return "<span class='vt-torfac-action-menu__icon vt-torfac-action-menu__icon--add' aria-hidden='true'>"
+                    + "<svg viewBox='0 0 24 24'><path d='M4 5h10l6 6v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z'></path><path d='M14 5v6h6'></path><path d='M12 11v6'></path><path d='M9 14h6'></path></svg>"
+                    + "</span>";
+            }
+
+            if (iconName === "launch") {
+                return "<span class='vt-torfac-action-menu__icon vt-torfac-action-menu__icon--launch' aria-hidden='true'>"
+                    + "<svg viewBox='0 0 24 24'><path d='M14 5h5v5'></path><path d='M10 14 19 5'></path><path d='M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4'></path></svg>"
+                    + "</span>";
+            }
+
+            return "<span class='vt-torfac-action-menu__icon vt-torfac-action-menu__icon--remove' aria-hidden='true'>"
+                + "<svg viewBox='0 0 24 24'><path d='M4 7h16'></path><path d='M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'></path><path d='M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9L17 7'></path><path d='M10 11v5'></path><path d='M14 11v5'></path></svg>"
+                + "</span>";
+        }
+
+        function runTorfacMenuAction(actionName, surveyId) {
+            hideTorfacActionsMenu();
+
+            if (!surveyId) {
+                return;
+            }
+
+            const row = findSurveyRowById(surveyId);
+            if (!row) {
+                Swal.fire("Error", "Unable to locate the selected Torfac survey row.", "error");
+                return;
+            }
+
+            if (actionName === "add") {
+                addProjectFromTorfac(surveyId);
+                return;
+            }
+
+            if (actionName === "view") {
+                viewProject(surveyId);
+                return;
+            }
+
+            if (actionName === "viewvt") {
+                viewProjectInVT(getRowValue(row, "internalProjectId"));
+                return;
+            }
+
+            if (actionName === "remove") {
+                removeProjectFromTorfac(surveyId);
+            }
+        }
+
+        function hideTorfacActionsMenu(returnFocus) {
+            const menu = getTorfacActionsMenuElement();
+            if (!menu) {
+                torfacActionMenuSurveyId = "";
+                torfacActionMenuTrigger = null;
+                return;
+            }
+
+            menu.hidden = true;
+            menu.style.visibility = "";
+            menu.innerHTML = "";
+
+            if (torfacActionMenuTrigger) {
+                setTorfacActionTriggerState(torfacActionMenuTrigger, false);
+
+                if (returnFocus) {
+                    torfacActionMenuTrigger.focus();
+                }
+            }
+
+            torfacActionMenuSurveyId = "";
+            torfacActionMenuTrigger = null;
+        }
+
+        function positionTorfacActionsMenu(trigger, menu) {
+            const triggerRect = trigger.getBoundingClientRect();
+            const menuRect = menu.getBoundingClientRect();
+            const viewportPadding = 12;
+            const offset = 8;
+
+            let left = triggerRect.right - menuRect.width;
+            let top = triggerRect.bottom + offset;
+
+            if (left < viewportPadding) {
+                left = viewportPadding;
+            }
+
+            if (left + menuRect.width > window.innerWidth - viewportPadding) {
+                left = window.innerWidth - viewportPadding - menuRect.width;
+            }
+
+            if (top + menuRect.height > window.innerHeight - viewportPadding) {
+                const topAboveTrigger = triggerRect.top - menuRect.height - offset;
+                top = topAboveTrigger >= viewportPadding
+                    ? topAboveTrigger
+                    : Math.max(viewportPadding, window.innerHeight - viewportPadding - menuRect.height);
+            }
+
+            menu.style.left = Math.round(left) + "px";
+            menu.style.top = Math.round(top) + "px";
+        }
+
+        function getTorfacActionsMenuElement() {
+            return document.getElementById("TorfacActionMenu");
+        }
+
+        function setTorfacActionTriggerState(trigger, isOpen) {
+            if (!trigger) {
+                return;
+            }
+
+            trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            trigger.classList.toggle("is-open", isOpen);
+        }
+
+        function toggleFetchState(isLoading) {
+            $("#TorfacFetchOverlay").css("display", isLoading ? "flex" : "none");
+            $("#TorfacFetchButton").prop("disabled", isLoading || @Html.Raw(hasConfiguredUrl ? "false" : "true"));
+        }
+
+        function setFetchMessage(type, message) {
+            const $message = $("#TorfacFetchMessage");
+            $message
+                .removeClass("alert-light alert-info alert-success alert-warning alert-danger border")
+                .addClass("alert-" + type)
+                .text(message || "");
+        }
+
+        function addProjectFromTorfac(surveyId) {
+            const row = findSurveyRowById(surveyId);
+
+            if (!row) {
+                Swal.fire("Error", "Unable to locate the selected Torfac survey row.", "error");
+                return;
+            }
+
+            const request = {
+                projectId: getRowValue(row, "surveyId"),
+                projectName: getRowValue(row, "name"),
+                cpi: getRowValue(row, "cpi"),
+                loi: getRowValue(row, "loi"),
+                ir: getRowValue(row, "ir"),
+                totalRemaining: getRowValue(row, "totalRemaining"),
+                liveLink: getRowValue(row, "liveLink")
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/VT/ApiProjects/AddProjectFromTorfac",
+                contentType: "application/json",
+                data: JSON.stringify(request),
+                success: function (response) {
+                    if (!response.result) {
+                        Swal.fire("Warning", response.message || "Unable to add the project.", "warning");
+                        return;
+                    }
+
+                    row.internalProjectId = response.projectId != null ? String(response.projectId) : "";
+                    row.hasProject = row.internalProjectId ? "true" : "false";
+                    renderSurveyTable(torfacSurveyRows, response.message || "Project added successfully.");
+                    Swal.fire("Success", response.message || "Project added successfully.", "success");
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to add the project.", "error");
+                }
+            });
+        }
+
+        function removeProjectFromTorfac(surveyId) {
+            const row = findSurveyRowById(surveyId);
+
+            if (!row) {
+                Swal.fire("Error", "Unable to locate the selected Torfac survey row.", "error");
+                return;
+            }
+
+            if (!getRowValue(row, "internalProjectId")) {
+                Swal.fire("Info", "This survey is not active in VT right now.", "info");
+                return;
+            }
+
+            Swal.fire({
+                title: "Remove project?",
+                text: "This will deactivate the VT project, mappings, and project URLs for this Torfac survey. SupplierProjects will stay unchanged.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Remove Project",
+                cancelButtonText: "Cancel"
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/VT/ApiProjects/RemoveProjectFromTorfac",
+                    contentType: "application/json",
+                    data: JSON.stringify({ projectId: surveyId }),
+                    success: function (response) {
+                        if (!response.result) {
+                            Swal.fire("Warning", response.message || "Unable to remove the project.", "warning");
+                            return;
+                        }
+
+                        row.internalProjectId = "";
+                        row.hasProject = "false";
+                        renderSurveyTable(torfacSurveyRows, response.message || "Project removed successfully.");
+                        Swal.fire("Success", response.message || "Project removed successfully.", "success");
+                    },
+                    error: function (xhr) {
+                        Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to remove the project.", "error");
+                    }
+                });
+            });
+        }
+
+        function viewProject(surveyId) {
+            const row = findSurveyRowById(surveyId);
+
+            if (!row) {
+                Swal.fire("Error", "Unable to locate the selected Torfac survey row.", "error");
+                return;
+            }
+
+            const details = parseRawPayload(getRowValue(row, "rawPayload"));
+            const title = getRowValue(row, "name") || ("Survey " + (getRowValue(row, "surveyId") || ""));
+
+            Swal.fire({
+                title: title,
+                width: "1100px",
+                confirmButtonText: "Close",
+                html: buildProjectPopupHtml(row, details.value, details.rawText)
+            });
+        }
+
+        function viewProjectInVT(projectId) {
+            if (!projectId) {
+                Swal.fire("Info", "This survey has not been added in VT yet.", "info");
+                return;
+            }
+
+            window.open("/VT/Home/ProjectPage?projectId=" + encodeURIComponent(projectId), "_blank", "noopener");
+        }
+
+        function findSurveyRowById(surveyId) {
+            return torfacSurveyRows.find(function (item) {
+                return getRowValue(item, "surveyId") === surveyId;
+            }) || null;
+        }
+
+        function buildProjectPopupHtml(row, rawPayload, rawPayloadText) {
+            const summaryItems = [
+                { label: "Survey ID", value: getRowValue(row, "surveyId") || "-" },
+                { label: "Name", value: getRowValue(row, "name") || "-" },
+                { label: "LOI", value: getRowValue(row, "loi") || "-" },
+                { label: "IR", value: getRowValue(row, "ir") || "-" },
+                { label: "CPI", value: getRowValue(row, "cpi") || "-" },
+                { label: "Country Name", value: getRowValue(row, "countryName") || "-" },
+                { label: "Device Type", value: getRowValue(row, "deviceType") || "-" },
+                { label: "Live Link", value: getRowValue(row, "liveLink") || "-" },
+                { label: "Total Remaining", value: getRowValue(row, "totalRemaining") || "-" },
+                { label: "VT Project ID", value: getRowValue(row, "internalProjectId") || "Not added yet" }
+            ];
+
+            const summaryHtml = summaryItems.map(function (item) {
+                return "<div class='vt-torfac-detail-card'>"
+                    + "<span class='vt-torfac-detail-card__label'>" + escapeHtml(item.label) + "</span>"
+                    + "<span class='vt-torfac-detail-card__value'>" + escapeHtml(item.value) + "</span>"
+                    + "</div>";
+            }).join("");
+
+            const detailEntries = [];
+            collectDetailEntries(rawPayload, "", detailEntries);
+
+            let detailRows = "";
+
+            if (detailEntries.length) {
+                detailRows = detailEntries.map(function (entry) {
+                    return "<tr>"
+                        + "<td><code>" + escapeHtml(entry.key) + "</code></td>"
+                        + "<td>" + escapeHtml(entry.value) + "</td>"
+                        + "</tr>";
+                }).join("");
+            } else {
+                detailRows = "<tr><td colspan='2'><pre class='vt-torfac-raw-json'>" + escapeHtml(rawPayloadText || "No detail payload returned from Torfac.") + "</pre></td></tr>";
+            }
+
+            return "<div class='vt-torfac-detail-summary'>" + summaryHtml + "</div>"
+                + "<div class='vt-torfac-detail-table-wrap'>"
+                + "<table class='vt-torfac-detail-table'>"
+                + "<thead><tr><th>Field</th><th>Value</th></tr></thead>"
+                + "<tbody>" + detailRows + "</tbody>"
+                + "</table>"
+                + "</div>";
+        }
+
+        function parseRawPayload(rawPayload) {
+            const payloadText = rawPayload || "";
+
+            if (!payloadText) {
+                return { value: null, rawText: "" };
+            }
+
+            try {
+                const parsedValue = JSON.parse(payloadText);
+                return {
+                    value: parsedValue,
+                    rawText: JSON.stringify(parsedValue, null, 2)
+                };
+            } catch (error) {
+                return {
+                    value: null,
+                    rawText: payloadText
+                };
+            }
+        }
+
+        function collectDetailEntries(value, path, entries) {
+            if (value == null) {
+                entries.push({
+                    key: path || "value",
+                    value: "-"
+                });
+                return;
+            }
+
+            if (Array.isArray(value)) {
+                if (!value.length) {
+                    entries.push({
+                        key: path || "value",
+                        value: "[]"
+                    });
+                    return;
+                }
+
+                value.forEach(function (item, index) {
+                    const nextPath = path ? path + "[" + index + "]" : "[" + index + "]";
+                    collectDetailEntries(item, nextPath, entries);
+                });
+                return;
+            }
+
+            if (typeof value === "object") {
+                const keys = Object.keys(value);
+
+                if (!keys.length) {
+                    entries.push({
+                        key: path || "value",
+                        value: "{}"
+                    });
+                    return;
+                }
+
+                keys.forEach(function (key) {
+                    const nextPath = path ? path + "." + key : key;
+                    collectDetailEntries(value[key], nextPath, entries);
+                });
+                return;
+            }
+
+            entries.push({
+                key: path || "value",
+                value: String(value)
+            });
+        }
+
+        function getRowValue(row, key) {
+            if (!row || !key) {
+                return "";
+            }
+
+            const value = row[key];
+            return value == null || value === "" ? "" : String(value);
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function escapeJsValue(value) {
+            return String(value || "")
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'");
+        }
+
+        document.addEventListener("click", function (event) {
+            const menu = getTorfacActionsMenuElement();
+            if (!menu || menu.hidden) {
+                return;
+            }
+
+            if (menu.contains(event.target)) {
+                return;
+            }
+
+            if (torfacActionMenuTrigger && torfacActionMenuTrigger.contains(event.target)) {
+                return;
+            }
+
+            hideTorfacActionsMenu();
+        });
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                hideTorfacActionsMenu(true);
+            }
+        });
+
+        window.addEventListener("resize", function () {
+            hideTorfacActionsMenu();
+        });
+
+        window.addEventListener("scroll", function () {
+            hideTorfacActionsMenu();
+        }, true);
+    </script>
+}

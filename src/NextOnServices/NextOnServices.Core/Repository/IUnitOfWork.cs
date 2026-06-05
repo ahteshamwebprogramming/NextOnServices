@@ -27,6 +27,7 @@ public interface IUnitOfWork : IDisposable
     public IQuestionsMasterRepository QuestionsMaster { get; }
     public IQuestionOptionRepository QuestionOption { get; }
     public IHashingSettingRepository HashingSetting { get; }
+    public ITorfacMarketplaceSettingRepository TorfacMarketplaceSetting { get; }
     public ILucidMarketplaceSettingRepository LucidMarketplaceSetting { get; }
     public ILucidMarketplaceSubscriptionRepository LucidMarketplaceSubscription { get; }
     public ILucidMarketplaceSyncLogRepository LucidMarketplaceSyncLog { get; }

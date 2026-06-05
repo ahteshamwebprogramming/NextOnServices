@@ -195,7 +195,19 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                             var firstRow = DS.FirstOrDefault();
 
                             string Url = firstRow?.OLink ?? "";
-                            string ID = firstRow?.UID ?? "";
+                            string returnedUid = firstRow?.UID?.ToString() ?? string.Empty;
+                            if (!string.IsNullOrWhiteSpace(returnedUid) &&
+                                !string.Equals(returnedUid, NID, StringComparison.OrdinalIgnoreCase))
+                            {
+                                _logger.LogWarning(
+                                    "MaskingURL ignored UID returned by Usp_GetSupplierUrl to avoid race condition. SID={SID}, PMID={PMID}, GeneratedNID={GeneratedNID}, ReturnedUID={ReturnedUID}",
+                                    SID,
+                                    Code,
+                                    NID,
+                                    returnedUid);
+                            }
+
+                            string ID = NID;
                             var launchContext = await _surveyAPIController.GetProjectLaunchRuntimeContextAsync(SID ?? string.Empty, Code);
 
                             if (string.Equals(launchContext?.ProjectFrom, "Zamplia", StringComparison.OrdinalIgnoreCase))
@@ -221,9 +233,7 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
                             if (ContainsRespondentPlaceholder(Url))
                             {
-                                Url = Url.Replace("[respondentID]", ID);
-                                Url = Url.Replace("[RespondentID]", ID);
-                                Url = Url.Replace("[RESPONDENTID]", ID);
+                                Url = ApplyRespondentLaunchPlaceholders(Url, ID, Code, SID);
 
                                 if (isToken == "1")
                                 {
@@ -416,25 +426,60 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
         private async Task<string> ResolveLaunchRuntimeUidAsync(string? sid, string? code, string generatedUid, string saveResult)
         {
-            SupplierProjects? supplierProject = null;
-
-            if (!string.IsNullOrWhiteSpace(code))
+            if (!string.IsNullOrWhiteSpace(generatedUid) &&
+                !string.Equals(saveResult, "3", StringComparison.Ordinal))
             {
-                supplierProject = await _surveyAPIController.GetSupplierProjectByPmidAsync(code, sid);
+                return generatedUid;
             }
 
-            if (supplierProject == null && !string.IsNullOrWhiteSpace(generatedUid))
+            SupplierProjects? supplierProject = null;
+            if (string.IsNullOrWhiteSpace(generatedUid))
             {
+                _logger.LogWarning(
+                    "MaskingURL runtime UID fallback started because generated NID was empty. SID={SID}, Code={Code}, SaveResult={SaveResult}",
+                    sid,
+                    code,
+                    saveResult);
+            }
+            else
+            {
+                _logger.LogWarning(
+                    "MaskingURL runtime UID fallback started because SaveSupplierProject did not return a usable success state. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}",
+                    sid,
+                    code,
+                    saveResult,
+                    generatedUid);
+            }
+
+            if (!string.IsNullOrWhiteSpace(generatedUid))
+            {
+                _logger.LogInformation(
+                    "MaskingURL runtime UID fallback trying SupplierProjects lookup by generated UID. SID={SID}, Code={Code}, GeneratedNID={GeneratedNID}",
+                    sid,
+                    code,
+                    generatedUid);
                 supplierProject = await _surveyAPIController.GetSupplierProjectByUidAsync(generatedUid, sid);
+            }
+
+            if (supplierProject == null && !string.IsNullOrWhiteSpace(code))
+            {
+                _logger.LogWarning(
+                    "MaskingURL runtime UID fallback trying SupplierProjects lookup by PMID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}",
+                    sid,
+                    code,
+                    saveResult,
+                    generatedUid);
+                supplierProject = await _surveyAPIController.GetSupplierProjectByPmidAsync(code, sid);
             }
 
             var resolvedUid = supplierProject?.UID;
             if (!string.IsNullOrWhiteSpace(resolvedUid))
             {
-                if (!string.Equals(resolvedUid, generatedUid, StringComparison.Ordinal))
+                if (!string.IsNullOrWhiteSpace(generatedUid) &&
+                    !string.Equals(resolvedUid, generatedUid, StringComparison.OrdinalIgnoreCase))
                 {
                     _logger.LogWarning(
-                        "MaskingURL resolved runtime UID different from generated NID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}, RuntimeUID={RuntimeUID}",
+                        "MaskingURL runtime UID fallback resolved a UID different from the generated NID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}, RuntimeUID={RuntimeUID}",
                         sid,
                         code,
                         saveResult,
@@ -445,18 +490,8 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 return resolvedUid;
             }
 
-            if (string.Equals(saveResult, "1", StringComparison.Ordinal))
-            {
-                _logger.LogInformation(
-                    "MaskingURL falling back to generated NID after save success. SID={SID}, Code={Code}, GeneratedNID={GeneratedNID}",
-                    sid,
-                    code,
-                    generatedUid);
-                return generatedUid;
-            }
-
             _logger.LogWarning(
-                "MaskingURL could not resolve runtime UID. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}",
+                "MaskingURL could not resolve runtime UID after fallback. SID={SID}, Code={Code}, SaveResult={SaveResult}, GeneratedNID={GeneratedNID}",
                 sid,
                 code,
                 saveResult,
@@ -514,9 +549,7 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
             if (ContainsRespondentPlaceholder(currentUrl))
             {
-                currentUrl = currentUrl.Replace("[respondentID]", currentId);
-                currentUrl = currentUrl.Replace("[RespondentID]", currentId);
-                currentUrl = currentUrl.Replace("[RESPONDENTID]", currentId);
+                currentUrl = ApplyRespondentLaunchPlaceholders(currentUrl, currentId, code, sid);
             }
 
             if (isToken == "1" && ContainsTokenPlaceholder(currentUrl))
@@ -636,6 +669,52 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                    (url.Contains("[respondentID]", StringComparison.OrdinalIgnoreCase) ||
                     url.Contains("[RespondentID]", StringComparison.OrdinalIgnoreCase) ||
                     url.Contains("[RESPONDENTID]", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static bool ContainsRespondentPanelistPlaceholder(string? url)
+        {
+            return !string.IsNullOrWhiteSpace(url) &&
+                   (url.Contains("[respondentpanelistID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[RespondentPanelistID]", StringComparison.OrdinalIgnoreCase) ||
+                    url.Contains("[RESPONDENTPANELISTID]", StringComparison.OrdinalIgnoreCase));
+        }
+
+        private string ApplyRespondentLaunchPlaceholders(string url, string respondentId, string? respondentPanelistId, string? sid)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return url;
+            }
+
+            var resolvedUrl = url
+                .Replace("[respondentID]", respondentId ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RespondentID]", respondentId ?? string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RESPONDENTID]", respondentId ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+
+            if (!ContainsRespondentPanelistPlaceholder(resolvedUrl))
+            {
+                return resolvedUrl;
+            }
+
+            if (!string.IsNullOrWhiteSpace(respondentPanelistId))
+            {
+                _logger.LogInformation(
+                    "Launch URL [respondentpanelistID] placeholder replaced with original respondent ID. SID={SID}, RuntimeUID={RuntimeUID}",
+                    sid,
+                    respondentId);
+
+                return resolvedUrl
+                .Replace("[respondentpanelistID]", respondentPanelistId, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RespondentPanelistID]", respondentPanelistId, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RESPONDENTPANELISTID]", respondentPanelistId, StringComparison.OrdinalIgnoreCase);
+            }
+
+            _logger.LogWarning(
+                "Launch URL contains [respondentpanelistID] placeholder but original respondent ID is empty. SID={SID}, RuntimeUID={RuntimeUID}",
+                sid,
+                respondentId);
+
+            return resolvedUrl;
         }
 
         private static bool ContainsTokenPlaceholder(string url)

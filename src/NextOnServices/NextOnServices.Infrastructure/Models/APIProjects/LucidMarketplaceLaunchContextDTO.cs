@@ -34,6 +34,8 @@ public class LucidMarketplaceLaunchContextDTO
 
     public string? ApiKey { get; set; }
 
+    public string? EntryLinkSecretKey { get; set; }
+
     public bool UseConsultingsBridge { get; set; }
 
     public string? SupplierLinkTypeCode { get; set; }
@@ -44,3 +46,4 @@ public class LucidMarketplaceLaunchContextDTO
 
     public string? ExistingMaskingUrl { get; set; }
 }
+
