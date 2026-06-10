@@ -74,5 +74,13 @@ public class TorfacMarketplaceQuotaFetchResultDTO
 
     public bool ResponseTruncated { get; set; }
 
+    public string? QuestionLookupSourceUrl { get; set; }
+
+    public int? QuestionLookupStatusCode { get; set; }
+
+    public string? QuestionLookupRawResponse { get; set; }
+
+    public bool QuestionLookupResponseTruncated { get; set; }
+
     public List<Dictionary<string, string?>> Rows { get; set; } = new();
 }

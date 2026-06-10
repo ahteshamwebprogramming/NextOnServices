@@ -123,7 +123,7 @@ public class TorfacMarketplaceApiController : Controller
     }
 
     [HttpGet("GetQuotaList")]
-    public async Task<IActionResult> GetQuotaList(string surveyId)
+    public async Task<IActionResult> GetQuotaList(string surveyId, int? countryId)
     {
         if (string.IsNullOrWhiteSpace(surveyId))
         {
@@ -156,6 +156,7 @@ public class TorfacMarketplaceApiController : Controller
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(60);
             using var request = BuildTorfacRequest(HttpMethod.Get, quotaUrl, setting.SecretKey.Trim());
+            TorfacLookupFetchResult? questionLookupResult = null;
 
             using var response = await client.SendAsync(request);
             var rawResponse = await response.Content.ReadAsStringAsync();
@@ -165,6 +166,11 @@ public class TorfacMarketplaceApiController : Controller
                 out var rows,
                 out var preview,
                 out var responseTruncated);
+
+            if (response.IsSuccessStatusCode && countryId.HasValue && countryId.Value > 0)
+            {
+                questionLookupResult = await EnrichQuotaRowsAsync(client, rows, setting.SurveysUrl.Trim(), setting.SecretKey.Trim(), countryId.Value);
+            }
 
             return Json(new TorfacMarketplaceQuotaFetchResultDTO
             {
@@ -182,6 +188,10 @@ public class TorfacMarketplaceApiController : Controller
                 QuotaCount = quotaCount,
                 RawResponse = preview,
                 ResponseTruncated = responseTruncated,
+                QuestionLookupSourceUrl = questionLookupResult?.SourceUrl,
+                QuestionLookupStatusCode = questionLookupResult?.StatusCode,
+                QuestionLookupRawResponse = questionLookupResult?.RawResponse,
+                QuestionLookupResponseTruncated = questionLookupResult?.ResponseTruncated ?? false,
                 Rows = rows
             });
         }
@@ -257,6 +267,32 @@ public class TorfacMarketplaceApiController : Controller
 
         var configuredUri = new Uri(surveysUrl, UriKind.Absolute);
         return new Uri(configuredUri, $"/api/v1/supplier-api/quota-list/{normalizedSurveyId}").ToString();
+    }
+
+    private static string BuildLookupUrl(string surveysUrl, string relativePath)
+    {
+        var configuredUri = new Uri(surveysUrl, UriKind.Absolute);
+        return new Uri(configuredUri, relativePath).ToString();
+    }
+
+    private sealed class TorfacLookupFetchResult
+    {
+        public Dictionary<string, string> Map { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public string SourceUrl { get; init; } = string.Empty;
+
+        public int? StatusCode { get; init; }
+
+        public string RawResponse { get; init; } = string.Empty;
+
+        public bool ResponseTruncated { get; init; }
+    }
+
+    private sealed class TorfacQuotaTargetEntry
+    {
+        public string QuestionId { get; init; } = string.Empty;
+
+        public JsonElement Value { get; init; }
     }
 
     private static void BuildSurveyFetchArtifacts(
@@ -447,6 +483,11 @@ public class TorfacMarketplaceApiController : Controller
 
         row["quotaId"] = FindPreferredValue(item, "id", "quotaid", "quota_id");
         row["target"] = FindPreferredValue(item, "target");
+        row["targetRaw"] = TryGetPropertyIgnoreCase(item, "target", out var targetValue)
+            ? targetValue.GetRawText()
+            : string.Empty;
+        row["decodedTarget"] = string.Empty;
+        row["matchedQuestions"] = string.Empty;
         row["details"] = SummarizeQuotaDetails(item);
         row["rawPayload"] = item.GetRawText();
         return row;
@@ -479,6 +520,7 @@ public class TorfacMarketplaceApiController : Controller
         row["loi"] = FindPreferredValue(item, "loi", "lengthofinterview", "length_of_interview", "estimatedloi", "estimated_loi");
         row["ir"] = FindPreferredValue(item, "ir", "incidencerate", "incidence_rate", "incidence");
         row["cpi"] = FindPreferredValue(item, "cpi", "costperinterview", "cost_per_interview", "payout", "reward");
+        row["countryId"] = FindPreferredValue(item, "countryid", "country_id");
         row["countryName"] = FindPreferredValue(item, "countryname", "country_name", "country", "countries", "market", "geo");
         row["deviceType"] = FindPreferredValue(item, "devicetype", "device_type", "device", "devicetypes", "device_types", "platform");
         row["liveLink"] = FindPreferredValue(item, "livelink", "live_link", "surveyurl", "survey_url", "url", "link", "entrylink", "entry_link");
@@ -626,6 +668,350 @@ public class TorfacMarketplaceApiController : Controller
         return parts.Count > 0
             ? TrimCellValue(string.Join(Environment.NewLine, parts))
             : TrimCellValue(value.GetRawText());
+    }
+
+    private async Task<TorfacLookupFetchResult> EnrichQuotaRowsAsync(
+        HttpClient client,
+        List<Dictionary<string, string?>> rows,
+        string surveysUrl,
+        string secretKey,
+        int countryId)
+    {
+        var questionLookup = await FetchQuestionLookupAsync(client, surveysUrl, secretKey, countryId);
+        var answerLookups = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+
+        if (rows.Count > 0)
+        {
+            foreach (var row in rows)
+            {
+                var targetRaw = GetRowValue(row, "targetRaw");
+                if (string.IsNullOrWhiteSpace(targetRaw))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    using var document = JsonDocument.Parse(targetRaw);
+                    var targetEntries = ExtractQuestionTargets(document.RootElement);
+                    foreach (var questionId in targetEntries.Select(entry => entry.QuestionId).Distinct(StringComparer.OrdinalIgnoreCase))
+                    {
+                        if (!answerLookups.ContainsKey(questionId))
+                        {
+                            var answerLookupResult = await FetchAnswerLookupAsync(client, surveysUrl, secretKey, countryId, questionId);
+                            answerLookups[questionId] = answerLookupResult.Map;
+                        }
+                    }
+
+                    row["matchedQuestions"] = BuildMatchedQuestionsText(targetEntries, questionLookup.Map, answerLookups);
+                    row["decodedTarget"] = row["matchedQuestions"];
+                }
+                catch
+                {
+                    row["decodedTarget"] = string.Empty;
+                    row["matchedQuestions"] = string.Empty;
+                }
+            }
+        }
+
+        return questionLookup;
+    }
+
+    private async Task<TorfacLookupFetchResult> FetchQuestionLookupAsync(
+        HttpClient client,
+        string surveysUrl,
+        string secretKey,
+        int countryId)
+    {
+        var url = BuildLookupUrl(surveysUrl, $"/api/v1/supplier-api/questions/{countryId}");
+        return await FetchLookupMapAsync(
+            client,
+            url,
+            secretKey,
+            new[] { "questionid", "question_id", "id", "lookupquestionid", "code" },
+            new[] { "questiontext", "questionengtext", "label", "name", "question", "questionname", "questionkey", "title", "text" });
+    }
+
+    private async Task<TorfacLookupFetchResult> FetchAnswerLookupAsync(
+        HttpClient client,
+        string surveysUrl,
+        string secretKey,
+        int countryId,
+        string questionId)
+    {
+        var url = BuildLookupUrl(surveysUrl, $"/api/v1/supplier-api/answers/{countryId}/{Uri.EscapeDataString(questionId)}");
+        return await FetchLookupMapAsync(
+            client,
+            url,
+            secretKey,
+            new[] { "ans_code", "answerid", "answer_id", "id", "code", "value" },
+            new[] { "answerengtitle", "answertitle", "label", "name", "answer", "answername", "title", "text", "option", "optionname" });
+    }
+
+    private async Task<TorfacLookupFetchResult> FetchLookupMapAsync(
+        HttpClient client,
+        string url,
+        string secretKey,
+        string[] keyAliases,
+        string[] labelAliases)
+    {
+        try
+        {
+            using var request = BuildTorfacRequest(HttpMethod.Get, url, secretKey);
+            using var response = await client.SendAsync(request);
+            var rawResponse = await response.Content.ReadAsStringAsync();
+            var preview = TrimResponse(rawResponse, out var responseTruncated);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new TorfacLookupFetchResult
+                {
+                    SourceUrl = url,
+                    StatusCode = (int)response.StatusCode,
+                    RawResponse = preview,
+                    ResponseTruncated = responseTruncated
+                };
+            }
+
+            return new TorfacLookupFetchResult
+            {
+                SourceUrl = url,
+                StatusCode = (int)response.StatusCode,
+                RawResponse = preview,
+                ResponseTruncated = responseTruncated,
+                Map = ParseLookupMap(rawResponse, keyAliases, labelAliases)
+            };
+        }
+        catch
+        {
+            return new TorfacLookupFetchResult
+            {
+                SourceUrl = url
+            };
+        }
+    }
+
+    private static Dictionary<string, string> ParseLookupMap(string? rawResponse, string[] keyAliases, string[] labelAliases)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(rawResponse))
+        {
+            return result;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(rawResponse);
+            var collectionLookup = TryLocateSurveyCollection(document.RootElement, "$", 0);
+            if (!collectionLookup.Collection.HasValue || collectionLookup.Collection.Value.ValueKind != JsonValueKind.Array)
+            {
+                return result;
+            }
+
+            foreach (var item in collectionLookup.Collection.Value.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var key = FindPreferredValue(item, keyAliases);
+                var label = FindPreferredValue(item, labelAliases);
+                if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(label) && !result.ContainsKey(key))
+                {
+                    result[key] = label;
+                }
+            }
+        }
+        catch
+        {
+            return result;
+        }
+
+        return result;
+    }
+
+    private static List<TorfacQuotaTargetEntry> ExtractQuestionTargets(JsonElement targetRoot)
+    {
+        if (targetRoot.ValueKind == JsonValueKind.String)
+        {
+            var stringValue = targetRoot.GetString();
+            if (!string.IsNullOrWhiteSpace(stringValue) &&
+                (stringValue.TrimStart().StartsWith("{", StringComparison.Ordinal) ||
+                 stringValue.TrimStart().StartsWith("[", StringComparison.Ordinal)))
+            {
+                try
+                {
+                    using var nestedDocument = JsonDocument.Parse(stringValue);
+                    return ExtractQuestionTargets(nestedDocument.RootElement);
+                }
+                catch
+                {
+                    return new List<TorfacQuotaTargetEntry>();
+                }
+            }
+
+            return new List<TorfacQuotaTargetEntry>();
+        }
+
+        var targets = new List<TorfacQuotaTargetEntry>();
+
+        if (targetRoot.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in targetRoot.EnumerateArray())
+            {
+                if (item.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                foreach (var property in item.EnumerateObject())
+                {
+                    if (!string.IsNullOrWhiteSpace(property.Name))
+                    {
+                        targets.Add(new TorfacQuotaTargetEntry
+                        {
+                            QuestionId = property.Name,
+                            Value = property.Value.Clone()
+                        });
+                    }
+                }
+            }
+        }
+        else if (targetRoot.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in targetRoot.EnumerateObject())
+            {
+                if (!string.IsNullOrWhiteSpace(property.Name))
+                {
+                    targets.Add(new TorfacQuotaTargetEntry
+                    {
+                        QuestionId = property.Name,
+                        Value = property.Value.Clone()
+                    });
+                }
+            }
+        }
+        else
+        {
+            return new List<TorfacQuotaTargetEntry>();
+        }
+
+        return targets
+            .GroupBy(target => target.QuestionId, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .OrderBy(target => int.TryParse(target.QuestionId, out var numericId) ? numericId : int.MaxValue)
+            .ThenBy(target => target.QuestionId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string BuildMatchedQuestionsText(
+        IEnumerable<TorfacQuotaTargetEntry> targetEntries,
+        IReadOnlyDictionary<string, string> questionLookup,
+        IReadOnlyDictionary<string, Dictionary<string, string>> answerLookups)
+    {
+        var lines = new List<string>();
+        foreach (var targetEntry in targetEntries)
+        {
+            var questionId = targetEntry.QuestionId;
+            var label = questionLookup.TryGetValue(questionId, out var questionLabel) && !string.IsNullOrWhiteSpace(questionLabel)
+                ? questionLabel
+                : $"Question {questionId}";
+
+            answerLookups.TryGetValue(questionId, out var answerLookup);
+            var decodedValues = DecodeQuotaValues(targetEntry.Value, answerLookup);
+
+            lines.Add(!string.IsNullOrWhiteSpace(decodedValues)
+                ? $"{questionId}: {label}{Environment.NewLine}{decodedValues}"
+                : $"{questionId}: {label}");
+        }
+
+        return lines.Count > 0
+            ? string.Join(Environment.NewLine + Environment.NewLine, lines)
+            : string.Empty;
+    }
+
+    private static string DecodeQuotaValues(JsonElement value, IReadOnlyDictionary<string, string>? answerLookup)
+    {
+        if (value.ValueKind == JsonValueKind.String)
+        {
+            var stringValue = value.GetString();
+            if (!string.IsNullOrWhiteSpace(stringValue) &&
+                (stringValue.TrimStart().StartsWith("{", StringComparison.Ordinal) ||
+                 stringValue.TrimStart().StartsWith("[", StringComparison.Ordinal)))
+            {
+                try
+                {
+                    using var nestedDocument = JsonDocument.Parse(stringValue);
+                    return DecodeQuotaValues(nestedDocument.RootElement, answerLookup);
+                }
+                catch
+                {
+                    return stringValue ?? string.Empty;
+                }
+            }
+
+            return MapAnswerValue(stringValue, answerLookup);
+        }
+
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            var hasAgeStart = TryGetPropertyIgnoreCase(value, "ageStart", out var ageStart);
+            var hasAgeEnd = TryGetPropertyIgnoreCase(value, "ageEnd", out var ageEnd);
+            if (hasAgeStart || hasAgeEnd)
+            {
+                var ageStartText = ageStart.ValueKind == JsonValueKind.Undefined ? "?" : ConvertElementToCellValue(ageStart);
+                var ageEndText = ageEnd.ValueKind == JsonValueKind.Undefined ? "?" : ConvertElementToCellValue(ageEnd);
+                return $"{ageStartText}-{ageEndText}";
+            }
+
+            var parts = new List<string>();
+            foreach (var property in value.EnumerateObject().OrderBy(property => property.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                var decoded = DecodeQuotaValues(property.Value, answerLookup);
+                if (!string.IsNullOrWhiteSpace(decoded))
+                {
+                    parts.Add(decoded);
+                }
+            }
+
+            return parts.Count > 0
+                ? string.Join(Environment.NewLine, parts.Distinct(StringComparer.OrdinalIgnoreCase))
+                : string.Empty;
+        }
+
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            var parts = new List<string>();
+            foreach (var item in value.EnumerateArray())
+            {
+                var decoded = DecodeQuotaValues(item, answerLookup);
+                if (!string.IsNullOrWhiteSpace(decoded))
+                {
+                    parts.Add(decoded);
+                }
+            }
+
+            return parts.Count > 0
+                ? string.Join(Environment.NewLine, parts.Distinct(StringComparer.OrdinalIgnoreCase))
+                : string.Empty;
+        }
+
+        return MapAnswerValue(ConvertElementToCellValue(value), answerLookup);
+    }
+
+    private static string MapAnswerValue(string? rawValue, IReadOnlyDictionary<string, string>? answerLookup)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        if (answerLookup != null && answerLookup.TryGetValue(rawValue, out var decodedLabel) && !string.IsNullOrWhiteSpace(decodedLabel))
+        {
+            return decodedLabel;
+        }
+
+        return rawValue;
     }
 
     private static string ExtractArraySummary(JsonElement value)

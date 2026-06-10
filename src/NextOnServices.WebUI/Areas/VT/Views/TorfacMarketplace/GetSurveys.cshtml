@@ -930,7 +930,7 @@
                 confirmButtonText: "Close",
                 html: buildProjectPopupHtml(row, details.value, details.rawText),
                 didOpen: function () {
-                    loadTorfacQuotaList(getRowValue(row, "surveyId"));
+                    loadTorfacQuotaList(getRowValue(row, "surveyId"), getRowValue(row, "countryId"));
                 }
             });
         }
@@ -1003,7 +1003,7 @@
                 + "</div>";
         }
 
-        function loadTorfacQuotaList(surveyId) {
+        function loadTorfacQuotaList(surveyId, countryId) {
             const $container = $("#TorfacQuotaListContainer");
             if (!$container.length) {
                 return;
@@ -1023,7 +1023,7 @@
             $.ajax({
                 type: "GET",
                 url: "/VT/TorfacMarketplaceApi/GetQuotaList",
-                data: { surveyId: surveyId },
+                data: { surveyId: surveyId, countryId: countryId || null },
                 success: function (response) {
                     $container.html(buildTorfacQuotaListMarkup(response));
                 },
@@ -1038,55 +1038,85 @@
 
         function buildTorfacQuotaListMarkup(response) {
             const rows = Array.isArray(response?.rows) ? response.rows : [];
-            const quotaCount = response?.quotaCount != null ? response.quotaCount : rows.length;
-            const statusCode = response?.statusCode != null ? String(response.statusCode) : "-";
             const message = response?.message || "";
 
-            const summaryHtml = "<div class='vt-torfac-detail-summary'>"
-                + buildQuotaSummaryCard("Status", response?.result ? "Success" : "Failed")
-                + buildQuotaSummaryCard("HTTP Code", statusCode)
-                + buildQuotaSummaryCard("Quota Rows", String(quotaCount))
-                + "</div>";
-
             if (!response?.result) {
-                return summaryHtml
-                    + "<div class='vt-torfac-quota-state vt-torfac-quota-state--danger'>"
+                return "<div class='vt-torfac-quota-state vt-torfac-quota-state--danger'>"
                     + escapeHtml(message || "Quota list request failed.")
                     + "</div>";
             }
 
             if (!rows.length) {
-                return summaryHtml
-                    + "<div class='vt-torfac-quota-state'>"
+                return "<div class='vt-torfac-quota-state'>"
                     + escapeHtml(message || "No quota rows were returned for this survey.")
                     + "</div>";
             }
 
-            const bodyHtml = rows.map(function (row) {
-                const quotaId = getRowValue(row, "quotaId") || "-";
-                const target = getRowValue(row, "target") || "-";
-                const details = getRowValue(row, "details") || "-";
+            const matchedQuestions = [];
+            rows.forEach(function (row) {
+                const text = getRowValue(row, "matchedQuestions") || getRowValue(row, "decodedTarget") || "";
+                if (!text) {
+                    return;
+                }
 
-                return "<tr>"
-                    + "<td>" + escapeHtml(quotaId) + "</td>"
-                    + "<td><div class='vt-torfac-quota-text'>" + formatMultilineValue(target) + "</div></td>"
-                    + "<td><div class='vt-torfac-quota-text'>" + formatMultilineValue(details) + "</div></td>"
-                    + "</tr>";
-            }).join("");
+                splitQuotaQuestionBlocks(text).forEach(function (block) {
+                    if (block.question && matchedQuestions.every(function (item) { return item.question !== block.question; })) {
+                        matchedQuestions.push(block);
+                    }
+                });
+            });
 
-            return summaryHtml
-                + "<div class='vt-torfac-detail-table-wrap'>"
-                + "<table class='vt-torfac-detail-table'>"
-                + "<thead><tr><th>Quota ID</th><th>Target</th><th>Details</th></tr></thead>"
-                + "<tbody>" + bodyHtml + "</tbody>"
-                + "</table>"
+            const matchedQuestionsHtml = "<div class='vt-torfac-popup-section'>"
+                + "<h4 class='vt-torfac-popup-section__title'>Questions Used In Quota</h4>"
+                + (matchedQuestions.length
+                    ? "<div class='vt-torfac-detail-table-wrap'>"
+                        + "<table class='vt-torfac-detail-table'>"
+                        + "<thead><tr><th>#</th><th>Question</th></tr></thead>"
+                        + "<tbody>"
+                        + matchedQuestions.map(function (item, index) {
+                            return "<tr>"
+                                + "<td>" + escapeHtml(String(index + 1)) + "</td>"
+                                + "<td>" + buildQuotaQuestionCell(item) + "</td>"
+                                + "</tr>";
+                        }).join("")
+                        + "</tbody>"
+                        + "</table>"
+                    + "</div>"
+                    : "<div class='vt-torfac-quota-state'>No quota questions were matched from the Questions API response.</div>")
                 + "</div>";
+
+            return matchedQuestionsHtml;
         }
 
-        function buildQuotaSummaryCard(label, value) {
-            return "<div class='vt-torfac-detail-card'>"
-                + "<span class='vt-torfac-detail-card__label'>" + escapeHtml(label) + "</span>"
-                + "<span class='vt-torfac-detail-card__value'>" + escapeHtml(value || "-") + "</span>"
+        function splitQuotaQuestionBlocks(text) {
+            return String(text || "")
+                .split(/\r?\n\r?\n/)
+                .map(function (block) {
+                    const lines = block
+                        .split(/\r?\n/)
+                        .map(function (line) { return line.trim(); })
+                        .filter(function (line) { return line.length > 0; });
+
+                    return {
+                        question: lines[0] || "",
+                        answers: lines.slice(1)
+                    };
+                })
+                .filter(function (block) { return block.question.length > 0; });
+        }
+
+        function buildQuotaQuestionCell(block) {
+            const answersHtml = block.answers.length
+                ? "<div class='vt-torfac-quota-text' style='margin-top:8px;'>"
+                    + block.answers.map(function (answer) {
+                        return "<div>" + escapeHtml(answer) + "</div>";
+                    }).join("")
+                    + "</div>"
+                : "";
+
+            return "<div class='vt-torfac-quota-text'>"
+                + "<div><strong>" + escapeHtml(block.question) + "</strong></div>"
+                + answersHtml
                 + "</div>";
         }
 
