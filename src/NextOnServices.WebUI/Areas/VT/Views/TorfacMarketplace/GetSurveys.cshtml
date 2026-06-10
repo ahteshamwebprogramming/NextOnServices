@@ -354,6 +354,39 @@
         line-height: 1.45;
         color: #3f2b1b;
     }
+
+    .vt-torfac-popup-section {
+        margin-top: 1.4rem;
+        text-align: left;
+    }
+
+    .vt-torfac-popup-section__title {
+        margin: 0 0 0.85rem;
+        color: #7c4a1d;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .vt-torfac-quota-state {
+        padding: 1rem 1.1rem;
+        border: 1px dashed #eadfd6;
+        border-radius: 12px;
+        background: #fffaf5;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .vt-torfac-quota-state--danger {
+        color: #b91c1c;
+        border-color: rgba(185, 28, 28, 0.2);
+        background: #fff5f5;
+    }
+
+    .vt-torfac-quota-text {
+        white-space: pre-wrap;
+        line-height: 1.5;
+        color: #3f2b1b;
+    }
 </style>
 
 <div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-torfac-get-page">
@@ -895,7 +928,10 @@
                 title: title,
                 width: "1100px",
                 confirmButtonText: "Close",
-                html: buildProjectPopupHtml(row, details.value, details.rawText)
+                html: buildProjectPopupHtml(row, details.value, details.rawText),
+                didOpen: function () {
+                    loadTorfacQuotaList(getRowValue(row, "surveyId"));
+                }
             });
         }
 
@@ -952,12 +988,110 @@
             }
 
             return "<div class='vt-torfac-detail-summary'>" + summaryHtml + "</div>"
+                + "<div class='vt-torfac-popup-section'>"
+                + "<h4 class='vt-torfac-popup-section__title'>Survey Details</h4>"
                 + "<div class='vt-torfac-detail-table-wrap'>"
                 + "<table class='vt-torfac-detail-table'>"
                 + "<thead><tr><th>Field</th><th>Value</th></tr></thead>"
                 + "<tbody>" + detailRows + "</tbody>"
                 + "</table>"
+                + "</div>"
+                + "</div>"
+                + "<div class='vt-torfac-popup-section'>"
+                + "<h4 class='vt-torfac-popup-section__title'>Quota List</h4>"
+                + "<div id='TorfacQuotaListContainer' class='vt-torfac-quota-state'>Loading quota list...</div>"
                 + "</div>";
+        }
+
+        function loadTorfacQuotaList(surveyId) {
+            const $container = $("#TorfacQuotaListContainer");
+            if (!$container.length) {
+                return;
+            }
+
+            if (!surveyId) {
+                $container
+                    .removeClass("vt-torfac-quota-state--danger")
+                    .html("Quota list is unavailable because the survey ID is missing.");
+                return;
+            }
+
+            $container
+                .removeClass("vt-torfac-quota-state--danger")
+                .html("Loading quota list...");
+
+            $.ajax({
+                type: "GET",
+                url: "/VT/TorfacMarketplaceApi/GetQuotaList",
+                data: { surveyId: surveyId },
+                success: function (response) {
+                    $container.html(buildTorfacQuotaListMarkup(response));
+                },
+                error: function (xhr) {
+                    const message = xhr.responseJSON?.message || xhr.responseText || "Unable to load the Torfac quota list.";
+                    $container
+                        .addClass("vt-torfac-quota-state--danger")
+                        .html(escapeHtml(message));
+                }
+            });
+        }
+
+        function buildTorfacQuotaListMarkup(response) {
+            const rows = Array.isArray(response?.rows) ? response.rows : [];
+            const quotaCount = response?.quotaCount != null ? response.quotaCount : rows.length;
+            const statusCode = response?.statusCode != null ? String(response.statusCode) : "-";
+            const message = response?.message || "";
+
+            const summaryHtml = "<div class='vt-torfac-detail-summary'>"
+                + buildQuotaSummaryCard("Status", response?.result ? "Success" : "Failed")
+                + buildQuotaSummaryCard("HTTP Code", statusCode)
+                + buildQuotaSummaryCard("Quota Rows", String(quotaCount))
+                + "</div>";
+
+            if (!response?.result) {
+                return summaryHtml
+                    + "<div class='vt-torfac-quota-state vt-torfac-quota-state--danger'>"
+                    + escapeHtml(message || "Quota list request failed.")
+                    + "</div>";
+            }
+
+            if (!rows.length) {
+                return summaryHtml
+                    + "<div class='vt-torfac-quota-state'>"
+                    + escapeHtml(message || "No quota rows were returned for this survey.")
+                    + "</div>";
+            }
+
+            const bodyHtml = rows.map(function (row) {
+                const quotaId = getRowValue(row, "quotaId") || "-";
+                const target = getRowValue(row, "target") || "-";
+                const details = getRowValue(row, "details") || "-";
+
+                return "<tr>"
+                    + "<td>" + escapeHtml(quotaId) + "</td>"
+                    + "<td><div class='vt-torfac-quota-text'>" + formatMultilineValue(target) + "</div></td>"
+                    + "<td><div class='vt-torfac-quota-text'>" + formatMultilineValue(details) + "</div></td>"
+                    + "</tr>";
+            }).join("");
+
+            return summaryHtml
+                + "<div class='vt-torfac-detail-table-wrap'>"
+                + "<table class='vt-torfac-detail-table'>"
+                + "<thead><tr><th>Quota ID</th><th>Target</th><th>Details</th></tr></thead>"
+                + "<tbody>" + bodyHtml + "</tbody>"
+                + "</table>"
+                + "</div>";
+        }
+
+        function buildQuotaSummaryCard(label, value) {
+            return "<div class='vt-torfac-detail-card'>"
+                + "<span class='vt-torfac-detail-card__label'>" + escapeHtml(label) + "</span>"
+                + "<span class='vt-torfac-detail-card__value'>" + escapeHtml(value || "-") + "</span>"
+                + "</div>";
+        }
+
+        function formatMultilineValue(value) {
+            return escapeHtml(value || "-").replace(/\r?\n/g, "<br>");
         }
 
         function parseRawPayload(rawPayload) {

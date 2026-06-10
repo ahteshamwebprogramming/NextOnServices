@@ -55,3 +55,24 @@ public class TorfacMarketplaceSurveyFetchResultDTO
 
     public List<Dictionary<string, string?>> Rows { get; set; } = new();
 }
+
+public class TorfacMarketplaceQuotaFetchResultDTO
+{
+    public bool Result { get; set; }
+
+    public string? Message { get; set; }
+
+    public string? SourceUrl { get; set; }
+
+    public int? StatusCode { get; set; }
+
+    public string? ContentType { get; set; }
+
+    public int? QuotaCount { get; set; }
+
+    public string? RawResponse { get; set; }
+
+    public bool ResponseTruncated { get; set; }
+
+    public List<Dictionary<string, string?>> Rows { get; set; } = new();
+}

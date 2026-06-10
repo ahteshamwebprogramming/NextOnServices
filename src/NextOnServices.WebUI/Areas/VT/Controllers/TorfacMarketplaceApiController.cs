@@ -73,13 +73,9 @@ public class TorfacMarketplaceApiController : Controller
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, setting.SurveysUrl.Trim());
-            request.Version = new Version(2, 0);
-            request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
-            ApplySecretHeaders(request, setting.SecretKey.Trim());
-
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(60);
+            using var request = BuildTorfacRequest(HttpMethod.Get, setting.SurveysUrl.Trim(), setting.SecretKey.Trim());
 
             using var response = await client.SendAsync(request);
             var rawResponse = await response.Content.ReadAsStringAsync();
@@ -126,6 +122,81 @@ public class TorfacMarketplaceApiController : Controller
         }
     }
 
+    [HttpGet("GetQuotaList")]
+    public async Task<IActionResult> GetQuotaList(string surveyId)
+    {
+        if (string.IsNullOrWhiteSpace(surveyId))
+        {
+            return BadRequest(new { result = false, message = "Survey ID is required." });
+        }
+
+        var setting = await GetCurrentSettingAsync();
+        if (setting == null || string.IsNullOrWhiteSpace(setting.SurveysUrl))
+        {
+            return Json(new TorfacMarketplaceQuotaFetchResultDTO
+            {
+                Result = false,
+                Message = "Save the Torfac Marketplace survey URL before fetching quota list."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(setting.SecretKey))
+        {
+            return Json(new TorfacMarketplaceQuotaFetchResultDTO
+            {
+                Result = false,
+                Message = "Save the Torfac Marketplace secret key before fetching quota list."
+            });
+        }
+
+        var quotaUrl = BuildQuotaListUrl(setting.SurveysUrl.Trim(), surveyId.Trim());
+
+        try
+        {
+            var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(60);
+            using var request = BuildTorfacRequest(HttpMethod.Get, quotaUrl, setting.SecretKey.Trim());
+
+            using var response = await client.SendAsync(request);
+            var rawResponse = await response.Content.ReadAsStringAsync();
+            BuildQuotaFetchArtifacts(
+                rawResponse,
+                out var quotaCount,
+                out var rows,
+                out var preview,
+                out var responseTruncated);
+
+            return Json(new TorfacMarketplaceQuotaFetchResultDTO
+            {
+                Result = response.IsSuccessStatusCode,
+                Message = response.IsSuccessStatusCode
+                    ? rows.Count > 0
+                        ? $"Fetched Torfac quota list successfully. Loaded {rows.Count} quota record(s)."
+                        : quotaCount.HasValue
+                            ? "Fetched Torfac quota list successfully, but no quota rows were returned."
+                            : "Fetched Torfac quota list successfully, but no quota collection was detected."
+                    : $"Remote endpoint returned HTTP {(int)response.StatusCode}.",
+                SourceUrl = quotaUrl,
+                StatusCode = (int)response.StatusCode,
+                ContentType = response.Content.Headers.ContentType?.MediaType,
+                QuotaCount = quotaCount,
+                RawResponse = preview,
+                ResponseTruncated = responseTruncated,
+                Rows = rows
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Torfac Marketplace quota fetch failed for survey {SurveyId}.", surveyId);
+            return Json(new TorfacMarketplaceQuotaFetchResultDTO
+            {
+                Result = false,
+                SourceUrl = quotaUrl,
+                Message = ex.Message
+            });
+        }
+    }
+
     [HttpGet("ResolveProject")]
     public async Task<IActionResult> ResolveProject(string surveyId)
     {
@@ -165,6 +236,29 @@ public class TorfacMarketplaceApiController : Controller
         request.Headers.TryAddWithoutValidation("x-api-key", secretKey);
     }
 
+    private static HttpRequestMessage BuildTorfacRequest(HttpMethod method, string url, string secretKey)
+    {
+        var request = new HttpRequestMessage(method, url);
+        request.Version = new Version(2, 0);
+        request.VersionPolicy = HttpVersionPolicy.RequestVersionOrHigher;
+        ApplySecretHeaders(request, secretKey);
+        return request;
+    }
+
+    private static string BuildQuotaListUrl(string surveysUrl, string surveyId)
+    {
+        const string surveysEndpoint = "/getallocatedsurveys";
+        var normalizedSurveyId = Uri.EscapeDataString(surveyId.Trim());
+
+        if (surveysUrl.EndsWith(surveysEndpoint, StringComparison.OrdinalIgnoreCase))
+        {
+            return surveysUrl[..^surveysEndpoint.Length] + $"/quota-list/{normalizedSurveyId}";
+        }
+
+        var configuredUri = new Uri(surveysUrl, UriKind.Absolute);
+        return new Uri(configuredUri, $"/api/v1/supplier-api/quota-list/{normalizedSurveyId}").ToString();
+    }
+
     private static void BuildSurveyFetchArtifacts(
         string? rawResponse,
         out int? surveyCount,
@@ -195,6 +289,46 @@ public class TorfacMarketplaceApiController : Controller
                 surveyCount = collectionLookup.Collection.Value.GetArrayLength();
                 collectionPath = collectionLookup.CollectionPath;
                 (columns, rows) = BuildSurveyTable(collectionLookup.Collection.Value);
+            }
+
+            var prettyJson = JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            preview = TrimResponse(prettyJson, out responseTruncated);
+        }
+        catch
+        {
+            preview = TrimResponse(rawResponse, out responseTruncated);
+        }
+    }
+
+    private static void BuildQuotaFetchArtifacts(
+        string? rawResponse,
+        out int? quotaCount,
+        out List<Dictionary<string, string?>> rows,
+        out string preview,
+        out bool responseTruncated)
+    {
+        quotaCount = null;
+        rows = new List<Dictionary<string, string?>>();
+        preview = string.Empty;
+        responseTruncated = false;
+
+        if (string.IsNullOrWhiteSpace(rawResponse))
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(rawResponse);
+            var collectionLookup = TryLocateSurveyCollection(document.RootElement, "$", 0);
+            if (collectionLookup.Collection.HasValue)
+            {
+                quotaCount = collectionLookup.Collection.Value.GetArrayLength();
+                rows = BuildQuotaRows(collectionLookup.Collection.Value);
             }
 
             var prettyJson = JsonSerializer.Serialize(document.RootElement, new JsonSerializerOptions
@@ -279,6 +413,43 @@ public class TorfacMarketplaceApiController : Controller
         }
 
         return (columns, rows);
+    }
+
+    private static List<Dictionary<string, string?>> BuildQuotaRows(JsonElement collection)
+    {
+        var rows = new List<Dictionary<string, string?>>();
+        if (collection.ValueKind != JsonValueKind.Array)
+        {
+            return rows;
+        }
+
+        foreach (var item in collection.EnumerateArray())
+        {
+            rows.Add(BuildQuotaRow(item));
+        }
+
+        return rows;
+    }
+
+    private static Dictionary<string, string?> BuildQuotaRow(JsonElement item)
+    {
+        var row = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
+        if (item.ValueKind != JsonValueKind.Object)
+        {
+            var fallbackValue = ConvertElementToCellValue(item);
+            row["quotaId"] = fallbackValue;
+            row["target"] = string.Empty;
+            row["details"] = fallbackValue;
+            row["rawPayload"] = item.GetRawText();
+            return row;
+        }
+
+        row["quotaId"] = FindPreferredValue(item, "id", "quotaid", "quota_id");
+        row["target"] = FindPreferredValue(item, "target");
+        row["details"] = SummarizeQuotaDetails(item);
+        row["rawPayload"] = item.GetRawText();
+        return row;
     }
 
     private static Dictionary<string, string?> BuildNormalizedSurveyRow(JsonElement item)
@@ -428,6 +599,33 @@ public class TorfacMarketplaceApiController : Controller
         }
 
         return null;
+    }
+
+    private static string SummarizeQuotaDetails(JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Object)
+        {
+            return ConvertElementToCellValue(value) ?? string.Empty;
+        }
+
+        var parts = new List<string>();
+        foreach (var property in value.EnumerateObject())
+        {
+            if (string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var candidate = ConvertElementToCellValue(property.Value);
+            if (!string.IsNullOrWhiteSpace(candidate))
+            {
+                parts.Add($"{property.Name}: {candidate}");
+            }
+        }
+
+        return parts.Count > 0
+            ? TrimCellValue(string.Join(Environment.NewLine, parts))
+            : TrimCellValue(value.GetRawText());
     }
 
     private static string ExtractArraySummary(JsonElement value)
