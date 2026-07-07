@@ -120,7 +120,7 @@ namespace NextOnServices.Endpoints.Accounts
                     UserCode = request.UserCode.Trim(),
                     UserName = request.UserName?.Trim(),
                     EmailId = request.EmailId?.Trim(),
-                    Password = CommonHelper.Encrypt(request.Password),
+                    Password = request.Password,
                     ContactNumber = request.ContactNumber?.Trim(),
                     Address = request.Address?.Trim(),
                     UserType = request.UserType ?? "U",
@@ -301,7 +301,7 @@ EXEC sp_executesql @Sql, N'@UserId INT', @UserId = @UserId;";
                 user.Address = request.Address?.Trim();
                 user.UserType = string.IsNullOrWhiteSpace(request.UserType) ? user.UserType : request.UserType.Trim();
                 if (!string.IsNullOrWhiteSpace(request.Password))
-                    user.Password = CommonHelper.Encrypt(request.Password);
+                    user.Password = request.Password;
                 _unitOfWork.User.Update(user);
                 _unitOfWork.Save();
                 return Ok("User updated successfully.");
@@ -363,23 +363,7 @@ EXEC sp_executesql @Sql, N'@UserId INT', @UserId = @UserId;";
                 if (!oldMatches)
                     return BadRequest("Old password is incorrect.");
 
-                // If the existing password appears to be encrypted (decrypt != stored),
-                // then encrypt the new password as well; otherwise, store as-is.
-                bool storedWasEncrypted = false;
-                try
-                {
-                    var decrypted = CommonHelper.Decrypt(stored);
-                    if (!string.IsNullOrEmpty(decrypted) && decrypted != stored)
-                        storedWasEncrypted = true;
-                }
-                catch
-                {
-                    storedWasEncrypted = false;
-                }
-
-                user.Password = storedWasEncrypted
-                    ? CommonHelper.Encrypt(request.NewPassword)
-                    : request.NewPassword;
+                user.Password = request.NewPassword;
 
                 _unitOfWork.User.Update(user);
                 _unitOfWork.Save();
