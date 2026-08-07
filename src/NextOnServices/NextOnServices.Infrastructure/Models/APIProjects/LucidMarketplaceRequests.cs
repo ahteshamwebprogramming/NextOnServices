@@ -51,9 +51,102 @@ public class LucidMarketplaceOpportunityStateRequest
     public string? LocalState { get; set; }
 }
 
+public class LucidMarketplaceNumericFilter
+{
+    public string? Op { get; set; }
+
+    public decimal? Value { get; set; }
+
+    public decimal? Min { get; set; }
+
+    public decimal? Max { get; set; }
+}
+
+public class LucidMarketplaceOpportunitySearchRequest
+{
+    public string? View { get; set; }
+
+    public int Draw { get; set; }
+
+    public int Start { get; set; }
+
+    public int Length { get; set; } = 25;
+
+    public string? Search { get; set; }
+
+    public string? OrderBy { get; set; }
+
+    public string? Dir { get; set; }
+
+    public string? CountryLanguageCode { get; set; }
+
+    public string? StudyType { get; set; }
+
+    public LucidMarketplaceNumericFilter? Cpi { get; set; }
+
+    public LucidMarketplaceNumericFilter? Ir { get; set; }
+
+    public LucidMarketplaceNumericFilter? Loi { get; set; }
+
+    public LucidMarketplaceNumericFilter? TotalRemaining { get; set; }
+}
+
+public class LucidMarketplaceOpportunityDataTableRequest : NextOnServices.Infrastructure.ViewModels.DataTablesRequest
+{
+    public string? View { get; set; }
+
+    public string? CountryLanguageCode { get; set; }
+
+    public string? StudyType { get; set; }
+
+    public LucidMarketplaceNumericFilter? Cpi { get; set; }
+
+    public LucidMarketplaceNumericFilter? Ir { get; set; }
+
+    public LucidMarketplaceNumericFilter? Loi { get; set; }
+
+    public LucidMarketplaceNumericFilter? TotalRemaining { get; set; }
+}
+
+public class LucidMarketplaceOpportunitySearchResult
+{
+    public int Draw { get; set; }
+
+    public int RecordsTotal { get; set; }
+
+    public int RecordsFiltered { get; set; }
+
+    public List<LucidMarketplaceOpportunityDTO> Data { get; set; } = new();
+}
+
 public class LucidMarketplaceAddProjectRequest
 {
     public int LucidMarketplaceOpportunityId { get; set; }
+}
+
+public class LucidMarketplaceRemoveProjectRequest
+{
+    public int LucidMarketplaceOpportunityId { get; set; }
+}
+
+public class LucidMarketplaceRemoveAddedProjectRequest
+{
+    public int LucidMarketplaceOpportunityId { get; set; }
+
+    /// <summary>
+    /// "lucid" = hard-delete Lucid Marketplace tables only; keep VT Projects/ProjectsUrl/ProjectMapping unchanged.
+    /// "entire" = hard-delete Lucid Marketplace tables and soft-deactivate VT Projects/ProjectsUrl/ProjectMapping.
+    /// </summary>
+    public string Mode { get; set; } = "lucid";
+}
+
+public class LucidMarketplaceRemoveNonLiveAddedProjectsRequest
+{
+    /// <summary>
+    /// "lucid" = hard-delete Lucid Marketplace tables only; keep VT Projects/ProjectsUrl/ProjectMapping unchanged.
+    /// "entire" = hard-delete Lucid Marketplace tables and soft-deactivate VT Projects/ProjectsUrl/ProjectMapping.
+    /// </summary>
+    public string Mode { get; set; } = "lucid";
 }
 
 public class LucidMarketplaceGenerateEntryLinkRequest

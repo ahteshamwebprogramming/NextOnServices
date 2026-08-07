@@ -174,10 +174,6 @@
                                 </select>
                             </div>
                             <div class="form-group col-md-3">
-                                <label>Use Consultings Bridge</label>
-                                <div class="switch-wrap"><input asp-for="Setting.UseConsultingsBridge" type="checkbox" /><span>Route external calls through Consultings</span></div>
-                            </div>
-                            <div class="form-group col-md-3">
                                 <label>Auto Sync Enabled</label>
                                 <div class="switch-wrap"><input asp-for="Setting.AutoSyncEnabled" type="checkbox" /><span>Enable scheduled sync foundation</span></div>
                             </div>
@@ -202,6 +198,7 @@
                                         <option value="@client.ClientId">@client.Company</option>
                                     }
                                 </select>
+                                <small class="text-muted d-block mt-2">Assigned automatically when a Lucid Marketplace project is added.</small>
                             </div>
                             <div class="form-group col-md-4">
                                 <label>Default Country</label>
@@ -214,14 +211,77 @@
                                 </select>
                             </div>
                             <div class="form-group col-md-4">
-                                <label>Default Supplier</label>
-                                <select asp-for="Setting.DefaultSupplierId" class="form-control form-control-sm select2">
-                                    <option value="">-- Select Supplier --</option>
+                                <label>Supplier CPI %</label>
+                                <input asp-for="Setting.SupplierCpiPercent" class="form-control form-control-sm" type="number" min="1" max="100" step="0.01" placeholder="100" />
+                                <small class="text-muted d-block mt-2">ProjectMapping CPI = Lucid CPI × this %. Leave blank for 100%. Project CPI stays full Lucid CPI.</small>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label>Default Suppliers</label>
+                                <select asp-for="Setting.DefaultSupplierIds" class="form-control form-control-sm select2" multiple>
                                     @foreach (var supplier in Model.Suppliers.Where(x => x.IsActive == 1))
                                     {
                                         <option value="@supplier.Id">@supplier.Name</option>
                                     }
                                 </select>
+                                <small class="text-muted d-block mt-2">When a Lucid Marketplace project is added, one supplier mapping is created for each selected supplier.</small>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Project Sampling Hashing</div>
+                        <div class="row">
+                            <div class="form-group col-md-12">
+                                <label>Enable Hashing</label>
+                                <div class="switch-wrap">
+                                    <input asp-for="Setting.EnableHashing" type="checkbox" id="Setting_EnableHashing" />
+                                    <span>When enabled, Add Project stores hashing on Project Mapping and can rewrite LiveLink URL parts.</span>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-4 lucid-hashing-fields">
+                                <label>Hash Parameter</label>
+                                <select asp-for="Setting.HashingParameter" class="form-control form-control-sm" id="Setting_HashingParameter">
+                                    <option value="enc">enc</option>
+                                    <option value="hash">hash</option>
+                                    <option value="token">token</option>
+                                </select>
+                                <small class="text-muted d-block mt-2">Same options as Project Mapping Parameter Name (e.g. <code>hash</code> for Lucid).</small>
+                            </div>
+                            <div class="form-group col-md-4 lucid-hashing-fields">
+                                <label>Hashing Type</label>
+                                @{
+                                    var selectedHashingType = Model?.Setting?.HashingType?.Trim() ?? string.Empty;
+                                    var configuredHashTypes = (Model?.HashingSettings ?? new List<NextOnServices.Infrastructure.Models.Settings.HashingSettingDTO>())
+                                        .Where(x => x.IsActive && !string.IsNullOrWhiteSpace(x.HashingType))
+                                        .Select(x => x.HashingType!.Trim())
+                                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                                        .ToList();
+                                    var hasSelectedHashingType = configuredHashTypes.Any(x => string.Equals(x, selectedHashingType, StringComparison.OrdinalIgnoreCase));
+                                }
+                                <select asp-for="Setting.HashingType" class="form-control form-control-sm" id="Setting_HashingType">
+                                    <option value="">-- Select Hashing Type --</option>
+                                    @foreach (var hashingType in configuredHashTypes)
+                                    {
+                                        <option value="@hashingType">@hashingType</option>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(selectedHashingType) && !hasSelectedHashingType)
+                                    {
+                                        <option value="@selectedHashingType">@selectedHashingType</option>
+                                    }
+                                </select>
+                                <small class="text-muted d-block mt-2">Uses keys from Settings → Hashing settings (same dropdown as Project Mapping).</small>
+                            </div>
+                        </div>
+
+                        <div class="vt-form-section">Entry Link Mapping</div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>Replace</label>
+                                <input asp-for="Setting.RespondentIdUrlParts" class="form-control form-control-sm" placeholder="PID=" />
+                                <small class="text-muted d-block mt-2">Find this LiveLink text when Enable Hashing is on (comma-separated for multiple).</small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>With</label>
+                                <input asp-for="Setting.RespondentIdUrlReplaceWith" class="form-control form-control-sm" placeholder="PID=[respondentID]" />
+                                <small class="text-muted d-block mt-2">Replacement text (e.g. <code>PID=[respondentID]</code>). Defaults to <code>[respondentID]</code> if blank. When hashing is off, LiveLink is stored as-is.</small>
                             </div>
                         </div>
 
@@ -275,10 +335,19 @@
                 $icon.toggleClass("mdi-eye", !showValue);
                 $icon.toggleClass("mdi-eye-off", showValue);
             });
+
+            function syncLucidHashingFieldsVisibility() {
+                const enabled = $("#Setting_EnableHashing").is(":checked");
+                $(".lucid-hashing-fields").toggle(enabled);
+            }
+
+            $("#Setting_EnableHashing").on("change", syncLucidHashingFieldsVisibility);
+            syncLucidHashingFieldsVisibility();
         });
 
         function buildSettingsPayload() {
             const $form = $("#LucidMarketplaceSettingsForm");
+            const enableHashing = $form.find("[name='Setting.EnableHashing']").is(":checked");
             return {
                 lucidMarketplaceSettingId: parseInt($form.find("[name='Setting.LucidMarketplaceSettingId']").val() || "0"),
                 baseUrl: $form.find("[name='Setting.BaseUrl']").val(),
@@ -289,14 +358,50 @@
                 outcomesCallbackUrl: $form.find("[name='Setting.OutcomesCallbackUrl']").val(),
                 supplierLinkTypeCode: $form.find("[name='Setting.SupplierLinkTypeCode']").val(),
                 trackingTypeCode: $form.find("[name='Setting.TrackingTypeCode']").val(),
-                useConsultingsBridge: $form.find("[name='Setting.UseConsultingsBridge']").is(":checked"),
+                useConsultingsBridge: false,
                 autoSyncEnabled: $form.find("[name='Setting.AutoSyncEnabled']").is(":checked"),
                 syncIntervalMinutes: parseInt($form.find("[name='Setting.SyncIntervalMinutes']").val() || "0") || null,
-                defaultClientId: parseInt($form.find("[name='Setting.DefaultClientId']").val() || "0") || null,
-                defaultCountryId: parseInt($form.find("[name='Setting.DefaultCountryId']").val() || "0") || null,
-                defaultSupplierId: parseInt($form.find("[name='Setting.DefaultSupplierId']").val() || "0") || null,
+                defaultClientId: parseNullableInt($form.find("[name='Setting.DefaultClientId']").val()),
+                defaultCountryId: parseNullableInt($form.find("[name='Setting.DefaultCountryId']").val()),
+                defaultSupplierIds: parseIntArray($form.find("[name='Setting.DefaultSupplierIds']").val()),
+                supplierCpiPercent: parseNullableDecimal($form.find("[name='Setting.SupplierCpiPercent']").val()),
+                enableHashing: enableHashing,
+                hashingParameter: enableHashing ? ($form.find("[name='Setting.HashingParameter']").val() || "hash") : null,
+                hashingType: enableHashing ? normalizeNullableText($form.find("[name='Setting.HashingType']").val()) : null,
+                respondentIdUrlParts: normalizeNullableText($form.find("[name='Setting.RespondentIdUrlParts']").val()),
+                respondentIdUrlReplaceWith: normalizeNullableText($form.find("[name='Setting.RespondentIdUrlReplaceWith']").val()),
                 isActive: $form.find("[name='Setting.IsActive']").is(":checked")
             };
+        }
+
+        function normalizeNullableText(value) {
+            const raw = (value || "").trim();
+            return raw ? raw : null;
+        }
+
+        function parseNullableInt(value) {
+            const parsedValue = parseInt(value || "", 10);
+            return isNaN(parsedValue) || parsedValue <= 0 ? null : parsedValue;
+        }
+
+        function parseNullableDecimal(value) {
+            const raw = (value || "").trim();
+            if (!raw) {
+                return null;
+            }
+            const parsedValue = Number(raw);
+            return isNaN(parsedValue) ? null : parsedValue;
+        }
+
+        function parseIntArray(values) {
+            if (!values || !values.length) {
+                return [];
+            }
+
+            const source = Array.isArray(values) ? values : [values];
+            return source
+                .map(function (item) { return parseInt(item, 10); })
+                .filter(function (item) { return !isNaN(item) && item > 0; });
         }
 
         function saveLucidMarketplaceSettings() {
@@ -305,6 +410,10 @@
             }
 
             const payload = buildSettingsPayload();
+            if (payload.enableHashing && !(payload.hashingType || "").trim()) {
+                Swal.fire("Required", "Select a Hashing Type when Enable Hashing is on.", "warning");
+                return;
+            }
             if (payload.lucidMarketplaceSettingId <= 0 && !(payload.apiKey || "").trim()) {
                 Swal.fire("Required", "Enter an API key before saving new Lucid Marketplace settings.", "warning");
                 return;

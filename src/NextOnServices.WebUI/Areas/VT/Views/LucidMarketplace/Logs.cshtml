@@ -30,25 +30,6 @@
         border-left-color: var(--vt-lm-theme);
     }
 
-    .vt-lm-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.3rem 0.7rem;
-        border-radius: 999px;
-        font-size: 0.76rem;
-        font-weight: 700;
-    }
-
-    .vt-lm-badge.success {
-        background: rgba(22, 163, 74, 0.12);
-        color: #166534;
-    }
-
-    .vt-lm-badge.error {
-        background: rgba(239, 68, 68, 0.12);
-        color: #991b1b;
-    }
-
     .vt-lm-logs-page .text-truncate-cell {
         max-width: 220px;
         white-space: nowrap;
@@ -66,19 +47,30 @@
         border-radius: 8px;
         padding: 0.75rem;
     }
+
+    .vt-lm-logs-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
 </style>
 
 <div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-logs-page">
     <div class="ref-page-title">
         <h1>Lucid Marketplace Logs</h1>
-        <p class="ref-subtitle">Track subscription API calls, callback receives, parse attempts, and opportunity save activity for the new Lucid Marketplace module.</p>
+        <p class="ref-subtitle">Failures only. Successful API calls and callbacks are not stored. Logs older than 30 days are removed automatically.</p>
     </div>
 
     <div class="row">
         <div class="col-md-12 grid-margin stretch-card">
             <div class="card card--table-section">
                 <div class="card-body">
-                    <h4 class="table-section-header">API / Sync Logs</h4>
+                    <div class="vt-lm-logs-toolbar">
+                        <h4 class="table-section-header mb-0">Failure Logs</h4>
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="btnClearLucidMarketplaceLogs">Clear Logs</button>
+                    </div>
                     <div class="table-responsive mt-3">
                         <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceLogsTable">
                             <thead>
@@ -89,37 +81,24 @@
                                     <th>Request URL</th>
                                     <th>Source</th>
                                     <th>Status Code</th>
-                                    <th>Success</th>
-                                    <th>Started On</th>
-                                    <th>Completed On</th>
+                                    <th>Logged On</th>
                                     <th>Error</th>
                                     <th>View Details</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @if (Model.Logs.Any())
-                                {
-                                    foreach (var item in Model.Logs)
-                                    {
-                                        <tr>
-                                            <td>@item.ActionName</td>
-                                            <td>@item.SupplierCode</td>
-                                            <td>@(item.RelatedSurveyId?.ToString() ?? "-")</td>
-                                            <td class="text-truncate-cell" title="@item.RequestUrl">@item.RequestUrl</td>
-                                            <td>@item.Source</td>
-                                            <td>@(item.ResponseStatusCode?.ToString() ?? "-")</td>
-                                            <td><span class="vt-lm-badge @(item.IsSuccess ? "success" : "error")">@(item.IsSuccess ? "Success" : "Failed")</span></td>
-                                            <td>@item.StartedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
-                                            <td>@item.CompletedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
-                                            <td class="text-truncate-cell" title="@item.ErrorText">@item.ErrorText</td>
-                                            <td><button type="button" class="btn btn-outline-primary btn-sm" onclick="viewLucidMarketplaceLog(@item.LucidMarketplaceSyncLogId)">Details</button></td>
-                                        </tr>
-                                    }
-                                }
-                                else
+                                @foreach (var item in Model.Logs)
                                 {
                                     <tr>
-                                        <td colspan="11" class="text-center text-muted py-4">No Lucid Marketplace logs are available yet.</td>
+                                        <td>@item.ActionName</td>
+                                        <td>@item.SupplierCode</td>
+                                        <td>@(item.RelatedSurveyId?.ToString() ?? "-")</td>
+                                        <td class="text-truncate-cell" title="@item.RequestUrl">@item.RequestUrl</td>
+                                        <td>@item.Source</td>
+                                        <td>@(item.ResponseStatusCode?.ToString() ?? "-")</td>
+                                        <td>@((item.CreatedDate ?? item.StartedOn)?.ToString("dd MMM yyyy hh:mm tt") ?? "-")</td>
+                                        <td class="text-truncate-cell" title="@item.ErrorText">@item.ErrorText</td>
+                                        <td><button type="button" class="btn btn-outline-primary btn-sm" onclick="viewLucidMarketplaceLog(@item.LucidMarketplaceSyncLogId)">Details</button></td>
                                     </tr>
                                 }
                             </tbody>
@@ -135,19 +114,19 @@
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Lucid Marketplace Log Details</h5>
+                <h5 class="modal-title">Lucid Marketplace Failure Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <div class="font-weight-600 mb-1">Request Body</div>
-                    <div id="lmLogRequest" class="vt-lm-log-pre"></div>
+                    <div class="font-weight-600 mb-1">Action</div>
+                    <div id="lmLogAction" class="vt-lm-log-pre"></div>
                 </div>
                 <div class="mb-3">
-                    <div class="font-weight-600 mb-1">Response Body</div>
-                    <div id="lmLogResponse" class="vt-lm-log-pre"></div>
+                    <div class="font-weight-600 mb-1">Request URL</div>
+                    <div id="lmLogRequestUrl" class="vt-lm-log-pre"></div>
                 </div>
                 <div>
                     <div class="font-weight-600 mb-1">Error</div>
@@ -162,15 +141,45 @@
     <script>
         $(document).ready(function () {
             $('#LucidMarketplaceLogsTable').DataTable({
-                order: [[7, 'desc']],
+                order: [[6, 'desc']],
                 paging: true,
                 pageLength: 25,
                 scrollX: true,
                 autoWidth: false,
                 language: {
                     search: "",
-                    searchPlaceholder: "Search logs..."
+                    searchPlaceholder: "Search logs...",
+                    emptyTable: "No Lucid Marketplace failure logs are available yet."
                 }
+            });
+
+            $('#btnClearLucidMarketplaceLogs').on('click', function () {
+                Swal.fire({
+                    title: 'Clear all failure logs?',
+                    text: 'This permanently removes every row from LucidMarketplaceSyncLog.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Clear Logs',
+                    confirmButtonColor: '#dc3545'
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/LucidMarketplaceApi/ClearLogs',
+                        success: function () {
+                            Swal.fire('Cleared', 'Lucid Marketplace failure logs were removed.', 'success')
+                                .then(function () {
+                                    window.location.reload();
+                                });
+                        },
+                        error: function (xhr) {
+                            Swal.fire('Error', xhr.responseText || 'Unable to clear logs.', 'error');
+                        }
+                    });
+                });
             });
         });
 
@@ -179,8 +188,8 @@
                 type: "GET",
                 url: "/VT/LucidMarketplaceApi/LogDetails/" + logId,
                 success: function (response) {
-                    $("#lmLogRequest").text(response.requestBodySnapshot || "No request payload captured.");
-                    $("#lmLogResponse").text(response.responseBodySnapshot || "No response payload captured.");
+                    $("#lmLogAction").text(response.actionName || "Unknown action");
+                    $("#lmLogRequestUrl").text(response.requestUrl || "No request URL captured.");
                     $("#lmLogError").text(response.errorText || "No error recorded.");
                     $("#lucidMarketplaceLogModal").modal("show");
                 },

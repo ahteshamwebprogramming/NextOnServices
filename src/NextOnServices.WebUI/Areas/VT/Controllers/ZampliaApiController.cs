@@ -27,6 +27,7 @@ public class ZampliaApiController : Controller
     private readonly IConfiguration _configuration;
     private readonly IZampliaLaunchService _zampliaLaunchService;
     private readonly ILegacyProjectStatusService _legacyProjectStatusService;
+    private readonly IZampliaClient _zampliaClient;
 
     public ZampliaApiController(
         ILogger<ZampliaApiController> logger,
@@ -34,7 +35,8 @@ public class ZampliaApiController : Controller
         IHttpClientFactory httpClientFactory,
         IConfiguration configuration,
         IZampliaLaunchService zampliaLaunchService,
-        ILegacyProjectStatusService legacyProjectStatusService)
+        ILegacyProjectStatusService legacyProjectStatusService,
+        IZampliaClient zampliaClient)
     {
         _logger = logger;
         _zampliaAPIController = zampliaAPIController;
@@ -42,6 +44,7 @@ public class ZampliaApiController : Controller
         _configuration = configuration;
         _zampliaLaunchService = zampliaLaunchService;
         _legacyProjectStatusService = legacyProjectStatusService;
+        _zampliaClient = zampliaClient;
     }
 
     [HttpPost("SaveSettings")]
@@ -74,7 +77,7 @@ public class ZampliaApiController : Controller
             {
                 BaseUrl = inputData.BaseUrl,
                 ApiKey = inputData.ApiKey,
-                UseConsultingsBridge = inputData.UseConsultingsBridge
+                UseConsultingsBridge = false
             }
         });
 
@@ -674,7 +677,7 @@ public class ZampliaApiController : Controller
                 BaseUrl = string.IsNullOrWhiteSpace(setting.BaseUrl) ? "https://surveysupplysandbox.zamplia.com" : setting.BaseUrl.Trim(),
                 ApiKey = setting.ApiKey,
                 ExitHmacKey = setting.ExitHmacKey,
-                UseConsultingsBridge = setting.UseConsultingsBridge,
+                UseConsultingsBridge = false,
                 IsActive = setting.IsActive
             },
             SurveyId = survey.SurveyId,
@@ -734,39 +737,9 @@ public class ZampliaApiController : Controller
         };
     }
 
-    private async Task<ZampliaProxyResponse> CallConsultingsProxyAsync(string actionPath, ZampliaProxyRequest payload)
+    private Task<ZampliaProxyResponse> CallConsultingsProxyAsync(string actionPath, ZampliaProxyRequest payload)
     {
-        var baseUrl = _configuration.GetValue<string>("ConsultingApiBaseUrl");
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            return new ZampliaProxyResponse { Result = false, IsStub = true, StatusCode = StatusCodes.Status500InternalServerError, Message = "Consultings proxy base URL is not configured." };
-        }
-
-        var url = $"{baseUrl.TrimEnd('/')}/VT/ZampliaSupplyProxy/{actionPath}";
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync(url, payload);
-            var content = await response.Content.ReadAsStringAsync();
-            var proxyResponse = string.IsNullOrWhiteSpace(content)
-                ? new ZampliaProxyResponse()
-                : JsonConvert.DeserializeObject<ZampliaProxyResponse>(content) ?? new ZampliaProxyResponse();
-
-            proxyResponse.StatusCode ??= (int)response.StatusCode;
-            proxyResponse.RequestUrl ??= url;
-            proxyResponse.ResponseBody ??= content;
-            if (!response.IsSuccessStatusCode && string.IsNullOrWhiteSpace(proxyResponse.Message))
-            {
-                proxyResponse.Message = "Consultings proxy request failed.";
-            }
-
-            return proxyResponse;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Consultings Zamplia proxy call failed. ActionPath={ActionPath}", actionPath);
-            return new ZampliaProxyResponse { Result = false, IsStub = true, StatusCode = StatusCodes.Status500InternalServerError, Message = ex.Message, RequestUrl = url };
-        }
+        return _zampliaClient.ExecuteAsync(actionPath, payload);
     }
 
     private async Task AppendLogAsync(string actionName, string? requestUrl, string? requestBody, string source, int? relatedEntityId, long? relatedSurveyId, IActionResult? apiResult = null, ZampliaProxyResponse? proxyResponse = null, string? responseBodyOverride = null, int? responseStatusCodeOverride = null, bool? forceSuccess = null)

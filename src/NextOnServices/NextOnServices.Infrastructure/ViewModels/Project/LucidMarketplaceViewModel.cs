@@ -1,25 +1,24 @@
 using NextOnServices.Infrastructure.Models.APIProjects;
 using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Masters;
+using NextOnServices.Infrastructure.Models.Settings;
 using NextOnServices.Infrastructure.Models.Supplier;
 
 namespace NextOnServices.VT.Infrastructure.ViewModels.Project;
 
 public class LucidMarketplaceDashboardVM
 {
-    public int ActiveSettings { get; set; }
-
     public int ActiveSubscriptions { get; set; }
 
     public int ActiveOpportunities { get; set; }
 
+    public int TotalOpportunities { get; set; }
+
+    public int AddedToProject { get; set; }
+
     public DateTime? LastSyncTime { get; set; }
 
-    public int TotalLogs { get; set; }
-
-    public int SuccessfulApiCalls { get; set; }
-
-    public int FailedApiCalls { get; set; }
+    public int RecentFailures7d { get; set; }
 
     public int LatestOutcomesReceivedCount { get; set; }
 
@@ -85,6 +84,8 @@ public class LucidMarketplaceViewModel
     public List<CountryMasterDTO> Countries { get; set; } = new();
 
     public List<SupplierDTO> Suppliers { get; set; } = new();
+
+    public List<HashingSettingDTO> HashingSettings { get; set; } = new();
 
     public string? PlaceholderTitle { get; set; }
 

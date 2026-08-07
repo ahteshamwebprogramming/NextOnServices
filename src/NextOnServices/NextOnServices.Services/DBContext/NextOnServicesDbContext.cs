@@ -814,6 +814,12 @@ public partial class NextOnServicesDbContext : DbContext
             entity.Property(e => e.SupplierCode).HasMaxLength(100);
             entity.Property(e => e.SupplierLinkTypeCode).HasMaxLength(20);
             entity.Property(e => e.TrackingTypeCode).HasMaxLength(20);
+            entity.Property(e => e.DefaultSupplierIds).HasMaxLength(1000);
+            entity.Property(e => e.SupplierCpiPercent).HasColumnType("decimal(9, 4)");
+            entity.Property(e => e.HashingParameter).HasMaxLength(50);
+            entity.Property(e => e.HashingType).HasMaxLength(50);
+            entity.Property(e => e.RespondentIdUrlParts).HasMaxLength(2000);
+            entity.Property(e => e.RespondentIdUrlReplaceWith).HasMaxLength(500);
         });
 
         modelBuilder.Entity<TorfacMarketplaceSetting>(entity =>
@@ -878,7 +884,6 @@ public partial class NextOnServicesDbContext : DbContext
 
             entity.ToTable("LucidMarketplaceOpportunity");
 
-            entity.Property(e => e.AccountName).HasMaxLength(200);
             entity.Property(e => e.BidIncidence).HasColumnType("decimal(18,4)");
             entity.Property(e => e.BidLengthOfInterview).HasColumnType("decimal(18,4)");
             entity.Property(e => e.CountryLanguageCode).HasMaxLength(50);
@@ -887,17 +892,14 @@ public partial class NextOnServicesDbContext : DbContext
                 .HasColumnType("datetime");
             entity.Property(e => e.Industry).HasMaxLength(100);
             entity.Property(e => e.LastSyncedOn).HasColumnType("datetime");
-            entity.Property(e => e.LastVendorUpdatedOn).HasColumnType("datetime");
             entity.Property(e => e.LocalState).HasMaxLength(50);
             entity.Property(e => e.MessageReason).HasMaxLength(100);
             entity.Property(e => e.ModifiedDate).HasColumnType("datetime");
-            entity.Property(e => e.RevenueCurrencyCode).HasMaxLength(10);
             entity.Property(e => e.RevenuePerInterview).HasColumnType("decimal(18,4)");
             entity.Property(e => e.SupplierCode).HasMaxLength(100);
             entity.Property(e => e.SurveyName).HasMaxLength(500);
             entity.Property(e => e.SurveyNumber).HasMaxLength(100);
             entity.Property(e => e.StudyType).HasMaxLength(100);
-            entity.Property(e => e.TargetGroupId).HasMaxLength(100);
         });
 
         modelBuilder.Entity<LucidMarketplaceOpportunityQualification>(entity =>

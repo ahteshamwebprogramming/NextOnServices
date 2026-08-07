@@ -22,6 +22,7 @@ public class ApiProjectsController : Controller
     private readonly ProjectURLAPIController _projectURLAPIController;
     private readonly ProjectMappingAPIController _projectMappingAPIController;
     private readonly TorfacMarketplaceAPIController _torfacMarketplaceAPIController;
+    private readonly LucidMarketplaceAPIController _lucidMarketplaceAPIController;
     private readonly IConfiguration _configuration;
     // Sago (Sample Cube) API configuration (previously named Lucid)
     private const string SAGO_API_BASE = "https://api.sample-cube.com/api";
@@ -46,6 +47,7 @@ public class ApiProjectsController : Controller
         ProjectURLAPIController projectURLAPIController,
         ProjectMappingAPIController projectMappingAPIController,
         TorfacMarketplaceAPIController torfacMarketplaceAPIController,
+        LucidMarketplaceAPIController lucidMarketplaceAPIController,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -54,6 +56,7 @@ public class ApiProjectsController : Controller
         _projectURLAPIController = projectURLAPIController;
         _projectMappingAPIController = projectMappingAPIController;
         _torfacMarketplaceAPIController = torfacMarketplaceAPIController;
+        _lucidMarketplaceAPIController = lucidMarketplaceAPIController;
         _configuration = configuration;
     }
 
@@ -106,31 +109,12 @@ public class ApiProjectsController : Controller
     }
 
     /// <summary>
-    /// When ConsultingApiBaseUrl is set, forwards the request to the Consultings API (where external Sago/Lucid APIs are implemented).
-    /// Returns non-null to short-circuit and return that result; returns null to continue with direct external call.
+    /// Previously forwarded to Consultings when ConsultingApiBaseUrl was set.
+    /// Bridge is retired — always use direct external API calls in this controller.
     /// </summary>
-    private async Task<IActionResult?> ForwardLucidToConsultingIfConfigured(string actionPath)
+    private Task<IActionResult?> ForwardLucidToConsultingIfConfigured(string actionPath)
     {
-        var baseUrl = _configuration.GetValue<string>("ConsultingApiBaseUrl");
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return null;
-        baseUrl = baseUrl.TrimEnd('/');
-        var url = $"{baseUrl}/VT/ApiProjects/{actionPath}{HttpContext?.Request?.QueryString.ToString()}";
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
-            var response = await client.GetAsync(url);
-            var content = await response.Content.ReadAsStringAsync();
-            if (response.IsSuccessStatusCode)
-                return Content(content, "application/json");
-            return StatusCode((int)response.StatusCode, content);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Consulting API call failed. Url={Url}, TraceId={TraceId}", url, HttpContext?.TraceIdentifier);
-            return StatusCode(500, BuildSafeError(ex, "ForwardSagoToConsulting", url));
-        }
+        return Task.FromResult<IActionResult?>(null);
     }
 
     /// <summary>
@@ -429,14 +413,124 @@ public class ApiProjectsController : Controller
     [Route("/VT/ApiProjects/GetLucidQualificationsForOfferwall")]
     public async Task<IActionResult> GetLucidQualificationsForOfferwall(int surveyNumber, int countryLanguageId)
     {
-        var forwarded = await ForwardLucidToConsultingIfConfigured("GetLucidQualificationsForOfferwall");
-        if (forwarded != null) return forwarded;
+        const string supplyBase = "https://api.samplicio.us/Supply/v1";
+        const string lookupBase = "https://api.samplicio.us/Lookup/v1";
+        const string apiKey = "DB1FBCB8-8900-459F-B0F5-8500666D137D";
 
-        return BadRequest(new
+        var questionsResult = new List<object>();
+
+        try
         {
-            error = true,
-            message = "ConsultingApiBaseUrl is not configured; qualifications endpoint is only available via Consultings bridge."
-        });
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Add("Authorization", apiKey);
+            client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
+
+            var qualUrl = $"{supplyBase.TrimEnd('/')}/SurveyQualifications/BySurveyNumberForOfferwall/{surveyNumber}";
+            var qualResponse = await client.GetAsync(qualUrl);
+            var qualContent = await qualResponse.Content.ReadAsStringAsync();
+            if (!qualResponse.IsSuccessStatusCode)
+            {
+                return StatusCode((int)qualResponse.StatusCode, qualContent);
+            }
+
+            using var qualDoc = System.Text.Json.JsonDocument.Parse(qualContent);
+            if (!qualDoc.RootElement.TryGetProperty("SurveyQualification", out var surveyQual) ||
+                !surveyQual.TryGetProperty("Questions", out var questionsEl) ||
+                questionsEl.ValueKind != System.Text.Json.JsonValueKind.Array)
+            {
+                return Ok(questionsResult);
+            }
+
+            foreach (var qEl in questionsEl.EnumerateArray())
+            {
+                if (!qEl.TryGetProperty("QuestionID", out var qIdProp) || qIdProp.ValueKind != System.Text.Json.JsonValueKind.Number)
+                {
+                    continue;
+                }
+
+                int questionId = qIdProp.GetInt32();
+                var preCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                if (qEl.TryGetProperty("PreCodes", out var preCodesEl) && preCodesEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    foreach (var pc in preCodesEl.EnumerateArray())
+                    {
+                        if (pc.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            preCodes.Add(pc.GetString() ?? "");
+                        }
+                    }
+                }
+
+                string questionText = "";
+                string questionType = "";
+                var qInfoUrl = $"{lookupBase.TrimEnd('/')}/QuestionLibrary/QuestionById/{countryLanguageId}/{questionId}";
+                var qInfoResp = await client.GetAsync(qInfoUrl);
+                var qInfoContent = await qInfoResp.Content.ReadAsStringAsync();
+                if (qInfoResp.IsSuccessStatusCode)
+                {
+                    using var qInfoDoc = System.Text.Json.JsonDocument.Parse(qInfoContent);
+                    if (qInfoDoc.RootElement.TryGetProperty("Question", out var qObj))
+                    {
+                        if (qObj.TryGetProperty("QuestionText", out var qtProp) && qtProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            questionText = qtProp.GetString() ?? "";
+                        }
+
+                        if (qObj.TryGetProperty("QuestionType", out var qt2Prop) && qt2Prop.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            questionType = qt2Prop.GetString() ?? "";
+                        }
+                    }
+                }
+
+                var allowedOptions = new List<string>();
+                var optUrl = $"{lookupBase.TrimEnd('/')}/QuestionLibrary/AllQuestionOptions/{countryLanguageId}/{questionId}";
+                var optResp = await client.GetAsync(optUrl);
+                var optContent = await optResp.Content.ReadAsStringAsync();
+                if (optResp.IsSuccessStatusCode)
+                {
+                    using var optDoc = System.Text.Json.JsonDocument.Parse(optContent);
+                    if (optDoc.RootElement.TryGetProperty("QuestionOptions", out var optsEl) &&
+                        optsEl.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        foreach (var o in optsEl.EnumerateArray())
+                        {
+                            string pre = "";
+                            string text = "";
+                            if (o.TryGetProperty("Precode", out var preProp) && preProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                            {
+                                pre = preProp.GetString() ?? "";
+                            }
+
+                            if (o.TryGetProperty("OptionText", out var txtProp) && txtProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                            {
+                                text = txtProp.GetString() ?? "";
+                            }
+
+                            if ((preCodes.Count == 0 || preCodes.Contains(pre)) && !string.IsNullOrWhiteSpace(text))
+                            {
+                                allowedOptions.Add(text);
+                            }
+                        }
+                    }
+                }
+
+                questionsResult.Add(new
+                {
+                    QuestionId = questionId,
+                    QuestionText = questionText,
+                    QuestionType = questionType,
+                    AllowedOptions = allowedOptions
+                });
+            }
+
+            return Ok(questionsResult);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching Lucid qualifications. SurveyNumber={SurveyNumber}, CountryLanguageId={CountryLanguageId}", surveyNumber, countryLanguageId);
+            return StatusCode(500, new { error = true, message = ex.Message });
+        }
     }
 
     [HttpGet]
@@ -906,7 +1000,7 @@ public class ApiProjectsController : Controller
         }
     }
 
-    private static double? GetProjectMappingCpiForVendor(string vendorKey, double? sourceCpi)
+    private static double? GetProjectMappingCpiForVendor(string vendorKey, double? sourceCpi, double? mappingCpiPercent = null)
     {
         if (!sourceCpi.HasValue)
         {
@@ -920,13 +1014,30 @@ public class ApiProjectsController : Controller
             return Math.Round(sourceCpi.Value * 0.4d, 4, MidpointRounding.AwayFromZero);
         }
 
+        if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+        {
+            var percent = mappingCpiPercent.GetValueOrDefault(100d);
+            if (percent <= 0)
+            {
+                percent = 100d;
+            }
+
+            if (percent > 100d)
+            {
+                percent = 100d;
+            }
+
+            return Math.Round(sourceCpi.Value * (percent / 100d), 4, MidpointRounding.AwayFromZero);
+        }
+
         return sourceCpi;
     }
 
     private async Task<(List<int> SupplierIds, string? ErrorMessage)> ResolveSupplierIdsForVendorAsync(
         string vendorKey,
         int? requestedSupplierId,
-        TorfacMarketplaceSettingDTO? torfacSetting = null)
+        TorfacMarketplaceSettingDTO? torfacSetting = null,
+        LucidMarketplaceSettingDTO? lucidMarketplaceSetting = null)
     {
         if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
         {
@@ -945,6 +1056,28 @@ public class ApiProjectsController : Controller
             return (supplierIds, null);
         }
 
+        if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+        {
+            var setting = lucidMarketplaceSetting ?? await GetLucidMarketplaceSettingAsync();
+            var supplierIds = setting?.DefaultSupplierIds?
+                .Where(supplierId => supplierId > 0)
+                .Distinct()
+                .ToList()
+                ?? new List<int>();
+
+            if (supplierIds.Count == 0 && setting?.DefaultSupplierId.GetValueOrDefault() > 0)
+            {
+                supplierIds.Add(setting!.DefaultSupplierId!.Value);
+            }
+
+            if (supplierIds.Count == 0)
+            {
+                return (new List<int>(), "Select at least one default supplier in Lucid Marketplace settings before adding projects.");
+            }
+
+            return (supplierIds, null);
+        }
+
         var supplierId = requestedSupplierId.HasValue && requestedSupplierId.Value > 0
             ? requestedSupplierId.Value
             : DEFAULT_SUPPLIER_ID;
@@ -955,7 +1088,8 @@ public class ApiProjectsController : Controller
     private async Task<int?> ResolveClientIdForVendorAsync(
         string vendorKey,
         int? requestedClientId,
-        TorfacMarketplaceSettingDTO? torfacSetting = null)
+        TorfacMarketplaceSettingDTO? torfacSetting = null,
+        LucidMarketplaceSettingDTO? lucidMarketplaceSetting = null)
     {
         if (requestedClientId.HasValue && requestedClientId.Value > 0)
         {
@@ -965,6 +1099,15 @@ public class ApiProjectsController : Controller
         if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
         {
             var setting = torfacSetting ?? await GetTorfacMarketplaceSettingAsync();
+            if (setting?.DefaultClientId.HasValue == true && setting.DefaultClientId.Value > 0)
+            {
+                return setting.DefaultClientId.Value;
+            }
+        }
+
+        if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+        {
+            var setting = lucidMarketplaceSetting ?? await GetLucidMarketplaceSettingAsync();
             if (setting?.DefaultClientId.HasValue == true && setting.DefaultClientId.Value > 0)
             {
                 return setting.DefaultClientId.Value;
@@ -982,6 +1125,14 @@ public class ApiProjectsController : Controller
             : null;
     }
 
+    private async Task<LucidMarketplaceSettingDTO?> GetLucidMarketplaceSettingAsync()
+    {
+        var result = await _lucidMarketplaceAPIController.GetLucidMarketplaceSetting();
+        return result is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK
+            ? objectResult.Value as LucidMarketplaceSettingDTO
+            : null;
+    }
+
     private static string GetProjectMappingFailureMessage(IActionResult result, int supplierId)
     {
         var defaultMessage = $"Unable to create supplier mapping for supplier {supplierId}.";
@@ -990,7 +1141,11 @@ public class ApiProjectsController : Controller
             : defaultMessage;
     }
 
-    private static string NormalizeVendorLiveLink(string? liveLink, string vendorKey, TorfacMarketplaceSettingDTO? torfacSetting = null)
+    private static string NormalizeVendorLiveLink(
+        string? liveLink,
+        string vendorKey,
+        TorfacMarketplaceSettingDTO? torfacSetting = null,
+        LucidMarketplaceSettingDTO? lucidMarketplaceSetting = null)
     {
         if (string.IsNullOrWhiteSpace(liveLink))
         {
@@ -1003,10 +1158,35 @@ public class ApiProjectsController : Controller
         {
             normalizedLink = ApplyConfiguredTorfacPlaceholderMappings(normalizedLink, torfacSetting);
         }
+        else if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+        {
+            // Hashing off: LiveLink goes to project sampling as-is.
+            // Hashing on: replace configured URL find tokens with configured replacement (default [respondentID]).
+            if (lucidMarketplaceSetting?.EnableHashing == true)
+            {
+                normalizedLink = ApplyConfiguredLucidPlaceholderMappings(normalizedLink, lucidMarketplaceSetting);
+            }
+        }
         else
         {
             normalizedLink = normalizedLink
                 .Replace("[#scid#]&uid=[#scid2#]", "[respondentID]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return normalizedLink;
+    }
+
+    private static string ApplyConfiguredLucidPlaceholderMappings(string liveLink, LucidMarketplaceSettingDTO? lucidMarketplaceSetting)
+    {
+        var normalizedLink = liveLink;
+        var replaceWith = string.IsNullOrWhiteSpace(lucidMarketplaceSetting?.RespondentIdUrlReplaceWith)
+            ? "[respondentID]"
+            : lucidMarketplaceSetting!.RespondentIdUrlReplaceWith!.Trim();
+
+        foreach (var sourcePart in GetConfiguredUrlParts(
+            lucidMarketplaceSetting?.RespondentIdUrlParts))
+        {
+            normalizedLink = normalizedLink.Replace(sourcePart, replaceWith, StringComparison.OrdinalIgnoreCase);
         }
 
         return normalizedLink;
@@ -1103,7 +1283,10 @@ public class ApiProjectsController : Controller
         return value?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
     }
 
-    private static void ApplyVendorHashingDefaults(ProjectMappingDTO projectMappingDTO, string vendorKey)
+    private static void ApplyVendorHashingDefaults(
+        ProjectMappingDTO projectMappingDTO,
+        string vendorKey,
+        LucidMarketplaceSettingDTO? lucidMarketplaceSetting = null)
     {
         if (projectMappingDTO == null)
         {
@@ -1118,9 +1301,35 @@ public class ApiProjectsController : Controller
             return;
         }
 
+        if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase)
+            && lucidMarketplaceSetting?.EnableHashing == true)
+        {
+            projectMappingDTO.AddHashing = 1;
+            projectMappingDTO.ParameterName = string.IsNullOrWhiteSpace(lucidMarketplaceSetting.HashingParameter)
+                ? "hash"
+                : lucidMarketplaceSetting.HashingParameter.Trim();
+            projectMappingDTO.HashingType = lucidMarketplaceSetting.HashingType?.Trim();
+            return;
+        }
+
         projectMappingDTO.AddHashing = 0;
         projectMappingDTO.ParameterName = null;
         projectMappingDTO.HashingType = null;
+    }
+
+    private static string? ValidateLucidMarketplaceHashingSettings(LucidMarketplaceSettingDTO? setting)
+    {
+        if (setting?.EnableHashing != true)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(setting.HashingType))
+        {
+            return "Configure Hashing Type in Lucid Marketplace settings before adding projects with hashing enabled.";
+        }
+
+        return null;
     }
 
     private async Task<IActionResult> AddProjectFromVendorAsync(
@@ -1176,24 +1385,49 @@ public class ApiProjectsController : Controller
 
             var projectMappingCpi = GetProjectMappingCpiForVendor(vendorKey, cpi);
             TorfacMarketplaceSettingDTO? torfacSetting = null;
+            LucidMarketplaceSettingDTO? lucidMarketplaceSetting = null;
             if (string.Equals(vendorKey, "Torfac", StringComparison.OrdinalIgnoreCase))
             {
                 torfacSetting = await GetTorfacMarketplaceSettingAsync();
             }
+            else if (string.Equals(vendorKey, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+            {
+                lucidMarketplaceSetting = await GetLucidMarketplaceSettingAsync();
+                var lucidPercent = lucidMarketplaceSetting?.SupplierCpiPercent.HasValue == true
+                    ? (double?)lucidMarketplaceSetting.SupplierCpiPercent.Value
+                    : 100d;
+                projectMappingCpi = GetProjectMappingCpiForVendor(vendorKey, cpi, lucidPercent);
 
-            var supplierResolution = await ResolveSupplierIdsForVendorAsync(vendorKey, request.SupplierId, torfacSetting);
+                var lucidHashingError = ValidateLucidMarketplaceHashingSettings(lucidMarketplaceSetting);
+                if (!string.IsNullOrWhiteSpace(lucidHashingError))
+                {
+                    return Ok(new { Result = false, Message = lucidHashingError });
+                }
+            }
+
+            var supplierResolution = await ResolveSupplierIdsForVendorAsync(
+                vendorKey,
+                request.SupplierId,
+                torfacSetting,
+                lucidMarketplaceSetting);
             if (!string.IsNullOrWhiteSpace(supplierResolution.ErrorMessage))
             {
                 return Ok(new { Result = false, Message = supplierResolution.ErrorMessage });
             }
 
-            var resolvedClientId = await ResolveClientIdForVendorAsync(vendorKey, request.ClientId, torfacSetting);
+            var resolvedClientId = await ResolveClientIdForVendorAsync(
+                vendorKey,
+                request.ClientId,
+                torfacSetting,
+                lucidMarketplaceSetting);
             var clientId = resolvedClientId.HasValue && resolvedClientId.Value > 0
                 ? resolvedClientId.Value
                 : DEFAULT_CLIENT_ID;
             var countryId = request.CountryId.HasValue && request.CountryId.Value > 0
                 ? request.CountryId.Value
-                : DEFAULT_COUNTRY_ID;
+                : (lucidMarketplaceSetting?.DefaultCountryId.GetValueOrDefault() > 0
+                    ? lucidMarketplaceSetting!.DefaultCountryId!.Value
+                    : DEFAULT_COUNTRY_ID);
             var supplierIds = supplierResolution.SupplierIds;
             var projectName = string.IsNullOrWhiteSpace(request.ProjectName)
                 ? request.ProjectId?.Trim()
@@ -1266,7 +1500,11 @@ public class ApiProjectsController : Controller
                 }
 
                 // Normalize vendor-specific respondent placeholders into VT launch placeholders.
-                string processedLiveLink = NormalizeVendorLiveLink(request.LiveLink, vendorKey, torfacSetting);
+                string processedLiveLink = NormalizeVendorLiveLink(
+                    request.LiveLink,
+                    vendorKey,
+                    torfacSetting,
+                    lucidMarketplaceSetting);
 
                 // Create ProjectURL
                 ProjectsUrlDTO projectUrlDTO = new ProjectsUrlDTO
@@ -1323,7 +1561,7 @@ public class ApiProjectsController : Controller
                         Rc = 0
                     };
 
-                    ApplyVendorHashingDefaults(projectMappingDTO, vendorKey);
+                    ApplyVendorHashingDefaults(projectMappingDTO, vendorKey, lucidMarketplaceSetting);
 
                     try
                     {
@@ -1495,39 +1733,8 @@ public class ApiProjectsController : Controller
             if (!string.IsNullOrEmpty(request.TotalRemaining) && int.TryParse(request.TotalRemaining, out int totalRemainingValue))
                 totalRemaining = totalRemainingValue;
 
-            // Call Spectrum API to register survey and get survey_entry_url (via Consultings when configured)
+            // Call Spectrum API to register survey and get survey_entry_url (direct)
             string surveyEntryUrl = null;
-            var consultingBase = _configuration.GetValue<string>("ConsultingApiBaseUrl")?.Trim();
-            if (!string.IsNullOrEmpty(consultingBase))
-            {
-                try
-                {
-                    var registerUrl = $"{consultingBase.TrimEnd('/')}/VT/ApiProjects/RegisterSpectrumSurvey";
-                    var client = _httpClientFactory.CreateClient();
-                    client.DefaultRequestHeaders.Add("Cache-Control", "no-cache");
-                    var body = JsonConvert.SerializeObject(new { ProjectId = request.ProjectId });
-                    var registerResponse = await client.PostAsync(registerUrl, new StringContent(body, System.Text.Encoding.UTF8, "application/json"));
-                    var registerContent = await registerResponse.Content.ReadAsStringAsync();
-                    if (registerResponse.IsSuccessStatusCode)
-                    {
-                        var registerJson = JsonConvert.DeserializeObject<Newtonsoft.Json.Linq.JObject>(registerContent);
-                        if (registerJson != null && registerJson["apiStatus"]?.ToString() == "success")
-                            surveyEntryUrl = registerJson["survey_entry_url"]?.ToString();
-                        else if (registerJson != null && registerJson.Value<bool?>("error") == true)
-                            return Ok(new { result = false, message = registerJson.Value<string>("message") ?? "Failed to register survey with Spectrum API" });
-                        else
-                            return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
-                    }
-                    else
-                        return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Consulting RegisterSpectrumSurvey failed");
-                    return Ok(new { result = false, message = "Failed to register survey with Spectrum API" });
-                }
-            }
-            else
             {
                 const string registerContext = "AddProjectFromSpectrum-Register";
                 var registerUrl = $"{SPECTRUM_API_BASE}/surveys/register/{request.ProjectId}";

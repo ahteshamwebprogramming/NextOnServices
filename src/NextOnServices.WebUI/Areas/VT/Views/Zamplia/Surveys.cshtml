@@ -32,8 +32,8 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h4 class="table-section-header mb-3 mb-md-0">Stored Surveys</h4>
                         <div>
-                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="syncAllocatedSurveys()">Sync Allocated Surveys</button>
-                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" onclick="removeInactiveSurveys()" @(inactiveSurveyCount == 0 ? "disabled" : null)>Remove Inactive Surveys (@inactiveSurveyCount)</button>
+                            <button type="button" class="btn btn-primary btn-sm mr-2" id="btnSyncAllocatedSurveys" onclick="syncAllocatedSurveys()">Sync Allocated Surveys</button>
+                            <button type="button" class="btn btn-outline-danger btn-sm mr-2" id="btnRemoveInactiveSurveys" onclick="removeInactiveSurveys()" @(inactiveSurveyCount == 0 ? "disabled" : null)>Remove Inactive Surveys (@inactiveSurveyCount)</button>
                             <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/Zamplia/Settings">Settings</a>
                             <a class="btn btn-outline-info btn-sm" href="/VT/Zamplia/Logs">Logs</a>
                         </div>
@@ -110,6 +110,17 @@
         });
 
         function syncAllocatedSurveys() {
+            var $btn = $("#btnSyncAllocatedSurveys");
+            $btn.prop("disabled", true);
+
+            Swal.fire({
+                title: "Syncing allocated surveys...",
+                text: "Please wait while surveys are synced from Zamplia.",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: function () { Swal.showLoading(); }
+            });
+
             $.ajax({
                 type: "POST",
                 url: "/VT/ZampliaApi/SyncAllocatedSurveys",
@@ -122,11 +133,15 @@
                     const errors = response.errors && response.errors.length ? response.errors.join("\n") : (response.message || "Sync failed.");
                     Swal.fire("Attention", errors, "warning");
                 },
-                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to sync allocated surveys.", "error"); }
+                error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to sync allocated surveys.", "error"); },
+                complete: function () { $btn.prop("disabled", false); }
             });
         }
 
         function removeInactiveSurveys() {
+            var $btn = $("#btnRemoveInactiveSurveys");
+            if ($btn.prop("disabled")) { return; }
+
             Swal.fire({
                 title: "Remove inactive surveys?",
                 text: "Are you sure you want to remove the inctive surevys , they will be deleted permanantly",
@@ -136,6 +151,15 @@
                 confirmButtonColor: "#dc3545"
             }).then(function (result) {
                 if (!result.isConfirmed) { return; }
+
+                $btn.prop("disabled", true);
+                Swal.fire({
+                    title: "Removing inactive surveys...",
+                    text: "Please wait while inactive surveys are removed.",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function () { Swal.showLoading(); }
+                });
 
                 $.ajax({
                     type: "POST",
@@ -148,7 +172,8 @@
 
                         Swal.fire("Attention", response.message || "Unable to remove inactive surveys.", "warning");
                     },
-                    error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to remove inactive surveys.", "error"); }
+                    error: function (xhr) { Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to remove inactive surveys.", "error"); },
+                    complete: function () { $btn.prop("disabled", false); }
                 });
             });
         }

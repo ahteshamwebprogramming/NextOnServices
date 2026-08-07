@@ -45,12 +45,8 @@ public class LucidMarketplaceAPIController : ControllerBase
     {
         try
         {
-            const string query = @"SELECT TOP 1 *
-                                   FROM LucidMarketplaceSetting
-                                   ORDER BY IsActive DESC, LucidMarketplaceSettingId DESC";
-
-            var setting = await _unitOfWork.LucidMarketplaceSetting.GetEntityData<LucidMarketplaceSettingDTO>(query);
-            return Ok(setting ?? new LucidMarketplaceSettingDTO());
+            var setting = await GetCurrentSettingEntityAsync(0);
+            return Ok(MapSettingToDto(setting));
         }
         catch (Exception ex)
         {
@@ -69,10 +65,41 @@ public class LucidMarketplaceAPIController : ControllerBase
                 return BadRequest("Invalid settings payload.");
             }
 
+            var normalizedSupplierIds = NormalizeSupplierIds(inputData.DefaultSupplierIds);
+            if (normalizedSupplierIds.Count == 0 && inputData.DefaultSupplierId.GetValueOrDefault() > 0)
+            {
+                normalizedSupplierIds.Add(inputData.DefaultSupplierId!.Value);
+            }
+
+            var supplierCpiPercent = NormalizeSupplierCpiPercent(inputData.SupplierCpiPercent);
+            var primarySupplierId = normalizedSupplierIds.Count > 0 ? normalizedSupplierIds[0] : (int?)null;
+            var enableHashing = inputData.EnableHashing;
+            var hashingParameter = enableHashing
+                ? NormalizeHashingParameter(inputData.HashingParameter)
+                : null;
+            var hashingType = enableHashing
+                ? NormalizeHashingType(inputData.HashingType)
+                : null;
+            var respondentIdUrlParts = NormalizeMappingText(inputData.RespondentIdUrlParts);
+            var respondentIdUrlReplaceWith = NormalizeMappingText(inputData.RespondentIdUrlReplaceWith);
+
+            if (enableHashing && string.IsNullOrWhiteSpace(hashingType))
+            {
+                return BadRequest("Select a Hashing Type when Enable Hashing is on.");
+            }
+
             var current = await GetCurrentSettingEntityAsync(inputData.LucidMarketplaceSettingId);
             if (current == null)
             {
                 var entity = _mapper.Map<LucidMarketplaceSetting>(inputData);
+                entity.DefaultSupplierIds = SerializeSupplierIds(normalizedSupplierIds);
+                entity.DefaultSupplierId = primarySupplierId;
+                entity.SupplierCpiPercent = supplierCpiPercent;
+                entity.EnableHashing = enableHashing;
+                entity.HashingParameter = hashingParameter;
+                entity.HashingType = hashingType;
+                entity.RespondentIdUrlParts = respondentIdUrlParts;
+                entity.RespondentIdUrlReplaceWith = respondentIdUrlReplaceWith;
                 entity.CreatedDate = DateTime.Now;
                 entity.ModifiedDate = DateTime.Now;
                 entity.LucidMarketplaceSettingId = await _unitOfWork.LucidMarketplaceSetting.AddAsync(entity);
@@ -82,10 +109,7 @@ public class LucidMarketplaceAPIController : ControllerBase
                     return BadRequest("Unable to save Lucid Marketplace settings.");
                 }
 
-                inputData.LucidMarketplaceSettingId = entity.LucidMarketplaceSettingId;
-                inputData.CreatedDate = entity.CreatedDate;
-                inputData.ModifiedDate = entity.ModifiedDate;
-                return Ok(inputData);
+                return Ok(MapSettingToDto(entity));
             }
 
             current.BaseUrl = inputData.BaseUrl?.Trim();
@@ -105,7 +129,14 @@ public class LucidMarketplaceAPIController : ControllerBase
             current.SyncIntervalMinutes = inputData.SyncIntervalMinutes;
             current.DefaultClientId = inputData.DefaultClientId;
             current.DefaultCountryId = inputData.DefaultCountryId;
-            current.DefaultSupplierId = inputData.DefaultSupplierId;
+            current.DefaultSupplierIds = SerializeSupplierIds(normalizedSupplierIds);
+            current.DefaultSupplierId = primarySupplierId;
+            current.SupplierCpiPercent = supplierCpiPercent;
+            current.EnableHashing = enableHashing;
+            current.HashingParameter = hashingParameter;
+            current.HashingType = hashingType;
+            current.RespondentIdUrlParts = respondentIdUrlParts;
+            current.RespondentIdUrlReplaceWith = respondentIdUrlReplaceWith;
             current.SupplierLinkTypeCode = inputData.SupplierLinkTypeCode?.Trim();
             current.TrackingTypeCode = inputData.TrackingTypeCode?.Trim();
             current.IsActive = inputData.IsActive;
@@ -118,11 +149,7 @@ public class LucidMarketplaceAPIController : ControllerBase
                 return BadRequest("Unable to update Lucid Marketplace settings.");
             }
 
-            inputData.LucidMarketplaceSettingId = current.LucidMarketplaceSettingId;
-            inputData.CreatedDate = current.CreatedDate;
-            inputData.ModifiedDate = current.ModifiedDate;
-            inputData.CreatedBy = current.CreatedBy;
-            return Ok(inputData);
+            return Ok(MapSettingToDto(current));
         }
         catch (Exception ex)
         {
@@ -321,6 +348,525 @@ public class LucidMarketplaceAPIController : ControllerBase
         }
     }
 
+    [HttpPost("Opportunity/Search")]
+    public async Task<IActionResult> SearchLucidMarketplaceOpportunities([FromBody] LucidMarketplaceOpportunitySearchRequest? inputData)
+    {
+        try
+        {
+            inputData ??= new LucidMarketplaceOpportunitySearchRequest();
+            var normalizedView = NormalizeOpportunityView(inputData.View);
+            var isRecentView = string.Equals(normalizedView, OpportunityViewRecent, StringComparison.OrdinalIgnoreCase);
+            var isAddedView = string.Equals(normalizedView, OpportunityViewAdded, StringComparison.OrdinalIgnoreCase);
+
+            var start = Math.Max(0, inputData.Start);
+            var length = inputData.Length <= 0 ? 25 : Math.Min(inputData.Length, 200);
+            var search = (inputData.Search ?? string.Empty).Trim();
+            if (search.Length > 200)
+            {
+                search = search[..200];
+            }
+
+            var countryLanguageCode = (inputData.CountryLanguageCode ?? string.Empty).Trim();
+            if (countryLanguageCode.Length > 50)
+            {
+                countryLanguageCode = countryLanguageCode[..50];
+            }
+
+            var studyType = (inputData.StudyType ?? string.Empty).Trim();
+            if (studyType.Length > 100)
+            {
+                studyType = studyType[..100];
+            }
+
+            var orderBySql = ResolveOpportunityOrderBy(inputData.OrderBy, isAddedView);
+            var dirSql = string.Equals(inputData.Dir, "asc", StringComparison.OrdinalIgnoreCase) ? "ASC" : "DESC";
+            var hasSearch = !string.IsNullOrWhiteSpace(search);
+            var hasCountryFilter = !string.IsNullOrWhiteSpace(countryLanguageCode);
+            var hasStudyTypeFilter = !string.IsNullOrWhiteSpace(studyType);
+            var parameters = new DynamicParameters();
+            parameters.Add("Start", start);
+            parameters.Add("Length", length);
+            parameters.Add("Search", hasSearch ? $"%{search}%" : null);
+            parameters.Add("CountryLanguageCode", hasCountryFilter ? countryLanguageCode : null);
+            parameters.Add("StudyType", hasStudyTypeFilter ? studyType : null);
+
+            var numericWhereParts = new List<string>();
+            var hasCpiFilter = TryApplyNumericFilter(numericWhereParts, parameters, "Cpi", "o.RevenuePerInterview", inputData.Cpi);
+            var hasIrFilter = TryApplyNumericFilter(numericWhereParts, parameters, "Ir", "o.BidIncidence", inputData.Ir);
+            var hasLoiFilter = TryApplyNumericFilter(numericWhereParts, parameters, "Loi", "o.BidLengthOfInterview", inputData.Loi);
+            var hasTotalRemainingFilter = TryApplyNumericFilter(numericWhereParts, parameters, "TotalRemaining", "o.TotalRemaining", inputData.TotalRemaining);
+            var hasNumericFilter = hasCpiFilter || hasIrFilter || hasLoiFilter || hasTotalRemainingFilter;
+            var hasAnyFilter = hasSearch || hasCountryFilter || hasStudyTypeFilter || hasNumericFilter;
+
+            await using var connection = await CreateOpenConnectionAsync();
+
+            if (isAddedView)
+            {
+                return Ok(await SearchAddedOpportunitiesAsync(
+                    connection,
+                    inputData.Draw,
+                    orderBySql,
+                    dirSql,
+                    hasSearch,
+                    hasCountryFilter,
+                    hasStudyTypeFilter,
+                    hasAnyFilter,
+                    numericWhereParts,
+                    parameters));
+            }
+
+            var fromClause = isRecentView
+                ? @"
+                FROM (
+                    SELECT TOP (500)
+                        o.*
+                    FROM LucidMarketplaceOpportunity o
+                    ORDER BY ISNULL(o.LastSyncedOn, ISNULL(o.ModifiedDate, o.CreatedDate)) DESC,
+                             o.LucidMarketplaceOpportunityId DESC
+                ) o"
+                : @"
+                FROM LucidMarketplaceOpportunity o";
+
+            var whereParts = new List<string>();
+            if (hasSearch)
+            {
+                whereParts.Add(@"
+                (
+                    CAST(o.SurveyId AS nvarchar(50)) LIKE @Search
+                    OR ISNULL(o.SurveyName, '') LIKE @Search
+                    OR ISNULL(o.CountryLanguageCode, '') LIKE @Search
+                    OR ISNULL(o.StudyType, '') LIKE @Search
+                    OR ISNULL(o.Industry, '') LIKE @Search
+                    OR ISNULL(o.MessageReason, '') LIKE @Search
+                    OR ISNULL(o.LocalState, '') LIKE @Search
+                    OR ISNULL(o.SupplierCode, '') LIKE @Search
+                )");
+            }
+
+            if (hasCountryFilter)
+            {
+                whereParts.Add("o.CountryLanguageCode = @CountryLanguageCode");
+            }
+
+            if (hasStudyTypeFilter)
+            {
+                whereParts.Add("o.StudyType = @StudyType");
+            }
+
+            whereParts.AddRange(numericWhereParts);
+
+            var searchClause = whereParts.Count > 0
+                ? "WHERE " + string.Join(" AND ", whereParts)
+                : string.Empty;
+
+            var countSql = $@"
+                SELECT COUNT(1)
+                {fromClause}
+                {searchClause}";
+
+            var pageOrderBySql = orderBySql.Replace("o.", "page.", StringComparison.Ordinal);
+            var dataSql = $@"
+                SELECT
+                    page.LucidMarketplaceOpportunityId,
+                    page.SupplierCode,
+                    page.SurveyId,
+                    page.SurveyNumber,
+                    page.SurveyName,
+                    page.CountryLanguageCode,
+                    page.StudyType,
+                    page.Industry,
+                    page.RevenuePerInterview,
+                    page.BidIncidence,
+                    page.BidLengthOfInterview,
+                    page.TotalRemaining,
+                    page.IsLive,
+                    page.MessageReason,
+                    page.LastSyncedOn,
+                    page.LocalState,
+                    page.IsActive,
+                    page.CreatedDate,
+                    page.ModifiedDate,
+                    pm.Id AS LucidMarketplaceProjectMapId,
+                    InternalProjectId = COALESCE(pm.InternalProjectId, p.ProjectId),
+                    IsMapped = CAST(CASE WHEN COALESCE(pm.InternalProjectId, p.ProjectId, 0) > 0 THEN 1 ELSE 0 END AS bit),
+                    MappingStatus = CASE
+                        WHEN COALESCE(pm.InternalProjectId, p.ProjectId, 0) > 0 THEN 'Mapped'
+                        ELSE ISNULL(NULLIF(page.LocalState, ''), 'New')
+                    END,
+                    QualificationCount = CAST(0 AS int),
+                    QuotaCount = CAST(0 AS int)
+                FROM (
+                    SELECT
+                        o.LucidMarketplaceOpportunityId,
+                        o.SupplierCode,
+                        o.SurveyId,
+                        o.SurveyNumber,
+                        o.SurveyName,
+                        o.CountryLanguageCode,
+                        o.StudyType,
+                        o.Industry,
+                        o.RevenuePerInterview,
+                        o.BidIncidence,
+                        o.BidLengthOfInterview,
+                        o.TotalRemaining,
+                        o.IsLive,
+                        o.MessageReason,
+                        o.LastSyncedOn,
+                        o.LocalState,
+                        o.IsActive,
+                        o.CreatedDate,
+                        o.ModifiedDate
+                    {fromClause}
+                    {searchClause}
+                    ORDER BY {orderBySql} {dirSql}
+                    OFFSET @Start ROWS FETCH NEXT @Length ROWS ONLY
+                ) page
+                OUTER APPLY (
+                    SELECT TOP 1
+                        pm.Id,
+                        pm.InternalProjectId
+                    FROM LucidMarketplaceProjectMap pm
+                    WHERE pm.LucidMarketplaceOpportunityId = page.LucidMarketplaceOpportunityId
+                      AND pm.IsActive = 1
+                      AND ISNULL(pm.InternalProjectId, 0) > 0
+                    ORDER BY pm.Id DESC
+                ) pm
+                OUTER APPLY (
+                    SELECT TOP 1 p.ProjectId
+                    FROM Projects p
+                    WHERE p.ProjectFrom = N'LucidMarketplace'
+                      AND p.IsActive = 1
+                      AND TRY_CONVERT(int, p.ProjectIdFromAPI) = page.SurveyId
+                    ORDER BY p.ProjectId DESC
+                ) p
+                ORDER BY {pageOrderBySql} {dirSql}";
+
+            var recordsFiltered = await connection.ExecuteScalarAsync<int>(countSql, parameters, commandTimeout: 60);
+            var recordsTotal = recordsFiltered;
+            if (hasAnyFilter)
+            {
+                recordsTotal = await connection.ExecuteScalarAsync<int>($"SELECT COUNT(1) {fromClause}", commandTimeout: 60);
+            }
+
+            var data = (await connection.QueryAsync<LucidMarketplaceOpportunityDTO>(dataSql, parameters, commandTimeout: 60)).ToList();
+
+            return Ok(new LucidMarketplaceOpportunitySearchResult
+            {
+                Draw = inputData.Draw,
+                RecordsTotal = recordsTotal,
+                RecordsFiltered = recordsFiltered,
+                Data = data
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching Lucid Marketplace opportunities");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to search opportunities." });
+        }
+    }
+
+    [HttpGet("Opportunity/CountryLanguages")]
+    public async Task<IActionResult> GetLucidMarketplaceOpportunityCountryLanguages()
+    {
+        try
+        {
+            const string query = @"
+                SELECT DISTINCT CountryLanguageCode
+                FROM LucidMarketplaceOpportunity
+                WHERE NULLIF(LTRIM(RTRIM(CountryLanguageCode)), '') IS NOT NULL
+                ORDER BY CountryLanguageCode";
+
+            await using var connection = await CreateOpenConnectionAsync();
+            var items = (await connection.QueryAsync<string>(query, commandTimeout: 60))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return Ok(items);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading Lucid Marketplace country languages");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to load country languages." });
+        }
+    }
+
+    [HttpGet("Opportunity/StudyTypes")]
+    public async Task<IActionResult> GetLucidMarketplaceOpportunityStudyTypes()
+    {
+        try
+        {
+            const string query = @"
+                SELECT DISTINCT StudyType
+                FROM LucidMarketplaceOpportunity
+                WHERE NULLIF(LTRIM(RTRIM(StudyType)), '') IS NOT NULL
+                ORDER BY StudyType";
+
+            await using var connection = await CreateOpenConnectionAsync();
+            var items = (await connection.QueryAsync<string>(query, commandTimeout: 60))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            return Ok(items);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading Lucid Marketplace study types");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to load study types." });
+        }
+    }
+
+    private static async Task<LucidMarketplaceOpportunitySearchResult> SearchAddedOpportunitiesAsync(
+        SqlConnection connection,
+        int draw,
+        string orderBySql,
+        string dirSql,
+        bool hasSearch,
+        bool hasCountryFilter,
+        bool hasStudyTypeFilter,
+        bool hasAnyFilter,
+        IReadOnlyList<string> numericWhereParts,
+        DynamicParameters parameters)
+    {
+        // Start from mapped projects (small set), not from every opportunity row.
+        const string addedCte = @"
+            ;WITH FromMap AS
+            (
+                SELECT
+                    pm.LucidMarketplaceOpportunityId,
+                    pm.Id AS LucidMarketplaceProjectMapId,
+                    pm.InternalProjectId,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY pm.LucidMarketplaceOpportunityId
+                        ORDER BY pm.Id DESC
+                    ) AS rn
+                FROM LucidMarketplaceProjectMap pm
+                WHERE pm.IsActive = 1
+                  AND ISNULL(pm.InternalProjectId, 0) > 0
+            ),
+            FromProjects AS
+            (
+                SELECT
+                    o.LucidMarketplaceOpportunityId,
+                    CAST(NULL AS int) AS LucidMarketplaceProjectMapId,
+                    p.ProjectId AS InternalProjectId
+                FROM Projects p
+                INNER JOIN LucidMarketplaceOpportunity o
+                    ON o.SurveyId = TRY_CONVERT(int, p.ProjectIdFromAPI)
+                WHERE p.ProjectFrom = N'LucidMarketplace'
+                  AND p.IsActive = 1
+                  AND TRY_CONVERT(int, p.ProjectIdFromAPI) IS NOT NULL
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM FromMap m
+                      WHERE m.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                        AND m.rn = 1
+                  )
+            ),
+            Added AS
+            (
+                SELECT LucidMarketplaceOpportunityId, LucidMarketplaceProjectMapId, InternalProjectId
+                FROM FromMap
+                WHERE rn = 1
+                UNION ALL
+                SELECT LucidMarketplaceOpportunityId, LucidMarketplaceProjectMapId, InternalProjectId
+                FROM FromProjects
+            )";
+
+        var whereParts = new List<string>();
+        if (hasSearch)
+        {
+            whereParts.Add(@"
+                (
+                    CAST(o.SurveyId AS nvarchar(50)) LIKE @Search
+                    OR ISNULL(o.SurveyName, '') LIKE @Search
+                    OR ISNULL(o.CountryLanguageCode, '') LIKE @Search
+                    OR ISNULL(o.StudyType, '') LIKE @Search
+                    OR ISNULL(o.Industry, '') LIKE @Search
+                    OR ISNULL(o.MessageReason, '') LIKE @Search
+                    OR ISNULL(o.LocalState, '') LIKE @Search
+                    OR ISNULL(o.SupplierCode, '') LIKE @Search
+                    OR CAST(a.InternalProjectId AS nvarchar(50)) LIKE @Search
+                )");
+        }
+
+        if (hasCountryFilter)
+        {
+            whereParts.Add("o.CountryLanguageCode = @CountryLanguageCode");
+        }
+
+        if (hasStudyTypeFilter)
+        {
+            whereParts.Add("o.StudyType = @StudyType");
+        }
+
+        whereParts.AddRange(numericWhereParts);
+
+        var searchClause = whereParts.Count > 0
+            ? "AND " + string.Join(" AND ", whereParts)
+            : string.Empty;
+
+        var countSql = $@"
+            {addedCte}
+            SELECT COUNT(1)
+            FROM Added a
+            INNER JOIN LucidMarketplaceOpportunity o
+                ON o.LucidMarketplaceOpportunityId = a.LucidMarketplaceOpportunityId
+            WHERE 1 = 1
+            {searchClause}";
+
+        var dataSql = $@"
+            {addedCte}
+            SELECT
+                o.LucidMarketplaceOpportunityId,
+                o.SupplierCode,
+                o.SurveyId,
+                o.SurveyNumber,
+                o.SurveyName,
+                o.CountryLanguageCode,
+                o.StudyType,
+                o.Industry,
+                o.RevenuePerInterview,
+                o.BidIncidence,
+                o.BidLengthOfInterview,
+                o.TotalRemaining,
+                o.IsLive,
+                o.MessageReason,
+                o.LastSyncedOn,
+                o.LocalState,
+                o.IsActive,
+                o.CreatedDate,
+                o.ModifiedDate,
+                a.LucidMarketplaceProjectMapId,
+                a.InternalProjectId,
+                IsMapped = CAST(1 AS bit),
+                MappingStatus = N'Mapped',
+                QualificationCount = CAST(0 AS int),
+                QuotaCount = CAST(0 AS int)
+            FROM Added a
+            INNER JOIN LucidMarketplaceOpportunity o
+                ON o.LucidMarketplaceOpportunityId = a.LucidMarketplaceOpportunityId
+            WHERE 1 = 1
+            {searchClause}
+            ORDER BY {orderBySql} {dirSql}
+            OFFSET @Start ROWS FETCH NEXT @Length ROWS ONLY";
+
+        var recordsFiltered = await connection.ExecuteScalarAsync<int>(countSql, parameters, commandTimeout: 60);
+        var recordsTotal = recordsFiltered;
+        if (hasAnyFilter)
+        {
+            var totalSql = $@"
+                {addedCte}
+                SELECT COUNT(1)
+                FROM Added a
+                INNER JOIN LucidMarketplaceOpportunity o
+                    ON o.LucidMarketplaceOpportunityId = a.LucidMarketplaceOpportunityId";
+            recordsTotal = await connection.ExecuteScalarAsync<int>(totalSql, commandTimeout: 60);
+        }
+
+        var data = (await connection.QueryAsync<LucidMarketplaceOpportunityDTO>(dataSql, parameters, commandTimeout: 60)).ToList();
+
+        return new LucidMarketplaceOpportunitySearchResult
+        {
+            Draw = draw,
+            RecordsTotal = recordsTotal,
+            RecordsFiltered = recordsFiltered,
+            Data = data
+        };
+    }
+
+    private static bool TryApplyNumericFilter(
+        List<string> whereParts,
+        DynamicParameters parameters,
+        string paramPrefix,
+        string columnSql,
+        LucidMarketplaceNumericFilter? filter)
+    {
+        var op = NormalizeNumericFilterOp(filter?.Op);
+        if (string.IsNullOrEmpty(op))
+        {
+            return false;
+        }
+
+        if (op is "gt" or "lt")
+        {
+            if (!filter!.Value.HasValue)
+            {
+                return false;
+            }
+
+            var valueName = paramPrefix + "Value";
+            parameters.Add(valueName, filter.Value.Value);
+            whereParts.Add(op == "gt"
+                ? $"{columnSql} > @{valueName}"
+                : $"{columnSql} < @{valueName}");
+            return true;
+        }
+
+        if (op == "between")
+        {
+            if (!filter!.Min.HasValue || !filter.Max.HasValue)
+            {
+                return false;
+            }
+
+            var min = filter.Min.Value;
+            var max = filter.Max.Value;
+            if (min > max)
+            {
+                (min, max) = (max, min);
+            }
+
+            var minName = paramPrefix + "Min";
+            var maxName = paramPrefix + "Max";
+            parameters.Add(minName, min);
+            parameters.Add(maxName, max);
+            whereParts.Add($"{columnSql} >= @{minName} AND {columnSql} <= @{maxName}");
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string? NormalizeNumericFilterOp(string? op)
+    {
+        var normalized = (op ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "gt" or "greaterthan" or ">" => "gt",
+            "lt" or "lessthan" or "<" => "lt",
+            "between" or "inbetween" or "range" => "between",
+            _ => null
+        };
+    }
+
+    private static string ResolveOpportunityOrderBy(string? orderBy, bool isAddedView = false)
+    {
+        return (orderBy ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "surveyid" => "o.SurveyId",
+            "surveyname" => "o.SurveyName",
+            "countrylanguagecode" => "o.CountryLanguageCode",
+            "studytype" => "o.StudyType",
+            "industry" => "o.Industry",
+            "revenueperinterview" => "o.RevenuePerInterview",
+            "bidincidence" => "o.BidIncidence",
+            "bidlengthofinterview" => "o.BidLengthOfInterview",
+            "totalremaining" => "o.TotalRemaining",
+            "islive" => "o.IsLive",
+            "messagereason" => "o.MessageReason",
+            "localstate" => "o.LocalState",
+            "ismapped" or "mappingstatus" => isAddedView ? "a.InternalProjectId" : "o.LucidMarketplaceOpportunityId",
+            "internalprojectid" => isAddedView ? "a.InternalProjectId" : "o.LucidMarketplaceOpportunityId",
+            _ => "ISNULL(o.LastSyncedOn, ISNULL(o.ModifiedDate, o.CreatedDate))"
+        };
+    }
+
     private static string NormalizeOpportunityView(string? view)
     {
         if (string.Equals(view, OpportunityViewAdded, StringComparison.OrdinalIgnoreCase))
@@ -411,7 +957,23 @@ public class LucidMarketplaceAPIController : ControllerBase
     [HttpGet("Opportunity/{id}/Logs")]
     public async Task<IActionResult> GetLucidMarketplaceOpportunityLogs(int id)
     {
-        return Ok(new List<LucidMarketplaceSyncLogDTO>());
+        try
+        {
+            const string query = @"
+                SELECT TOP (100) *
+                FROM LucidMarketplaceSyncLog
+                WHERE IsSuccess = 0
+                  AND RelatedEntityId = @Id
+                ORDER BY ISNULL(CreatedDate, StartedOn) DESC, LucidMarketplaceSyncLogId DESC";
+
+            var items = await _unitOfWork.LucidMarketplaceSyncLog.GetTableData<LucidMarketplaceSyncLogDTO>(query, new { Id = id });
+            return Ok(items ?? new List<LucidMarketplaceSyncLogDTO>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading Lucid Marketplace opportunity failure logs for {OpportunityId}", id);
+            return Ok(new List<LucidMarketplaceSyncLogDTO>());
+        }
     }
 
     [HttpGet("Opportunity/{id}/ProjectMap")]
@@ -1139,16 +1701,478 @@ public class LucidMarketplaceAPIController : ControllerBase
         }
     }
 
+    [HttpPost("Opportunity/RemoveProject")]
+    public async Task<IActionResult> RemoveLucidMarketplaceProjectMapping(LucidMarketplaceRemoveProjectRequest inputData, int? modifiedBy = null)
+    {
+        try
+        {
+            if (inputData == null || inputData.LucidMarketplaceOpportunityId <= 0)
+            {
+                return BadRequest(new { result = false, message = "A valid opportunity id is required." });
+            }
+
+            var outcome = await SoftRemoveProjectMappingCoreAsync(inputData.LucidMarketplaceOpportunityId, modifiedBy);
+            return outcome.Success
+                ? Ok(new { result = true, message = outcome.Message, processed = 1 })
+                : BadRequest(new { result = false, message = outcome.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error soft-removing Lucid Marketplace project mapping {OpportunityId}", inputData?.LucidMarketplaceOpportunityId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to remove the project." });
+        }
+    }
+
+    [HttpPost("Opportunity/RemoveAdded")]
+    public async Task<IActionResult> RemoveAddedLucidMarketplaceProject(LucidMarketplaceRemoveAddedProjectRequest inputData, int? modifiedBy = null)
+    {
+        try
+        {
+            if (inputData == null || inputData.LucidMarketplaceOpportunityId <= 0)
+            {
+                return BadRequest(new { result = false, message = "A valid opportunity id is required." });
+            }
+
+            var mode = NormalizeRemoveMode(inputData.Mode);
+            if (mode == null)
+            {
+                return BadRequest(new { result = false, message = "Mode must be 'lucid' or 'entire'." });
+            }
+
+            var outcome = await RemoveAddedProjectCoreAsync(inputData.LucidMarketplaceOpportunityId, mode, modifiedBy);
+            return outcome.Success
+                ? Ok(new { result = true, mode, message = outcome.Message, processed = 1 })
+                : BadRequest(new { result = false, message = outcome.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing Lucid Marketplace added project {OpportunityId}", inputData?.LucidMarketplaceOpportunityId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to remove the added project." });
+        }
+    }
+
+    [HttpPost("Opportunity/RemoveAllNonLiveAdded")]
+    public async Task<IActionResult> RemoveAllNonLiveAddedLucidMarketplaceProjects(LucidMarketplaceRemoveNonLiveAddedProjectsRequest? inputData, int? modifiedBy = null)
+    {
+        try
+        {
+            var mode = NormalizeRemoveMode(inputData?.Mode);
+            if (mode == null)
+            {
+                return BadRequest(new { result = false, message = "Mode must be 'lucid' or 'entire'." });
+            }
+
+            const string query = @"
+                SELECT o.LucidMarketplaceOpportunityId
+                FROM LucidMarketplaceOpportunity o
+                OUTER APPLY (
+                    SELECT TOP 1 *
+                    FROM LucidMarketplaceProjectMap pm
+                    WHERE pm.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                      AND pm.IsActive = 1
+                    ORDER BY pm.Id DESC
+                ) pm
+                OUTER APPLY (
+                    SELECT TOP 1 p.ProjectId
+                    FROM Projects p
+                    WHERE p.ProjectIdFromAPI = CAST(o.SurveyId AS nvarchar(100))
+                      AND p.ProjectFrom = 'LucidMarketplace'
+                      AND p.IsActive = 1
+                    ORDER BY p.ProjectId DESC
+                ) p
+                WHERE ISNULL(o.IsLive, 0) = 0
+                  AND COALESCE(pm.InternalProjectId, p.ProjectId, 0) > 0";
+
+            var opportunityIds = (await _unitOfWork.LucidMarketplaceOpportunity.GetTableData<LucidMarketplaceOpportunityDTO>(query))
+                ?.Select(x => x.LucidMarketplaceOpportunityId)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList()
+                ?? new List<int>();
+
+            var processed = 0;
+            var errors = new List<string>();
+            foreach (var opportunityId in opportunityIds)
+            {
+                var outcome = await RemoveAddedProjectCoreAsync(opportunityId, mode, modifiedBy);
+                if (outcome.Success)
+                {
+                    processed++;
+                }
+                else
+                {
+                    errors.Add($"Opportunity {opportunityId}: {outcome.Message}");
+                }
+            }
+
+            return Ok(new
+            {
+                result = errors.Count == 0,
+                mode,
+                processed,
+                total = opportunityIds.Count,
+                errors,
+                message = mode == "entire"
+                    ? $"Soft-deactivated VT project and removed Lucid data for {processed} of {opportunityIds.Count} non-live added project(s)."
+                    : $"Removed Lucid data for {processed} of {opportunityIds.Count} non-live added project(s)."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing all non-live Lucid Marketplace added projects");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to remove non-live added projects." });
+        }
+    }
+
+    [HttpPost("Opportunity/DeleteNonLiveUnmapped")]
+    public async Task<IActionResult> DeleteNonLiveUnmappedLucidMarketplaceOpportunities()
+    {
+        const int batchSize = 500;
+        const int maxBatchesPerRequest = 20;
+        const int commandTimeoutSeconds = 120;
+
+        try
+        {
+            const string batchDeleteSql = @"
+                DECLARE @Batch TABLE
+                (
+                    LucidMarketplaceOpportunityId INT NOT NULL PRIMARY KEY,
+                    SupplierCode NVARCHAR(100) NOT NULL,
+                    SurveyId INT NOT NULL
+                );
+
+                INSERT INTO @Batch (LucidMarketplaceOpportunityId, SupplierCode, SurveyId)
+                SELECT TOP (@BatchSize)
+                    o.LucidMarketplaceOpportunityId,
+                    o.SupplierCode,
+                    o.SurveyId
+                FROM LucidMarketplaceOpportunity o
+                WHERE ISNULL(o.IsLive, 0) = 0
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM LucidMarketplaceProjectMap pm
+                      WHERE pm.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                        AND pm.IsActive = 1
+                        AND ISNULL(pm.InternalProjectId, 0) > 0
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM Projects p
+                      WHERE p.ProjectIdFromAPI = CONVERT(nvarchar(100), o.SurveyId)
+                        AND p.ProjectFrom = N'LucidMarketplace'
+                        AND p.IsActive = 1
+                  )
+                ORDER BY o.LucidMarketplaceOpportunityId;
+
+                DECLARE @Deleted INT = (SELECT COUNT(1) FROM @Batch);
+
+                IF @Deleted > 0
+                BEGIN
+                    DELETE a
+                    FROM LucidMarketplaceRespondentAttempt a
+                    INNER JOIN @Batch b ON a.LucidMarketplaceOpportunityId = b.LucidMarketplaceOpportunityId;
+
+                    DELETE e
+                    FROM LucidMarketplaceEntryLink e
+                    INNER JOIN @Batch b ON e.LucidMarketplaceOpportunityId = b.LucidMarketplaceOpportunityId;
+
+                    DELETE pm
+                    FROM LucidMarketplaceProjectMap pm
+                    INNER JOIN @Batch b ON pm.LucidMarketplaceOpportunityId = b.LucidMarketplaceOpportunityId;
+
+                    IF OBJECT_ID('dbo.LucidMarketplaceRespondentOutcome', 'U') IS NOT NULL
+                    BEGIN
+                        DELETE oc
+                        FROM LucidMarketplaceRespondentOutcome oc
+                        INNER JOIN @Batch b
+                            ON oc.SurveyId = b.SurveyId
+                           AND oc.SupplierCode = b.SupplierCode;
+                    END
+
+                    DELETE o
+                    FROM LucidMarketplaceOpportunity o
+                    INNER JOIN @Batch b ON o.LucidMarketplaceOpportunityId = b.LucidMarketplaceOpportunityId;
+                END
+
+                SELECT @Deleted AS Deleted;";
+
+            var deleted = 0;
+            var batchesRun = 0;
+            var done = false;
+
+            await using var connection = await CreateOpenConnectionAsync();
+
+            while (batchesRun < maxBatchesPerRequest)
+            {
+                await using var transaction = connection.BeginTransaction();
+                try
+                {
+                    var batchDeleted = await connection.ExecuteScalarAsync<int>(
+                        batchDeleteSql,
+                        new { BatchSize = batchSize },
+                        transaction,
+                        commandTimeout: commandTimeoutSeconds);
+
+                    await transaction.CommitAsync();
+
+                    batchesRun++;
+                    deleted += batchDeleted;
+
+                    if (batchDeleted == 0)
+                    {
+                        done = true;
+                        break;
+                    }
+
+                    if (batchDeleted < batchSize)
+                    {
+                        done = true;
+                        break;
+                    }
+                }
+                catch
+                {
+                    try
+                    {
+                        await transaction.RollbackAsync();
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+
+                    throw;
+                }
+            }
+
+            if (!done && batchesRun >= maxBatchesPerRequest)
+            {
+                done = false;
+            }
+
+            return Ok(new
+            {
+                result = true,
+                deleted,
+                done,
+                batches = batchesRun,
+                message = deleted == 0
+                    ? "No non-live unmapped opportunities were found to delete."
+                    : done
+                        ? $"Permanently deleted {deleted} non-live opportunity(ies) that were not added to VT."
+                        : $"Deleted {deleted} so far; more non-live unmapped opportunities remain."
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting non-live unmapped Lucid Marketplace opportunities");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to delete non-live unmapped opportunities." });
+        }
+    }
+
+    private static string? NormalizeRemoveMode(string? mode)
+    {
+        var normalized = (mode ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized is "lucid" or "entire" ? normalized : null;
+    }
+
+    private async Task<(bool Success, string Message)> SoftRemoveProjectMappingCoreAsync(int opportunityId, int? modifiedBy)
+    {
+        var opportunity = await _unitOfWork.LucidMarketplaceOpportunity.FindByIdAsync(opportunityId);
+        if (opportunity == null)
+        {
+            return (false, "Opportunity record not found.");
+        }
+
+        await using var connection = await CreateOpenConnectionAsync();
+        await using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            var projectId = await connection.ExecuteScalarAsync<int?>(
+                @"SELECT TOP 1 COALESCE(pm.InternalProjectId, p.ProjectId)
+                  FROM LucidMarketplaceOpportunity o
+                  OUTER APPLY (
+                      SELECT TOP 1 *
+                      FROM LucidMarketplaceProjectMap pm
+                      WHERE pm.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                      ORDER BY pm.IsActive DESC, pm.Id DESC
+                  ) pm
+                  OUTER APPLY (
+                      SELECT TOP 1 p.ProjectId
+                      FROM Projects p
+                      WHERE p.ProjectIdFromAPI = CAST(o.SurveyId AS nvarchar(100))
+                        AND p.ProjectFrom = 'LucidMarketplace'
+                      ORDER BY p.IsActive DESC, p.ProjectId DESC
+                  ) p
+                  WHERE o.LucidMarketplaceOpportunityId = @OpportunityId",
+                new { OpportunityId = opportunityId },
+                transaction);
+
+            if (!projectId.HasValue || projectId.Value <= 0)
+            {
+                await transaction.RollbackAsync();
+                return (false, "This opportunity is not linked to a VT project.");
+            }
+
+            await connection.ExecuteAsync(
+                @"UPDATE Projects SET IsActive = 0 WHERE ProjectId = @ProjectId;
+                  UPDATE ProjectMapping SET IsActive = 0 WHERE ProjectID = @ProjectId;
+                  UPDATE ProjectsUrl SET Status = 0 WHERE PID = @ProjectId;
+                  UPDATE LucidMarketplaceProjectMap
+                  SET IsActive = 0
+                  WHERE LucidMarketplaceOpportunityId = @OpportunityId;",
+                new { ProjectId = projectId.Value, OpportunityId = opportunityId },
+                transaction);
+
+            await transaction.CommitAsync();
+            return (true, $"Project {projectId.Value} removed successfully. VT project data was deactivated and Lucid Marketplace opportunity data was left unchanged.");
+        }
+        catch
+        {
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            throw;
+        }
+    }
+
+    private async Task<(bool Success, string Message)> RemoveAddedProjectCoreAsync(int opportunityId, string mode, int? modifiedBy)
+    {
+        var opportunity = await _unitOfWork.LucidMarketplaceOpportunity.FindByIdAsync(opportunityId);
+        if (opportunity == null)
+        {
+            return (false, "Opportunity record not found.");
+        }
+
+        if (opportunity.IsLive == true)
+        {
+            return (false, "Only Not Live added projects can be removed from this action.");
+        }
+
+        await using var connection = await CreateOpenConnectionAsync();
+        await using var transaction = connection.BeginTransaction();
+
+        try
+        {
+            var projectId = await connection.ExecuteScalarAsync<int?>(
+                @"SELECT TOP 1 COALESCE(pm.InternalProjectId, p.ProjectId)
+                  FROM LucidMarketplaceOpportunity o
+                  OUTER APPLY (
+                      SELECT TOP 1 *
+                      FROM LucidMarketplaceProjectMap pm
+                      WHERE pm.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                      ORDER BY pm.IsActive DESC, pm.Id DESC
+                  ) pm
+                  OUTER APPLY (
+                      SELECT TOP 1 p.ProjectId
+                      FROM Projects p
+                      WHERE p.ProjectIdFromAPI = CAST(o.SurveyId AS nvarchar(100))
+                        AND p.ProjectFrom = 'LucidMarketplace'
+                      ORDER BY p.IsActive DESC, p.ProjectId DESC
+                  ) p
+                  WHERE o.LucidMarketplaceOpportunityId = @OpportunityId",
+                new { OpportunityId = opportunityId },
+                transaction);
+
+            if (!projectId.HasValue || projectId.Value <= 0)
+            {
+                await transaction.RollbackAsync();
+                return (false, "This opportunity is not linked to a VT project.");
+            }
+
+            // Both modes hard-delete Lucid Marketplace rows.
+            await connection.ExecuteAsync(
+                @"DELETE FROM LucidMarketplaceRespondentAttempt WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+                  DELETE FROM LucidMarketplaceEntryLink WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+                  DELETE FROM LucidMarketplaceProjectMap WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+                  IF OBJECT_ID('dbo.LucidMarketplaceRespondentOutcome', 'U') IS NOT NULL
+                      DELETE FROM LucidMarketplaceRespondentOutcome
+                      WHERE SurveyId = @SurveyId
+                        AND (@SupplierCode IS NULL OR SupplierCode = @SupplierCode);
+                  DELETE FROM LucidMarketplaceOpportunity WHERE LucidMarketplaceOpportunityId = @OpportunityId;",
+                new
+                {
+                    OpportunityId = opportunityId,
+                    SurveyId = opportunity.SurveyId,
+                    SupplierCode = opportunity.SupplierCode
+                },
+                transaction);
+
+            if (mode == "entire")
+            {
+                // Soft-deactivate VT rows; keep them in place.
+                await connection.ExecuteAsync(
+                    @"UPDATE Projects SET IsActive = 0 WHERE ProjectId = @ProjectId;
+                      UPDATE ProjectMapping SET IsActive = 0 WHERE ProjectID = @ProjectId;
+                      UPDATE ProjectsUrl SET Status = 0 WHERE PID = @ProjectId;",
+                    new { ProjectId = projectId.Value },
+                    transaction);
+
+                await transaction.CommitAsync();
+                return (true, $"Soft-deactivated VT project {projectId.Value} and hard-deleted related Lucid Marketplace data.");
+            }
+
+            await transaction.CommitAsync();
+            return (true, $"Hard-deleted Lucid Marketplace data for opportunity {opportunityId}. VT project {projectId.Value} was left unchanged.");
+        }
+        catch
+        {
+            try
+            {
+                await transaction.RollbackAsync();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            throw;
+        }
+    }
+
     [HttpGet("Logs")]
     public async Task<IActionResult> GetLucidMarketplaceLogs(int take = 250)
     {
-        return Ok(new List<LucidMarketplaceSyncLogDTO>());
+        try
+        {
+            await PurgeExpiredFailureLogsAsync();
+
+            var safeTake = take <= 0 ? 250 : Math.Min(take, 1000);
+            var query = $@"SELECT TOP ({safeTake}) *
+                           FROM LucidMarketplaceSyncLog
+                           WHERE IsSuccess = 0
+                           ORDER BY ISNULL(CreatedDate, StartedOn) DESC, LucidMarketplaceSyncLogId DESC";
+
+            var items = await _unitOfWork.LucidMarketplaceSyncLog.GetTableData<LucidMarketplaceSyncLogDTO>(query);
+            return Ok(items ?? new List<LucidMarketplaceSyncLogDTO>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading Lucid Marketplace failure logs");
+            return Ok(new List<LucidMarketplaceSyncLogDTO>());
+        }
     }
 
     [HttpGet("Log/{id}")]
     public async Task<IActionResult> GetLucidMarketplaceLog(int id)
     {
-        return NotFound();
+        try
+        {
+            var entity = await _unitOfWork.LucidMarketplaceSyncLog.FindByIdAsync(id);
+            return entity == null ? NotFound() : Ok(_mapper.Map<LucidMarketplaceSyncLogDTO>(entity));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading Lucid Marketplace log {LogId}", id);
+            return NotFound();
+        }
     }
 
     [HttpPost("Log")]
@@ -1159,7 +2183,28 @@ public class LucidMarketplaceAPIController : ControllerBase
             return BadRequest("Invalid log payload.");
         }
 
+        await InsertLogAsync(inputData);
         return Ok(inputData);
+    }
+
+    [HttpPost("ClearLogs")]
+    public async Task<IActionResult> ClearLucidMarketplaceLogs()
+    {
+        try
+        {
+            const string query = @"
+                IF OBJECT_ID('dbo.LucidMarketplaceSyncLog', 'U') IS NOT NULL
+                    TRUNCATE TABLE dbo.LucidMarketplaceSyncLog;";
+
+            await using var connection = await CreateOpenConnectionAsync();
+            await connection.ExecuteAsync(query);
+            return Ok(new { result = true, message = "Lucid Marketplace failure logs cleared." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error clearing Lucid Marketplace failure logs");
+            return StatusCode(StatusCodes.Status500InternalServerError, new { result = false, message = "Unable to clear Lucid Marketplace logs." });
+        }
     }
 
     [HttpGet("Dashboard")]
@@ -1169,13 +2214,37 @@ public class LucidMarketplaceAPIController : ControllerBase
         {
             const string query = @"
                 SELECT
-                    ActiveSettings = (SELECT COUNT(1) FROM LucidMarketplaceSetting WHERE IsActive = 1),
                     ActiveSubscriptions = (SELECT COUNT(1) FROM LucidMarketplaceSubscription WHERE IsActive = 1),
                     ActiveOpportunities = (SELECT COUNT(1) FROM LucidMarketplaceOpportunity WHERE IsActive = 1),
+                    TotalOpportunities = (SELECT COUNT(1) FROM LucidMarketplaceOpportunity),
+                    AddedToProject = (
+                        SELECT COUNT(1)
+                        FROM LucidMarketplaceOpportunity o
+                        WHERE EXISTS (
+                            SELECT 1
+                            FROM LucidMarketplaceProjectMap pm
+                            WHERE pm.LucidMarketplaceOpportunityId = o.LucidMarketplaceOpportunityId
+                              AND pm.IsActive = 1
+                              AND ISNULL(pm.InternalProjectId, 0) > 0
+                        )
+                        OR EXISTS (
+                            SELECT 1
+                            FROM Projects p
+                            WHERE p.ProjectIdFromAPI = CONVERT(nvarchar(100), o.SurveyId)
+                              AND p.ProjectFrom = N'LucidMarketplace'
+                              AND p.IsActive = 1
+                        )
+                    ),
                     LastSyncTime = (SELECT MAX(LastSyncedOn) FROM LucidMarketplaceOpportunity),
-                    TotalLogs = CAST(0 AS int),
-                    SuccessfulApiCalls = CAST(0 AS int),
-                    FailedApiCalls = CAST(0 AS int),
+                    RecentFailures7d = CASE
+                        WHEN OBJECT_ID('dbo.LucidMarketplaceSyncLog', 'U') IS NOT NULL THEN (
+                            SELECT COUNT(1)
+                            FROM LucidMarketplaceSyncLog
+                            WHERE IsSuccess = 0
+                              AND ISNULL(CreatedDate, StartedOn) >= DATEADD(day, -7, GETDATE())
+                        )
+                        ELSE 0
+                    END,
                     LatestOutcomesReceivedCount = (SELECT COUNT(1) FROM LucidMarketplaceRespondentOutcome WHERE IsLatest = 1),
                     LatestReconciliationRunTime = (
                         SELECT MAX(COALESCE(CompletedOn, StartedOn, CreatedDate))
@@ -1285,25 +2354,11 @@ public class LucidMarketplaceAPIController : ControllerBase
 
                     var opportunityId = await UpsertOpportunityAsync(opportunityElement, effectiveSupplierCode, userId);
                     result.ProcessedCount++;
-                    result.OpportunityIds.Add(opportunityId);
                     result.SurveyIds.Add(surveyId);
-
-                    await InsertLogAsync(new LucidMarketplaceSyncLogDTO
+                    if (opportunityId > 0)
                     {
-                        ModuleName = "Lucid Marketplace",
-                        ActionName = "CallbackSaveSuccess",
-                        Source = source,
-                        SupplierCode = effectiveSupplierCode,
-                        RelatedEntityId = opportunityId,
-                        RelatedSurveyId = surveyId,
-                        RequestBodySnapshot = Truncate(opportunityElement.GetRawText(), 8000),
-                        ResponseStatusCode = StatusCodes.Status200OK,
-                        ResponseBodySnapshot = $"Saved opportunity {surveyId}.",
-                        IsSuccess = true,
-                        StartedOn = DateTime.Now,
-                        CompletedOn = DateTime.Now,
-                        CreatedBy = userId
-                    });
+                        result.OpportunityIds.Add(opportunityId);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1572,7 +2627,7 @@ public class LucidMarketplaceAPIController : ControllerBase
                 o.SurveyNumber,
                 o.SupplierCode,
                 SurveyName = o.SurveyName,
-                OpportunityRawJson = o.RawJson,
+                OpportunityRawJson = CAST(NULL AS nvarchar(max)),
                 InternalProjectId = COALESCE(pm.InternalProjectId, p.ProjectId),
                 InternalProjectUrlId = COALESCE(pm.InternalProjectUrlId, puById.ID, puFallback.ID),
                 InternalProjectMappingId = COALESCE(pm.InternalProjectMappingId, mapById.ID, mapFallback.ID),
@@ -1711,6 +2766,10 @@ public class LucidMarketplaceAPIController : ControllerBase
             launchUrl);
     }
 
+    /// <summary>
+    /// Refreshes LucidMarketplaceProjectMap ids only. Does not write LaunchRespondent into ProjectsUrl.Url or ProjectMapping.Olink.
+    /// When a stored sampling LiveLink exists, delegates to <see cref="SyncLucidMarketplaceProjectSamplingLiveLinkByIdsAsync"/>.
+    /// </summary>
     [NonAction]
     public async Task<bool> SyncLucidMarketplaceProjectLaunchUrlByIdsAsync(
         int? lucidMarketplaceOpportunityId,
@@ -1720,9 +2779,30 @@ public class LucidMarketplaceAPIController : ControllerBase
         int? countryId,
         string launchUrl)
     {
-        if (!internalProjectId.HasValue || internalProjectId.Value <= 0 || string.IsNullOrWhiteSpace(launchUrl))
+        if (!internalProjectId.HasValue || internalProjectId.Value <= 0)
         {
             return false;
+        }
+
+        var updated = false;
+
+        if (lucidMarketplaceOpportunityId.HasValue && lucidMarketplaceOpportunityId.Value > 0)
+        {
+            var entryLink = await GetCurrentEntryLinkEntityAsync(lucidMarketplaceOpportunityId.Value);
+            var storedLiveLink = !string.IsNullOrWhiteSpace(entryLink?.LiveLink)
+                ? entryLink!.LiveLink
+                : entryLink?.TestLink;
+
+            if (!string.IsNullOrWhiteSpace(storedLiveLink))
+            {
+                updated = await SyncLucidMarketplaceProjectSamplingLiveLinkByIdsAsync(
+                    lucidMarketplaceOpportunityId,
+                    internalProjectId,
+                    internalProjectUrlId,
+                    internalProjectMappingId,
+                    countryId,
+                    storedLiveLink!) || updated;
+            }
         }
 
         var resolvedProjectUrl = internalProjectUrlId.HasValue && internalProjectUrlId.Value > 0
@@ -1763,26 +2843,6 @@ public class LucidMarketplaceAPIController : ControllerBase
                 });
         }
 
-        var updated = false;
-        if (resolvedProjectUrl != null)
-        {
-            if (string.IsNullOrWhiteSpace(resolvedProjectUrl.OriginalUrl) &&
-                !string.IsNullOrWhiteSpace(resolvedProjectUrl.Url) &&
-                !string.Equals(resolvedProjectUrl.Url, launchUrl, StringComparison.OrdinalIgnoreCase))
-            {
-                resolvedProjectUrl.OriginalUrl = resolvedProjectUrl.Url;
-            }
-
-            resolvedProjectUrl.Url = launchUrl;
-            updated = await _unitOfWork.ProjectsUrl.UpdateAsync(resolvedProjectUrl) || updated;
-        }
-
-        if (resolvedProjectMapping != null)
-        {
-            resolvedProjectMapping.Olink = launchUrl;
-            updated = await _unitOfWork.ProjectMapping.UpdateAsync(resolvedProjectMapping) || updated;
-        }
-
         var projectMapEntity = await _unitOfWork.LucidMarketplaceProjectMap.GetEntityData<LucidMarketplaceProjectMap>(
             @"SELECT TOP 1 *
               FROM LucidMarketplaceProjectMap
@@ -1805,6 +2865,110 @@ public class LucidMarketplaceAPIController : ControllerBase
             }
 
             updated = await _unitOfWork.LucidMarketplaceProjectMap.UpdateAsync(projectMapEntity) || updated;
+        }
+
+        _ = launchUrl;
+        return updated;
+    }
+
+    /// <summary>
+    /// Stores Lucid LiveLink on ProjectsUrl.Url, ProjectsUrl.OriginalUrl, and all ProjectMapping.Olink rows for the project (Torfac-style vendor link).
+    /// </summary>
+    [NonAction]
+    public async Task<bool> SyncLucidMarketplaceProjectSamplingLiveLinkByIdsAsync(
+        int? lucidMarketplaceOpportunityId,
+        int? internalProjectId,
+        int? internalProjectUrlId,
+        int? internalProjectMappingId,
+        int? countryId,
+        string liveLink)
+    {
+        if (!internalProjectId.HasValue || internalProjectId.Value <= 0 || string.IsNullOrWhiteSpace(liveLink))
+        {
+            return false;
+        }
+
+        var trimmedLiveLink = liveLink.Trim();
+        var projectUrls = await _unitOfWork.ProjectsUrl.GetTableData<ProjectsUrl>(
+            @"SELECT *
+              FROM ProjectsUrl
+              WHERE PID = @ProjectId
+                AND (@CountryId IS NULL OR CID = @CountryId)",
+            new
+            {
+                ProjectId = internalProjectId.Value,
+                CountryId = countryId
+            }) ?? new List<ProjectsUrl>();
+
+        if (internalProjectUrlId.HasValue && internalProjectUrlId.Value > 0 &&
+            projectUrls.All(x => x.Id != internalProjectUrlId.Value))
+        {
+            var byId = await _unitOfWork.ProjectsUrl.FindByIdAsync(internalProjectUrlId.Value);
+            if (byId != null)
+            {
+                projectUrls.Add(byId);
+            }
+        }
+
+        var mappings = await _unitOfWork.ProjectMapping.GetTableData<ProjectMapping>(
+            @"SELECT *
+              FROM ProjectMapping
+              WHERE ProjectID = @ProjectId
+                AND (@CountryId IS NULL OR CountryID = @CountryId)",
+            new
+            {
+                ProjectId = internalProjectId.Value,
+                CountryId = countryId
+            }) ?? new List<ProjectMapping>();
+
+        if (internalProjectMappingId.HasValue && internalProjectMappingId.Value > 0 &&
+            mappings.All(x => x.Id != internalProjectMappingId.Value))
+        {
+            var byId = await _unitOfWork.ProjectMapping.FindByIdAsync(internalProjectMappingId.Value);
+            if (byId != null)
+            {
+                mappings.Add(byId);
+            }
+        }
+
+        if (projectUrls.Count == 0 && mappings.Count == 0)
+        {
+            _logger.LogWarning(
+                "Lucid Marketplace sampling LiveLink sync found no ProjectsUrl/ProjectMapping rows for ProjectId={ProjectId}, CountryId={CountryId}, OpportunityId={OpportunityId}, ProjectUrlId={ProjectUrlId}, ProjectMappingId={ProjectMappingId}",
+                internalProjectId,
+                countryId,
+                lucidMarketplaceOpportunityId,
+                internalProjectUrlId,
+                internalProjectMappingId);
+            return false;
+        }
+
+        var updated = false;
+        foreach (var projectUrl in projectUrls)
+        {
+            updated = await _unitOfWork.ProjectsUrl.ExecuteQueryAsync(
+                @"UPDATE ProjectsUrl
+                  SET Url = @LiveLink, OriginalUrl = @LiveLink
+                  WHERE ID = @Id",
+                new { LiveLink = trimmedLiveLink, Id = projectUrl.Id }) || updated;
+        }
+
+        foreach (var mapping in mappings)
+        {
+            updated = await _unitOfWork.ProjectMapping.ExecuteQueryAsync(
+                @"UPDATE ProjectMapping
+                  SET Olink = @LiveLink
+                  WHERE ID = @Id",
+                new { LiveLink = trimmedLiveLink, Id = mapping.Id }) || updated;
+        }
+
+        if (!updated)
+        {
+            _logger.LogWarning(
+                "Lucid Marketplace sampling LiveLink sync SQL updates failed for ProjectId={ProjectId}, CountryId={CountryId}, OpportunityId={OpportunityId}",
+                internalProjectId,
+                countryId,
+                lucidMarketplaceOpportunityId);
         }
 
         return updated;
@@ -2307,6 +3471,132 @@ public class LucidMarketplaceAPIController : ControllerBase
                                ORDER BY IsActive DESC, LucidMarketplaceSettingId DESC";
 
         return await _unitOfWork.LucidMarketplaceSetting.GetEntityData<LucidMarketplaceSetting>(query);
+    }
+
+    private static LucidMarketplaceSettingDTO MapSettingToDto(LucidMarketplaceSetting? entity)
+    {
+        if (entity == null)
+        {
+            return new LucidMarketplaceSettingDTO();
+        }
+
+        var supplierIds = ParseSupplierIds(entity.DefaultSupplierIds);
+        if (supplierIds.Count == 0 && entity.DefaultSupplierId.GetValueOrDefault() > 0)
+        {
+            supplierIds.Add(entity.DefaultSupplierId!.Value);
+        }
+
+        return new LucidMarketplaceSettingDTO
+        {
+            LucidMarketplaceSettingId = entity.LucidMarketplaceSettingId,
+            BaseUrl = entity.BaseUrl,
+            ApiKey = entity.ApiKey,
+            EntryLinkSecretKey = entity.EntryLinkSecretKey,
+            SupplierCode = entity.SupplierCode,
+            OpportunitiesCallbackUrl = entity.OpportunitiesCallbackUrl,
+            OutcomesCallbackUrl = entity.OutcomesCallbackUrl,
+            UseConsultingsBridge = entity.UseConsultingsBridge,
+            AutoSyncEnabled = entity.AutoSyncEnabled,
+            SyncIntervalMinutes = entity.SyncIntervalMinutes,
+            DefaultClientId = entity.DefaultClientId,
+            DefaultCountryId = entity.DefaultCountryId,
+            DefaultSupplierId = supplierIds.Count > 0 ? supplierIds[0] : entity.DefaultSupplierId,
+            DefaultSupplierIds = supplierIds,
+            SupplierCpiPercent = entity.SupplierCpiPercent,
+            EnableHashing = entity.EnableHashing,
+            HashingParameter = entity.HashingParameter,
+            HashingType = entity.HashingType,
+            RespondentIdUrlParts = entity.RespondentIdUrlParts,
+            RespondentIdUrlReplaceWith = entity.RespondentIdUrlReplaceWith,
+            SupplierLinkTypeCode = entity.SupplierLinkTypeCode,
+            TrackingTypeCode = entity.TrackingTypeCode,
+            IsActive = entity.IsActive,
+            CreatedDate = entity.CreatedDate,
+            ModifiedDate = entity.ModifiedDate,
+            CreatedBy = entity.CreatedBy,
+            ModifiedBy = entity.ModifiedBy
+        };
+    }
+
+    private static List<int> ParseSupplierIds(string? serializedSupplierIds)
+    {
+        if (string.IsNullOrWhiteSpace(serializedSupplierIds))
+        {
+            return new List<int>();
+        }
+
+        return serializedSupplierIds
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(value => int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var supplierId) ? supplierId : 0)
+            .Where(supplierId => supplierId > 0)
+            .Distinct()
+            .ToList();
+    }
+
+    private static List<int> NormalizeSupplierIds(IEnumerable<int>? supplierIds)
+    {
+        return supplierIds?
+            .Where(supplierId => supplierId > 0)
+            .Distinct()
+            .ToList()
+            ?? new List<int>();
+    }
+
+    private static string? SerializeSupplierIds(IEnumerable<int> supplierIds)
+    {
+        var normalizedSupplierIds = NormalizeSupplierIds(supplierIds);
+        return normalizedSupplierIds.Count > 0
+            ? string.Join(",", normalizedSupplierIds)
+            : null;
+    }
+
+    private static decimal? NormalizeSupplierCpiPercent(decimal? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+
+        var clamped = Math.Round(value.Value, 4, MidpointRounding.AwayFromZero);
+        if (clamped < 1m)
+        {
+            return 1m;
+        }
+
+        if (clamped > 100m)
+        {
+            return 100m;
+        }
+
+        return clamped;
+    }
+
+    private static string? NormalizeHashingParameter(string? value)
+    {
+        var normalized = value?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return "hash";
+        }
+
+        if (normalized is not ("enc" or "hash" or "token"))
+        {
+            return "hash";
+        }
+
+        return normalized;
+    }
+
+    private static string? NormalizeHashingType(string? value)
+    {
+        var normalized = value?.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static string? NormalizeMappingText(string? value)
+    {
+        var normalized = value?.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 
     private async Task<LucidMarketplaceSubscription?> GetCurrentSubscriptionEntityAsync(
@@ -3032,11 +4322,21 @@ public class LucidMarketplaceAPIController : ControllerBase
                 transaction);
 
             var now = DateTime.Now;
-            var isLive = GetBoolValue(opportunityElement, "is_live", "isLive");
-            var localState = string.IsNullOrWhiteSpace(existing?.LocalState) ? "New" : existing!.LocalState;
-            var preserveIgnored = string.Equals(localState, "Ignored", StringComparison.OrdinalIgnoreCase) && existing?.IsActive == false;
-            var incomingSurveyNumber = GetStringValue(opportunityElement, "survey_number", "surveyNumber");
+            var isLive = GetBoolValue(opportunityElement, "is_live", "isLive") ?? false;
+            var isMapped = await IsOpportunityMappedAsync(connection, transaction, existing?.LucidMarketplaceOpportunityId, surveyId);
 
+            if (!isLive && !isMapped)
+            {
+                if (existing != null)
+                {
+                    await HardDeleteUnmappedOpportunityAsync(connection, transaction, existing.LucidMarketplaceOpportunityId, supplierCode.Trim(), surveyId);
+                }
+
+                transaction.Commit();
+                return 0;
+            }
+
+            var incomingSurveyNumber = GetStringValue(opportunityElement, "survey_number", "surveyNumber");
             var entity = existing ?? new LucidMarketplaceOpportunity();
             entity.SupplierCode = supplierCode.Trim();
             entity.SurveyId = surveyId;
@@ -3046,26 +4346,18 @@ public class LucidMarketplaceAPIController : ControllerBase
                     : surveyId.ToString(CultureInfo.InvariantCulture))
                 : incomingSurveyNumber.Trim();
             entity.SurveyName = GetStringValue(opportunityElement, "survey_name", "surveyName", "title");
-            entity.AccountName = GetStringValue(opportunityElement, "account_name", "accountName");
-            entity.BuyerId = GetIntValue(opportunityElement, "buyer_id", "buyerId");
-            entity.TargetGroupId = GetStringValue(opportunityElement, "target_group_id", "targetGroupId");
             entity.CountryLanguageCode = GetStringValue(opportunityElement, "country_language", "countryLanguage");
             entity.StudyType = GetStringValue(opportunityElement, "study_type", "studyType");
             entity.Industry = GetStringValue(opportunityElement, "industry");
             entity.RevenuePerInterview = GetMonetaryValue(opportunityElement, "revenue_per_interview", "revenuePerInterview");
-            entity.RevenueCurrencyCode = GetMonetaryCurrency(opportunityElement, "revenue_per_interview", "revenuePerInterview");
             entity.BidIncidence = GetDecimalValue(opportunityElement, "bid_incidence", "bidIncidence");
             entity.BidLengthOfInterview = GetDecimalValue(opportunityElement, "bid_length_of_interview", "bidLengthOfInterview");
             entity.TotalRemaining = GetIntValue(opportunityElement, "total_remaining", "totalRemaining");
             entity.IsLive = isLive;
-            entity.RecontactCount = GetIntValue(opportunityElement, "recontact_count", "recontactCount");
-            entity.SurveyGroupIdsJson = GetJsonTextValue(opportunityElement, "survey_group_ids", "surveyGroupIds");
             entity.MessageReason = GetStringValue(opportunityElement, "message_reason", "messageReason");
-            entity.LastVendorUpdatedOn = GetDateTimeValue(opportunityElement, "survey_lastSend", "survey_last_send", "last_vendor_updated_on", "updated_at", "lastUpdatedOn");
             entity.LastSyncedOn = now;
-            entity.LocalState = localState;
-            entity.RawJson = null;
-            entity.IsActive = preserveIgnored ? false : (isLive ?? existing?.IsActive ?? true);
+            entity.LocalState = string.IsNullOrWhiteSpace(existing?.LocalState) ? "New" : existing!.LocalState;
+            entity.IsActive = isLive;
             entity.ModifiedDate = now;
             entity.ModifiedBy = userId;
 
@@ -3078,19 +4370,15 @@ public class LucidMarketplaceAPIController : ControllerBase
                 const string insertOpportunitySql = @"
                     INSERT INTO LucidMarketplaceOpportunity
                     (
-                        SupplierCode, SurveyId, SurveyNumber, SurveyName, AccountName, BuyerId, TargetGroupId,
-                        CountryLanguageCode, StudyType, Industry, RevenuePerInterview, RevenueCurrencyCode,
-                        BidIncidence, BidLengthOfInterview, TotalRemaining, IsLive, RecontactCount,
-                        SurveyGroupIdsJson, MessageReason, LastVendorUpdatedOn, LastSyncedOn, LocalState,
-                        RawJson, IsActive, CreatedDate, ModifiedDate, CreatedBy, ModifiedBy
+                        SupplierCode, SurveyId, SurveyNumber, SurveyName, CountryLanguageCode, StudyType, Industry,
+                        RevenuePerInterview, BidIncidence, BidLengthOfInterview, TotalRemaining, IsLive,
+                        MessageReason, LastSyncedOn, LocalState, IsActive, CreatedDate, ModifiedDate, CreatedBy, ModifiedBy
                     )
                     VALUES
                     (
-                        @SupplierCode, @SurveyId, @SurveyNumber, @SurveyName, @AccountName, @BuyerId, @TargetGroupId,
-                        @CountryLanguageCode, @StudyType, @Industry, @RevenuePerInterview, @RevenueCurrencyCode,
-                        @BidIncidence, @BidLengthOfInterview, @TotalRemaining, @IsLive, @RecontactCount,
-                        @SurveyGroupIdsJson, @MessageReason, @LastVendorUpdatedOn, @LastSyncedOn, @LocalState,
-                        @RawJson, @IsActive, @CreatedDate, @ModifiedDate, @CreatedBy, @ModifiedBy
+                        @SupplierCode, @SurveyId, @SurveyNumber, @SurveyName, @CountryLanguageCode, @StudyType, @Industry,
+                        @RevenuePerInterview, @BidIncidence, @BidLengthOfInterview, @TotalRemaining, @IsLive,
+                        @MessageReason, @LastSyncedOn, @LocalState, @IsActive, @CreatedDate, @ModifiedDate, @CreatedBy, @ModifiedBy
                     );
                     SELECT CAST(SCOPE_IDENTITY() AS int);";
 
@@ -3108,25 +4396,17 @@ public class LucidMarketplaceAPIController : ControllerBase
                         SurveyId = @SurveyId,
                         SurveyNumber = @SurveyNumber,
                         SurveyName = @SurveyName,
-                        AccountName = @AccountName,
-                        BuyerId = @BuyerId,
-                        TargetGroupId = @TargetGroupId,
                         CountryLanguageCode = @CountryLanguageCode,
                         StudyType = @StudyType,
                         Industry = @Industry,
                         RevenuePerInterview = @RevenuePerInterview,
-                        RevenueCurrencyCode = @RevenueCurrencyCode,
                         BidIncidence = @BidIncidence,
                         BidLengthOfInterview = @BidLengthOfInterview,
                         TotalRemaining = @TotalRemaining,
                         IsLive = @IsLive,
-                        RecontactCount = @RecontactCount,
-                        SurveyGroupIdsJson = @SurveyGroupIdsJson,
                         MessageReason = @MessageReason,
-                        LastVendorUpdatedOn = @LastVendorUpdatedOn,
                         LastSyncedOn = @LastSyncedOn,
                         LocalState = @LocalState,
-                        RawJson = @RawJson,
                         IsActive = @IsActive,
                         ModifiedDate = @ModifiedDate,
                         ModifiedBy = @ModifiedBy
@@ -3152,6 +4432,49 @@ public class LucidMarketplaceAPIController : ControllerBase
 
             throw;
         }
+    }
+
+    private static async Task<bool> IsOpportunityMappedAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        int? opportunityId,
+        int surveyId)
+    {
+        const string query = @"
+            SELECT CASE WHEN EXISTS (
+                SELECT 1
+                FROM LucidMarketplaceProjectMap pm
+                WHERE (@OpportunityId IS NOT NULL AND pm.LucidMarketplaceOpportunityId = @OpportunityId AND pm.IsActive = 1 AND ISNULL(pm.InternalProjectId, 0) > 0)
+                   OR (pm.LucidSurveyId = @SurveyId AND pm.IsActive = 1 AND ISNULL(pm.InternalProjectId, 0) > 0)
+            ) OR EXISTS (
+                SELECT 1
+                FROM Projects p
+                WHERE p.ProjectIdFromAPI = CAST(@SurveyId AS nvarchar(100))
+                  AND p.ProjectFrom = 'LucidMarketplace'
+                  AND p.IsActive = 1
+            ) THEN 1 ELSE 0 END";
+
+        return await connection.ExecuteScalarAsync<int>(query, new { OpportunityId = opportunityId, SurveyId = surveyId }, transaction) == 1;
+    }
+
+    private static async Task HardDeleteUnmappedOpportunityAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        int opportunityId,
+        string supplierCode,
+        int surveyId)
+    {
+        await connection.ExecuteAsync(
+            @"DELETE FROM LucidMarketplaceRespondentAttempt WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+              DELETE FROM LucidMarketplaceEntryLink WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+              DELETE FROM LucidMarketplaceProjectMap WHERE LucidMarketplaceOpportunityId = @OpportunityId;
+              IF OBJECT_ID('dbo.LucidMarketplaceRespondentOutcome', 'U') IS NOT NULL
+                  DELETE FROM LucidMarketplaceRespondentOutcome
+                  WHERE SurveyId = @SurveyId
+                    AND (@SupplierCode IS NULL OR SupplierCode = @SupplierCode);
+              DELETE FROM LucidMarketplaceOpportunity WHERE LucidMarketplaceOpportunityId = @OpportunityId;",
+            new { OpportunityId = opportunityId, SupplierCode = supplierCode, SurveyId = surveyId },
+            transaction);
     }
 
     private async Task InsertQualificationsAsync(
@@ -3261,11 +4584,83 @@ public class LucidMarketplaceAPIController : ControllerBase
         }
     }
 
-    private Task InsertLogAsync(LucidMarketplaceSyncLogDTO log)
+    private async Task<bool> InsertLogAsync(LucidMarketplaceSyncLogDTO log)
     {
-        // Lucid Marketplace sync logging is intentionally disabled to keep the
-        // LucidMarketplaceSyncLog table from growing too quickly.
-        return Task.CompletedTask;
+        if (log.IsSuccess)
+        {
+            return false;
+        }
+
+        try
+        {
+            var entity = _mapper.Map<LucidMarketplaceSyncLog>(log);
+            if (string.IsNullOrWhiteSpace(entity.ErrorText))
+            {
+                entity.ErrorText = entity.ResponseBodySnapshot ?? entity.RequestBodySnapshot;
+            }
+
+            TrimLucidLogEntity(entity);
+            entity.RequestBodySnapshot = null;
+            entity.ResponseBodySnapshot = null;
+            entity.IsSuccess = false;
+            entity.CreatedDate ??= DateTime.Now;
+            entity.StartedOn ??= entity.CreatedDate;
+            entity.CompletedOn ??= entity.CreatedDate;
+
+            entity.LucidMarketplaceSyncLogId = await _unitOfWork.LucidMarketplaceSyncLog.AddAsync(entity);
+            log.LucidMarketplaceSyncLogId = entity.LucidMarketplaceSyncLogId;
+            log.CreatedDate = entity.CreatedDate;
+            return entity.LucidMarketplaceSyncLogId > 0;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to persist Lucid Marketplace failure log for action {ActionName}", log.ActionName);
+            return false;
+        }
+    }
+
+    private async Task PurgeExpiredFailureLogsAsync()
+    {
+        try
+        {
+            const string query = @"
+                IF OBJECT_ID('dbo.LucidMarketplaceSyncLog', 'U') IS NOT NULL
+                    DELETE FROM LucidMarketplaceSyncLog
+                    WHERE ISNULL(CreatedDate, StartedOn) < DATEADD(day, -30, GETDATE());";
+
+            await using var connection = await CreateOpenConnectionAsync();
+            await connection.ExecuteAsync(query);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to purge expired Lucid Marketplace failure logs");
+        }
+    }
+
+    private static void TrimLucidLogEntity(LucidMarketplaceSyncLog entity)
+    {
+        entity.ModuleName = TrimForStorage(entity.ModuleName, 100) ?? "Lucid Marketplace";
+        entity.ActionName = TrimForStorage(entity.ActionName, 100);
+        entity.RequestUrl = TrimForStorage(entity.RequestUrl, 1000);
+        entity.Source = TrimForStorage(entity.Source, 50);
+        entity.SupplierCode = TrimForStorage(entity.SupplierCode, 100);
+        entity.ErrorText = TrimForStorage(entity.ErrorText, 500);
+    }
+
+    private static string? TrimForStorage(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        var trimmed = value.Trim();
+        if (trimmed.Length <= maxLength)
+        {
+            return trimmed;
+        }
+
+        return trimmed[..(maxLength - 3)] + "...";
     }
 
     private static bool NormalizeIncludeQuotas(string? subscriptionType, bool includeQuotas)

@@ -33,6 +33,20 @@ public class LucidMarketplaceSettingDTO
 
     public int? DefaultSupplierId { get; set; }
 
+    public List<int> DefaultSupplierIds { get; set; } = new();
+
+    public decimal? SupplierCpiPercent { get; set; }
+
+    public bool EnableHashing { get; set; }
+
+    public string? HashingParameter { get; set; }
+
+    public string? HashingType { get; set; }
+
+    public string? RespondentIdUrlParts { get; set; }
+
+    public string? RespondentIdUrlReplaceWith { get; set; }
+
     public string? SupplierLinkTypeCode { get; set; }
 
     public string? TrackingTypeCode { get; set; }

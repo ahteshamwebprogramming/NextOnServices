@@ -83,13 +83,11 @@
                         <div class="col-md-3 vt-lm-kv"><div class="label">Country-Language</div><div class="value">@opportunity.CountryLanguageCode</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Study Type</div><div class="value">@opportunity.StudyType</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Industry</div><div class="value">@opportunity.Industry</div></div>
-                        <div class="col-md-3 vt-lm-kv"><div class="label">CPI</div><div class="value">@(opportunity.RevenuePerInterview?.ToString("0.##") ?? "-") @opportunity.RevenueCurrencyCode</div></div>
+                        <div class="col-md-3 vt-lm-kv"><div class="label">CPI</div><div class="value">@(opportunity.RevenuePerInterview?.ToString("0.##") ?? "-")</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">IR</div><div class="value">@(opportunity.BidIncidence?.ToString("0.##") ?? "-")</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">LOI</div><div class="value">@(opportunity.BidLengthOfInterview?.ToString("0.##") ?? "-")</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Total Remaining</div><div class="value">@(opportunity.TotalRemaining?.ToString() ?? "-")</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Is Live</div><div class="value">@((opportunity.IsLive ?? false) ? "Yes" : "No")</div></div>
-                        <div class="col-md-3 vt-lm-kv"><div class="label">Recontact Count</div><div class="value">@(opportunity.RecontactCount?.ToString() ?? "0")</div></div>
-                        <div class="col-md-3 vt-lm-kv"><div class="label">Survey Group IDs</div><div class="value">@(!string.IsNullOrWhiteSpace(opportunity.SurveyGroupIdsJson) ? opportunity.SurveyGroupIdsJson : "-")</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Message Reason</div><div class="value">@opportunity.MessageReason</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Local State</div><div class="value">@opportunity.LocalState</div></div>
                         <div class="col-md-3 vt-lm-kv"><div class="label">Last Synced</div><div class="value">@opportunity.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt")</div></div>
@@ -107,7 +105,9 @@
                             @if (hasMappedProject)
                             {
                                 <button type="button" class="btn btn-primary btn-sm mr-2" onclick="generateEntryLink(@opportunity.LucidMarketplaceOpportunityId, 'Live')">Generate Live Link</button>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="generateEntryLink(@opportunity.LucidMarketplaceOpportunityId, 'Test')">Generate Test Link</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm mr-2" onclick="generateEntryLink(@opportunity.LucidMarketplaceOpportunityId, 'Test')">Generate Test Link</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm mr-2" data-toggle="collapse" data-target="#lucidReturnLinksCollapse" aria-expanded="false" aria-controls="lucidReturnLinksCollapse">View return links</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="updateReturnLinks(@opportunity.LucidMarketplaceOpportunityId)">Update return links on Cint</button>
                             }
                             else
                             {
@@ -138,6 +138,33 @@
                             <div class="label mb-2">Test Link Snapshot</div>
                             <div class="vt-lm-json" style="max-height:140px;">@(!string.IsNullOrWhiteSpace(entryLink.TestLink) ? entryLink.TestLink : "No test supplier link is stored yet.")</div>
                         </div>
+                    </div>
+
+                    <div class="collapse mt-3" id="lucidReturnLinksCollapse">
+                        <div class="label mb-2">Return links (registered with Cint)</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="label mb-1">Success</div>
+                                <div class="vt-lm-json" style="max-height:100px;">@(!string.IsNullOrWhiteSpace(entryLink.SuccessLink) ? entryLink.SuccessLink : "Not registered yet")</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="label mb-1">Failure</div>
+                                <div class="vt-lm-json" style="max-height:100px;">@(!string.IsNullOrWhiteSpace(entryLink.FailureLink) ? entryLink.FailureLink : "Not registered yet")</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="label mb-1">Over Quota</div>
+                                <div class="vt-lm-json" style="max-height:100px;">@(!string.IsNullOrWhiteSpace(entryLink.OverQuotaLink) ? entryLink.OverQuotaLink : "Not registered yet")</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="label mb-1">Quality Termination</div>
+                                <div class="vt-lm-json" style="max-height:100px;">@(!string.IsNullOrWhiteSpace(entryLink.QualityTerminationLink) ? entryLink.QualityTerminationLink : "Not registered yet")</div>
+                            </div>
+                            <div class="col-md-12 mb-2">
+                                <div class="label mb-1">Default</div>
+                                <div class="vt-lm-json" style="max-height:100px;">@(!string.IsNullOrWhiteSpace(entryLink.DefaultLink) ? entryLink.DefaultLink : "Not registered yet")</div>
+                            </div>
+                        </div>
+                        <small class="text-muted">These are ProjectStatus return URLs sent to Lucid on Supplier Link Create/Update (<code>ID=[%PID%]</code>). Use Update return links on Cint to push them again.</small>
                     </div>
                 </div>
             </div>
@@ -221,16 +248,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 grid-margin stretch-card">
-            <div class="card card--table-section">
-                <div class="card-body">
-                    <h4 class="table-section-header">Raw JSON Snapshot</h4>
-                    <div class="vt-lm-json mt-3">@opportunity.RawJson</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 grid-margin stretch-card">
+        <div class="col-md-12 grid-margin stretch-card">
             <div class="card card--table-section">
                 <div class="card-body">
                     <h4 class="table-section-header">Recent Sync Logs</h4>
@@ -352,6 +370,29 @@
                 },
                 error: function (xhr) {
                     Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to generate the Lucid Marketplace entry link.", "error");
+                }
+            });
+        }
+
+        function updateReturnLinks(opportunityId) {
+            $.ajax({
+                type: "POST",
+                url: "/VT/LucidMarketplaceApi/UpdateSupplierReturnLinksFromOpportunity",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    lucidMarketplaceOpportunityId: opportunityId
+                }),
+                success: function (response) {
+                    if (response.result) {
+                        Swal.fire("Success", response.message || "Return links updated on Cint.", "success")
+                            .then(function () { window.location.reload(); });
+                        return;
+                    }
+
+                    Swal.fire("Error", response.message || "Unable to update return links on Cint.", "error");
+                },
+                error: function (xhr) {
+                    Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to update return links on Cint.", "error");
                 }
             });
         }

@@ -81,13 +81,12 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Settings</div><div class="stat-value">@Model.Dashboard.ActiveSettings</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Subscriptions</div><div class="stat-value">@Model.Dashboard.ActiveSubscriptions</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Active Opportunities</div><div class="stat-value">@Model.Dashboard.ActiveOpportunities</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Total Opportunities</div><div class="stat-value">@Model.Dashboard.TotalOpportunities</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Added to Project</div><div class="stat-value">@Model.Dashboard.AddedToProject</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Last Sync Time</div><div class="stat-value" style="font-size:1.15rem;">@lastSyncText</div></div></div></div>
-        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Total Logs</div><div class="stat-value">@Model.Dashboard.TotalLogs</div></div></div></div>
-        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Successful API Calls</div><div class="stat-value">@Model.Dashboard.SuccessfulApiCalls</div></div></div></div>
-        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Failed API Calls</div><div class="stat-value">@Model.Dashboard.FailedApiCalls</div></div></div></div>
+        <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Recent Failures (7d)</div><div class="stat-value">@Model.Dashboard.RecentFailures7d</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Outcomes</div><div class="stat-value">@Model.Dashboard.LatestOutcomesReceivedCount</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Last Reconciliation</div><div class="stat-value" style="font-size:1.15rem;">@lastReconciliationText</div></div></div></div>
         <div class="col-md-4 grid-margin stretch-card"><div class="card vt-lm-stat-card"><div class="card-body"><div class="stat-label">Latest Mismatches</div><div class="stat-value">@Model.Dashboard.LatestReconciliationMismatchCount</div></div></div></div>
@@ -103,7 +102,7 @@
                     <div class="row mt-3">
                         <div class="col-sm-6 mb-3"><div class="text-muted small">Base URL</div><div class="font-weight-600">@(string.IsNullOrWhiteSpace(Model.Setting.BaseUrl) ? "Not configured" : Model.Setting.BaseUrl)</div></div>
                         <div class="col-sm-6 mb-3"><div class="text-muted small">Supplier Code</div><div class="font-weight-600">@(string.IsNullOrWhiteSpace(Model.Setting.SupplierCode) ? "Not configured" : Model.Setting.SupplierCode)</div></div>
-                        <div class="col-sm-6 mb-3"><div class="text-muted small">Consultings Bridge</div><div><span class="vt-lm-chip">@(Model.Setting.UseConsultingsBridge ? "Enabled" : "Disabled")</span></div></div>
+                        <div class="col-sm-6 mb-3"><div class="text-muted small">API Mode</div><div><span class="vt-lm-chip">Direct</span></div></div>
                         <div class="col-sm-6 mb-3"><div class="text-muted small">Module Status</div><div><span class="vt-lm-chip">@(Model.Setting.IsActive ? "Active" : "Inactive")</span></div></div>
                     </div>
                 </div>

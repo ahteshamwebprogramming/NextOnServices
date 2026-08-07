@@ -14,12 +14,6 @@ public class LucidMarketplaceOpportunityDTO
 
     public string? SurveyName { get; set; }
 
-    public string? AccountName { get; set; }
-
-    public int? BuyerId { get; set; }
-
-    public string? TargetGroupId { get; set; }
-
     public string? CountryLanguageCode { get; set; }
 
     public string? StudyType { get; set; }
@@ -27,8 +21,6 @@ public class LucidMarketplaceOpportunityDTO
     public string? Industry { get; set; }
 
     public decimal? RevenuePerInterview { get; set; }
-
-    public string? RevenueCurrencyCode { get; set; }
 
     public decimal? BidIncidence { get; set; }
 
@@ -38,19 +30,11 @@ public class LucidMarketplaceOpportunityDTO
 
     public bool? IsLive { get; set; }
 
-    public int? RecontactCount { get; set; }
-
-    public string? SurveyGroupIdsJson { get; set; }
-
     public string? MessageReason { get; set; }
-
-    public DateTime? LastVendorUpdatedOn { get; set; }
 
     public DateTime? LastSyncedOn { get; set; }
 
     public string? LocalState { get; set; }
-
-    public string? RawJson { get; set; }
 
     public bool IsActive { get; set; }
 

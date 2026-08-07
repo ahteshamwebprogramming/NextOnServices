@@ -8,8 +8,10 @@ using NextOnServices.Endpoints.Suppliers;
 using NextOnServices.Infrastructure.Models.APIProjects;
 using NextOnServices.Infrastructure.Models.Client;
 using NextOnServices.Infrastructure.Models.Masters;
+using NextOnServices.Infrastructure.Models.Settings;
 using NextOnServices.Infrastructure.Models.Supplier;
 using NextOnServices.VT.Infrastructure.ViewModels.Project;
+using NextOnServices.WebUI.VT.Services;
 
 namespace NextOnServices.WebUI.VT.Controllers;
 
@@ -26,19 +28,22 @@ public class LucidMarketplaceController : Controller
     private readonly ClientsAPIController _clientsAPIController;
     private readonly CountryAPIController _countryAPIController;
     private readonly SuppliersAPIController _suppliersAPIController;
+    private readonly IHashingSettingsService _hashingSettingsService;
 
     public LucidMarketplaceController(
         ILogger<LucidMarketplaceController> logger,
         LucidMarketplaceAPIController lucidMarketplaceAPIController,
         ClientsAPIController clientsAPIController,
         CountryAPIController countryAPIController,
-        SuppliersAPIController suppliersAPIController)
+        SuppliersAPIController suppliersAPIController,
+        IHashingSettingsService hashingSettingsService)
     {
         _logger = logger;
         _lucidMarketplaceAPIController = lucidMarketplaceAPIController;
         _clientsAPIController = clientsAPIController;
         _countryAPIController = countryAPIController;
         _suppliersAPIController = suppliersAPIController;
+        _hashingSettingsService = hashingSettingsService;
     }
 
     [Route("/VT/LucidMarketplace")]
@@ -66,7 +71,8 @@ public class LucidMarketplaceController : Controller
             Setting = await GetSettingAsync(),
             Clients = await GetClientsAsync(),
             Countries = await GetCountriesAsync(),
-            Suppliers = await GetSuppliersAsync()
+            Suppliers = await GetSuppliersAsync(),
+            HashingSettings = await GetHashingSettingsAsync()
         };
 
         return View(model);
@@ -105,16 +111,15 @@ public class LucidMarketplaceController : Controller
         ViewData["Title"] = "Lucid Marketplace Opportunities";
 
         var normalizedView = NormalizeOpportunityView(view);
-        var opportunities = await GetOpportunitiesAsync(normalizedView);
 
         var model = new LucidMarketplaceViewModel
         {
-            Opportunities = opportunities,
+            Opportunities = new List<LucidMarketplaceOpportunityDTO>(),
             OpportunityView = normalizedView,
-            OpportunityCount = opportunities.Count
+            OpportunityCount = 0
         };
 
-        return View(model);
+        return await Task.FromResult(View(model));
     }
 
     [Route("/VT/LucidMarketplace/OpportunityDetails/{id:int}")]
@@ -577,5 +582,18 @@ public class LucidMarketplaceController : Controller
         return result is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK
             ? objectResult.Value as List<SupplierDTO> ?? new List<SupplierDTO>()
             : new List<SupplierDTO>();
+    }
+
+    private async Task<List<HashingSettingDTO>> GetHashingSettingsAsync()
+    {
+        try
+        {
+            return await _hashingSettingsService.GetAllAsync() ?? new List<HashingSettingDTO>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load hashing settings for Lucid Marketplace settings page.");
+            return new List<HashingSettingDTO>();
+        }
     }
 }

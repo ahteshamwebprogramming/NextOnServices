@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using NextOnServices.Infrastructure.Models.APIProjects;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -48,7 +49,7 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
 
         try
         {
-            var unsignedUrl = RemoveQueryParameter(baseLink, "hash");
+            var unsignedUrl = RemoveQueryParameter(baseLink, LucidHmacHelper.HashParameterName);
             if (ContainsQueryParameter(unsignedUrl, "cint_email") && string.IsNullOrWhiteSpace(request.CintEmailRaw))
             {
                 _logger.LogWarning(
@@ -99,7 +100,7 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
                 return BuildFailure("Lucid Marketplace unsigned entry link could not be built.");
             }
 
-            var signingUrl = EnsureHashAppendPosition(unsignedUrl);
+            var signingUrl = LucidHmacHelper.NormalizeUrlForSigning(unsignedUrl);
             var sanitizedUnsignedUrl = SanitizeUrlForLog(signingUrl);
             _logger.LogInformation(
                 "Lucid Marketplace unsigned entry link built. OpportunityId={OpportunityId}, InternalProjectId={InternalProjectId}, SurveyId={SurveyId}, AttemptType={AttemptType}, Url={UnsignedUrl}, HasCintEmail={HasCintEmail}, MaskedEmail={MaskedEmail}",
@@ -111,7 +112,7 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
                 includedCintEmail,
                 MaskEmail(request.CintEmailRaw));
 
-            var hashValue = ComputeUrlSafeHmacSha1(secretKey, signingUrl);
+            var hashValue = LucidHmacHelper.ComputeUrlSafeHmacSha1(secretKey, signingUrl);
             if (string.IsNullOrWhiteSpace(hashValue))
             {
                 _logger.LogWarning(
@@ -123,7 +124,7 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
                 return BuildFailure("Unable to generate the Lucid Marketplace entry-link hash.");
             }
 
-            var signedUrl = $"{signingUrl}hash={hashValue}";
+            var signedUrl = $"{signingUrl}{LucidHmacHelper.HashParameterName}={hashValue}";
             var sanitizedSignedUrl = SanitizeUrlForLog(signedUrl);
 
             _logger.LogInformation(
@@ -159,14 +160,7 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
     }
 
     public string ComputeUrlSafeHmacSha1(string secretKey, string unsignedUrl)
-    {
-        using var hmac = new HMACSHA1(Encoding.UTF8.GetBytes(secretKey ?? string.Empty));
-        var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(unsignedUrl ?? string.Empty));
-        return Convert.ToBase64String(hashBytes)
-            .Replace('+', '-')
-            .Replace('/', '_')
-            .TrimEnd('=');
-    }
+        => LucidHmacHelper.ComputeUrlSafeHmacSha1(secretKey, unsignedUrl);
 
     public string ComputeCintEmailHash(string rawEmail)
     {
@@ -236,22 +230,6 @@ public sealed class LucidMarketplaceLinkSigner : ILucidMarketplaceLinkSigner
             : updated;
     }
 
-    private static string EnsureHashAppendPosition(string url)
-    {
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            return string.Empty;
-        }
-
-        if (url.EndsWith("&", StringComparison.Ordinal) || url.EndsWith("?", StringComparison.Ordinal))
-        {
-            return url;
-        }
-
-        return url.Contains('?', StringComparison.Ordinal)
-            ? $"{url}&"
-            : $"{url}?";
-    }
     private static string AppendQueryParameter(string url, string parameterName, string value)
     {
         if (string.IsNullOrWhiteSpace(url))

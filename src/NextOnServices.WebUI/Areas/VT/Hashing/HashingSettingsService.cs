@@ -38,7 +38,20 @@ public sealed class HashingSettingsService : IHashingSettingsService
                 ON [dbo].[HashingSetting] ([HashingType] ASC);
         END;
         """;
-    private static readonly string[] _supportedHashingTypes = new[] { "SHA1", "SHA3", "HMACSHA256", "TORFAC_MD5" };
+    private static readonly string[] _supportedHashingTypes = new[]
+    {
+        "SHA1",
+        "SHA3",
+        "HMACSHA256_Zamplia",
+        "HMACSHA1_LUCID",
+        "TORFAC_MD5"
+    };
+
+    /// <summary>Legacy type name still accepted for apply/save of existing rows.</summary>
+    private const string LegacyZampliaHashingType = "HMACSHA256";
+    private const string ZampliaHashingType = "HMACSHA256_Zamplia";
+    private const string LucidHashingType = "HMACSHA1_LUCID";
+    private const string TorfacHashingType = "TORFAC_MD5";
 
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -93,9 +106,15 @@ public sealed class HashingSettingsService : IHashingSettingsService
         await EnsureTableAsync();
 
         var normalizedType = NormalizeHashingType(inputData.HashingType);
-        if (!_supportedHashingTypes.Contains(normalizedType, StringComparer.OrdinalIgnoreCase))
+        if (!IsAcceptedHashingType(normalizedType))
         {
             throw new InvalidOperationException("Please select a supported hashing type.");
+        }
+
+        // Persist under the canonical Zamplia name when legacy HMACSHA256 is submitted.
+        if (string.Equals(normalizedType, LegacyZampliaHashingType, StringComparison.Ordinal))
+        {
+            normalizedType = ZampliaHashingType;
         }
 
         var normalizedKey = inputData.HashingKey?.Trim();
@@ -168,22 +187,48 @@ public sealed class HashingSettingsService : IHashingSettingsService
         {
             await EnsureTableAsync();
 
-            var key = await _unitOfWork.HashingSetting.GetEntityData<string>(
-                """
-                SELECT TOP 1 HashingKey
-                FROM HashingSetting
-                WHERE IsActive = 1
-                  AND UPPER(LTRIM(RTRIM(HashingType))) = @HashingType
-                ORDER BY HashingSettingId DESC;
-                """,
-                new { HashingType = normalizedType });
+            foreach (var candidateType in GetHashingTypeLookupCandidates(normalizedType))
+            {
+                var key = await _unitOfWork.HashingSetting.GetEntityData<string>(
+                    """
+                    SELECT TOP 1 HashingKey
+                    FROM HashingSetting
+                    WHERE IsActive = 1
+                      AND UPPER(LTRIM(RTRIM(HashingType))) = @HashingType
+                    ORDER BY HashingSettingId DESC;
+                    """,
+                    new { HashingType = candidateType });
 
-            return string.IsNullOrWhiteSpace(key) ? null : key.Trim();
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    return key.Trim();
+                }
+            }
+
+            return null;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Unable to load hashing key for type {HashingType}", normalizedType);
             return null;
+        }
+    }
+
+    private static IEnumerable<string> GetHashingTypeLookupCandidates(string normalizedType)
+    {
+        yield return normalizedType;
+
+        if (IsZampliaHashingType(normalizedType))
+        {
+            if (!string.Equals(normalizedType, ZampliaHashingType, StringComparison.Ordinal))
+            {
+                yield return ZampliaHashingType;
+            }
+
+            if (!string.Equals(normalizedType, LegacyZampliaHashingType, StringComparison.Ordinal))
+            {
+                yield return LegacyZampliaHashingType;
+            }
         }
     }
 
@@ -217,22 +262,27 @@ public sealed class HashingSettingsService : IHashingSettingsService
         }
 
         var normalizedParameterName = string.IsNullOrWhiteSpace(parameterName)
-            ? string.Equals(normalizedType, "HMACSHA256", StringComparison.Ordinal)
+            ? IsZampliaHashingType(normalizedType) || IsLucidHashingType(normalizedType)
                 ? "hash"
-                : string.Equals(normalizedType, "TORFAC_MD5", StringComparison.Ordinal)
+                : string.Equals(normalizedType, TorfacHashingType, StringComparison.Ordinal)
                     ? "token"
                     : "enc"
             : parameterName.Trim();
 
-        if (string.Equals(normalizedType, "TORFAC_MD5", StringComparison.Ordinal))
+        if (string.Equals(normalizedType, TorfacHashingType, StringComparison.Ordinal))
         {
             _logger.LogInformation("TORFAC_MD5 selected for launch hashing. ParameterName={ParameterName}", normalizedParameterName);
             return ApplyTorfacMd5Hash(result, hashingKey, normalizedParameterName);
         }
 
-        if (string.Equals(normalizedType, "HMACSHA256", StringComparison.Ordinal))
+        if (IsZampliaHashingType(normalizedType))
         {
             return ApplyZampliaHmacHash(result, hashingKey, normalizedParameterName);
+        }
+
+        if (IsLucidHashingType(normalizedType))
+        {
+            return ApplyLucidHmacSha1Hash(result, hashingKey, normalizedParameterName);
         }
 
         var hashCode = normalizedType switch
@@ -294,6 +344,48 @@ public sealed class HashingSettingsService : IHashingSettingsService
 
     private static string NormalizeHashingType(string? hashingType)
         => hashingType?.Trim().ToUpperInvariant() ?? string.Empty;
+
+    private static bool IsAcceptedHashingType(string normalizedType)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedType))
+        {
+            return false;
+        }
+
+        return _supportedHashingTypes.Contains(normalizedType, StringComparer.OrdinalIgnoreCase)
+               || string.Equals(normalizedType, LegacyZampliaHashingType, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsZampliaHashingType(string normalizedType)
+        => string.Equals(normalizedType, ZampliaHashingType, StringComparison.Ordinal)
+           || string.Equals(normalizedType, LegacyZampliaHashingType, StringComparison.Ordinal);
+
+    private static bool IsLucidHashingType(string normalizedType)
+        => string.Equals(normalizedType, LucidHashingType, StringComparison.Ordinal);
+
+    private static HashingApplicationResult ApplyLucidHmacSha1Hash(
+        HashingApplicationResult result,
+        string hashingKey,
+        string parameterName)
+    {
+        var normalizedParameterName = string.IsNullOrWhiteSpace(parameterName)
+            ? LucidHmacHelper.HashParameterName
+            : parameterName.Trim();
+
+        var signedUrl = LucidHmacHelper.BuildSignedUrl(result.RequestUrl, hashingKey, normalizedParameterName);
+        if (string.IsNullOrWhiteSpace(signedUrl))
+        {
+            return result;
+        }
+
+        var signingUrl = LucidHmacHelper.NormalizeUrlForSigning(result.RequestUrl, normalizedParameterName);
+        var hashCode = LucidHmacHelper.ComputeUrlSafeHmacSha1(hashingKey, signingUrl);
+
+        result.HashCode = hashCode;
+        result.RequestUrl = signedUrl;
+        result.HashApplied = true;
+        return result;
+    }
 
     private static HashingApplicationResult ApplyZampliaHmacHash(
         HashingApplicationResult result,

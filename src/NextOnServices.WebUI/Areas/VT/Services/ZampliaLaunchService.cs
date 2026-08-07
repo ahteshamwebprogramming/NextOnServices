@@ -20,19 +20,22 @@ public sealed class ZampliaLaunchService : IZampliaLaunchService
     private readonly SurveyAPIController _surveyAPIController;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
+    private readonly IZampliaClient _zampliaClient;
 
     public ZampliaLaunchService(
         ILogger<ZampliaLaunchService> logger,
         ZampliaAPIController zampliaAPIController,
         SurveyAPIController surveyAPIController,
         IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IZampliaClient zampliaClient)
     {
         _logger = logger;
         _zampliaAPIController = zampliaAPIController;
         _surveyAPIController = surveyAPIController;
         _httpClientFactory = httpClientFactory;
         _configuration = configuration;
+        _zampliaClient = zampliaClient;
     }
 
     public async Task<ZampliaLaunchResolution> TryResolveVendorLaunchAsync(ZampliaLaunchServiceRequest request)
@@ -354,52 +357,9 @@ public sealed class ZampliaLaunchService : IZampliaLaunchService
         return null;
     }
 
-    private async Task<ZampliaProxyResponse> CallConsultingsProxyAsync(string actionPath, ZampliaProxyRequest payload)
+    private Task<ZampliaProxyResponse> CallConsultingsProxyAsync(string actionPath, ZampliaProxyRequest payload)
     {
-        var baseUrl = _configuration.GetValue<string>("ConsultingApiBaseUrl");
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            return new ZampliaProxyResponse
-            {
-                Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Message = "Consultings proxy base URL is not configured."
-            };
-        }
-
-        var url = $"{baseUrl.TrimEnd('/')}/VT/ZampliaSupplyProxy/{actionPath}";
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync(url, payload);
-            var content = await response.Content.ReadAsStringAsync();
-            var proxyResponse = string.IsNullOrWhiteSpace(content)
-                ? new ZampliaProxyResponse()
-                : JsonConvert.DeserializeObject<ZampliaProxyResponse>(content) ?? new ZampliaProxyResponse();
-
-            proxyResponse.StatusCode ??= (int)response.StatusCode;
-            proxyResponse.RequestUrl ??= url;
-            proxyResponse.ResponseBody ??= content;
-            if (!response.IsSuccessStatusCode && string.IsNullOrWhiteSpace(proxyResponse.Message))
-            {
-                proxyResponse.Message = "Consultings proxy request failed.";
-            }
-
-            return proxyResponse;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Consultings Zamplia proxy call failed. ActionPath={ActionPath}", actionPath);
-            return new ZampliaProxyResponse
-            {
-                Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Message = ex.Message,
-                RequestUrl = url
-            };
-        }
+        return _zampliaClient.ExecuteAsync(actionPath, payload);
     }
 
     private async Task InsertFailureLogAsync(
@@ -436,7 +396,7 @@ public sealed class ZampliaLaunchService : IZampliaLaunchService
         BaseUrl = context.BaseUrl,
         ApiKey = context.ApiKey,
         ExitHmacKey = context.ExitHmacKey,
-        UseConsultingsBridge = context.UseConsultingsBridge,
+        UseConsultingsBridge = false,
         IsActive = true
     };
 

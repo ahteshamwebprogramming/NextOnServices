@@ -56,10 +56,9 @@
 
                         <div class="vt-form-section">Behavior</div>
                         <div class="row">
-                            <div class="form-group col-md-3"><label>Use Consultings Bridge</label><div class="switch-wrap"><input asp-for="Setting.UseConsultingsBridge" type="checkbox" /><span>Route external calls through Consultings</span></div></div>
+                            <div class="form-group col-md-3"><label>Is Active</label><div class="switch-wrap"><input asp-for="Setting.IsActive" type="checkbox" /><span>Enable the Zamplia module</span></div></div>
                             <div class="form-group col-md-3"><label>Auto Sync Enabled</label><div class="switch-wrap"><input asp-for="Setting.AutoSyncEnabled" type="checkbox" /><span>Enable scheduled sync foundation</span></div></div>
                             <div class="form-group col-md-3"><label>Sync Interval Minutes</label><input asp-for="Setting.SyncIntervalMinutes" type="number" min="1" class="form-control form-control-sm" /></div>
-                            <div class="form-group col-md-3"><label>Is Active</label><div class="switch-wrap"><input asp-for="Setting.IsActive" type="checkbox" /><span>Enable the Zamplia module</span></div></div>
                         </div>
 
                         <div class="vt-form-section">Default Mapping</div>
@@ -139,7 +138,7 @@
                 baseUrl: $form.find("[name='Setting.BaseUrl']").val(),
                 apiKey: $form.find("[name='Setting.ApiKey']").val(),
                 exitHmacKey: $form.find("[name='Setting.ExitHmacKey']").val(),
-                useConsultingsBridge: $form.find("[name='Setting.UseConsultingsBridge']").is(":checked"),
+                useConsultingsBridge: false,
                 autoSyncEnabled: $form.find("[name='Setting.AutoSyncEnabled']").is(":checked"),
                 syncIntervalMinutes: parseNullableInt($form.find("[name='Setting.SyncIntervalMinutes']").val()),
                 defaultClientId: parseNullableInt($form.find("[name='Setting.DefaultClientId']").val()),

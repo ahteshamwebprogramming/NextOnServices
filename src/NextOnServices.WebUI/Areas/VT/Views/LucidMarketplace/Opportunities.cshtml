@@ -5,6 +5,7 @@
     var isRecentView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewRecent, StringComparison.OrdinalIgnoreCase);
     var isAddedView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewAdded, StringComparison.OrdinalIgnoreCase);
     var isAllView = string.Equals(Model.OpportunityView, NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewAll, StringComparison.OrdinalIgnoreCase);
+    var opportunityView = Model.OpportunityView ?? NextOnServices.VT.Infrastructure.ViewModels.Project.LucidMarketplaceViewModel.OpportunityViewRecent;
 }
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -52,11 +53,6 @@
         color: #991b1b;
     }
 
-    .vt-lm-pill.ignored {
-        background: rgba(245, 158, 11, 0.14);
-        color: #92400e;
-    }
-
     .vt-lm-pill.mapped {
         background: rgba(37, 99, 235, 0.12);
         color: #1d4ed8;
@@ -67,6 +63,8 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: inline-block;
+        vertical-align: bottom;
     }
 
     .vt-lm-filter-bar {
@@ -85,10 +83,288 @@
         flex-wrap: wrap;
     }
 
+    .vt-lm-filter-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-left: auto;
+    }
+
     .vt-lm-filter-note {
         margin: 0;
         color: #4b5563;
         font-size: 0.92rem;
+    }
+
+    .vt-lm-filter-icon-btn.active {
+        color: #fff;
+        background-color: #125b50;
+        border-color: #125b50;
+    }
+
+    /* Filter popup - modern compact shell */
+    .swal2-container.vt-lm-filter-swal-container {
+        background: rgba(15, 40, 36, 0.45) !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal {
+        border-radius: 14px !important;
+        padding: 1.15rem 1.25rem 1.1rem !important;
+        box-shadow: 0 18px 48px rgba(18, 91, 80, 0.18), 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+        border: 1px solid rgba(18, 91, 80, 0.12);
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-title {
+        font-size: 1.05rem !important;
+        font-weight: 650 !important;
+        color: #12382f !important;
+        text-align: left !important;
+        padding: 0 0 0.65rem !important;
+        margin: 0 0 0.75rem !important;
+        border-bottom: 1px solid rgba(18, 91, 80, 0.1);
+        line-height: 1.3 !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-html-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-actions {
+        margin: 0.9rem 0 0 !important;
+        gap: 0.5rem;
+        width: 100%;
+        justify-content: flex-end !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-confirm.vt-lm-filter-confirm {
+        background: #125b50 !important;
+        border: 1px solid #125b50 !important;
+        border-radius: 8px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        padding: 0.45rem 1.1rem !important;
+        box-shadow: none !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-confirm.vt-lm-filter-confirm:hover {
+        background: #0e4a41 !important;
+        border-color: #0e4a41 !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-cancel.vt-lm-filter-cancel {
+        background: #fff !important;
+        color: #4b5563 !important;
+        border: 1px solid #d7e0dd !important;
+        border-radius: 8px !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        padding: 0.45rem 1.1rem !important;
+        box-shadow: none !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-cancel.vt-lm-filter-cancel:hover {
+        background: #f6f9f8 !important;
+        border-color: #b8c9c3 !important;
+    }
+
+    .swal2-popup.vt-lm-filter-swal .swal2-validation-message {
+        margin: 0.65rem 0 0 !important;
+        border-radius: 8px;
+        background: #fef2f2 !important;
+        color: #991b1b !important;
+        font-size: 0.8125rem !important;
+    }
+
+    .vt-lm-filter-form {
+        --vt-lm-theme: #125b50;
+        --vt-lm-theme-soft: rgba(18, 91, 80, 0.1);
+        --vt-lm-border: rgba(18, 91, 80, 0.12);
+        --vt-lm-input-border: #d7e0dd;
+        text-align: left;
+        max-width: 680px;
+        margin: 0 auto;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-section {
+        background: #f6f9f8;
+        border: 1px solid var(--vt-lm-border);
+        border-radius: 10px;
+        padding: 0.65rem 0.75rem 0.7rem;
+        margin-bottom: 0.55rem;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #3d5c55;
+        margin: 0 0 0.55rem;
+        line-height: 1.2;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-section-title::before {
+        content: '';
+        display: inline-block;
+        width: 3px;
+        height: 0.85rem;
+        border-radius: 2px;
+        background: var(--vt-lm-theme);
+        flex-shrink: 0;
+    }
+
+    .vt-lm-filter-form .vt-lm-classification-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem 0.65rem;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-field {
+        margin-bottom: 0;
+    }
+
+    .vt-lm-filter-form .vt-lm-filter-field > label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #2f4a44;
+        margin-bottom: 0.25rem;
+    }
+
+    .vt-lm-filter-form select,
+    .vt-lm-filter-form input[type="number"] {
+        width: 100%;
+        height: 32px;
+        padding: 0 0.55rem;
+        border: 1px solid var(--vt-lm-input-border);
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        line-height: 1.2;
+        color: #1f2937;
+        background: #fff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+    }
+
+    .vt-lm-filter-form input[type="number"] {
+        -moz-appearance: textfield;
+    }
+
+    .vt-lm-filter-form input[type="number"]::-webkit-outer-spin-button,
+    .vt-lm-filter-form input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .vt-lm-filter-form select:hover,
+    .vt-lm-filter-form input[type="number"]:hover {
+        border-color: #b8c9c3;
+    }
+
+    .vt-lm-filter-form select:focus,
+    .vt-lm-filter-form input[type="number"]:focus {
+        outline: none;
+        border-color: var(--vt-lm-theme);
+        box-shadow: 0 0 0 3px var(--vt-lm-theme-soft);
+    }
+
+    .vt-lm-filter-form .vt-lm-metrics-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .vt-lm-filter-form .vt-lm-metric-row {
+        display: grid;
+        grid-template-columns: minmax(110px, 124px) 148px minmax(0, 1fr);
+        gap: 0.4rem 0.45rem;
+        align-items: center;
+        background: #fff;
+        border: 1px solid rgba(18, 91, 80, 0.08);
+        border-radius: 8px;
+        padding: 0.35rem 0.45rem;
+        transition: background 0.12s ease, border-color 0.12s ease;
+    }
+
+    .vt-lm-filter-form .vt-lm-metric-row:nth-child(even) {
+        background: #fafcfb;
+    }
+
+    .vt-lm-filter-form .vt-lm-metric-row:hover {
+        border-color: rgba(18, 91, 80, 0.18);
+        background: #fff;
+    }
+
+    .vt-lm-filter-form .vt-lm-metric-label {
+        font-size: 0.8rem;
+        font-weight: 650;
+        color: #1f3d37;
+        margin: 0;
+        line-height: 1.2;
+        padding-left: 0.45rem;
+        border-left: 3px solid var(--vt-lm-theme);
+    }
+
+    .vt-lm-filter-form .vt-lm-numeric-values {
+        display: none;
+        align-items: center;
+        gap: 0.35rem;
+        min-height: 32px;
+    }
+
+    .vt-lm-filter-form .vt-lm-numeric-values.is-single,
+    .vt-lm-filter-form .vt-lm-numeric-values.is-range {
+        display: grid;
+    }
+
+    .vt-lm-filter-form .vt-lm-numeric-values.is-single {
+        grid-template-columns: minmax(0, 150px);
+    }
+
+    .vt-lm-filter-form .vt-lm-numeric-values.is-range {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .vt-lm-filter-form .vt-lm-range-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.12rem;
+        min-width: 0;
+    }
+
+    .vt-lm-filter-form .vt-lm-range-field label {
+        font-size: 0.62rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        color: #7a8f88;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .vt-lm-filter-form .vt-lm-single-value label {
+        display: none;
+    }
+
+    @@media (max-width: 640px) {
+        .vt-lm-filter-form .vt-lm-classification-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .vt-lm-filter-form .vt-lm-metric-row {
+            grid-template-columns: 1fr;
+            gap: 0.3rem;
+        }
     }
 </style>
 
@@ -105,8 +381,13 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h4 class="table-section-header mb-3 mb-md-0">Stored Opportunities</h4>
                         <div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" id="btnOpportunityFilter" title="Filter opportunities">
+                                <i class="mdi mdi-filter-variant"></i> Filter
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" id="btnResetOpportunityFilters" style="display:none;">Reset filters</button>
                             <a class="btn btn-info btn-sm mr-2" href="/VT/LucidMarketplace/Subscriptions">Manage Subscription</a>
-                            <a class="btn btn-outline-secondary btn-sm" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                            <a class="btn btn-outline-secondary btn-sm mr-2" href="/VT/LucidMarketplace/Logs">View Logs</a>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="btnDeleteNonLiveOpportunities">Delete Non-Live Opportunities</button>
                         </div>
                     </div>
 
@@ -116,25 +397,31 @@
                             <a class="btn @(isAddedView ? "btn-primary" : "btn-outline-primary") btn-sm" href="/VT/LucidMarketplace/Opportunities?view=added">Added Projects</a>
                             <a class="btn @(isAllView ? "btn-primary" : "btn-outline-primary") btn-sm" href="/VT/LucidMarketplace/Opportunities?view=all">All Opportunities</a>
                         </div>
-                        <p class="vt-lm-filter-note">
-                            @if (isRecentView)
+                        <div class="vt-lm-filter-right">
+                            <p class="vt-lm-filter-note">
+                                @if (isRecentView)
+                                {
+                                    <span>Showing the latest 500 stored opportunities (server-paged).</span>
+                                }
+                                else if (isAddedView)
+                                {
+                                    <span>Showing opportunities that already have a project added in VT (server-paged).</span>
+                                }
+                                else
+                                {
+                                    <span>Showing every stored Lucid Marketplace opportunity (server-paged).</span>
+                                }
+                                <span class="font-weight-semibold ml-2" id="opportunityRowsNote">Matching rows: —</span>
+                            </p>
+                            @if (isAddedView)
                             {
-                                <span>Showing the latest 500 stored opportunities. Switch to <strong>Added Projects</strong> or <strong>All Opportunities</strong> to browse older records.</span>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btnDeleteAllNonLiveAdded">Delete non-live from added projects</button>
                             }
-                            else if (isAddedView)
-                            {
-                                <span>Showing all opportunities that already have a project added in VT.</span>
-                            }
-                            else
-                            {
-                                <span>Showing every stored Lucid Marketplace opportunity.</span>
-                            }
-                            <span class="font-weight-semibold ml-2">Rows loaded: @Model.OpportunityCount</span>
-                        </p>
+                        </div>
                     </div>
 
                     <div class="table-responsive mt-3">
-                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceOpportunitiesTable">
+                        <table class="table table-striped vt-ref-table ref-project-table" id="LucidMarketplaceOpportunitiesTable" style="width:100%">
                             <thead>
                                 <tr>
                                     <th>Survey ID</th>
@@ -147,8 +434,6 @@
                                     <th>LOI</th>
                                     <th>Total Remaining</th>
                                     <th>Is Live</th>
-                                    <th>Recontact</th>
-                                    <th>Survey Group IDs</th>
                                     <th>Message Reason</th>
                                     <th>Last Synced</th>
                                     <th>Status</th>
@@ -156,60 +441,7 @@
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @if (Model.Opportunities.Any())
-                                {
-                                    foreach (var item in Model.Opportunities)
-                                    {
-                                        var localState = string.IsNullOrWhiteSpace(item.LocalState) ? "New" : item.LocalState;
-                                        var mappingLabel = item.IsMapped
-                                            ? (item.InternalProjectId.HasValue ? $"Mapped #{item.InternalProjectId}" : "Mapped")
-                                            : "Not Added";
-                                        <tr>
-                                            <td>@item.SurveyId</td>
-                                            <td class="vt-lm-table-note" title="@item.SurveyName">@item.SurveyName</td>
-                                            <td>@item.CountryLanguageCode</td>
-                                            <td>@item.StudyType</td>
-                                            <td>@item.Industry</td>
-                                            <td>@(item.RevenuePerInterview?.ToString("0.##") ?? "-")</td>
-                                            <td>@(item.BidIncidence?.ToString("0.##") ?? "-")</td>
-                                            <td>@(item.BidLengthOfInterview?.ToString("0.##") ?? "-")</td>
-                                            <td>@(item.TotalRemaining?.ToString() ?? "-")</td>
-                                            <td><span class="vt-lm-pill @((item.IsLive ?? false) ? "live" : "off")">@((item.IsLive ?? false) ? "Live" : "Not Live")</span></td>
-                                            <td>@(item.RecontactCount?.ToString() ?? "0")</td>
-                                            <td class="vt-lm-table-note" title="@item.SurveyGroupIdsJson">@(!string.IsNullOrWhiteSpace(item.SurveyGroupIdsJson) ? item.SurveyGroupIdsJson : "-")</td>
-                                            <td>@item.MessageReason</td>
-                                            <td>@item.LastSyncedOn?.ToString("dd MMM yyyy hh:mm tt")</td>
-                                            <td>
-                                                <span class="vt-lm-pill @(localState.Equals("Ignored", StringComparison.OrdinalIgnoreCase) ? "ignored" : (item.IsActive ? "live" : "off"))">@localState</span>
-                                            </td>
-                                            <td>
-                                                <span class="vt-lm-pill @(item.IsMapped ? "mapped" : "off")">@mappingLabel</span>
-                                            </td>
-                                            <td>
-                                                <a class="btn btn-outline-primary btn-sm mb-1" href="/VT/LucidMarketplace/OpportunityDetails/@item.LucidMarketplaceOpportunityId">View Details</a>
-                                                @if (item.IsMapped)
-                                                {
-                                                    <button type="button" class="btn btn-secondary btn-sm mb-1" disabled>Already Added</button>
-                                                }
-                                                else
-                                                {
-                                                    <button type="button" class="btn btn-success btn-sm mb-1" onclick="addProjectFromOpportunity(@item.LucidMarketplaceOpportunityId)">Add Project</button>
-                                                }
-
-                                                @if (item.IsActive)
-                                                {
-                                                    <button type="button" class="btn btn-outline-warning btn-sm mb-1" onclick="updateOpportunityState(@item.LucidMarketplaceOpportunityId, false, 'Ignored')">Ignore</button>
-                                                }
-                                                else
-                                                {
-                                                    <button type="button" class="btn btn-outline-success btn-sm mb-1" onclick="updateOpportunityState(@item.LucidMarketplaceOpportunityId, true, 'New')">Activate</button>
-                                                }
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -220,73 +452,812 @@
 
 @section scripts {
     <script>
+        var opportunityView = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(opportunityView));
+        var isAddedView = @(isAddedView ? "true" : "false");
+        var opportunityFilterStorageKey = 'lucidMarketplaceOpportunityFilters';
+        var countryLanguageOptionsCache = null;
+        var studyTypeOptionsCache = null;
+        var opportunitiesTable = null;
+        var numericFilterDefs = [
+            { key: 'cpi', label: 'CPI', hint: 'amount', step: 'any' },
+            { key: 'ir', label: 'IR', hint: 'incidence', step: 'any' },
+            { key: 'loi', label: 'LOI', hint: 'minutes', step: 'any' },
+            { key: 'totalRemaining', label: 'Total Remaining', hint: 'completes', step: '1' }
+        ];
+
+        function emptyNumericFilter() {
+            return { op: '', value: null, min: null, max: null };
+        }
+
+        function normalizeNumericFilter(raw) {
+            if (!raw || typeof raw !== 'object') {
+                return emptyNumericFilter();
+            }
+            var op = String(raw.op || '').toLowerCase();
+            if (op !== 'gt' && op !== 'lt' && op !== 'between') {
+                op = '';
+            }
+            function toNumberOrNull(v) {
+                if (v === null || v === undefined || v === '') {
+                    return null;
+                }
+                var n = Number(v);
+                return isNaN(n) ? null : n;
+            }
+            return {
+                op: op,
+                value: toNumberOrNull(raw.value),
+                min: toNumberOrNull(raw.min),
+                max: toNumberOrNull(raw.max)
+            };
+        }
+
+        function isNumericFilterActive(filter) {
+            var f = normalizeNumericFilter(filter);
+            if (f.op === 'gt' || f.op === 'lt') {
+                return f.value !== null;
+            }
+            if (f.op === 'between') {
+                return f.min !== null && f.max !== null;
+            }
+            return false;
+        }
+
+        function emptyOpportunityFilters() {
+            return {
+                countryLanguageCode: '',
+                studyType: '',
+                cpi: emptyNumericFilter(),
+                ir: emptyNumericFilter(),
+                loi: emptyNumericFilter(),
+                totalRemaining: emptyNumericFilter()
+            };
+        }
+
+        function loadOpportunityFilters() {
+            try {
+                var raw = sessionStorage.getItem(opportunityFilterStorageKey);
+                if (!raw) {
+                    return emptyOpportunityFilters();
+                }
+                var parsed = JSON.parse(raw);
+                return {
+                    countryLanguageCode: (parsed && parsed.countryLanguageCode) ? String(parsed.countryLanguageCode) : '',
+                    studyType: (parsed && parsed.studyType) ? String(parsed.studyType) : '',
+                    cpi: normalizeNumericFilter(parsed && parsed.cpi),
+                    ir: normalizeNumericFilter(parsed && parsed.ir),
+                    loi: normalizeNumericFilter(parsed && parsed.loi),
+                    totalRemaining: normalizeNumericFilter(parsed && parsed.totalRemaining)
+                };
+            } catch (e) {
+                return emptyOpportunityFilters();
+            }
+        }
+
+        function saveOpportunityFilters(filters) {
+            try {
+                sessionStorage.setItem(opportunityFilterStorageKey, JSON.stringify({
+                    countryLanguageCode: filters.countryLanguageCode || '',
+                    studyType: filters.studyType || '',
+                    cpi: normalizeNumericFilter(filters.cpi),
+                    ir: normalizeNumericFilter(filters.ir),
+                    loi: normalizeNumericFilter(filters.loi),
+                    totalRemaining: normalizeNumericFilter(filters.totalRemaining)
+                }));
+            } catch (e) {
+                // ignore storage failures
+            }
+        }
+
+        function getActiveFilterCount(filters) {
+            var count = 0;
+            if (filters.countryLanguageCode) {
+                count++;
+            }
+            if (filters.studyType) {
+                count++;
+            }
+            numericFilterDefs.forEach(function (def) {
+                if (isNumericFilterActive(filters[def.key])) {
+                    count++;
+                }
+            });
+            return count;
+        }
+
+        var opportunityFilters = loadOpportunityFilters();
+        var selectedCountryLanguage = opportunityFilters.countryLanguageCode || '';
+        var selectedStudyType = opportunityFilters.studyType || '';
+        var selectedCpi = normalizeNumericFilter(opportunityFilters.cpi);
+        var selectedIr = normalizeNumericFilter(opportunityFilters.ir);
+        var selectedLoi = normalizeNumericFilter(opportunityFilters.loi);
+        var selectedTotalRemaining = normalizeNumericFilter(opportunityFilters.totalRemaining);
+
+        function currentFiltersSnapshot() {
+            return {
+                countryLanguageCode: selectedCountryLanguage,
+                studyType: selectedStudyType,
+                cpi: selectedCpi,
+                ir: selectedIr,
+                loi: selectedLoi,
+                totalRemaining: selectedTotalRemaining
+            };
+        }
+
+        function formatNumericFilterTitle(label, filter) {
+            var f = normalizeNumericFilter(filter);
+            if (!isNumericFilterActive(f)) {
+                return null;
+            }
+            if (f.op === 'gt') {
+                return label + ' > ' + f.value;
+            }
+            if (f.op === 'lt') {
+                return label + ' < ' + f.value;
+            }
+            return label + ' ' + f.min + '–' + f.max;
+        }
+
+        function updateFilterButtonState() {
+            var $btn = $('#btnOpportunityFilter');
+            var $reset = $('#btnResetOpportunityFilters');
+            var snapshot = currentFiltersSnapshot();
+            var activeCount = getActiveFilterCount(snapshot);
+
+            if (activeCount > 0) {
+                $btn.addClass('active btn-primary').removeClass('btn-outline-secondary');
+                $btn.html(activeCount === 1 ? '1 filter applied' : (activeCount + ' filters applied'));
+                var titleParts = [];
+                if (selectedCountryLanguage) {
+                    titleParts.push('Country Language: ' + selectedCountryLanguage);
+                }
+                if (selectedStudyType) {
+                    titleParts.push('Study Type: ' + selectedStudyType);
+                }
+                numericFilterDefs.forEach(function (def) {
+                    var part = formatNumericFilterTitle(def.label, snapshot[def.key]);
+                    if (part) {
+                        titleParts.push(part);
+                    }
+                });
+                $btn.attr('title', titleParts.join(' | ') || 'Filters applied');
+                $reset.show();
+            } else {
+                $btn.removeClass('active btn-primary').addClass('btn-outline-secondary');
+                $btn.html('<i class="mdi mdi-filter-variant"></i> Filter');
+                $btn.attr('title', 'Filter opportunities');
+                $reset.hide();
+            }
+        }
+
+        function applyOpportunityFilters(nextFilters, reloadTable) {
+            var next = nextFilters || emptyOpportunityFilters();
+            selectedCountryLanguage = next.countryLanguageCode || '';
+            selectedStudyType = next.studyType || '';
+            selectedCpi = normalizeNumericFilter(next.cpi);
+            selectedIr = normalizeNumericFilter(next.ir);
+            selectedLoi = normalizeNumericFilter(next.loi);
+            selectedTotalRemaining = normalizeNumericFilter(next.totalRemaining);
+            opportunityFilters = currentFiltersSnapshot();
+            saveOpportunityFilters(opportunityFilters);
+            updateFilterButtonState();
+            if (reloadTable && opportunitiesTable) {
+                opportunitiesTable.ajax.reload();
+            }
+        }
+
+        function resetOpportunityFilters() {
+            applyOpportunityFilters(emptyOpportunityFilters(), true);
+        }
+
+        function buildFilterSelectHtml(id, label, options, selectedValue) {
+            var html = '<div class="vt-lm-filter-field">';
+            html += '<label for="' + id + '">' + label + '</label>';
+            html += '<select id="' + id + '">';
+            html += '<option value="">All</option>';
+            (options || []).forEach(function (code) {
+                var selected = selectedValue === code ? ' selected' : '';
+                html += '<option value="' + escapeHtml(code) + '"' + selected + '>' + escapeHtml(code) + '</option>';
+            });
+            html += '</select></div>';
+            return html;
+        }
+
+        function buildNumericFilterHtml(def, filter) {
+            var f = normalizeNumericFilter(filter);
+            var opId = 'filterOp_' + def.key;
+            var valueId = 'filterValue_' + def.key;
+            var minId = 'filterMin_' + def.key;
+            var maxId = 'filterMax_' + def.key;
+            var valuesId = 'filterValues_' + def.key;
+            var html = '<div class="vt-lm-metric-row" data-numeric-key="' + def.key + '">';
+            html += '<div class="vt-lm-metric-label" id="label_' + def.key + '">' + escapeHtml(def.label) + '</div>';
+            html += '<select id="' + opId + '" class="vt-lm-numeric-op" data-key="' + def.key + '" aria-labelledby="label_' + def.key + '">';
+            html += '<option value=""' + (!f.op ? ' selected' : '') + '>None</option>';
+            html += '<option value="gt"' + (f.op === 'gt' ? ' selected' : '') + '>Greater than</option>';
+            html += '<option value="lt"' + (f.op === 'lt' ? ' selected' : '') + '>Less than</option>';
+            html += '<option value="between"' + (f.op === 'between' ? ' selected' : '') + '>In between</option>';
+            html += '</select>';
+            html += '<div id="' + valuesId + '" class="vt-lm-numeric-values">';
+            html += '<div class="vt-lm-range-field vt-lm-single-value">';
+            html += '<input type="number" id="' + valueId + '" step="' + def.step + '" placeholder="Value" value="' + (f.value !== null ? escapeHtml(f.value) : '') + '" />';
+            html += '</div>';
+            html += '<div class="vt-lm-range-field vt-lm-min-value">';
+            html += '<label for="' + minId + '">Min</label>';
+            html += '<input type="number" id="' + minId + '" step="' + def.step + '" placeholder="Min" value="' + (f.min !== null ? escapeHtml(f.min) : '') + '" />';
+            html += '</div>';
+            html += '<div class="vt-lm-range-field vt-lm-max-value">';
+            html += '<label for="' + maxId + '">Max</label>';
+            html += '<input type="number" id="' + maxId + '" step="' + def.step + '" placeholder="Max" value="' + (f.max !== null ? escapeHtml(f.max) : '') + '" />';
+            html += '</div>';
+            html += '</div></div>';
+            return html;
+        }
+
+        function syncNumericFilterFields(key) {
+            var op = $('#filterOp_' + key).val() || '';
+            var $values = $('#filterValues_' + key);
+            $values.removeClass('is-single is-range');
+            $values.find('.vt-lm-single-value, .vt-lm-min-value, .vt-lm-max-value').hide();
+            if (op === 'gt' || op === 'lt') {
+                $values.addClass('is-single');
+                $values.find('.vt-lm-single-value').show();
+            } else if (op === 'between') {
+                $values.addClass('is-range');
+                $values.find('.vt-lm-min-value, .vt-lm-max-value').show();
+            }
+        }
+
+        function readNumericFilterFromForm(key) {
+            var op = $('#filterOp_' + key).val() || '';
+            function readNumber(id) {
+                var raw = $('#' + id).val();
+                if (raw === null || raw === undefined || String(raw).trim() === '') {
+                    return null;
+                }
+                var n = Number(raw);
+                return isNaN(n) ? null : n;
+            }
+            return normalizeNumericFilter({
+                op: op,
+                value: readNumber('filterValue_' + key),
+                min: readNumber('filterMin_' + key),
+                max: readNumber('filterMax_' + key)
+            });
+        }
+
+        function validateNumericFilter(label, filter) {
+            var f = normalizeNumericFilter(filter);
+            if (!f.op) {
+                return null;
+            }
+            if (f.op === 'gt' || f.op === 'lt') {
+                if (f.value === null) {
+                    return label + ': enter a value.';
+                }
+                return null;
+            }
+            if (f.op === 'between') {
+                if (f.min === null || f.max === null) {
+                    return label + ': enter both Min and Max.';
+                }
+                if (f.min > f.max) {
+                    return label + ': Min cannot be greater than Max.';
+                }
+            }
+            return null;
+        }
+
+        function buildOpportunityFilterFormHtml(countryOptions, studyTypeOptions) {
+            var snapshot = currentFiltersSnapshot();
+            var html = '<div class="vt-lm-filter-form">';
+            html += '<div class="vt-lm-filter-section">';
+            html += '<div class="vt-lm-filter-section-title">Classification</div>';
+            html += '<div class="vt-lm-classification-grid">';
+            html += buildFilterSelectHtml('filterCountryLanguage', 'Country Language', countryOptions, snapshot.countryLanguageCode);
+            html += buildFilterSelectHtml('filterStudyType', 'Study Type', studyTypeOptions, snapshot.studyType);
+            html += '</div></div>';
+            html += '<div class="vt-lm-filter-section">';
+            html += '<div class="vt-lm-filter-section-title">Survey Metrics</div>';
+            html += '<div class="vt-lm-metrics-list">';
+            numericFilterDefs.forEach(function (def) {
+                html += buildNumericFilterHtml(def, snapshot[def.key]);
+            });
+            html += '</div></div></div>';
+            return html;
+        }
+
+        function openOpportunityFilterPopup() {
+            function showPopup(countryOptions, studyTypeOptions) {
+                Swal.fire({
+                    title: 'Filter Opportunities',
+                    html: buildOpportunityFilterFormHtml(countryOptions, studyTypeOptions),
+                    width: 720,
+                    showCancelButton: true,
+                    confirmButtonText: 'Apply',
+                    cancelButtonText: 'Cancel',
+                    focusConfirm: false,
+                    customClass: {
+                        container: 'vt-lm-filter-swal-container',
+                        popup: 'vt-lm-filter-swal',
+                        confirmButton: 'vt-lm-filter-confirm',
+                        cancelButton: 'vt-lm-filter-cancel'
+                    },
+                    buttonsStyling: true,
+                    didOpen: function () {
+                        numericFilterDefs.forEach(function (def) {
+                            syncNumericFilterFields(def.key);
+                            $('#filterOp_' + def.key).on('change', function () {
+                                syncNumericFilterFields(def.key);
+                            });
+                        });
+                    },
+                    preConfirm: function () {
+                        var next = {
+                            countryLanguageCode: $('#filterCountryLanguage').val() || '',
+                            studyType: $('#filterStudyType').val() || '',
+                            cpi: readNumericFilterFromForm('cpi'),
+                            ir: readNumericFilterFromForm('ir'),
+                            loi: readNumericFilterFromForm('loi'),
+                            totalRemaining: readNumericFilterFromForm('totalRemaining')
+                        };
+
+                        for (var i = 0; i < numericFilterDefs.length; i++) {
+                            var def = numericFilterDefs[i];
+                            var err = validateNumericFilter(def.label, next[def.key]);
+                            if (err) {
+                                Swal.showValidationMessage(err);
+                                return false;
+                            }
+                            if (next[def.key].op && !isNumericFilterActive(next[def.key])) {
+                                next[def.key] = emptyNumericFilter();
+                            }
+                        }
+
+                        return next;
+                    }
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    applyOpportunityFilters(result.value || emptyOpportunityFilters(), true);
+                });
+            }
+
+            function loadFilterOptionsThenShow() {
+                var countryReady = countryLanguageOptionsCache !== null;
+                var studyReady = studyTypeOptionsCache !== null;
+
+                if (countryReady && studyReady) {
+                    showPopup(countryLanguageOptionsCache, studyTypeOptionsCache);
+                    return;
+                }
+
+                var requests = [];
+                if (!countryReady) {
+                    requests.push($.ajax({
+                        type: 'GET',
+                        url: '/VT/LucidMarketplaceApi/CountryLanguages'
+                    }).then(function (response) {
+                        countryLanguageOptionsCache = (response && response.data) ? response.data : [];
+                    }));
+                }
+                if (!studyReady) {
+                    requests.push($.ajax({
+                        type: 'GET',
+                        url: '/VT/LucidMarketplaceApi/StudyTypes'
+                    }).then(function (response) {
+                        studyTypeOptionsCache = (response && response.data) ? response.data : [];
+                    }));
+                }
+
+                $.when.apply($, requests).done(function () {
+                    showPopup(countryLanguageOptionsCache || [], studyTypeOptionsCache || []);
+                }).fail(function (xhr) {
+                    var msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) || 'Unable to load filter options.';
+                    Swal.fire('Error', msg, 'error');
+                });
+            }
+
+            loadFilterOptionsThenShow();
+        }
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) {
+                return '';
+            }
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatDecimal(value) {
+            if (value === null || value === undefined || value === '') {
+                return '-';
+            }
+            var num = Number(value);
+            if (isNaN(num)) {
+                return escapeHtml(value);
+            }
+            return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        }
+
+        function formatDate(value) {
+            if (!value) {
+                return '';
+            }
+            var date = new Date(value);
+            if (isNaN(date.getTime())) {
+                return escapeHtml(value);
+            }
+            return date.toLocaleString(undefined, {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         $(document).ready(function () {
-            $('#LucidMarketplaceOpportunitiesTable').DataTable({
-                order: [[13, 'desc']],
+            opportunitiesTable = $('#LucidMarketplaceOpportunitiesTable').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: true,
                 paging: true,
                 pageLength: 25,
                 scrollX: true,
                 autoWidth: false,
+                order: [[11, 'desc']],
+                ajax: {
+                    url: '/VT/LucidMarketplaceApi/SearchOpportunities',
+                    type: 'POST',
+                    contentType: 'application/json; charset=utf-8',
+                    timeout: 60000,
+                    data: function (d) {
+                        d.view = opportunityView;
+                        d.countryLanguageCode = selectedCountryLanguage || null;
+                        d.studyType = selectedStudyType || null;
+                        d.cpi = isNumericFilterActive(selectedCpi) ? selectedCpi : null;
+                        d.ir = isNumericFilterActive(selectedIr) ? selectedIr : null;
+                        d.loi = isNumericFilterActive(selectedLoi) ? selectedLoi : null;
+                        d.totalRemaining = isNumericFilterActive(selectedTotalRemaining) ? selectedTotalRemaining : null;
+                        return JSON.stringify(d);
+                    },
+                    dataSrc: function (json) {
+                        var matching = (json && typeof json.recordsFiltered !== 'undefined') ? json.recordsFiltered : 0;
+                        $('#opportunityRowsNote').text('Matching rows: ' + matching);
+                        return (json && json.data) ? json.data : [];
+                    },
+                    error: function (xhr) {
+                        var msg = xhr.responseJSON?.message || xhr.responseText || 'Unable to load opportunities.';
+                        if (xhr.statusText === 'timeout') {
+                            msg = 'Loading opportunities timed out. Please try again.';
+                        }
+                        Swal.fire('Error', msg, 'error');
+                    }
+                },
+                columns: [
+                    { data: 'surveyId', name: 'surveyId' },
+                    {
+                        data: 'surveyName',
+                        name: 'surveyName',
+                        render: function (data) {
+                            var text = escapeHtml(data || '');
+                            return '<span class="vt-lm-table-note" title="' + text + '">' + text + '</span>';
+                        }
+                    },
+                    { data: 'countryLanguageCode', name: 'countryLanguageCode', defaultContent: '' },
+                    { data: 'studyType', name: 'studyType', defaultContent: '' },
+                    { data: 'industry', name: 'industry', defaultContent: '' },
+                    {
+                        data: 'revenuePerInterview',
+                        name: 'revenuePerInterview',
+                        render: function (data) { return formatDecimal(data); }
+                    },
+                    {
+                        data: 'bidIncidence',
+                        name: 'bidIncidence',
+                        render: function (data) { return formatDecimal(data); }
+                    },
+                    {
+                        data: 'bidLengthOfInterview',
+                        name: 'bidLengthOfInterview',
+                        render: function (data) { return formatDecimal(data); }
+                    },
+                    {
+                        data: 'totalRemaining',
+                        name: 'totalRemaining',
+                        render: function (data) {
+                            return data === null || data === undefined || data === '' ? '-' : escapeHtml(data);
+                        }
+                    },
+                    {
+                        data: 'isLive',
+                        name: 'isLive',
+                        render: function (data) {
+                            var live = !!data;
+                            return '<span class="vt-lm-pill ' + (live ? 'live' : 'off') + '">' + (live ? 'Live' : 'Not Live') + '</span>';
+                        }
+                    },
+                    { data: 'messageReason', name: 'messageReason', defaultContent: '' },
+                    {
+                        data: 'lastSyncedOn',
+                        name: 'lastSyncedOn',
+                        render: function (data) { return formatDate(data); }
+                    },
+                    {
+                        data: 'localState',
+                        name: 'localState',
+                        render: function (data, type, row) {
+                            var state = (data && String(data).trim()) ? String(data).trim() : 'New';
+                            var active = !!(row && row.isActive);
+                            return '<span class="vt-lm-pill ' + (active ? 'live' : 'off') + '">' + escapeHtml(state) + '</span>';
+                        }
+                    },
+                    {
+                        data: 'isMapped',
+                        name: 'isMapped',
+                        render: function (data, type, row) {
+                            var mapped = !!data;
+                            var label = mapped
+                                ? (row.internalProjectId ? ('Mapped #' + row.internalProjectId) : 'Mapped')
+                                : 'Not Added';
+                            return '<span class="vt-lm-pill ' + (mapped ? 'mapped' : 'off') + '">' + escapeHtml(label) + '</span>';
+                        }
+                    },
+                    {
+                        data: 'lucidMarketplaceOpportunityId',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            var id = row.lucidMarketplaceOpportunityId || data;
+                            var html = '<a class="btn btn-outline-primary btn-sm mb-1" href="/VT/LucidMarketplace/OpportunityDetails/' + id + '">View Details</a> ';
+                            if (row.isMapped) {
+                                html += '<button type="button" class="btn btn-outline-warning btn-sm mb-1" onclick="removeProjectFromLucidMarketplace(' + id + ')">Remove Project</button> ';
+                                if (isAddedView && !row.isLive) {
+                                    html += '<button type="button" class="btn btn-outline-danger btn-sm mb-1" onclick="removeAddedProject(' + id + ')">Delete</button>';
+                                }
+                            } else {
+                                html += '<button type="button" class="btn btn-success btn-sm mb-1" onclick="addProjectFromOpportunity(' + id + ')">Add Project</button>';
+                            }
+                            return html;
+                        }
+                    }
+                ],
                 language: {
-                    search: "",
-                    searchPlaceholder: "Search opportunities...",
-                    emptyTable: "No Lucid Marketplace opportunities have been stored yet. Once the callback receives payloads, they will appear here."
+                    search: '',
+                    searchPlaceholder: 'Search opportunities...',
+                    processing: 'Loading opportunities...',
+                    emptyTable: 'No Lucid Marketplace opportunities have been stored yet. Once the callback receives payloads, they will appear here.',
+                    zeroRecords: 'No matching opportunities found.'
                 }
+            });
+
+            $('#btnOpportunityFilter').on('click', openOpportunityFilterPopup);
+            $('#btnResetOpportunityFilters').on('click', resetOpportunityFilters);
+            updateFilterButtonState();
+
+            $('#btnDeleteAllNonLiveAdded').on('click', function () {
+                promptRemoveMode(function (mode) {
+                    $.ajax({
+                        type: 'POST',
+                        url: '/VT/LucidMarketplaceApi/RemoveAllNonLiveAddedProjects',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ mode: mode }),
+                        success: function (response) {
+                            Swal.fire(response.result ? 'Done' : 'Completed with errors', response.message || 'Request completed.', response.result ? 'success' : 'warning')
+                                .then(function () { window.location.reload(); });
+                        },
+                        error: function (xhr) {
+                            Swal.fire('Error', xhr.responseJSON?.message || xhr.responseText || 'Unable to remove non-live projects.', 'error');
+                        }
+                    });
+                }, true);
+            });
+
+            $('#btnDeleteNonLiveOpportunities').on('click', function () {
+                var $btn = $(this);
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Permanently delete non-live opportunities?',
+                    text: 'This cannot be undone. Only Not Live opportunities that are NOT added to a VT project will be removed. Large cleanups run in batches.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, permanently delete',
+                    confirmButtonColor: '#dc3545'
+                }).then(function (result) {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    var originalText = $btn.text();
+                    var totalDeleted = 0;
+                    $btn.prop('disabled', true).text('Delete in Progress');
+
+                    function runDeleteBatch() {
+                        $.ajax({
+                            type: 'POST',
+                            url: '/VT/LucidMarketplaceApi/DeleteNonLiveUnmapped',
+                            timeout: 120000,
+                            success: function (response) {
+                                if (!response || response.result === false) {
+                                    $btn.prop('disabled', false).text(originalText);
+                                    Swal.fire('Error', (response && response.message) || 'Unable to delete non-live opportunities.', 'error');
+                                    return;
+                                }
+
+                                totalDeleted += (response.deleted || 0);
+                                $btn.text('Delete in Progress (' + totalDeleted + ' deleted)...');
+
+                                if (response.done === false) {
+                                    runDeleteBatch();
+                                    return;
+                                }
+
+                                Swal.fire(
+                                    'Done',
+                                    totalDeleted === 0
+                                        ? (response.message || 'No non-live unmapped opportunities were found to delete.')
+                                        : ('Permanently deleted ' + totalDeleted + ' non-live opportunity(ies) that were not added to VT.'),
+                                    'success'
+                                ).then(function () {
+                                    window.location.reload();
+                                });
+                            },
+                            error: function (xhr) {
+                                $btn.prop('disabled', false).text(originalText);
+                                var msg = xhr.responseJSON?.message || xhr.responseText || 'Unable to delete non-live opportunities.';
+                                if (xhr.statusText === 'timeout') {
+                                    msg = 'A delete batch timed out after deleting ' + totalDeleted + ' so far. You can click the button again to continue.';
+                                }
+                                Swal.fire('Error', msg, 'error');
+                            }
+                        });
+                    }
+
+                    runDeleteBatch();
+                });
             });
         });
 
         function addProjectFromOpportunity(opportunityId) {
             Swal.fire({
-                title: "Add Project?",
-                text: "This will create the internal project, project URL, and project mapping for the selected Lucid Marketplace opportunity.",
-                icon: "question",
+                title: 'Add Project?',
+                text: 'This will create the internal project, project URL, and project mapping for the selected Lucid Marketplace opportunity.',
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: "Add Project"
+                confirmButtonText: 'Add Project'
             }).then(function (result) {
                 if (!result.isConfirmed) {
                     return;
                 }
 
                 $.ajax({
-                    type: "POST",
-                    url: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
-                    contentType: "application/json",
+                    type: 'POST',
+                    url: '/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace',
+                    contentType: 'application/json',
                     data: JSON.stringify({
                         lucidMarketplaceOpportunityId: opportunityId
                     }),
                     success: function (response) {
                         if (response.result) {
-                            Swal.fire("Success", response.message || "Project added successfully.", "success")
+                            Swal.fire('Success', response.message || 'Project added successfully.', 'success')
                                 .then(function () { window.location.reload(); });
                             return;
                         }
 
-                        Swal.fire("Error", response.message || "Unable to add the project.", "error");
+                        Swal.fire('Error', response.message || 'Unable to add the project.', 'error');
                     },
                     error: function (xhr) {
-                        Swal.fire("Error", xhr.responseJSON?.message || xhr.responseText || "Unable to add the project.", "error");
+                        Swal.fire('Error', xhr.responseJSON?.message || xhr.responseText || 'Unable to add the project.', 'error');
                     }
                 });
             });
         }
 
-        function updateOpportunityState(opportunityId, isActive, localState) {
-            $.ajax({
-                type: "POST",
-                url: "/VT/LucidMarketplaceApi/UpdateOpportunityState",
-                contentType: "application/json",
-                data: JSON.stringify({
-                    lucidMarketplaceOpportunityId: opportunityId,
-                    isActive: isActive,
-                    localState: localState
-                }),
-                success: function () {
-                    Swal.fire("Updated", "Opportunity state updated successfully.", "success")
-                        .then(function () { window.location.reload(); });
-                },
-                error: function (xhr) {
-                    Swal.fire("Error", xhr.responseText || "Unable to update the opportunity state.", "error");
+        function removeProjectFromLucidMarketplace(opportunityId) {
+            Swal.fire({
+                title: 'Remove project?',
+                text: 'This will deactivate the VT project, mappings, and project URLs for this Lucid Marketplace opportunity. Lucid Marketplace opportunity data will stay unchanged.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Remove Project',
+                cancelButtonText: 'Cancel'
+            }).then(function (result) {
+                if (!result.isConfirmed) {
+                    return;
                 }
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/LucidMarketplaceApi/RemoveProject',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        lucidMarketplaceOpportunityId: opportunityId
+                    }),
+                    success: function (response) {
+                        if (!response.result) {
+                            Swal.fire('Warning', response.message || 'Unable to remove the project.', 'warning');
+                            return;
+                        }
+
+                        Swal.fire('Success', response.message || 'Project removed successfully.', 'success')
+                            .then(function () { window.location.reload(); });
+                    },
+                    error: function (xhr) {
+                        Swal.fire('Error', xhr.responseJSON?.message || xhr.responseText || 'Unable to remove the project.', 'error');
+                    }
+                });
+            });
+        }
+
+        function removeAddedProject(opportunityId) {
+            promptRemoveMode(function (mode) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/VT/LucidMarketplaceApi/RemoveAddedProject',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        lucidMarketplaceOpportunityId: opportunityId,
+                        mode: mode
+                    }),
+                    success: function (response) {
+                        Swal.fire(response.result ? 'Done' : 'Error', response.message || 'Request completed.', response.result ? 'success' : 'error')
+                            .then(function () {
+                                if (response.result) {
+                                    window.location.reload();
+                                }
+                            });
+                    },
+                    error: function (xhr) {
+                        Swal.fire('Error', xhr.responseJSON?.message || xhr.responseText || 'Unable to remove the project.', 'error');
+                    }
+                });
+            }, false);
+        }
+
+        function promptRemoveMode(onSelected, isBulk) {
+            Swal.fire({
+                title: isBulk ? 'Delete non-live from added projects?' : 'Remove non-live added project?',
+                text: 'Only Not Live opportunities that are already added to VT will be affected. Choose what to delete.',
+                icon: 'warning',
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Delete from Lucid Related',
+                denyButtonText: 'Delete Entirely',
+                confirmButtonColor: '#6c757d',
+                denyButtonColor: '#dc3545'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    onSelected('lucid');
+                    return;
+                }
+
+                if (!result.isDenied) {
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Delete Entirely?',
+                    text: 'This hard-deletes Lucid Marketplace data and soft-deactivates the VT project (Projects / ProjectsUrl / ProjectMapping). Soft-deactivated VT rows are kept.',
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete entirely',
+                    confirmButtonColor: '#dc3545'
+                }).then(function (confirmResult) {
+                    if (confirmResult.isConfirmed) {
+                        onSelected('entire');
+                    }
+                });
             });
         }
     </script>

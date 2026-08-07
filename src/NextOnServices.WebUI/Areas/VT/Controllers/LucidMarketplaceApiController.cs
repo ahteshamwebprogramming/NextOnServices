@@ -29,6 +29,8 @@ public class LucidMarketplaceApiController : Controller
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILegacyProjectStatusService _legacyProjectStatusService;
     private readonly ILucidMarketplaceLinkSigner _lucidMarketplaceLinkSigner;
+    private readonly ILucidMarketplaceClient _lucidMarketplaceClient;
+    private readonly IHashingSettingsService _hashingSettingsService;
     private readonly IConfiguration _configuration;
 
     public LucidMarketplaceApiController(
@@ -38,6 +40,8 @@ public class LucidMarketplaceApiController : Controller
         IHttpClientFactory httpClientFactory,
         ILegacyProjectStatusService legacyProjectStatusService,
         ILucidMarketplaceLinkSigner lucidMarketplaceLinkSigner,
+        ILucidMarketplaceClient lucidMarketplaceClient,
+        IHashingSettingsService hashingSettingsService,
         IConfiguration configuration)
     {
         _logger = logger;
@@ -46,6 +50,8 @@ public class LucidMarketplaceApiController : Controller
         _httpClientFactory = httpClientFactory;
         _legacyProjectStatusService = legacyProjectStatusService;
         _lucidMarketplaceLinkSigner = lucidMarketplaceLinkSigner;
+        _lucidMarketplaceClient = lucidMarketplaceClient;
+        _hashingSettingsService = hashingSettingsService;
         _configuration = configuration;
     }
 
@@ -86,18 +92,10 @@ public class LucidMarketplaceApiController : Controller
             BaseUrl = inputData.BaseUrl,
             ApiKey = inputData.ApiKey,
             SupplierCode = inputData.SupplierCode,
-            UseConsultingsBridge = inputData.UseConsultingsBridge
+            UseConsultingsBridge = false
         };
 
-        var proxyResponse = inputData.UseConsultingsBridge
-            ? await CallConsultingsProxyAsync("TestConnectivity", new LucidMarketplaceProxyRequest { Setting = setting })
-            : new LucidMarketplaceProxyResponse
-            {
-                Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Enable the Consultings bridge to validate Lucid Marketplace connectivity."
-            };
+        var proxyResponse = await CallLucidApiAsync("TestConnectivity", new LucidMarketplaceProxyRequest { Setting = setting });
 
         await AppendLogAsync(
             actionName: "TestConnectivity",
@@ -156,19 +154,11 @@ public class LucidMarketplaceApiController : Controller
             return BadRequest(new { result = false, message = ex.Message });
         }
 
-        var proxyResponse = currentSetting.UseConsultingsBridge
-            ? await CallConsultingsProxyAsync("CreateSubscription", new LucidMarketplaceProxyRequest
-            {
-                Setting = currentSetting,
-                Subscription = subscription
-            })
-            : new LucidMarketplaceProxyResponse
-            {
-                Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status400BadRequest,
-                Message = "Direct Lucid Marketplace calls are not enabled for this module. Use the Consultings bridge."
-            };
+        var proxyResponse = await CallLucidApiAsync("CreateSubscription", new LucidMarketplaceProxyRequest
+        {
+            Setting = currentSetting,
+            Subscription = subscription
+        });
 
         subscription.ResponsePayloadSnapshot = proxyResponse.ResponseBody;
         subscription.LastStatus = proxyResponse.Message;
@@ -209,11 +199,11 @@ public class LucidMarketplaceApiController : Controller
         var existingSubscriptions = await GetSubscriptionsAsync();
         var refreshMessages = new List<string>();
 
-        if (currentSetting != null && currentSetting.UseConsultingsBridge)
+        if (currentSetting != null)
         {
             foreach (var subscriptionType in new[] { "Opportunities", "RespondentOutcomes" })
             {
-                var proxyResponse = await CallConsultingsProxyAsync("GetSubscriptions", new LucidMarketplaceProxyRequest
+                var proxyResponse = await CallLucidApiAsync("GetSubscriptions", new LucidMarketplaceProxyRequest
                 {
                     Setting = currentSetting,
                     Subscription = new LucidMarketplaceSubscriptionDTO
@@ -287,10 +277,9 @@ public class LucidMarketplaceApiController : Controller
         LucidMarketplaceProxyResponse? proxyResponse = null;
         if (currentSubscription != null &&
             currentSetting != null &&
-            currentSetting.UseConsultingsBridge &&
             !string.IsNullOrWhiteSpace(NormalizeSubscriptionType(currentSubscription.SubscriptionType)))
         {
-            proxyResponse = await CallConsultingsProxyAsync("DeleteSubscription", new LucidMarketplaceProxyRequest
+            proxyResponse = await CallLucidApiAsync("DeleteSubscription", new LucidMarketplaceProxyRequest
             {
                 Setting = currentSetting,
                 Subscription = currentSubscription
@@ -326,6 +315,135 @@ public class LucidMarketplaceApiController : Controller
             requestBody: JsonConvert.SerializeObject(inputData),
             source: "manual",
             apiResult: apiResult);
+
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost("RemoveProject")]
+    public async Task<IActionResult> RemoveProject([FromBody] LucidMarketplaceRemoveProjectRequest inputData)
+    {
+        var apiResult = await _lucidMarketplaceAPIController.RemoveLucidMarketplaceProjectMapping(inputData, GetCurrentUserId());
+        await AppendLogAsync(
+            actionName: "RemoveProject",
+            requestUrl: "/VT/LucidMarketplaceApi/RemoveProject",
+            requestBody: JsonConvert.SerializeObject(inputData),
+            source: "manual",
+            relatedEntityId: inputData?.LucidMarketplaceOpportunityId,
+            apiResult: apiResult);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost("RemoveAddedProject")]
+    public async Task<IActionResult> RemoveAddedProject([FromBody] LucidMarketplaceRemoveAddedProjectRequest inputData)
+    {
+        var apiResult = await _lucidMarketplaceAPIController.RemoveAddedLucidMarketplaceProject(inputData, GetCurrentUserId());
+        await AppendLogAsync(
+            actionName: "RemoveAddedProject",
+            requestUrl: "/VT/LucidMarketplaceApi/RemoveAddedProject",
+            requestBody: JsonConvert.SerializeObject(inputData),
+            source: "manual",
+            relatedEntityId: inputData?.LucidMarketplaceOpportunityId,
+            apiResult: apiResult);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost("RemoveAllNonLiveAddedProjects")]
+    public async Task<IActionResult> RemoveAllNonLiveAddedProjects([FromBody] LucidMarketplaceRemoveNonLiveAddedProjectsRequest? inputData)
+    {
+        var apiResult = await _lucidMarketplaceAPIController.RemoveAllNonLiveAddedLucidMarketplaceProjects(inputData, GetCurrentUserId());
+        await AppendLogAsync(
+            actionName: "RemoveAllNonLiveAddedProjects",
+            requestUrl: "/VT/LucidMarketplaceApi/RemoveAllNonLiveAddedProjects",
+            requestBody: JsonConvert.SerializeObject(inputData),
+            source: "manual",
+            apiResult: apiResult);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost("DeleteNonLiveUnmapped")]
+    public async Task<IActionResult> DeleteNonLiveUnmapped()
+    {
+        var apiResult = await _lucidMarketplaceAPIController.DeleteNonLiveUnmappedLucidMarketplaceOpportunities();
+        await AppendLogAsync(
+            actionName: "DeleteNonLiveUnmapped",
+            requestUrl: "/VT/LucidMarketplaceApi/DeleteNonLiveUnmapped",
+            requestBody: null,
+            source: "manual",
+            apiResult: apiResult);
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpPost("SearchOpportunities")]
+    public async Task<IActionResult> SearchOpportunities([FromBody] LucidMarketplaceOpportunityDataTableRequest? request)
+    {
+        request ??= new LucidMarketplaceOpportunityDataTableRequest();
+
+        var orderColumnIndex = request.order?.FirstOrDefault()?.column ?? 11;
+        var orderBy = string.Empty;
+        if (request.columns != null &&
+            orderColumnIndex >= 0 &&
+            orderColumnIndex < request.columns.Count)
+        {
+            orderBy = request.columns[orderColumnIndex]?.data ?? string.Empty;
+        }
+
+        var searchRequest = new LucidMarketplaceOpportunitySearchRequest
+        {
+            View = request.View,
+            Draw = request.draw,
+            Start = request.start,
+            Length = request.length ?? 25,
+            Search = request.search?.value,
+            OrderBy = orderBy,
+            Dir = request.order?.FirstOrDefault()?.dir,
+            CountryLanguageCode = request.CountryLanguageCode,
+            StudyType = request.StudyType,
+            Cpi = request.Cpi,
+            Ir = request.Ir,
+            Loi = request.Loi,
+            TotalRemaining = request.TotalRemaining
+        };
+
+        var apiResult = await _lucidMarketplaceAPIController.SearchLucidMarketplaceOpportunities(searchRequest);
+        if (apiResult is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK)
+        {
+            var result = objectResult.Value as LucidMarketplaceOpportunitySearchResult
+                         ?? new LucidMarketplaceOpportunitySearchResult { Draw = request.draw };
+
+            return Json(new
+            {
+                draw = result.Draw,
+                recordsTotal = result.RecordsTotal,
+                recordsFiltered = result.RecordsFiltered,
+                data = result.Data
+            });
+        }
+
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpGet("CountryLanguages")]
+    public async Task<IActionResult> CountryLanguages()
+    {
+        var apiResult = await _lucidMarketplaceAPIController.GetLucidMarketplaceOpportunityCountryLanguages();
+        if (apiResult is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK)
+        {
+            var data = objectResult.Value as List<string> ?? new List<string>();
+            return Json(new { result = true, data });
+        }
+
+        return ConvertApiResult(apiResult);
+    }
+
+    [HttpGet("StudyTypes")]
+    public async Task<IActionResult> StudyTypes()
+    {
+        var apiResult = await _lucidMarketplaceAPIController.GetLucidMarketplaceOpportunityStudyTypes();
+        if (apiResult is ObjectResult objectResult && objectResult.StatusCode == StatusCodes.Status200OK)
+        {
+            var data = objectResult.Value as List<string> ?? new List<string>();
+            return Json(new { result = true, data });
+        }
 
         return ConvertApiResult(apiResult);
     }
@@ -415,7 +533,7 @@ public class LucidMarketplaceApiController : Controller
 
         var currentSetting = await GetCurrentSettingAsync();
         var existingEntryLink = await GetEntryLinkAsync(opportunity.LucidMarketplaceOpportunityId);
-        var reusableProjectLevelLink = string.IsNullOrWhiteSpace(existingEntryLink?.LiveLink)
+        var existingLiveLink = string.IsNullOrWhiteSpace(existingEntryLink?.LiveLink)
             ? existingEntryLink?.TestLink
             : existingEntryLink.LiveLink;
         var addRequest = new AddProjectFromLucidRequest
@@ -428,10 +546,8 @@ public class LucidMarketplaceApiController : Controller
             LOI = ConvertToWholeNumberString(opportunity.BidLengthOfInterview),
             IR = ConvertToWholeNumberString(opportunity.BidIncidence),
             TotalRemaining = opportunity.TotalRemaining?.ToString(CultureInfo.InvariantCulture),
-            LiveLink = reusableProjectLevelLink ?? string.Empty,
-            ClientId = currentSetting?.DefaultClientId,
-            CountryId = currentSetting?.DefaultCountryId,
-            SupplierId = currentSetting?.DefaultSupplierId
+            LiveLink = existingLiveLink ?? string.Empty,
+            CountryId = currentSetting?.DefaultCountryId
         };
 
         var apiProjectsController = ActivatorUtilities.CreateInstance<ApiProjectsController>(HttpContext.RequestServices);
@@ -453,9 +569,7 @@ public class LucidMarketplaceApiController : Controller
                 addRequest.LOI,
                 addRequest.IR,
                 addRequest.TotalRemaining,
-                addRequest.ClientId,
-                addRequest.CountryId,
-                addRequest.SupplierId
+                addRequest.CountryId
             }),
             source: "manual",
             supplierCode: opportunity.SupplierCode,
@@ -511,38 +625,6 @@ public class LucidMarketplaceApiController : Controller
             "Live",
             "[respondentID]");
 
-        var syncedCoreLaunchUrl = await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectLaunchUrlByIdsAsync(
-            opportunity.LucidMarketplaceOpportunityId,
-            addProjectResult.ProjectId,
-            addProjectResult.ProjectUrlId,
-            addProjectResult.ProjectMappingId,
-            addRequest.CountryId,
-            internalLaunchUrl);
-
-        if (!syncedCoreLaunchUrl)
-        {
-            await AppendLogAsync(
-                actionName: "AddProjectCoreLinkSync",
-                requestUrl: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
-                requestBody: JsonConvert.SerializeObject(new
-                {
-                    inputData.LucidMarketplaceOpportunityId,
-                    addProjectResult.ProjectId,
-                    addProjectResult.ProjectUrlId,
-                    addProjectResult.ProjectMappingId,
-                    internalLaunchUrl
-                }),
-                source: "manual",
-                supplierCode: opportunity.SupplierCode,
-                relatedEntityId: opportunity.LucidMarketplaceOpportunityId,
-                relatedSurveyId: opportunity.SurveyId,
-                responseBodyOverride: "Project created but core launch URL sync failed.",
-                responseStatusCodeOverride: StatusCodes.Status500InternalServerError,
-                forceSuccess: false);
-
-            return Json(new { result = false, message = "Project created but the Lucid launch URL could not be stored in the normal project tables." });
-        }
-
         var mapResult = await _lucidMarketplaceAPIController.SaveLucidMarketplaceProjectMap(new LucidMarketplaceProjectMapDTO
         {
             LucidMarketplaceOpportunityId = opportunity.LucidMarketplaceOpportunityId,
@@ -582,6 +664,127 @@ public class LucidMarketplaceApiController : Controller
             },
             userId);
 
+        var entryLinkResolution = await EnsureEntryLinkAsync(
+            new LucidMarketplaceGenerateEntryLinkRequest
+            {
+                LucidMarketplaceOpportunityId = opportunity.LucidMarketplaceOpportunityId,
+                InternalProjectId = addProjectResult.ProjectId,
+                InternalProjectUrlId = addProjectResult.ProjectUrlId,
+                InternalProjectMappingId = addProjectResult.ProjectMappingId
+            },
+            "manual");
+
+        if (!entryLinkResolution.Success || entryLinkResolution.EntryLink == null)
+        {
+            await AppendLogAsync(
+                actionName: "AddProjectEntryLink",
+                requestUrl: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
+                requestBody: JsonConvert.SerializeObject(new
+                {
+                    inputData.LucidMarketplaceOpportunityId,
+                    addProjectResult.ProjectId,
+                    addProjectResult.ProjectUrlId,
+                    addProjectResult.ProjectMappingId
+                }),
+                source: "manual",
+                supplierCode: opportunity.SupplierCode,
+                relatedEntityId: opportunity.LucidMarketplaceOpportunityId,
+                relatedSurveyId: opportunity.SurveyId,
+                responseBodyOverride: entryLinkResolution.Message ?? "Unable to create Lucid supplier entry link.",
+                responseStatusCodeOverride: StatusCodes.Status500InternalServerError,
+                forceSuccess: false);
+
+            return Json(new
+            {
+                result = false,
+                message = entryLinkResolution.Message
+                    ?? "Project was created, but the Lucid survey entry link could not be generated. Generate the entry link before launching respondents.",
+                projectId = addProjectResult.ProjectId,
+                projectUrlId = addProjectResult.ProjectUrlId,
+                projectMappingId = addProjectResult.ProjectMappingId,
+                supportMapSaved,
+                entryLinkCreated = false
+            });
+        }
+
+        var samplingLiveLink = BuildProjectSamplingLiveLink(
+            entryLinkResolution.EntryLink.LiveLink,
+            currentSetting);
+
+        if (string.IsNullOrWhiteSpace(samplingLiveLink))
+        {
+            await AppendLogAsync(
+                actionName: "AddProjectLiveLinkSync",
+                requestUrl: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
+                requestBody: JsonConvert.SerializeObject(new
+                {
+                    inputData.LucidMarketplaceOpportunityId,
+                    addProjectResult.ProjectId,
+                    addProjectResult.ProjectUrlId,
+                    addProjectResult.ProjectMappingId
+                }),
+                source: "manual",
+                supplierCode: opportunity.SupplierCode,
+                relatedEntityId: opportunity.LucidMarketplaceOpportunityId,
+                relatedSurveyId: opportunity.SurveyId,
+                responseBodyOverride: "Entry link created but LiveLink was empty; Project URL / mapping could not be updated.",
+                responseStatusCodeOverride: StatusCodes.Status500InternalServerError,
+                forceSuccess: false);
+
+            return Json(new
+            {
+                result = false,
+                message = "Project was created and the Lucid entry link exists, but the LiveLink could not be stored on Project URLs / Project Mapping.",
+                projectId = addProjectResult.ProjectId,
+                projectUrlId = addProjectResult.ProjectUrlId,
+                projectMappingId = addProjectResult.ProjectMappingId,
+                supportMapSaved,
+                entryLinkCreated = true
+            });
+        }
+
+        var syncedSamplingLiveLink = await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectSamplingLiveLinkByIdsAsync(
+            opportunity.LucidMarketplaceOpportunityId,
+            addProjectResult.ProjectId,
+            addProjectResult.ProjectUrlId,
+            addProjectResult.ProjectMappingId,
+            addRequest.CountryId,
+            samplingLiveLink);
+
+        if (!syncedSamplingLiveLink)
+        {
+            await AppendLogAsync(
+                actionName: "AddProjectLiveLinkSync",
+                requestUrl: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
+                requestBody: JsonConvert.SerializeObject(new
+                {
+                    inputData.LucidMarketplaceOpportunityId,
+                    addProjectResult.ProjectId,
+                    addProjectResult.ProjectUrlId,
+                    addProjectResult.ProjectMappingId,
+                    samplingLiveLink
+                }),
+                source: "manual",
+                supplierCode: opportunity.SupplierCode,
+                relatedEntityId: opportunity.LucidMarketplaceOpportunityId,
+                relatedSurveyId: opportunity.SurveyId,
+                responseBodyOverride: "Unable to store Lucid LiveLink on Project URLs / Project Mapping.",
+                responseStatusCodeOverride: StatusCodes.Status500InternalServerError,
+                forceSuccess: false);
+
+            return Json(new
+            {
+                result = false,
+                message = "Project was created, but the Lucid LiveLink could not be stored on Project URLs / Project Mapping.",
+                projectId = addProjectResult.ProjectId,
+                projectUrlId = addProjectResult.ProjectUrlId,
+                projectMappingId = addProjectResult.ProjectMappingId,
+                supportMapSaved,
+                entryLinkCreated = true,
+                liveLink = entryLinkResolution.EntryLink.LiveLink
+            });
+        }
+
         await AppendLogAsync(
             actionName: "AddProject",
             requestUrl: "/VT/LucidMarketplaceApi/AddProjectFromLucidMarketplace",
@@ -597,7 +800,10 @@ public class LucidMarketplaceApiController : Controller
                 addProjectResult.ProjectMappingId,
                 state = "Mapped",
                 supportMapSaved,
-                internalLaunchUrl
+                internalLaunchUrl,
+                entryLinkId = entryLinkResolution.EntryLink.Id,
+                liveLink = entryLinkResolution.EntryLink.LiveLink,
+                samplingLiveLink
             }),
             responseStatusCodeOverride: StatusCodes.Status200OK,
             forceSuccess: true);
@@ -611,7 +817,9 @@ public class LucidMarketplaceApiController : Controller
             projectId = addProjectResult.ProjectId,
             projectUrlId = addProjectResult.ProjectUrlId,
             projectMappingId = addProjectResult.ProjectMappingId,
-            supportMapSaved
+            supportMapSaved,
+            entryLinkCreated = true,
+            liveLink = entryLinkResolution.EntryLink.LiveLink
         });
     }
 
@@ -848,7 +1056,177 @@ public class LucidMarketplaceApiController : Controller
             liveLink = resolution.EntryLink.LiveLink,
             testLink = resolution.EntryLink.TestLink,
             internalLaunchUrl = resolution.InternalLaunchUrl,
-            usedFallback = resolution.UsedFallback
+            usedFallback = resolution.UsedFallback,
+            samplingLiveLinkSynced = resolution.SamplingLiveLinkSynced
+        });
+    }
+
+    [HttpPost("UpdateSupplierReturnLinksFromOpportunity")]
+    public async Task<IActionResult> UpdateSupplierReturnLinksFromOpportunity([FromBody] LucidMarketplaceGenerateEntryLinkRequest inputData)
+    {
+        if (inputData == null || !inputData.LucidMarketplaceOpportunityId.HasValue || inputData.LucidMarketplaceOpportunityId.Value <= 0)
+        {
+            return BadRequest(new { result = false, message = "A valid Lucid Marketplace opportunity is required." });
+        }
+
+        var opportunityId = inputData.LucidMarketplaceOpportunityId.Value;
+        var context = await _lucidMarketplaceAPIController.GetLucidMarketplaceLaunchContextAsync(
+            opportunityId,
+            inputData.InternalProjectId,
+            inputData.InternalProjectMappingId);
+
+        if (context == null || context.LucidMarketplaceOpportunityId <= 0)
+        {
+            return Json(new { result = false, message = "Invalid Opportunity" });
+        }
+
+        if (context.InternalProjectId.GetValueOrDefault() <= 0 || context.InternalProjectMappingId.GetValueOrDefault() <= 0)
+        {
+            return Json(new { result = false, message = "Project not mapped" });
+        }
+
+        if (!string.Equals(context.ProjectFrom, "LucidMarketplace", StringComparison.OrdinalIgnoreCase))
+        {
+            return Json(new { result = false, message = "Project is not mapped from Lucid Marketplace." });
+        }
+
+        if (string.IsNullOrWhiteSpace(context.BaseUrl) || string.IsNullOrWhiteSpace(context.ApiKey))
+        {
+            return Json(new { result = false, message = "Save active Lucid Marketplace settings (Base URL and API Key) before updating return links." });
+        }
+
+        if (string.IsNullOrWhiteSpace(context.SupplierCode))
+        {
+            return Json(new { result = false, message = "Supplier code is required before updating return links." });
+        }
+
+        if (!TryResolveStoredMarketplaceSurveyNumber(context, out var resolvedSurveyNumber, out var surveyNumberError))
+        {
+            return Json(new { result = false, message = surveyNumberError ?? "Survey number is required." });
+        }
+
+        var proxyRequest = BuildEntryLinkProxyRequest(context, resolvedSurveyNumber);
+        var currentUserId = GetCurrentUserId();
+        var existingEntryLink = await GetEntryLinkAsync(context.LucidMarketplaceOpportunityId);
+
+        var getResponse = await CallLucidApiAsync("GetSupplierLink", proxyRequest);
+        await AppendLogAsync(
+            actionName: "UpdateReturnLinksShow",
+            requestUrl: getResponse.RequestUrl ?? "/VT/LucidMarketplaceApi/UpdateSupplierReturnLinksFromOpportunity",
+            requestBody: JsonConvert.SerializeObject(new
+            {
+                opportunityId,
+                resolvedSurveyNumber,
+                successLink = proxyRequest.EntryLink?.SuccessLink,
+                failureLink = proxyRequest.EntryLink?.FailureLink,
+                overQuotaLink = proxyRequest.EntryLink?.OverQuotaLink,
+                qualityTerminationLink = proxyRequest.EntryLink?.QualityTerminationLink,
+                defaultLink = proxyRequest.EntryLink?.DefaultLink
+            }),
+            source: "manual",
+            supplierCode: context.SupplierCode,
+            relatedEntityId: context.LucidMarketplaceOpportunityId,
+            relatedSurveyId: context.LucidSurveyId,
+            responseBodyOverride: BuildProxyResponseLogSnapshot(getResponse),
+            proxyResponse: getResponse);
+
+        var existingOnLucid = TryBuildEntryLinkFromProxyResponse(context, getResponse, currentUserId);
+        var hasExistingLiveLink = (existingOnLucid != null && !string.IsNullOrWhiteSpace(existingOnLucid.LiveLink)) ||
+                                  (existingEntryLink != null && !string.IsNullOrWhiteSpace(existingEntryLink.LiveLink));
+
+        LucidMarketplaceProxyResponse updateOrCreateResponse;
+        string actionLabel;
+
+        if (hasExistingLiveLink)
+        {
+            actionLabel = "Update";
+            updateOrCreateResponse = await CallLucidApiAsync("UpdateSupplierLink", proxyRequest);
+        }
+        else
+        {
+            actionLabel = "Create";
+            updateOrCreateResponse = await CallLucidApiAsync("CreateSupplierLink", proxyRequest);
+        }
+
+        await AppendLogAsync(
+            actionName: $"UpdateReturnLinks{actionLabel}",
+            requestUrl: updateOrCreateResponse.RequestUrl ?? "/VT/LucidMarketplaceApi/UpdateSupplierReturnLinksFromOpportunity",
+            requestBody: JsonConvert.SerializeObject(new
+            {
+                opportunityId,
+                action = actionLabel,
+                successLink = proxyRequest.EntryLink?.SuccessLink,
+                failureLink = proxyRequest.EntryLink?.FailureLink,
+                overQuotaLink = proxyRequest.EntryLink?.OverQuotaLink,
+                qualityTerminationLink = proxyRequest.EntryLink?.QualityTerminationLink,
+                defaultLink = proxyRequest.EntryLink?.DefaultLink
+            }),
+            source: "manual",
+            supplierCode: context.SupplierCode,
+            relatedEntityId: context.LucidMarketplaceOpportunityId,
+            relatedSurveyId: context.LucidSurveyId,
+            responseBodyOverride: BuildProxyResponseLogSnapshot(updateOrCreateResponse),
+            proxyResponse: updateOrCreateResponse);
+
+        if (!updateOrCreateResponse.Result)
+        {
+            return Json(new
+            {
+                result = false,
+                message = updateOrCreateResponse.Message
+                    ?? $"Unable to {actionLabel.ToLowerInvariant()} supplier return links on Cint. Generate the Live Link first, then retry."
+            });
+        }
+
+        var resolvedEntryLink = TryBuildEntryLinkFromProxyResponse(context, updateOrCreateResponse, currentUserId);
+        if (resolvedEntryLink == null && existingOnLucid != null)
+        {
+            // Update may return a thin body; apply requested return URLs onto the known link snapshot.
+            existingOnLucid.SuccessLink = proxyRequest.EntryLink?.SuccessLink;
+            existingOnLucid.FailureLink = proxyRequest.EntryLink?.FailureLink;
+            existingOnLucid.OverQuotaLink = proxyRequest.EntryLink?.OverQuotaLink;
+            existingOnLucid.QualityTerminationLink = proxyRequest.EntryLink?.QualityTerminationLink;
+            existingOnLucid.DefaultLink = proxyRequest.EntryLink?.DefaultLink;
+            existingOnLucid.ModifiedBy = currentUserId;
+            resolvedEntryLink = existingOnLucid;
+        }
+
+        if (resolvedEntryLink == null && existingEntryLink?.Id > 0)
+        {
+            existingEntryLink.SuccessLink = proxyRequest.EntryLink?.SuccessLink;
+            existingEntryLink.FailureLink = proxyRequest.EntryLink?.FailureLink;
+            existingEntryLink.OverQuotaLink = proxyRequest.EntryLink?.OverQuotaLink;
+            existingEntryLink.QualityTerminationLink = proxyRequest.EntryLink?.QualityTerminationLink;
+            existingEntryLink.DefaultLink = proxyRequest.EntryLink?.DefaultLink;
+            existingEntryLink.ModifiedBy = currentUserId;
+            resolvedEntryLink = existingEntryLink;
+        }
+
+        if (resolvedEntryLink == null)
+        {
+            return Json(new
+            {
+                result = false,
+                message = $"Cint accepted the {actionLabel.ToLowerInvariant()}, but no supplier link snapshot was returned to save locally."
+            });
+        }
+
+        var saveResult = await _lucidMarketplaceAPIController.SaveLucidMarketplaceEntryLink(resolvedEntryLink);
+        if (saveResult is ObjectResult saveObjectResult && saveObjectResult.StatusCode == StatusCodes.Status200OK)
+        {
+            resolvedEntryLink = saveObjectResult.Value as LucidMarketplaceEntryLinkDTO ?? resolvedEntryLink;
+        }
+
+        return Json(new
+        {
+            result = true,
+            message = $"Return links {actionLabel.ToLowerInvariant()}d on Cint successfully.",
+            entryLinkId = resolvedEntryLink.Id,
+            successLink = resolvedEntryLink.SuccessLink,
+            failureLink = resolvedEntryLink.FailureLink,
+            overQuotaLink = resolvedEntryLink.OverQuotaLink,
+            qualityTerminationLink = resolvedEntryLink.QualityTerminationLink,
+            defaultLink = resolvedEntryLink.DefaultLink
         });
     }
 
@@ -880,7 +1258,8 @@ public class LucidMarketplaceApiController : Controller
             liveLink = resolution.EntryLink.LiveLink,
             testLink = resolution.EntryLink.TestLink,
             internalLaunchUrl = resolution.InternalLaunchUrl,
-            usedFallback = resolution.UsedFallback
+            usedFallback = resolution.UsedFallback,
+            samplingLiveLinkSynced = resolution.SamplingLiveLinkSynced
         });
     }
 
@@ -961,30 +1340,38 @@ public class LucidMarketplaceApiController : Controller
 
         if (!string.Equals(normalizedAttemptType, "Test", StringComparison.OrdinalIgnoreCase))
         {
-            signedLaunch = _lucidMarketplaceLinkSigner.BuildSignedEntryLink(new LucidMarketplaceLinkSignRequest
-            {
-                BaseLink = resolution.EntryLink.LiveLink,
-                SecretKey = resolution.Context.EntryLinkSecretKey,
-                RespondentId = supplierProjectUid,
-                OpportunityId = resolution.Context.LucidMarketplaceOpportunityId,
-                InternalProjectId = resolution.Context.InternalProjectId,
-                LucidSurveyId = resolution.Context.LucidSurveyId,
-                AttemptType = normalizedAttemptType
-            });
+            vendorLaunchUrl = await BuildLiveVendorLaunchUrlAsync(
+                resolution.EntryLink.LiveLink,
+                supplierProjectUid,
+                resolution.Context.ProjectMappingSid);
 
-            if (!signedLaunch.Success || string.IsNullOrWhiteSpace(signedLaunch.SignedUrl))
+            if (string.IsNullOrWhiteSpace(vendorLaunchUrl))
             {
-                _logger.LogWarning(
-                    "Lucid Marketplace signed respondent launch could not be prepared. OpportunityId={OpportunityId}, InternalProjectId={InternalProjectId}, SurveyId={SurveyId}, AttemptType={AttemptType}, Message={Message}",
-                    resolution.Context.LucidMarketplaceOpportunityId,
-                    resolution.Context.InternalProjectId,
-                    resolution.Context.LucidSurveyId,
-                    normalizedAttemptType,
-                    signedLaunch.Message);
-                return Content(signedLaunch.Message ?? "Unable to prepare the Lucid Marketplace signed entry link.", "text/plain");
+                signedLaunch = _lucidMarketplaceLinkSigner.BuildSignedEntryLink(new LucidMarketplaceLinkSignRequest
+                {
+                    BaseLink = resolution.EntryLink.LiveLink,
+                    SecretKey = resolution.Context.EntryLinkSecretKey,
+                    RespondentId = supplierProjectUid,
+                    OpportunityId = resolution.Context.LucidMarketplaceOpportunityId,
+                    InternalProjectId = resolution.Context.InternalProjectId,
+                    LucidSurveyId = resolution.Context.LucidSurveyId,
+                    AttemptType = normalizedAttemptType
+                });
+
+                if (!signedLaunch.Success || string.IsNullOrWhiteSpace(signedLaunch.SignedUrl))
+                {
+                    _logger.LogWarning(
+                        "Lucid Marketplace signed respondent launch could not be prepared. OpportunityId={OpportunityId}, InternalProjectId={InternalProjectId}, SurveyId={SurveyId}, AttemptType={AttemptType}, Message={Message}",
+                        resolution.Context.LucidMarketplaceOpportunityId,
+                        resolution.Context.InternalProjectId,
+                        resolution.Context.LucidSurveyId,
+                        normalizedAttemptType,
+                        signedLaunch.Message);
+                    return Content(signedLaunch.Message ?? "Unable to prepare the Lucid Marketplace signed entry link.", "text/plain");
+                }
+
+                vendorLaunchUrl = signedLaunch.SignedUrl;
             }
-
-            vendorLaunchUrl = signedLaunch.SignedUrl;
         }
 
         if (string.IsNullOrWhiteSpace(vendorLaunchUrl))
@@ -1247,6 +1634,13 @@ public class LucidMarketplaceApiController : Controller
         return ConvertApiResult(apiResult);
     }
 
+    [HttpPost("ClearLogs")]
+    public async Task<IActionResult> ClearLogs()
+    {
+        var apiResult = await _lucidMarketplaceAPIController.ClearLucidMarketplaceLogs();
+        return ConvertApiResult(apiResult);
+    }
+
     private async Task<LucidMarketplaceSettingDTO?> GetCurrentSettingAsync()
     {
         var result = await _lucidMarketplaceAPIController.GetLucidMarketplaceSetting();
@@ -1346,58 +1740,28 @@ public class LucidMarketplaceApiController : Controller
             : null;
     }
 
-    private async Task<LucidMarketplaceProxyResponse> CallConsultingsProxyAsync(string actionPath, LucidMarketplaceProxyRequest payload)
+    private async Task<LucidMarketplaceProxyResponse> CallLucidApiAsync(string actionPath, LucidMarketplaceProxyRequest payload)
     {
-        var baseUrl = _configuration.GetValue<string>("ConsultingApiBaseUrl");
-        if (string.IsNullOrWhiteSpace(baseUrl))
+        return actionPath switch
         {
-            return new LucidMarketplaceProxyResponse
+            "TestConnectivity" => await _lucidMarketplaceClient.TestConnectivityAsync(payload),
+            "CreateSubscription" => await _lucidMarketplaceClient.CreateSubscriptionAsync(payload),
+            "GetSubscriptions" => await _lucidMarketplaceClient.GetSubscriptionsAsync(payload),
+            "DeleteSubscription" => await _lucidMarketplaceClient.DeleteSubscriptionAsync(payload),
+            "CreateSupplierLink" => await _lucidMarketplaceClient.CreateSupplierLinkAsync(payload),
+            "GetSupplierLink" => await _lucidMarketplaceClient.GetSupplierLinkAsync(payload),
+            "UpdateSupplierLink" => await _lucidMarketplaceClient.UpdateSupplierLinkAsync(payload),
+            _ => new LucidMarketplaceProxyResponse
             {
                 Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Message = "Consultings proxy base URL is not configured."
-            };
-        }
-
-        var url = $"{baseUrl.TrimEnd('/')}/VT/LucidMarketplaceProxy/{actionPath}";
-
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync(url, payload);
-            var content = await response.Content.ReadAsStringAsync();
-
-            var proxyResponse = string.IsNullOrWhiteSpace(content)
-                ? new LucidMarketplaceProxyResponse()
-                : JsonConvert.DeserializeObject<LucidMarketplaceProxyResponse>(content) ?? new LucidMarketplaceProxyResponse();
-
-            proxyResponse.StatusCode ??= (int)response.StatusCode;
-            proxyResponse.RequestUrl ??= url;
-            proxyResponse.ResponseBody ??= content;
-
-            if (!response.IsSuccessStatusCode && string.IsNullOrWhiteSpace(proxyResponse.Message))
-            {
-                proxyResponse.Message = "Consultings proxy request failed.";
+                IsStub = false,
+                StatusCode = StatusCodes.Status400BadRequest,
+                Message = $"Unsupported Lucid Marketplace action: {actionPath}"
             }
-
-            return proxyResponse;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Consultings Lucid Marketplace proxy call failed. ActionPath={ActionPath}", actionPath);
-            return new LucidMarketplaceProxyResponse
-            {
-                Result = false,
-                IsStub = true,
-                StatusCode = StatusCodes.Status500InternalServerError,
-                Message = ex.Message,
-                RequestUrl = url
-            };
-        }
+        };
     }
 
-    private Task AppendLogAsync(
+    private async Task AppendLogAsync(
         string actionName,
         string? requestUrl,
         string? requestBody,
@@ -1411,9 +1775,45 @@ public class LucidMarketplaceApiController : Controller
         int? responseStatusCodeOverride = null,
         bool? forceSuccess = null)
     {
-        // Lucid Marketplace sync logging is intentionally disabled to keep the
-        // LucidMarketplaceSyncLog table from growing too quickly.
-        return Task.CompletedTask;
+        var log = new LucidMarketplaceSyncLogDTO
+        {
+            ModuleName = "Lucid Marketplace",
+            ActionName = actionName,
+            RequestUrl = requestUrl,
+            Source = source,
+            SupplierCode = supplierCode,
+            RelatedEntityId = relatedEntityId,
+            RelatedSurveyId = relatedSurveyId,
+            StartedOn = DateTime.Now,
+            CompletedOn = DateTime.Now,
+            CreatedBy = GetCurrentUserId()
+        };
+
+        if (proxyResponse != null)
+        {
+            log.ResponseStatusCode = proxyResponse.StatusCode;
+            log.IsSuccess = forceSuccess ?? proxyResponse.Result;
+            log.ErrorText = log.IsSuccess ? null : responseBodyOverride ?? proxyResponse.Message ?? proxyResponse.ResponseBody;
+        }
+        else if (apiResult is ObjectResult objectResult)
+        {
+            log.ResponseStatusCode = objectResult.StatusCode ?? StatusCodes.Status200OK;
+            log.IsSuccess = forceSuccess ?? ((objectResult.StatusCode ?? StatusCodes.Status200OK) < 400);
+            log.ErrorText = log.IsSuccess ? null : responseBodyOverride ?? JsonConvert.SerializeObject(objectResult.Value);
+        }
+        else
+        {
+            log.ResponseStatusCode = responseStatusCodeOverride ?? StatusCodes.Status200OK;
+            log.IsSuccess = forceSuccess ?? ((responseStatusCodeOverride ?? StatusCodes.Status200OK) < 400);
+            log.ErrorText = log.IsSuccess ? null : responseBodyOverride;
+        }
+
+        if (log.IsSuccess)
+        {
+            return;
+        }
+
+        await _lucidMarketplaceAPIController.AddLucidMarketplaceLog(log);
     }
 
     private int? GetCurrentUserId()
@@ -1558,16 +1958,19 @@ public class LucidMarketplaceApiController : Controller
         var internalLaunchUrl = BuildInternalLaunchUrl(context, NormalizeAttemptType(inputData.AttemptType), "[respondentID]");
 
         if (string.IsNullOrWhiteSpace(context.BaseUrl) ||
-            string.IsNullOrWhiteSpace(context.ApiKey) ||
-            !context.UseConsultingsBridge)
+            string.IsNullOrWhiteSpace(context.ApiKey))
         {
             if (existingEntryLink?.Id > 0 && !string.IsNullOrWhiteSpace(existingEntryLink.LiveLink))
             {
-                await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectLaunchUrlAsync(context.LucidMarketplaceOpportunityId, internalLaunchUrl);
-                return LucidMarketplaceEntryLinkResolution.SuccessResult(existingEntryLink, context, internalLaunchUrl, true, "Stored Lucid Marketplace link loaded.");
+                return await FinalizeEntryLinkWithSamplingSyncAsync(
+                    existingEntryLink,
+                    context,
+                    internalLaunchUrl,
+                    usedFallback: true,
+                    successMessage: "Stored Lucid Marketplace link loaded.");
             }
 
-            return LucidMarketplaceEntryLinkResolution.Fail("Save active Lucid Marketplace settings and enable the Consultings bridge before generating entry links.");
+            return LucidMarketplaceEntryLinkResolution.Fail("Save active Lucid Marketplace settings (Base URL and API Key) before generating entry links.");
         }
 
         var proxyRequest = BuildEntryLinkProxyRequest(context, resolvedSurveyNumber);
@@ -1580,7 +1983,7 @@ public class LucidMarketplaceApiController : Controller
             fallbackAttempted: false,
             finalReason: null);
 
-        var createResponse = await CallConsultingsProxyAsync("CreateSupplierLink", proxyRequest);
+        var createResponse = await CallLucidApiAsync("CreateSupplierLink", proxyRequest);
         await AppendLogAsync(
             actionName: "GenerateEntryLinkCreate",
             requestUrl: createResponse.RequestUrl ?? "/VT/LucidMarketplaceApi/GenerateEntryLinkFromOpportunity",
@@ -1596,9 +1999,30 @@ public class LucidMarketplaceApiController : Controller
         var usedFallback = false;
         LucidMarketplaceProxyResponse? getResponse = null;
 
+        if (resolvedEntryLink != null && ShouldUpdateEntryLink(resolvedEntryLink, proxyRequest.EntryLink))
+        {
+            var updateAfterCreateResponse = await CallLucidApiAsync("UpdateSupplierLink", proxyRequest);
+            await AppendLogAsync(
+                actionName: "GenerateEntryLinkUpdate",
+                requestUrl: updateAfterCreateResponse.RequestUrl ?? "/VT/LucidMarketplaceApi/GenerateEntryLinkFromOpportunity",
+                requestBody: JsonConvert.SerializeObject(createRequestDiagnostics),
+                source: source,
+                supplierCode: context.SupplierCode,
+                relatedEntityId: context.LucidMarketplaceOpportunityId,
+                relatedSurveyId: context.LucidSurveyId,
+                responseBodyOverride: BuildProxyResponseLogSnapshot(updateAfterCreateResponse),
+                proxyResponse: updateAfterCreateResponse);
+
+            var updatedAfterCreate = TryBuildEntryLinkFromProxyResponse(context, updateAfterCreateResponse, currentUserId);
+            if (updatedAfterCreate != null)
+            {
+                resolvedEntryLink = updatedAfterCreate;
+            }
+        }
+
         if (resolvedEntryLink == null && ShouldAttemptEntryLinkFallback(createResponse))
         {
-            getResponse = await CallConsultingsProxyAsync("GetSupplierLink", proxyRequest);
+            getResponse = await CallLucidApiAsync("GetSupplierLink", proxyRequest);
             var fallbackRequestDiagnostics = BuildEntryLinkRequestDiagnostics(
                 context,
                 proxyRequest.EntryLink,
@@ -1623,7 +2047,7 @@ public class LucidMarketplaceApiController : Controller
 
             if (resolvedEntryLink != null && ShouldUpdateEntryLink(resolvedEntryLink, proxyRequest.EntryLink))
             {
-                var updateResponse = await CallConsultingsProxyAsync("UpdateSupplierLink", proxyRequest);
+                var updateResponse = await CallLucidApiAsync("UpdateSupplierLink", proxyRequest);
                 await AppendLogAsync(
                     actionName: "GenerateEntryLinkUpdate",
                     requestUrl: updateResponse.RequestUrl ?? "/VT/LucidMarketplaceApi/GenerateEntryLinkFromOpportunity",
@@ -1683,13 +2107,42 @@ public class LucidMarketplaceApiController : Controller
             resolvedEntryLink = saveObjectResult.Value as LucidMarketplaceEntryLinkDTO ?? resolvedEntryLink;
         }
 
-        await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectLaunchUrlAsync(context.LucidMarketplaceOpportunityId, internalLaunchUrl);
-        return LucidMarketplaceEntryLinkResolution.SuccessResult(
+        return await FinalizeEntryLinkWithSamplingSyncAsync(
             resolvedEntryLink,
             context,
             internalLaunchUrl,
             usedFallback,
-            usedFallback ? "Lucid Marketplace supplier link loaded using fallback retrieval." : "Lucid Marketplace supplier link generated successfully.");
+            usedFallback
+                ? "Lucid Marketplace supplier link loaded using fallback retrieval."
+                : "Lucid Marketplace supplier link generated successfully.");
+    }
+
+    private async Task<LucidMarketplaceEntryLinkResolution> FinalizeEntryLinkWithSamplingSyncAsync(
+        LucidMarketplaceEntryLinkDTO entryLink,
+        LucidMarketplaceLaunchContextDTO context,
+        string internalLaunchUrl,
+        bool usedFallback,
+        string successMessage)
+    {
+        var samplingLiveLinkSynced = await SyncProjectSamplingLiveLinkAsync(context, entryLink.LiveLink);
+        var isMapped = (context.InternalProjectId.HasValue && context.InternalProjectId.Value > 0) ||
+                       (context.InternalProjectMappingId.HasValue && context.InternalProjectMappingId.Value > 0);
+
+        if (isMapped &&
+            !string.IsNullOrWhiteSpace(entryLink.LiveLink) &&
+            !samplingLiveLinkSynced)
+        {
+            return LucidMarketplaceEntryLinkResolution.Fail(
+                "Entry link was resolved but Project Mapping Client Link could not be updated with the Lucid LiveLink. Verify ProjectsUrl and ProjectMapping rows exist for this project.");
+        }
+
+        return LucidMarketplaceEntryLinkResolution.SuccessResult(
+            entryLink,
+            context,
+            internalLaunchUrl,
+            usedFallback,
+            successMessage,
+            samplingLiveLinkSynced);
     }
 
     private async Task<string?> SyncInternalLaunchUrlAsync(int lucidMarketplaceOpportunityId)
@@ -1700,9 +2153,33 @@ public class LucidMarketplaceApiController : Controller
             return null;
         }
 
-        var internalLaunchUrl = BuildInternalLaunchUrl(context, "Live", "[respondentID]");
-        await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectLaunchUrlAsync(context.LucidMarketplaceOpportunityId, internalLaunchUrl);
-        return internalLaunchUrl;
+        var entryLink = await GetEntryLinkAsync(context.LucidMarketplaceOpportunityId);
+        var liveLink = string.IsNullOrWhiteSpace(entryLink?.LiveLink) ? entryLink?.TestLink : entryLink?.LiveLink;
+        await SyncProjectSamplingLiveLinkAsync(context, liveLink);
+        return BuildInternalLaunchUrl(context, "Live", "[respondentID]");
+    }
+
+    private async Task<bool> SyncProjectSamplingLiveLinkAsync(LucidMarketplaceLaunchContextDTO context, string? liveLink)
+    {
+        if (context == null || context.LucidMarketplaceOpportunityId <= 0)
+        {
+            return false;
+        }
+
+        var setting = await GetCurrentSettingAsync();
+        var samplingLiveLink = BuildProjectSamplingLiveLink(liveLink, setting);
+        if (string.IsNullOrWhiteSpace(samplingLiveLink))
+        {
+            return false;
+        }
+
+        return await _lucidMarketplaceAPIController.SyncLucidMarketplaceProjectSamplingLiveLinkByIdsAsync(
+            context.LucidMarketplaceOpportunityId,
+            context.InternalProjectId,
+            context.InternalProjectUrlId,
+            context.InternalProjectMappingId,
+            context.CountryId,
+            samplingLiveLink);
     }
 
     private LucidMarketplaceProxyRequest BuildEntryLinkProxyRequest(LucidMarketplaceLaunchContextDTO context, int resolvedSurveyNumber)
@@ -1714,7 +2191,7 @@ public class LucidMarketplaceApiController : Controller
                 BaseUrl = context.BaseUrl,
                 ApiKey = context.ApiKey,
                 SupplierCode = context.SupplierCode,
-                UseConsultingsBridge = context.UseConsultingsBridge
+                UseConsultingsBridge = false
             },
             EntryLink = new LucidMarketplaceEntryLinkProxyRequest
             {
@@ -1726,11 +2203,11 @@ public class LucidMarketplaceApiController : Controller
                 TrackingTypeCode = string.IsNullOrWhiteSpace(context.TrackingTypeCode)
                     ? "NONE"
                     : context.TrackingTypeCode.Trim(),
-                DefaultLink = BuildRedirectReturnUrl(context, "default"),
-                SuccessLink = BuildRedirectReturnUrl(context, "complete"),
-                FailureLink = BuildRedirectReturnUrl(context, "failure"),
-                OverQuotaLink = BuildRedirectReturnUrl(context, "overquota"),
-                QualityTerminationLink = BuildRedirectReturnUrl(context, "quality")
+                SuccessLink = BuildProjectStatusReturnUrl("COMPLETE"),
+                FailureLink = BuildProjectStatusReturnUrl("TERMINATE"),
+                OverQuotaLink = BuildProjectStatusReturnUrl("OVERQUOTA"),
+                QualityTerminationLink = BuildProjectStatusReturnUrl("SEC_TERM"),
+                DefaultLink = BuildProjectStatusReturnUrl("TERMINATE")
             }
         };
     }
@@ -1744,6 +2221,119 @@ public class LucidMarketplaceApiController : Controller
             context.InternalProjectMappingId,
             attemptType,
             respondentIdToken);
+    }
+
+    private static string? BuildProjectSamplingLiveLink(string? liveLink, LucidMarketplaceSettingDTO? setting)
+    {
+        if (string.IsNullOrWhiteSpace(liveLink))
+        {
+            return null;
+        }
+
+        if (setting?.EnableHashing != true)
+        {
+            return liveLink.Trim();
+        }
+
+        var normalizedLink = liveLink.Trim();
+        var replaceWith = string.IsNullOrWhiteSpace(setting.RespondentIdUrlReplaceWith)
+            ? "[respondentID]"
+            : setting.RespondentIdUrlReplaceWith.Trim();
+
+        foreach (var sourcePart in (setting.RespondentIdUrlParts ?? string.Empty)
+                     .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                     .Where(value => !string.IsNullOrWhiteSpace(value))
+                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            normalizedLink = normalizedLink.Replace(sourcePart, replaceWith, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return normalizedLink;
+    }
+
+    /// <summary>
+    /// Builds Live launch URL using Project Mapping hashing when enabled; otherwise returns null so caller can fall back to EntryLinkSecretKey signer.
+    /// </summary>
+    private async Task<string?> BuildLiveVendorLaunchUrlAsync(string? liveLink, string supplierProjectUid, string? projectMappingSid)
+    {
+        if (string.IsNullOrWhiteSpace(liveLink) || string.IsNullOrWhiteSpace(supplierProjectUid))
+        {
+            return null;
+        }
+
+        var withRespondent = InjectRespondentIntoLucidLiveLink(liveLink, supplierProjectUid);
+        if (string.IsNullOrWhiteSpace(withRespondent))
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(projectMappingSid))
+        {
+            return null;
+        }
+
+        try
+        {
+            var projectMapping = await _surveyAPIController.GetProjectMappingRecordBYSID(projectMappingSid);
+            if (projectMapping == null || projectMapping.AddHashing != 1 || string.IsNullOrWhiteSpace(projectMapping.HashingType))
+            {
+                return null;
+            }
+
+            var hashingResult = await _hashingSettingsService.ApplyHashAsync(
+                withRespondent,
+                projectMapping.AddHashing,
+                projectMapping.HashingType,
+                projectMapping.ParameterName);
+
+            if (!hashingResult.HashApplied || string.IsNullOrWhiteSpace(hashingResult.RequestUrl))
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(hashingResult.HashCode))
+            {
+                await _surveyAPIController.UpdateSupplierENCByUID(supplierProjectUid, hashingResult.HashCode);
+            }
+
+            return hashingResult.RequestUrl;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Lucid Marketplace Project Mapping hashing failed for SID {Sid}. Falling back to entry-link signer.", projectMappingSid);
+            return null;
+        }
+    }
+
+    private static string InjectRespondentIntoLucidLiveLink(string liveLink, string respondentId)
+    {
+        if (string.IsNullOrWhiteSpace(liveLink) || string.IsNullOrWhiteSpace(respondentId))
+        {
+            return string.Empty;
+        }
+
+        var encodedRespondentId = Uri.EscapeDataString(respondentId.Trim());
+        if (liveLink.Contains("[respondentID]", StringComparison.OrdinalIgnoreCase))
+        {
+            return liveLink
+                .Replace("[respondentID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RespondentID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase)
+                .Replace("[RESPONDENTID]", encodedRespondentId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var updated = new Regex("(?i)([?&]PID=)([^&]*)").Replace(
+            liveLink,
+            match => $"{match.Groups[1].Value}{encodedRespondentId}",
+            1);
+
+        if (!string.Equals(updated, liveLink, StringComparison.Ordinal))
+        {
+            return updated;
+        }
+
+        return liveLink.Contains('?', StringComparison.Ordinal)
+            ? $"{liveLink}&PID={encodedRespondentId}"
+            : $"{liveLink}?PID={encodedRespondentId}";
     }
 
     private string BuildInternalLaunchUrl(
@@ -1834,6 +2424,14 @@ public class LucidMarketplaceApiController : Controller
             : $"{root}{pathBase}";
 
         return true;
+    }
+
+    private string BuildProjectStatusReturnUrl(string projectStatus)
+    {
+        var status = string.IsNullOrWhiteSpace(projectStatus) ? "TERMINATE" : projectStatus.Trim().ToUpperInvariant();
+        // Lucid substitutes [%PID%] with the panelist RID (same value currently appended as pid=).
+        var relativeUrl = $"/VT/ProjectStatus.aspx?ID=[%PID%]&Status={Uri.EscapeDataString(status)}&RC=0";
+        return BuildAbsoluteLucidMarketplaceUrl(relativeUrl);
     }
 
     private string BuildRedirectReturnUrl(LucidMarketplaceLaunchContextDTO context, string returnStatus)
@@ -2259,16 +2857,31 @@ public class LucidMarketplaceApiController : Controller
         LucidMarketplaceEntryLinkDTO currentEntryLink,
         LucidMarketplaceEntryLinkProxyRequest? requestedEntryLink)
     {
-        if (requestedEntryLink == null)
+        if (currentEntryLink == null || requestedEntryLink == null)
         {
             return false;
         }
 
-        return !string.Equals(currentEntryLink.DefaultLink, requestedEntryLink.DefaultLink, StringComparison.OrdinalIgnoreCase) ||
-               !string.Equals(currentEntryLink.SuccessLink, requestedEntryLink.SuccessLink, StringComparison.OrdinalIgnoreCase) ||
-               !string.Equals(currentEntryLink.FailureLink, requestedEntryLink.FailureLink, StringComparison.OrdinalIgnoreCase) ||
-               !string.Equals(currentEntryLink.OverQuotaLink, requestedEntryLink.OverQuotaLink, StringComparison.OrdinalIgnoreCase) ||
-               !string.Equals(currentEntryLink.QualityTerminationLink, requestedEntryLink.QualityTerminationLink, StringComparison.OrdinalIgnoreCase);
+        return !ReturnUrlsMatch(currentEntryLink.SuccessLink, requestedEntryLink.SuccessLink) ||
+               !ReturnUrlsMatch(currentEntryLink.FailureLink, requestedEntryLink.FailureLink) ||
+               !ReturnUrlsMatch(currentEntryLink.OverQuotaLink, requestedEntryLink.OverQuotaLink) ||
+               !ReturnUrlsMatch(currentEntryLink.QualityTerminationLink, requestedEntryLink.QualityTerminationLink) ||
+               !ReturnUrlsMatch(currentEntryLink.DefaultLink, requestedEntryLink.DefaultLink);
+    }
+
+    private static bool ReturnUrlsMatch(string? current, string? requested)
+    {
+        if (string.IsNullOrWhiteSpace(requested))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(current))
+        {
+            return false;
+        }
+
+        return string.Equals(current.Trim(), requested.Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static string BuildLucidRespondentLaunchUrl(string? liveLink, string respondentId)
@@ -2892,6 +3505,8 @@ public class LucidMarketplaceApiController : Controller
 
         public bool UsedFallback { get; init; }
 
+        public bool SamplingLiveLinkSynced { get; init; }
+
         public string? InternalLaunchUrl { get; init; }
 
         public LucidMarketplaceLaunchContextDTO? Context { get; init; }
@@ -2912,13 +3527,15 @@ public class LucidMarketplaceApiController : Controller
             LucidMarketplaceLaunchContextDTO context,
             string internalLaunchUrl,
             bool usedFallback,
-            string message)
+            string message,
+            bool samplingLiveLinkSynced = false)
         {
             return new LucidMarketplaceEntryLinkResolution
             {
                 Success = true,
                 Message = message,
                 UsedFallback = usedFallback,
+                SamplingLiveLinkSynced = samplingLiveLinkSynced,
                 InternalLaunchUrl = internalLaunchUrl,
                 Context = context,
                 EntryLink = entryLink

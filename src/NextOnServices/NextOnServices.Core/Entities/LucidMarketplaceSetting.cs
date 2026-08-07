@@ -33,6 +33,27 @@ public class LucidMarketplaceSetting
 
     public int? DefaultSupplierId { get; set; }
 
+    /// <summary>Comma-separated supplier ids (Torfac-style multi default suppliers).</summary>
+    public string? DefaultSupplierIds { get; set; }
+
+    /// <summary>Percent of Lucid CPI stored on ProjectMapping (e.g. 40 = 40%). Null means 100 at add time.</summary>
+    public decimal? SupplierCpiPercent { get; set; }
+
+    /// <summary>When true, Add Project sets ProjectMapping hashing and may rewrite LiveLink URL parts.</summary>
+    public bool EnableHashing { get; set; }
+
+    /// <summary>ProjectMapping ParameterName: enc, hash, or token.</summary>
+    public string? HashingParameter { get; set; }
+
+    /// <summary>ProjectMapping HashingType (must match an active HashingSetting row).</summary>
+    public string? HashingType { get; set; }
+
+    /// <summary>Comma-separated LiveLink substrings to find when EnableHashing is on.</summary>
+    public string? RespondentIdUrlParts { get; set; }
+
+    /// <summary>Replacement for each find token (e.g. PID=[respondentID]). Defaults to [respondentID] when blank.</summary>
+    public string? RespondentIdUrlReplaceWith { get; set; }
+
     public string? SupplierLinkTypeCode { get; set; }
 
     public string? TrackingTypeCode { get; set; }

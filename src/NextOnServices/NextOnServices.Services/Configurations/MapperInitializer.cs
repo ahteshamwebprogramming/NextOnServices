@@ -37,7 +37,10 @@ public class MapperInitializer : Profile
             .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore())
             .ReverseMap()
             .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore());
-        CreateMap<LucidMarketplaceSetting, LucidMarketplaceSettingDTO>().ReverseMap();
+        CreateMap<LucidMarketplaceSetting, LucidMarketplaceSettingDTO>()
+            .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore())
+            .ReverseMap()
+            .ForMember(dest => dest.DefaultSupplierIds, opt => opt.Ignore());
         CreateMap<LucidMarketplaceSubscription, LucidMarketplaceSubscriptionDTO>().ReverseMap();
         CreateMap<LucidMarketplaceSyncLog, LucidMarketplaceSyncLogDTO>().ReverseMap();
         CreateMap<LucidMarketplaceOpportunity, LucidMarketplaceOpportunityDTO>().ReverseMap();

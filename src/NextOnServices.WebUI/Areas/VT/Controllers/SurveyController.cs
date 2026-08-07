@@ -2,6 +2,7 @@ using NextOnServices.Infrastructure.Helper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.Extensions;
 using System;
+using System.Globalization;
 using GRP.Endpoints.Masters;
 using NextOnServices.Endpoints.Projects;
 using System.Threading.Tasks;
@@ -844,7 +845,7 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
                 return null;
             }
 
-            var vendorLaunchUrl = BuildLucidRespondentLaunchUrl(storedLucidLink, supplierProjectUid, out _, out _);
+            var vendorLaunchUrl = BuildLucidRespondentLaunchUrlWithoutConfigHash(storedLucidLink, supplierProjectUid);
             if (string.IsNullOrWhiteSpace(vendorLaunchUrl))
             {
                 _logger.LogWarning("Unable to build Lucid Marketplace respondent launch URL for project {ProjectId} / opportunity {OpportunityId}.", launchContext.ProjectId, lucidContext.LucidMarketplaceOpportunityId);
@@ -859,7 +860,15 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
             }
 
             SetLucidAttemptCookie(savedAttempt.Id, lucidContext.InternalProjectMappingId, lucidContext.LucidMarketplaceOpportunityId);
-            return vendorLaunchUrl;
+            return await ApplyProjectMappingLaunchHashingAsync(
+                launchContext.ProjectMappingSid,
+                supplierProjectUid,
+                vendorLaunchUrl);
+        }
+
+        private string BuildLucidRespondentLaunchUrlWithoutConfigHash(string liveLink, string respondentId)
+        {
+            return InjectLucidRespondentIdentifier(liveLink, respondentId, ResolveLucidRespondentParameterName());
         }
 
         private async Task<string?> ResolveStoredLucidBaseLinkAsync(
@@ -1396,6 +1405,22 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
             {
                 //string NID = CommonHelper.RandomString(32);
                 _SID = Request.Query["ID"];
+                if (string.IsNullOrWhiteSpace(_SID))
+                {
+                    // Lucid Marketplace often appends panelist RID as pid= when ID was never registered.
+                    var lucidPid = Request.Query["pid"].ToString();
+                    if (string.IsNullOrWhiteSpace(lucidPid))
+                    {
+                        lucidPid = Request.Query["PID"].ToString();
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(lucidPid) &&
+                        !int.TryParse(lucidPid, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+                    {
+                        _SID = lucidPid;
+                    }
+                }
+
                 string? TempStat = Request.Query["Status"];
                 _Status = await ReformStatus(Request.Query["Status"]);
                 _RC = Convert.ToInt32(Request.Query["RC"]);
@@ -1404,7 +1429,11 @@ namespace NextOnServices.WebUI.Areas.VT.Controllers
 
                 if (_RC == 1)
                 {
-                    _PID = Convert.ToInt32(Request.Query["PID"]);
+                    var pidRaw = Request.Query["PID"].ToString();
+                    if (int.TryParse(pidRaw, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericPid))
+                    {
+                        _PID = numericPid;
+                    }
                 }
 
                 if (Request.Query.ContainsKey("PX"))
