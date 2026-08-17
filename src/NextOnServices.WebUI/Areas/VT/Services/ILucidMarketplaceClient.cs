@@ -17,4 +17,12 @@ public interface ILucidMarketplaceClient
     Task<LucidMarketplaceProxyResponse> GetSupplierLinkAsync(LucidMarketplaceProxyRequest request);
 
     Task<LucidMarketplaceProxyResponse> UpdateSupplierLinkAsync(LucidMarketplaceProxyRequest request);
+
+    Task<LucidMarketplaceProxyResponse> GetSurveyQualificationsAsync(LucidMarketplaceProxyRequest request);
+
+    Task<LucidMarketplaceProxyResponse> GetCountryLanguagesAsync(LucidMarketplaceProxyRequest request);
+
+    Task<LucidMarketplaceProxyResponse> GetQuestionByIdAsync(LucidMarketplaceProxyRequest request);
+
+    Task<LucidMarketplaceProxyResponse> GetQuestionOptionsAsync(LucidMarketplaceProxyRequest request);
 }

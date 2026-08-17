@@ -1263,6 +1263,102 @@ public class LucidMarketplaceApiController : Controller
         });
     }
 
+    [HttpGet("FetchLiveQualifications/{opportunityId:int}")]
+    public async Task<IActionResult> FetchLiveQualifications(int opportunityId)
+    {
+        if (opportunityId <= 0)
+        {
+            return BadRequest(new { result = false, message = "A valid Lucid Marketplace opportunity is required." });
+        }
+
+        var opportunity = await GetOpportunityAsync(opportunityId);
+        if (opportunity == null || opportunity.LucidMarketplaceOpportunityId <= 0)
+        {
+            return Json(new { result = false, message = "Invalid Opportunity" });
+        }
+
+        var setting = await GetCurrentSettingAsync();
+        if (setting == null || string.IsNullOrWhiteSpace(setting.BaseUrl) || string.IsNullOrWhiteSpace(setting.ApiKey))
+        {
+            return Json(new { result = false, message = "Save active Lucid Marketplace settings (Base URL and API Key) before loading qualifications." });
+        }
+
+        var surveyNumber = 0;
+        if (!string.IsNullOrWhiteSpace(opportunity.SurveyNumber) &&
+            int.TryParse(opportunity.SurveyNumber.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedSurveyNumber) &&
+            parsedSurveyNumber > 0)
+        {
+            surveyNumber = parsedSurveyNumber;
+        }
+        else if (opportunity.SurveyId > 0)
+        {
+            surveyNumber = opportunity.SurveyId;
+        }
+
+        if (surveyNumber <= 0)
+        {
+            return Json(new { result = false, message = "Survey number is not stored for this opportunity." });
+        }
+
+        var proxyResponse = await CallLucidApiAsync("GetSurveyQualifications", new LucidMarketplaceProxyRequest
+        {
+            Setting = new LucidMarketplaceSettingDTO
+            {
+                BaseUrl = setting.BaseUrl,
+                ApiKey = setting.ApiKey,
+                SupplierCode = setting.SupplierCode,
+                UseConsultingsBridge = false
+            },
+            SurveyNumber = surveyNumber
+        });
+
+        if (!proxyResponse.Result)
+        {
+            return Json(new
+            {
+                result = false,
+                message = proxyResponse.Message ?? "Unable to load qualifications from Lucid."
+            });
+        }
+
+        var items = ParseLiveQualifications(proxyResponse.ResponseBody);
+        var lookupSetting = new LucidMarketplaceSettingDTO
+        {
+            BaseUrl = setting.BaseUrl,
+            ApiKey = setting.ApiKey,
+            SupplierCode = setting.SupplierCode,
+            UseConsultingsBridge = false
+        };
+
+        var countryLanguageId = await ResolveCountryLanguageIdAsync(lookupSetting, opportunity.CountryLanguageCode);
+        if (countryLanguageId.HasValue && countryLanguageId.Value > 0)
+        {
+            foreach (var item in items.Where(x => x.QuestionId.GetValueOrDefault() > 0))
+            {
+                await EnrichLiveQualificationAsync(lookupSetting, countryLanguageId.Value, item);
+            }
+        }
+
+        return Json(new
+        {
+            result = true,
+            message = items.Count == 0
+                ? "No qualifications returned from Lucid."
+                : $"Loaded {items.Count} qualification(s) from Lucid.",
+            surveyNumber,
+            countryLanguageId,
+            items = items.Select(item => new
+            {
+                questionId = item.QuestionId,
+                questionText = item.QuestionText,
+                logicalOperator = item.LogicalOperator,
+                precodes = item.Precodes,
+                options = item.Options,
+                rawJson = item.RawJson
+            })
+        });
+    }
+
     [HttpGet("EntryLinkDetails/{opportunityId:int}")]
     public async Task<IActionResult> EntryLinkDetails(int opportunityId)
     {
@@ -1751,6 +1847,10 @@ public class LucidMarketplaceApiController : Controller
             "CreateSupplierLink" => await _lucidMarketplaceClient.CreateSupplierLinkAsync(payload),
             "GetSupplierLink" => await _lucidMarketplaceClient.GetSupplierLinkAsync(payload),
             "UpdateSupplierLink" => await _lucidMarketplaceClient.UpdateSupplierLinkAsync(payload),
+            "GetSurveyQualifications" => await _lucidMarketplaceClient.GetSurveyQualificationsAsync(payload),
+            "GetCountryLanguages" => await _lucidMarketplaceClient.GetCountryLanguagesAsync(payload),
+            "GetQuestionById" => await _lucidMarketplaceClient.GetQuestionByIdAsync(payload),
+            "GetQuestionOptions" => await _lucidMarketplaceClient.GetQuestionOptionsAsync(payload),
             _ => new LucidMarketplaceProxyResponse
             {
                 Result = false,
@@ -3001,6 +3101,237 @@ public class LucidMarketplaceApiController : Controller
 
         var match = Regex.Match(url, $"(?i)(?:[?&]){Regex.Escape(parameterName)}=([^&]+)");
         return match.Success ? Uri.UnescapeDataString(match.Groups[1].Value) : null;
+    }
+
+    private static List<LiveQualificationItem> ParseLiveQualifications(string? responseBody)
+    {
+        var items = new List<LiveQualificationItem>();
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return items;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(responseBody);
+            var root = document.RootElement;
+            if (!TryGetJsonProperty(root, out var surveyQual, "SurveyQualification", "surveyQualification") ||
+                surveyQual.ValueKind != JsonValueKind.Object)
+            {
+                return items;
+            }
+
+            if (!TryGetJsonProperty(surveyQual, out var questionsEl, "Questions", "questions") ||
+                questionsEl.ValueKind != JsonValueKind.Array)
+            {
+                return items;
+            }
+
+            foreach (var questionEl in questionsEl.EnumerateArray())
+            {
+                if (questionEl.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                var questionIdText = GetJsonString(questionEl, "QuestionID", "questionID", "questionId", "QuestionId");
+                int? questionId = null;
+                if (int.TryParse(questionIdText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedQuestionId) &&
+                    parsedQuestionId > 0)
+                {
+                    questionId = parsedQuestionId;
+                }
+
+                var precodes = new List<string>();
+                if (TryGetJsonProperty(questionEl, out var precodesEl, "PreCodes", "precodes", "PreCode") &&
+                    precodesEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var precodeEl in precodesEl.EnumerateArray())
+                    {
+                        var precode = precodeEl.ValueKind switch
+                        {
+                            JsonValueKind.String => precodeEl.GetString(),
+                            JsonValueKind.Number => precodeEl.ToString(),
+                            _ => null
+                        };
+                        if (!string.IsNullOrWhiteSpace(precode))
+                        {
+                            precodes.Add(precode);
+                        }
+                    }
+                }
+
+                items.Add(new LiveQualificationItem
+                {
+                    QuestionId = questionId,
+                    QuestionText = GetJsonString(questionEl, "QuestionText", "questionText", "Name", "name"),
+                    LogicalOperator = GetJsonString(questionEl, "LogicalOperator", "logicalOperator"),
+                    Precodes = string.Join(", ", precodes),
+                    PrecodeValues = precodes,
+                    RawJson = questionEl.GetRawText()
+                });
+            }
+        }
+        catch
+        {
+            return items;
+        }
+
+        return items;
+    }
+
+    private async Task<int?> ResolveCountryLanguageIdAsync(LucidMarketplaceSettingDTO setting, string? countryLanguageCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryLanguageCode))
+        {
+            return null;
+        }
+
+        var lookup = await CallLucidApiAsync("GetCountryLanguages", new LucidMarketplaceProxyRequest { Setting = setting });
+        if (!lookup.Result || string.IsNullOrWhiteSpace(lookup.ResponseBody))
+        {
+            return null;
+        }
+
+        var wanted = NormalizeCountryLanguageLookupCode(countryLanguageCode);
+        try
+        {
+            using var document = JsonDocument.Parse(lookup.ResponseBody);
+            if (!TryGetJsonProperty(document.RootElement, out var languages, "AllCountryLanguages", "allCountryLanguages") ||
+                languages.ValueKind != JsonValueKind.Array)
+            {
+                return null;
+            }
+
+            foreach (var language in languages.EnumerateArray())
+            {
+                var code = GetJsonString(language, "Code", "code");
+                if (string.IsNullOrWhiteSpace(code) ||
+                    !string.Equals(NormalizeCountryLanguageLookupCode(code), wanted, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var idText = GetJsonString(language, "Id", "id", "CountryLanguageID", "countryLanguageId");
+                if (int.TryParse(idText, NumberStyles.Integer, CultureInfo.InvariantCulture, out var countryLanguageId) &&
+                    countryLanguageId > 0)
+                {
+                    return countryLanguageId;
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static string NormalizeCountryLanguageLookupCode(string? value)
+    {
+        return (value ?? string.Empty)
+            .Trim()
+            .Replace('_', '-')
+            .ToUpperInvariant();
+    }
+
+    private async Task EnrichLiveQualificationAsync(
+        LucidMarketplaceSettingDTO setting,
+        int countryLanguageId,
+        LiveQualificationItem item)
+    {
+        var lookupRequest = new LucidMarketplaceProxyRequest
+        {
+            Setting = setting,
+            CountryLanguageId = countryLanguageId,
+            QuestionId = item.QuestionId
+        };
+
+        var questionResponse = await CallLucidApiAsync("GetQuestionById", lookupRequest);
+        if (questionResponse.Result && !string.IsNullOrWhiteSpace(questionResponse.ResponseBody))
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(questionResponse.ResponseBody);
+                if (TryGetJsonProperty(document.RootElement, out var questionEl, "Question", "question") &&
+                    questionEl.ValueKind == JsonValueKind.Object)
+                {
+                    var questionText = GetJsonString(questionEl, "QuestionText", "questionText");
+                    if (!string.IsNullOrWhiteSpace(questionText))
+                    {
+                        item.QuestionText = questionText;
+                    }
+                }
+            }
+            catch
+            {
+                // Keep IDs/precodes when question text lookup fails.
+            }
+        }
+
+        var optionsResponse = await CallLucidApiAsync("GetQuestionOptions", lookupRequest);
+        if (!optionsResponse.Result || string.IsNullOrWhiteSpace(optionsResponse.ResponseBody))
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(optionsResponse.ResponseBody);
+            if (!TryGetJsonProperty(document.RootElement, out var optionsEl, "QuestionOptions", "questionOptions") ||
+                optionsEl.ValueKind != JsonValueKind.Array)
+            {
+                return;
+            }
+
+            var allowed = new HashSet<string>(item.PrecodeValues, StringComparer.OrdinalIgnoreCase);
+            var labels = new List<string>();
+            foreach (var optionEl in optionsEl.EnumerateArray())
+            {
+                var precode = GetJsonString(optionEl, "Precode", "precode") ?? string.Empty;
+                if (allowed.Count > 0 && !allowed.Contains(precode))
+                {
+                    continue;
+                }
+
+                var optionText = GetJsonString(optionEl, "OptionText", "optionText");
+                if (string.IsNullOrWhiteSpace(optionText))
+                {
+                    continue;
+                }
+
+                labels.Add(string.IsNullOrWhiteSpace(precode)
+                    ? optionText
+                    : $"{precode} - {optionText}");
+            }
+
+            if (labels.Count > 0)
+            {
+                item.Options = string.Join(", ", labels);
+            }
+        }
+        catch
+        {
+            // Keep raw precodes when option lookup fails.
+        }
+    }
+
+    private sealed class LiveQualificationItem
+    {
+        public int? QuestionId { get; set; }
+
+        public string? QuestionText { get; set; }
+
+        public string? LogicalOperator { get; set; }
+
+        public string Precodes { get; set; } = string.Empty;
+
+        public List<string> PrecodeValues { get; set; } = new();
+
+        public string? Options { get; set; }
+
+        public string? RawJson { get; set; }
     }
 
     private static bool TryGetJsonProperty(JsonElement element, out JsonElement value, params string[] propertyNames)

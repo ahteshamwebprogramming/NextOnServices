@@ -173,6 +173,88 @@ public class LucidMarketplaceClient : ILucidMarketplaceClient
         return response;
     }
 
+    public async Task<LucidMarketplaceProxyResponse> GetSurveyQualificationsAsync(LucidMarketplaceProxyRequest request)
+    {
+        var validationErrors = GetValidationErrors(request?.Setting);
+        var surveyNumber = request?.SurveyNumber
+            ?? request?.EntryLink?.SurveyNumber
+            ?? 0;
+        if (surveyNumber <= 0)
+        {
+            validationErrors.Add("SurveyNumber is required.");
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            return ValidationFailure(validationErrors);
+        }
+
+        var url = BuildSurveyQualificationsUrl(request!.Setting!, surveyNumber);
+        var response = await SendRequestAsync(HttpMethod.Get, url, null, request.Setting!.ApiKey);
+        response.Message ??= response.Result
+            ? "Lucid Marketplace survey qualifications loaded."
+            : "Lucid Marketplace survey qualifications lookup failed.";
+        return response;
+    }
+
+    public async Task<LucidMarketplaceProxyResponse> GetCountryLanguagesAsync(LucidMarketplaceProxyRequest request)
+    {
+        var validationErrors = GetValidationErrors(request?.Setting);
+        if (validationErrors.Count > 0)
+        {
+            return ValidationFailure(validationErrors);
+        }
+
+        var url = $"{GetApiRoot(request!.Setting!.BaseUrl)}/Lookup/v1/BasicLookups/BundledLookups/CountryLanguages";
+        var response = await SendRequestAsync(HttpMethod.Get, url, null, request.Setting.ApiKey);
+        response.Message ??= response.Result
+            ? "Lucid Marketplace country languages loaded."
+            : "Lucid Marketplace country languages lookup failed.";
+        return response;
+    }
+
+    public async Task<LucidMarketplaceProxyResponse> GetQuestionByIdAsync(LucidMarketplaceProxyRequest request)
+    {
+        var validationErrors = GetValidationErrors(request?.Setting);
+        if (request?.CountryLanguageId.GetValueOrDefault() <= 0 || request?.QuestionId.GetValueOrDefault() <= 0)
+        {
+            validationErrors.Add("CountryLanguageId and QuestionId are required.");
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            return ValidationFailure(validationErrors);
+        }
+
+        var url = $"{GetApiRoot(request!.Setting!.BaseUrl)}/Lookup/v1/QuestionLibrary/QuestionById/{request.CountryLanguageId}/{request.QuestionId}";
+        var response = await SendRequestAsync(HttpMethod.Get, url, null, request.Setting.ApiKey);
+        response.Message ??= response.Result
+            ? "Lucid Marketplace question details loaded."
+            : "Lucid Marketplace question details lookup failed.";
+        return response;
+    }
+
+    public async Task<LucidMarketplaceProxyResponse> GetQuestionOptionsAsync(LucidMarketplaceProxyRequest request)
+    {
+        var validationErrors = GetValidationErrors(request?.Setting);
+        if (request?.CountryLanguageId.GetValueOrDefault() <= 0 || request?.QuestionId.GetValueOrDefault() <= 0)
+        {
+            validationErrors.Add("CountryLanguageId and QuestionId are required.");
+        }
+
+        if (validationErrors.Count > 0)
+        {
+            return ValidationFailure(validationErrors);
+        }
+
+        var url = $"{GetApiRoot(request!.Setting!.BaseUrl)}/Lookup/v1/QuestionLibrary/AllQuestionOptions/{request.CountryLanguageId}/{request.QuestionId}";
+        var response = await SendRequestAsync(HttpMethod.Get, url, null, request.Setting.ApiKey);
+        response.Message ??= response.Result
+            ? "Lucid Marketplace question options loaded."
+            : "Lucid Marketplace question options lookup failed.";
+        return response;
+    }
+
     private async Task<LucidMarketplaceProxyResponse> SendRequestAsync(
         HttpMethod method,
         string url,
@@ -353,6 +435,12 @@ public class LucidMarketplaceClient : ILucidMarketplaceClient
         var supplierCode = Uri.EscapeDataString(entryLink.SupplierCode ?? setting.SupplierCode ?? string.Empty);
         var surveyNumber = entryLink.SurveyNumber.ToString();
         return $"{apiRoot}/Supply/v1/SupplierLinks/BySurveyNumber/{surveyNumber}/{supplierCode}";
+    }
+
+    private static string BuildSurveyQualificationsUrl(LucidMarketplaceSettingDTO setting, int surveyNumber)
+    {
+        var apiRoot = GetApiRoot(setting.BaseUrl);
+        return $"{apiRoot}/Supply/v1/SurveyQualifications/BySurveyNumberForOfferwall/{surveyNumber}";
     }
 
     private static string GetApiRoot(string? configuredBaseUrl)

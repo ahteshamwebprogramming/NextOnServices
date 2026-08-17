@@ -254,6 +254,12 @@ public class LucidMarketplaceProxyRequest
     public LucidMarketplaceSubscriptionDTO? Subscription { get; set; }
 
     public LucidMarketplaceEntryLinkProxyRequest? EntryLink { get; set; }
+
+    public int? SurveyNumber { get; set; }
+
+    public int? CountryLanguageId { get; set; }
+
+    public int? QuestionId { get; set; }
 }
 
 public class LucidMarketplaceProxyResponse

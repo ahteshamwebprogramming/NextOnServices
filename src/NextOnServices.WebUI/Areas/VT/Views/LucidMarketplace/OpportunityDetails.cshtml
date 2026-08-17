@@ -57,6 +57,58 @@
         border-radius: 8px;
         padding: 0.85rem;
     }
+
+    .vt-lm-options-preview {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        max-width: 280px;
+        max-height: 2.8em;
+        text-overflow: ellipsis;
+        word-break: break-word;
+    }
+
+    #lucidQualificationsFormattedModal .modal-body {
+        max-height: calc(100vh - 180px);
+        overflow-y: auto;
+    }
+
+    .vt-lm-qual-block {
+        border: 1px solid var(--vt-lm-border);
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.85rem;
+        background: #f8fafc;
+    }
+
+    .vt-lm-qual-block h6 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+    }
+
+    .vt-lm-qual-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+    .vt-lm-qual-chips li {
+        background: #fff;
+        border: 1px solid #dbe3ea;
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.78rem;
+        color: #334155;
+    }
 </style>
 
 <div class="vt-project-page vt-dashboard-ref ref-content-wrap vt-lm-opportunity-details">
@@ -173,34 +225,25 @@
         <div class="col-md-12 grid-margin stretch-card">
             <div class="card card--table-section">
                 <div class="card-body">
-                    <h4 class="table-section-header">Qualifications</h4>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h4 class="table-section-header mb-3 mb-md-0">Qualifications <small class="text-muted" style="font-size:0.72rem; font-weight:600;">Live from Lucid (not stored)</small></h4>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mr-2" onclick="loadLiveQualifications(@opportunity.LucidMarketplaceOpportunityId)">Refresh from Lucid</button>
+                            <button type="button" class="btn btn-outline-success btn-sm" id="viewFormattedQualificationsBtn" disabled onclick="viewFormattedQualifications(@opportunity.LucidMarketplaceOpportunityId)">View in Formatted</button>
+                        </div>
+                    </div>
                     <div class="table-responsive mt-3">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
                                     <th>Question ID</th>
+                                    <th>Question</th>
                                     <th>Operator</th>
-                                    <th>Precodes</th>
-                                    <th>Raw JSON</th>
+                                    <th>Options</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                @if (Model.OpportunityQualifications.Any())
-                                {
-                                    foreach (var item in Model.OpportunityQualifications)
-                                    {
-                                        <tr>
-                                            <td>@item.QuestionId</td>
-                                            <td>@item.LogicalOperator</td>
-                                            <td>@item.PrecodesJson</td>
-                                            <td><div class="vt-lm-json" style="max-height:120px;">@item.RawJson</div></td>
-                                        </tr>
-                                    }
-                                }
-                                else
-                                {
-                                    <tr><td colspan="4" class="text-center text-muted py-3">No qualifications were stored for this opportunity.</td></tr>
-                                }
+                            <tbody id="lucidLiveQualificationsBody">
+                                <tr><td colspan="4" class="text-center text-muted py-3">Loading qualifications from Lucid...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -347,6 +390,23 @@
     </div>
 </div>
 
+<div class="modal fade" id="lucidQualificationsFormattedModal" tabindex="-1" role="dialog" aria-labelledby="lucidQualificationsFormattedTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lucidQualificationsFormattedTitle">Qualifications — Survey @opportunity.SurveyId</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body" id="lucidQualificationsFormattedBody">
+                <p class="text-muted mb-0">Load qualifications from Lucid first.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section scripts {
     <script>
         function generateEntryLink(opportunityId, attemptType) {
@@ -396,5 +456,129 @@
                 }
             });
         }
+
+        function escapeHtml(value) {
+            return $("<div/>").text(value == null ? "" : String(value)).html();
+        }
+
+        window.lucidLiveQualifications = [];
+
+        function setFormattedQualificationsEnabled(enabled) {
+            $("#viewFormattedQualificationsBtn").prop("disabled", !enabled);
+        }
+
+        function splitQualificationOptions(item) {
+            var labeled = (item && item.options ? String(item.options) : "").trim();
+            if (labeled && labeled.indexOf(" - ") >= 0) {
+                return labeled.split(/, (?=\S+ - )/);
+            }
+
+            var raw = labeled || (item && item.precodes ? String(item.precodes) : "").trim();
+            if (!raw) {
+                return [];
+            }
+
+            return raw.split(/,\s*/).filter(function (part) { return part.length > 0; });
+        }
+
+        function renderFormattedQualifications(items) {
+            if (!items || items.length === 0) {
+                return '<p class="text-muted mb-0">No qualifications to display.</p>';
+            }
+
+            return items.map(function (item) {
+                var title = item.questionText || ("Question " + (item.questionId || ""));
+                var options = splitQualificationOptions(item);
+                var chips = options.length
+                    ? '<ul class="vt-lm-qual-chips">' + options.map(function (option) {
+                        return "<li>" + escapeHtml(option) + "</li>";
+                    }).join("") + "</ul>"
+                    : '<p class="text-muted mb-0">No options returned.</p>';
+
+                return '<div class="vt-lm-qual-block">' +
+                    "<h6>" + escapeHtml(title) + "</h6>" +
+                    '<div class="text-muted mb-2" style="font-size:0.78rem;">Question ID ' + escapeHtml(item.questionId || "-") +
+                    " · Operator " + escapeHtml(item.logicalOperator || "-") + "</div>" +
+                    chips +
+                    "</div>";
+            }).join("");
+        }
+
+        function openFormattedQualificationsModal() {
+            $("#lucidQualificationsFormattedBody").html(renderFormattedQualifications(window.lucidLiveQualifications));
+            $("#lucidQualificationsFormattedModal").modal("show");
+        }
+
+        function viewFormattedQualifications(opportunityId) {
+            if (window.lucidLiveQualifications && window.lucidLiveQualifications.length > 0) {
+                openFormattedQualificationsModal();
+                return;
+            }
+
+            loadLiveQualifications(opportunityId, function () {
+                if (window.lucidLiveQualifications && window.lucidLiveQualifications.length > 0) {
+                    openFormattedQualificationsModal();
+                    return;
+                }
+
+                Swal.fire("Info", "No live qualifications are available to format.", "info");
+            });
+        }
+
+        function loadLiveQualifications(opportunityId, onComplete) {
+            var $body = $("#lucidLiveQualificationsBody");
+            window.lucidLiveQualifications = [];
+            setFormattedQualificationsEnabled(false);
+            $body.html('<tr><td colspan="4" class="text-center text-muted py-3">Loading qualifications from Lucid...</td></tr>');
+
+            $.ajax({
+                type: "GET",
+                url: "/VT/LucidMarketplaceApi/FetchLiveQualifications/" + opportunityId,
+                success: function (response) {
+                    if (!response || !response.result) {
+                        $body.html('<tr><td colspan="4" class="text-center text-muted py-3">' + escapeHtml(response?.message || "Unable to load from Lucid.") + '</td></tr>');
+                        if (typeof onComplete === "function") {
+                            onComplete();
+                        }
+                        return;
+                    }
+
+                    var items = response.items || [];
+                    window.lucidLiveQualifications = items;
+                    if (items.length === 0) {
+                        $body.html('<tr><td colspan="4" class="text-center text-muted py-3">' + escapeHtml(response.message || "No qualifications returned.") + '</td></tr>');
+                        if (typeof onComplete === "function") {
+                            onComplete();
+                        }
+                        return;
+                    }
+
+                    var html = "";
+                    items.forEach(function (item) {
+                        html += "<tr>" +
+                            "<td>" + escapeHtml(item.questionId || "-") + "</td>" +
+                            "<td>" + escapeHtml(item.questionText || "-") + "</td>" +
+                            "<td>" + escapeHtml(item.logicalOperator || "-") + "</td>" +
+                            '<td><div class="vt-lm-options-preview">' + escapeHtml(item.options || item.precodes || "-") + "</div></td>" +
+                            "</tr>";
+                    });
+                    $body.html(html);
+                    setFormattedQualificationsEnabled(true);
+                    if (typeof onComplete === "function") {
+                        onComplete();
+                    }
+                },
+                error: function (xhr) {
+                    $body.html('<tr><td colspan="4" class="text-center text-muted py-3">' + escapeHtml(xhr.responseJSON?.message || xhr.responseText || "Unable to load from Lucid.") + '</td></tr>');
+                    if (typeof onComplete === "function") {
+                        onComplete();
+                    }
+                }
+            });
+        }
+
+        $(function () {
+            loadLiveQualifications(@opportunity.LucidMarketplaceOpportunityId);
+        });
     </script>
 }
