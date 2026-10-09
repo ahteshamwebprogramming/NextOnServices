@@ -97,6 +97,26 @@ public class ProjectURLsController : Controller
         }
         return PartialView("_projectURLs/_listProjectURL", dto);
     }
+    [HttpPost]
+    [Route("/VT/ProjectURLs/AddCountry")]
+    public async Task<IActionResult> AddCountry([FromBody] AddCountryRequest inputDTO)
+    {
+        try
+        {
+            if (inputDTO == null || string.IsNullOrWhiteSpace(inputDTO.CountryName))
+            {
+                return BadRequest("Country name is required.");
+            }
+
+            return await _countryAPIController.AddCountry(inputDTO);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding country from Project URLs");
+            return BadRequest("Unable to add country right now.");
+        }
+    }
+
     public async Task<IActionResult> SaveProjectURL([FromBody] ProjectsUrlDTO inputDTO)
     {
         try
