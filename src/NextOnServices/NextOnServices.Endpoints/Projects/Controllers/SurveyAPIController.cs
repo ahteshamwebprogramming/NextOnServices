@@ -1471,7 +1471,14 @@ public class SurveyAPIController : ControllerBase
             {
                 using var multiCharts = await connection.QueryMultipleAsync(
                     "chartsremain",
-                    null,
+                    new
+                    {
+                        supplierid = commonParams.supplierid,
+                        clientid = commonParams.clientid,
+                        countryid = commonParams.countryid,
+                        startdate = commonParams.startdate,
+                        enddate = commonParams.enddate
+                    },
                     commandType: CommandType.StoredProcedure);
 
                 var completeRows = await TryReadRows(multiCharts, "OverallReport-Charts", 1);

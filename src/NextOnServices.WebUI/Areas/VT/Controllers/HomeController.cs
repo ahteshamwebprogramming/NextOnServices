@@ -308,23 +308,21 @@ public class HomeController : Controller
                     if (DateTime.TryParse(item.StartDate, out DateTime startDate))
                     {
                         worksheet.Cell(row, 7).Value = startDate;
-                        worksheet.Cell(row, 7).Style.DateFormat.Format = "dd:MM:yyyy:HH:mm:ss";
+                        worksheet.Cell(row, 7).Style.DateFormat.Format = "dd-MM-yyyy HH:mm:ss";
                     }
                     else
                     {
-                        worksheet.Cell(row, 7).Value = item.StartDate; // Keep the original value if parsing fails
+                        worksheet.Cell(row, 7).Value = item.StartDate;
                     }
-                    //worksheet.Cell(row, 7).Value = item.StartDate;
                     if (DateTime.TryParse(item.EndDate, out DateTime endDate))
                     {
-                        worksheet.Cell(row, 8).Value = startDate;
-                        worksheet.Cell(row, 8).Style.DateFormat.Format = "dd:MM:yyyy:HH:mm:ss";
+                        worksheet.Cell(row, 8).Value = endDate;
+                        worksheet.Cell(row, 8).Style.DateFormat.Format = "dd-MM-yyyy HH:mm:ss";
                     }
                     else
                     {
-                        worksheet.Cell(row, 8).Value = item.EndDate; // Keep the original value if parsing fails
+                        worksheet.Cell(row, 8).Value = item.EndDate;
                     }
-                    //worksheet.Cell(row, 8).Value = item.EndDate;
                     worksheet.Cell(row, 9).Value = item.Duration;
                     worksheet.Cell(row, 10).Value = item.ClientBrowser;
                     worksheet.Cell(row, 11).Value = item.ClientIP;

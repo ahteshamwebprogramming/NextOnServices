@@ -23,6 +23,12 @@
     .flatpickr-calendar .flatpickr-day.today { border-color:#0f7f79; }
     .flatpickr-calendar .flatpickr-day:hover { background:#e6f4f3; border-color:#e6f4f3; }
     .flatpickr-calendar .flatpickr-current-month { font-size:1rem; }
+    .flatpickr-calendar .flatpickr-time { border-top:1px solid #e3edf2; max-height:44px; }
+    .flatpickr-calendar .flatpickr-time input.flatpickr-hour,
+    .flatpickr-calendar .flatpickr-time input.flatpickr-minute { font-weight:600; color:#0f5566; }
+    .flatpickr-calendar .flatpickr-time .flatpickr-am-pm { color:#0f7f79; font-weight:700; }
+    .flatpickr-calendar.arrowTop:before,
+    .flatpickr-calendar.arrowTop:after { border-bottom-color:#d6e3eb; }
     .vt-overall-report-page .vt-filter-actions {
         display:flex;
         gap:.45rem;
@@ -114,8 +120,8 @@
     <div class="row"><div class="col-12 grid-margin"><div class="card vt-lift"><div class="card-body">
         <p class="table-section-header mb-3">Filters</p>
         <div class="vt-filter-grid">
-            <div class="form-group"><label for="txtSDate">Start Date</label><input type="text" id="txtSDate" class="form-control vt-date-input" autocomplete="off" /></div>
-            <div class="form-group"><label for="txtEDate">End Date</label><input type="text" id="txtEDate" class="form-control vt-date-input" autocomplete="off" /></div>
+            <div class="form-group"><label for="txtSDate">Start date &amp; time</label><input type="text" id="txtSDate" class="form-control vt-date-input" autocomplete="off" /></div>
+            <div class="form-group"><label for="txtEDate">End date &amp; time</label><input type="text" id="txtEDate" class="form-control vt-date-input" autocomplete="off" /></div>
             <div class="form-group"><label for="ddlCountry">Country</label><select id="ddlCountry" class="form-control"><option value="0">--Search Country--</option></select></div>
             <div class="form-group"><label for="ddlClients">Client</label><select id="ddlClients" class="form-control"><option value="0">--Search Client--</option></select></div>
             <div class="form-group"><label for="ddlSuppliers">Supplier</label><select id="ddlSuppliers" class="form-control"><option value="0">--Search Supplier--</option></select></div>
@@ -216,21 +222,34 @@
                 if ($.unblockUI) $.unblockUI();
             }
 
-            function toIsoDate(d) { return d.toISOString().slice(0, 10); }
+            function toIsoDateTime(d) {
+                if (!d || !(d instanceof Date) || isNaN(d.getTime())) return null;
+                const pad = function (n) { return String(n).padStart(2, "0"); };
+                return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+                    "T" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+            }
+
+            function getPickerDateTime(picker) {
+                if (!picker || !picker.selectedDates || !picker.selectedDates.length) return null;
+                return toIsoDateTime(picker.selectedDates[0]);
+            }
 
             function initDatePickers() {
                 if (typeof flatpickr !== "function") {
-                    $("#txtSDate, #txtEDate").attr("type", "date");
+                    $("#txtSDate, #txtEDate").attr("type", "datetime-local");
                     return;
                 }
 
                 const baseOptions = {
-                    dateFormat: "Y-m-d",
+                    enableTime: true,
+                    time_24hr: false,
+                    dateFormat: "Y-m-d H:i:S",
                     altInput: true,
                     altInputClass: "form-control vt-date-input",
-                    altFormat: "d-m-Y",
+                    altFormat: "d-m-Y h:i K",
                     allowInput: false,
-                    disableMobile: true
+                    disableMobile: true,
+                    minuteIncrement: 1
                 };
 
                 startDatePicker = flatpickr("#txtSDate", Object.assign({}, baseOptions, {
@@ -250,16 +269,16 @@
 
             function setDefaultDates() {
                 const now = new Date();
-                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
                 if (startDatePicker && endDatePicker) {
                     startDatePicker.setDate(monthStart, true);
                     endDatePicker.setDate(now, true);
-                    startDatePicker.set("maxDate", toIsoDate(now));
-                    endDatePicker.set("minDate", toIsoDate(monthStart));
+                    endDatePicker.set("minDate", monthStart);
+                    startDatePicker.set("maxDate", now);
                     return;
                 }
-                $("#txtSDate").val(toIsoDate(monthStart));
-                $("#txtEDate").val(toIsoDate(now));
+                $("#txtSDate").val(toIsoDateTime(monthStart));
+                $("#txtEDate").val(toIsoDateTime(now));
             }
 
             function fillSelect($el, items, placeholder) {
@@ -537,10 +556,14 @@
 
             async function loadDashboardData() {
                 $("#lblMsg").text("");
-                const sDate = $("#txtSDate").val();
-                const eDate = $("#txtEDate").val();
+                const sDate = getPickerDateTime(startDatePicker) || $("#txtSDate").val();
+                const eDate = getPickerDateTime(endDatePicker) || $("#txtEDate").val();
                 if ((sDate && !eDate) || (!sDate && eDate)) {
-                    $("#lblMsg").text("Please select both start date and end date.");
+                    $("#lblMsg").text("Please select both start and end date/time.");
+                    return;
+                }
+                if (sDate && eDate && new Date(sDate) > new Date(eDate)) {
+                    $("#lblMsg").text("End date/time must be on or after start date/time.");
                     return;
                 }
 
